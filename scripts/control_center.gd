@@ -153,6 +153,7 @@ func _play_intro() -> void:
 		_resume_campaign_story()
 		return
 	var intro = INTRO.instantiate()
+	intro.configure_route(active_route)
 	_set_hub_visible(false)
 	%HubScrim.hide()
 	add_child(intro)

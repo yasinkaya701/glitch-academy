@@ -35,6 +35,7 @@ const CINEMATIC_BACKDROP := preload("res://assets/intro/meridyen_opening_backdro
 var meridyen: TextureRect
 var elapsed := 0.0
 var cue_index := -1
+var campaign_route: StringName = &"tyt"
 var started := false
 var playing := false
 
@@ -67,6 +68,10 @@ func start() -> void:
 	set_process_input(true)
 
 
+func configure_route(route: StringName) -> void:
+	campaign_route = route if route in [&"lgs", &"tyt", &"ayt", &"ydt"] else &"tyt"
+
+
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
@@ -91,8 +96,8 @@ func _update_frame() -> void:
 			next_cue = index
 	if next_cue != cue_index:
 		cue_index = next_cue
-		headline.text = HEADLINES[cue_index]
-		caption.text = CAPTIONS[cue_index]
+		headline.text = _route_headline() if cue_index == HEADLINES.size() - 1 else HEADLINES[cue_index]
+		caption.text = _route_caption() if cue_index == CAPTIONS.size() - 1 else CAPTIONS[cue_index]
 		headline.add_theme_font_size_override("font_size", 36)
 	var cue_start: float = CUE_STARTS[cue_index]
 	var cue_end: float = CUE_STARTS[cue_index + 1]
@@ -108,6 +113,23 @@ func _update_frame() -> void:
 	location.add_theme_color_override("font_color", alarm_color)
 	progress.value = elapsed / DURATION
 	alarm_changed.emit(alarm)
+
+
+func _route_headline() -> String:
+	if campaign_route == &"lgs":
+		return HEADLINES[HEADLINES.size() - 1]
+	return "İlk sinyal: %s rotası." % String(campaign_route).to_upper()
+
+
+func _route_caption() -> String:
+	match campaign_route:
+		&"lgs":
+			return "Sapma sürüyor. Onarım senden bekleniyor."
+		&"ayt":
+			return "Alan düzeneklerindeki ölçüm farkını incele."
+		&"ydt":
+			return "Kesilen frekansı dinle; mesajı geri getir."
+	return "Ortak sınav kaydındaki ölçüm farkını incele."
 
 
 func _build_meridyen() -> void:
