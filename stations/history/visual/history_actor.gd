@@ -127,15 +127,9 @@ func exit_angry(duration: float = 1.4) -> Tween:
 
 func _process(delta: float) -> void:
 	_clock += delta
-	var target_e: float = 0.0
-	if speaking:
-		target_e = clampf(mouth_level, 0.15, 1.0) if mouth_level >= 0.0 else (0.35 + 0.25 * absf(sin(_clock * 6.5)))
-	_speak_energy = lerpf(_speak_energy, target_e, 1.0 - exp(-delta * 10.0))
-
-	var breath: float = sin(_clock * BREATH_SPEED) * 1.8
-	var talk_lift: float = -_speak_energy * 3.2
-	_rig.position = Vector2(-_body_size.x * 0.5, -_body_size.y + breath + talk_lift)
-	_rig.rotation = sin(_clock * 0.7) * 0.0025
+	var breath: float = sin(_clock * BREATH_SPEED) * 0.8
+	_rig.position = Vector2(-_body_size.x * 0.5, -_body_size.y + breath)
+	_rig.rotation = 0.0
 
 
 func _apply_scale() -> void:

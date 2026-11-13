@@ -143,6 +143,10 @@ func speak_live(philosopher_id: StringName, text: String, tag_id: StringName = &
 	_start_fallback_speaking(text, est_duration)
 
 
+func is_listening() -> bool:
+	return _listening
+
+
 ## Mikrofondan oyuncunun sesini dinleyip Türkçe metne çevirir ve speech_recognized sinyali yayar.
 func listen_microphone(seconds: float = 4.2) -> bool:
 	if _listening:

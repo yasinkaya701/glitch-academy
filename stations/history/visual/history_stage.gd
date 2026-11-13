@@ -226,16 +226,14 @@ func _draw_floor_shadow() -> void:
 
 func _process(delta: float) -> void:
 	_clock += delta
-	var target_zoom: float = 1.045 if (actor != null and actor.speaking) else 1.0 + 0.008 * sin(_clock * 0.40)
-	_cam_zoom = lerpf(_cam_zoom, target_zoom, 1.0 - exp(-delta * 2.6))
+	_cam_zoom = 1.0
 	if actor != null and size.y > 0.0:
-		actor.fit_to_height(size.y * ACTOR_HEIGHT_RATIO * _cam_zoom)
+		actor.fit_to_height(size.y * ACTOR_HEIGHT_RATIO)
 
 	if _backdrop_tex.visible:
-		var z: float = 1.02 + 0.015 * (_cam_zoom - 1.0)
 		_backdrop_tex.pivot_offset = _backdrop_tex.size * 0.5
-		_backdrop_tex.scale = Vector2(z, z)
-		_backdrop_tex.position = Vector2(sin(_clock * 0.12) * 5.0, 0.0)
+		_backdrop_tex.scale = Vector2.ONE
+		_backdrop_tex.position = Vector2.ZERO
 		_backdrop_tex.size = size
 
 
