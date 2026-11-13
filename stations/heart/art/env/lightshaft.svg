@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="1024" viewBox="0 0 512 1024">
+<defs><linearGradient id="shaft" x1="0" y1="0" x2=".15" y2="1"><stop stop-color="#f4bd78" stop-opacity=".24"/><stop offset=".22" stop-color="#e9b678" stop-opacity=".12"/><stop offset=".72" stop-color="#adc3d4" stop-opacity=".045"/><stop offset="1" stop-color="#adc3d4" stop-opacity="0"/></linearGradient><linearGradient id="feather" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#fff0ce" stop-opacity="0"/><stop offset=".46" stop-color="#ffe4bd" stop-opacity=".65"/><stop offset="1" stop-color="#fff0ce" stop-opacity="0"/></linearGradient></defs>
+<path d="M130 0H382L506 1024H6Z" fill="url(#shaft)"/>
+<path d="M239 0h34L318 1024h-82Z" fill="url(#feather)" opacity=".18"/>
+<path d="M180 0h2L80 1024h-5Zm151 0h2l115 1024h-5Z" fill="#f2d9b8" opacity=".055"/>
+</svg>
