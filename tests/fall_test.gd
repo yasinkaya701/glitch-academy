@@ -20,5 +20,12 @@ func _init() -> void:
 	print("kapsül 45 m havada: %.2f s, çarpma %.1f m/s" % [cap_air.time, cap_air.speed])
 	var g_measured: float = 2.0 * 20.0 / pow(Fall.fall(&"steel", 20.0, 0.0).time, 2.0)
 	print("ölçülen g (2h/t²): %.2f" % g_measured)
+	var weak: Dictionary = Fall.fall(&"steel", 20.0, 0.0, 6.0)
+	print("g=6, 20 m vakum: %.3f s (beklenen 2,582)" % weak.time)
+	if absf(weak.time - 2.582) > 0.005:
+		failures += 1
+	print("g=6, 45 m kapsül vakum: %.3f s (kapak 3,00 s)" % Fall.fall(&"capsule", 45.0, 0.0, 6.0).time)
+	print("g=6, 27 m kapsül vakum: %.3f s (hedef 3,000)" % Fall.fall(&"capsule", 27.0, 0.0, 6.0).time)
+	print("ayar 25 -> g %.1f, ayar 50 -> g %.1f" % [Fall.gravity_for_dial(25.0), Fall.gravity_for_dial(50.0)])
 	print("BAŞARISIZ" if failures > 0 else "GEÇTİ")
 	quit(failures)

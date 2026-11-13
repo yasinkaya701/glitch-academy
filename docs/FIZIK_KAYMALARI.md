@@ -55,8 +55,20 @@ Ortak yapı: **Açılış** (≤ 8 sn, atlanabilir, anlatıcı yok) → **Deney*
 
 ## 3 · Düşüş Odası · AYT Hareket (uygulandı)
 
-**Kayma.** Cihaz odada hava yokmuş gibi hesaplıyor. **Güç:** Ayır (havayı çek).
-Açılış: çelik küre 2,00 s, sünger top 4,34 s, cihaz her ikisini 2,00 s bekliyor. Deney: vakum, g = 2h/t² = 10 m/s². Uygulama: 45 m'den kapsül 3,00 s. *Kayıt: "Kütle değildi. Hava hesaptan çıkarılmıştı."* Ayrıntı `stations/free_fall/mission.gd`.
+**Kayma.** Misafirler Dünya'nın **yer çekimini** zayıflattı (g = 6 m/s², sağlıklı 10). **Güç:** Ayır (havayı çek, kütleyi eşitle).
+
+**Kriz.** Gözlemevi'nin veri kapsülü 45 m'den bırakılıyor, sensör kapağı 3,00 s'de 0,05 s açık. Cihaz 10 m/s² varsayıyor. Oda vakumda, yine de kapsül 3,87 s'de iniyor, kapak kapanmış, veri kayboluyor.
+
+**Deney.**
+1. Çelik küre (33 kg) ve sünger topu (50 g) 20 m'den vakumda bırak: ikisi de **2,58 s**. Havayı açıp tekrarla: hava hafif topu yavaşlatır (4,3 s), ama oda zaten vakumdaydı, yani asıl neden bu değil.
+2. Neden: kütle (vakumda eşit), hava (vakumda yok) elenir, geriye **g** kalır.
+3. g = 2h / t² = 2·20 / 2,58² = **6 m/s²**.
+
+**Uygulama (kurtarma).** Kapak 3,00 s'de açık: h = ½·g·t² = ½·6·9 = **27 m**. Üç kapsül. 45 m (cihazın eski planı) kapsülü kaybettirir.
+
+**Onarım.** Çekim dengeleyici ayarı 0–100, g = 2 + 0,16·ayar. Başlangıç 25 (g = 6). Oyuncu her ayarı 20 m vakum düşüşüyle ölçer (g = 2h/t²), doğrusal ilişkiyi bulup **ayar 50** (g = 10) değerine gelir. Sahne ışığı sıcaklaşır.
+
+*Kayıt: "Kütle de hava da değildi. Çekimin kendisi kaymıştı."* Ayrıntı `stations/free_fall/mission.gd`.
 
 ---
 
@@ -132,7 +144,7 @@ Açılış: çelik küre 2,00 s, sünger top 4,34 s, cihaz her ikisini 2,00 s be
 |---|---|---|---|---|
 | 1 | Ölçüm Atölyesi | TYT Fizik Bilimine Giriş | Yavaşlat | 240 cm = 2,4 m; 6 m / 3 s = 2 m/s; 1500 g = 1,5 kg |
 | 2 | Vektör Limanı | 11.1.1.3 | Gör | (3, 4) → 5; (5, −12) → 13 |
-| 3 | Düşüş Odası | 11.1.4.3 | Ayır | 20 m, 2 s, g = 10; 45 m, 3 s |
+| 3 | Düşüş Odası | 11.1.4.3 | Ayır | 20 m, 2,58 s → g = 6; 27 m, 3 s; ayar 50 → g = 10 |
 | 4 | Newton Kızağı | AYT Fizik 6 | Yavaşlat | 10 N: 5 ve 2 m/s²; 40 m, 4 s, 6 kg → 30 N |
 | 5 | Atış Alanı | AYT Fizik 8 | Sar | 45 m, 3 s, 60 m → 20 m/s |
 | 6 | Çarpışma Hattı | AYT Fizik 9 | Gör | 2·3 + 1·(−3) → 1 m/s; 3·4 → −2,4 m/s |

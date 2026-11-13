@@ -50,7 +50,7 @@ Soyut "cihaz yanlış sanıyor" yetmez. Her istasyon **somut bir kriz**tir:
 |---|---|---|
 | 1 Ölçüm Atölyesi | Taşıyıcı ray kopuk, parça yuvaya sığmıyor | uzunluğu **m**'ye, kütleyi **kg**'a çevir ve rayın 2 m/s sınırından süreyi hesapla |
 | 2 Vektör Limanı | Kapsül limanı kaçırıyor | iki rota segmentini ve yan rüzgârı bileşke olarak topla (yön, büyüklük) |
-| 3 Düşüş Odası | Kapsül kapak kapandıktan sonra geliyor | **vakum + h = ½gt²**: ikisi de gerekli (uygulandı) |
+| 3 Düşüş Odası | Kapsül kapak kapandıktan sonra geliyor, her şey yavaş düşüyor | **g'yi ölç (h = ½gt²), kapsülü bu çekime göre kurtar, çekim dengeleyiciyi ayarlayıp g = 10'u geri getir** (uygulandı) |
 | 4 Newton Kızağı | Kızak varış kapısına geç kalıyor | yükü seç (itici sınırı 40 N) ve F = m·a ile kuvveti gir |
 | 5 Atış Alanı | Kapsül hedef halkasını ıskalıyor | düşüş süresinden yatay hızı bul, bırak–fırlat zamanlamasını eşitle |
 | 6 Çarpışma Hattı | Arşiv kapısındaki iki araba kapıyı çarparak kırıyor | durdurma hızını (işaretli) hesapla ve ısıya giden enerjiyi (≤ 15 J) doğrula |
@@ -64,7 +64,7 @@ Soyut "cihaz yanlış sanıyor" yetmez. Her istasyon **somut bir kriz**tir:
 |---|---|---|---|---|---|
 | 1 | Ölçüm Atölyesi (TYT) | Parça yuvaya sığmaz | Santimetre metre sayılıyor | 240 cm ile 2,4 m'yi rayda karşılaştır | "Sayı doğruydu. Birimi değişmişti." |
 | 2 | Vektör Limanı (AYT) | Kapsül yanaşma noktasını kaçırır | Yer değiştirmeler yönsüz toplanıyor | Aynı iki oku ters yönde ekle (**Gör**) | "Uzunluk toplandı. Yön silinmişti." |
-| 3 | **Düşüş Odası (AYT)** | Aynı yükseklikten çelik küre 2,0 s, sünger top 4,3 s sürede iner. Cihaz ikisini de 2,0 s bekler | Odada hava yokmuş gibi hesaplanıyor | Havayı boşalt (**Ayır**): iki cisim birlikte iner | "Kütle değildi. Hava hesaptan çıkarılmıştı." |
+| 3 | **Düşüş Odası (AYT)** | Oda vakumda ama her şey beklenenden yavaş düşüyor: çelik ve sünger top 20 m'yi 2,58 s'de iner, cihaz 2,00 s bekler. Kapsül kapak kapandıktan sonra gelir | Misafirler Dünya'nın yer çekimini zayıflattı (g = 6 m/s²) | Kütleyi ve havayı ele (**Ayır**): vakumda ikisi eşit ama yine yavaş, geriye çekim kalır | "Kütle de hava da değildi. Çekimin kendisi kaymıştı." |
 | 4 | Newton Kızağı (AYT) | Aynı itişle iki yük aynı hızlanır | İvme kütleden bağımsız sayılıyor | Aynı kuvvette iki kütleyi karşılaştır (**Yavaşlat**) | "İtiş yazılmış, yük silinmişti." |
 | 5 | Atış Alanı (AYT) | Top hedefin önüne düşer | Yatay ve düşey hareket bağlanmış | İki topu aynı anda bırak ve fırlat (**Sar**) | "İki hareket tek sayılmıştı." |
 | 6 | Çarpışma Hattı (AYT) | Çarpışmada toplam hareket kaybolur | Momentumun yönü korunmuyor | Ters yönde çarpıştır, toplamı al (**Gör**) | "Hareket yok olmamıştı. Yön değiştirmişti." |

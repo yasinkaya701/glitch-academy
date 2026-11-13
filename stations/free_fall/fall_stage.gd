@@ -40,6 +40,9 @@ var time_scale := 1.0
 var log_rows: Array[String] = []
 var visible_ids: Array = [&"steel", &"foam"]
 ## Veri kapsülü krizi: sensör kapağı `door_time` ± `door_window` saniyede açıktır. Kaçıran kapsül kaybolur.
+var gravity := Fall.G                ## yerel çekim ivmesi (Misafirler bozar, dengeleyici onarır)
+var gravity_label := ""             ## panoda "ÇEKİM" satırı; boşsa gösterilmez
+var gravity_fixed := false          ## onarıldıysa sahne ışığı sıcaklaşır
 var door_enabled := false
 var door_time := 3.0
 var door_window := 0.05
@@ -152,7 +155,7 @@ func _start_fall() -> void:
 		data["active"] = _pending.has(id)
 		data["state"] = Fall.State.new()
 		data["landed"] = false
-		data["result"] = Fall.fall(id, release_height, pressure) if _pending.has(id) else {}
+		data["result"] = Fall.fall(id, release_height, pressure, gravity) if _pending.has(id) else {}
 	_elapsed = 0.0
 	outcome = &""
 	falling = true
@@ -168,7 +171,7 @@ func _step_fall(delta: float) -> void:
 		for id in _bodies:
 			var data: Dictionary = _bodies[id]
 			if data["active"] and not data["landed"]:
-				Fall.step(data["state"], id, pressure, slice)
+				Fall.step(data["state"], id, pressure, slice, gravity)
 		remaining -= slice
 	var all_done := true
 	for id in _bodies:
@@ -216,6 +219,8 @@ func _draw() -> void:
 	_draw_signature(factor)
 	_draw_board(factor)
 	_draw_gauge(factor)
+	if gravity_fixed:
+		draw_rect(Rect2(Vector2.ZERO, size), Color(1.0, 0.72, 0.4, 0.07))
 
 
 func _font() -> Font:
@@ -388,6 +393,11 @@ func _draw_board(factor: float) -> void:
 		draw_line(_p(x, row - 28.0), _p(x + 640.0, row - 28.0), Color(WARM, 0.5), 1.0 * factor)
 		_text(_p(x, row + 6.0), "CİHAZ BEKLENTİSİ", 20.0 * factor, WARM)
 		_text(_p(x + 380.0, row + 6.0), seconds_text(EXPECTED_TIME if not door_enabled else door_time), 34.0 * factor, WARM, HORIZONTAL_ALIGNMENT_RIGHT, 260.0 * factor)
+		row += 68.0
+	if gravity_label != "":
+		draw_line(_p(x, row - 28.0), _p(x + 640.0, row - 28.0), Color(MUTED, 0.35), 1.0 * factor)
+		_text(_p(x, row + 6.0), "ÇEKİM", 20.0 * factor, MUTED)
+		_text(_p(x + 380.0, row + 6.0), gravity_label, 34.0 * factor, ACCENT if gravity_fixed else WARM, HORIZONTAL_ALIGNMENT_RIGHT, 260.0 * factor)
 		row += 68.0
 	if door_enabled:
 		_draw_door(x, row, factor)

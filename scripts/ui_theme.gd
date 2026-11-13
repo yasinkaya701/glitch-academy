@@ -56,6 +56,9 @@ static func build() -> Theme:
 	theme.set_font("font", "PrimaryButton", semibold)
 	theme.set_type_variation("DangerButton", "Button")
 	_button(theme, "DangerButton", Color("#5a2420"), DANGER, INK)
+	# Meridian cihaz düğmeleri (Codex): 9 dilimli, ortası uzar, kesik köşe ve yan ray sabit kalır.
+	_texture_button(theme, "Button", "btn")
+	_texture_button(theme, "PrimaryButton", "btn_primary")
 
 	# Onay ve seçenek
 	for type_name in ["CheckButton", "CheckBox"]:
@@ -122,6 +125,30 @@ static func build() -> Theme:
 	theme.set_stylebox("background", "ProgressBar", _flat(Color("#1b2c3f"), Color(0, 0, 0, 0), 0, 4, 0))
 	theme.set_stylebox("fill", "ProgressBar", _flat(ACCENT, Color(0, 0, 0, 0), 0, 4, 0))
 	return theme
+
+
+static func _texture_button(theme: Theme, type_name: String, prefix: String) -> void:
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var path := "res://assets/ui/%s_%s.png" % [prefix, state]
+		if not ResourceLoader.exists(path):
+			return
+		var box := StyleBoxTexture.new()
+		box.texture = load(path)
+		box.texture_margin_left = 26.0
+		box.texture_margin_right = 26.0
+		box.texture_margin_top = 16.0
+		box.texture_margin_bottom = 16.0
+		# Yan ray (sol) ve gösterge noktası (sağ) yazıya binmesin.
+		box.content_margin_left = 36.0
+		box.content_margin_right = 36.0
+		box.content_margin_top = 10.0
+		box.content_margin_bottom = 10.0
+		theme.set_stylebox(state, type_name, box)
+	if prefix == "btn_primary":
+		# Dolgu koyu seramik: yazı açık krem (Codex dolgusu koyu, eski turuncu dolgu için koyu yazı geçersiz).
+		for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+			theme.set_color(color_name, type_name, Color("#ffe2b8"))
+		theme.set_color("font_disabled_color", type_name, Color("#ffe2b8", 0.4))
 
 
 static func _button(theme: Theme, type_name: String, fill: Color, edge: Color, text: Color) -> void:

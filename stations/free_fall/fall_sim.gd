@@ -31,18 +31,18 @@ static func drag_coefficient(body: StringName) -> float:
 	return 0.5 * data["cd"] * PI * data["radius"] * data["radius"]
 
 
-static func acceleration(body: StringName, speed: float, pressure_kpa: float) -> float:
+static func acceleration(body: StringName, speed: float, pressure_kpa: float, g: float = G) -> float:
 	var mass: float = BODIES[body]["mass"]
-	return G - density(pressure_kpa) * drag_coefficient(body) * speed * speed / mass
+	return g - density(pressure_kpa) * drag_coefficient(body) * speed * speed / mass
 
 
 ## Bir adım (RK4).
-static func step(state: State, body: StringName, pressure_kpa: float, dt: float) -> void:
+static func step(state: State, body: StringName, pressure_kpa: float, dt: float, g: float = G) -> void:
 	var v0 := state.speed
-	var k1v := acceleration(body, v0, pressure_kpa)
-	var k2v := acceleration(body, v0 + 0.5 * dt * k1v, pressure_kpa)
-	var k3v := acceleration(body, v0 + 0.5 * dt * k2v, pressure_kpa)
-	var k4v := acceleration(body, v0 + dt * k3v, pressure_kpa)
+	var k1v := acceleration(body, v0, pressure_kpa, g)
+	var k2v := acceleration(body, v0 + 0.5 * dt * k1v, pressure_kpa, g)
+	var k3v := acceleration(body, v0 + 0.5 * dt * k2v, pressure_kpa, g)
+	var k4v := acceleration(body, v0 + dt * k3v, pressure_kpa, g)
 	var v1 := v0 + dt / 6.0 * (k1v + 2.0 * k2v + 2.0 * k3v + k4v)
 	state.depth += 0.5 * (v0 + v1) * dt
 	state.speed = v1
@@ -50,13 +50,13 @@ static func step(state: State, body: StringName, pressure_kpa: float, dt: float)
 
 
 ## `height` metreden ilk hızsız bırakılan cismin yere varış süresi (s) ve çarpma hızı.
-static func fall(body: StringName, height: float, pressure_kpa: float) -> Dictionary:
+static func fall(body: StringName, height: float, pressure_kpa: float, g: float = G) -> Dictionary:
 	var state := State.new()
 	var dt := 0.001
 	while state.depth < height:
 		var before_depth := state.depth
 		var before_time := state.time
-		step(state, body, pressure_kpa, dt)
+		step(state, body, pressure_kpa, dt, g)
 		if state.depth >= height:
 			# Son adımı doğrusal ara değerle düzelt.
 			var share := (height - before_depth) / maxf(state.depth - before_depth, 1e-9)
@@ -66,6 +66,9 @@ static func fall(body: StringName, height: float, pressure_kpa: float) -> Dictio
 	return {"time": state.time, "speed": state.speed}
 
 
-## Vakumda kapalı çözüm: t = √(2h/g).
-static func vacuum_time(height: float) -> float:
-	return sqrt(2.0 * height / G)
+## Vakumda kapalı çözüm: t = √(2h/g). `g` Misafirlerin bozduğu yerel çekim ivmesidir.
+## Çekim dengeleyici ayarı → g: g = 2 + 0,16·ayar (ayar 0–100). Sağlıklı Dünya: ayar 50, g = 10.
+static func gravity_for_dial(dial: float) -> float:
+	return 2.0 + 0.16 * dial
+static func vacuum_time(height: float, g: float = G) -> float:
+	return sqrt(2.0 * height / g)

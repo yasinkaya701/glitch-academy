@@ -6,6 +6,7 @@ func _ready() -> void:
 	var out: String = OS.get_cmdline_user_args()[0]
 	get_window().size = Vector2i(1600, 900)
 	var scene: Control = load("res://stations/heart/mission.tscn").instantiate()
+	scene.theme = get_tree().root.theme  # Düz Node ata olduğundan tema kendiliğinden geçmez
 	add_child(scene)
 	scene.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	await get_tree().create_timer(3.5).timeout

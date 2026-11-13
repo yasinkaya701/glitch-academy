@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/photoelectric/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"photoelectric"
+title = "Fotoelektrik Kapısı"
+subject = "Fizik"
+grade = 12
+routes = PackedStringArray("ayt")
+description = "Arşiv kapısı için lambayı kur: şiddet akımı, frekans elektron enerjisini belirler."
+curriculum = "AYT Fizik · Modern Fizik, fotoelektrik olay"
+source_url = "https://ttkb.meb.gov.tr/www/icerik_goruntule.php?DIL=tr&KNO=831"
+scene = ExtResource("2")
