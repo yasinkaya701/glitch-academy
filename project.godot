@@ -7,6 +7,11 @@ config/name="Yanlış Dünya"
 run/main_scene="res://scenes/control_center.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
+[autoload]
+
+UITheme="*res://scripts/ui_theme.gd"
+Sfx="*res://scripts/sfx.gd"
+
 [display]
 
 window/size/viewport_width=1280
@@ -15,6 +20,8 @@ window/stretch/mode="canvas_items"
 
 [rendering]
 
-renderer/rendering_method="gl_compatibility"
+textures/default_filters/anisotropic_filtering_level=3
+
+renderer/rendering_method="forward_plus"
 renderer/rendering_method.mobile="gl_compatibility"
 environment/defaults/default_clear_color=Color(0.043, 0.067, 0.11, 1)

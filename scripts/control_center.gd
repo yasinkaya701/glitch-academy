@@ -2,10 +2,17 @@ extends Control
 
 const Mission = preload("res://scripts/mission.gd")
 const MissionDefinition = preload("res://scripts/mission_definition.gd")
+const INTRO = preload("res://scenes/intro/intro.tscn")
 const CATALOG: Array[MissionDefinition] = [
+	preload("res://stations/seasons/mission.tres"),
+	preload("res://stations/measurement/mission.tres"),
+	preload("res://stations/vectors/mission.tres"),
+	preload("res://stations/derivative/mission.tres"),
 	preload("res://stations/bridge/mission.tres"),
 	preload("res://stations/prism/mission.tres"),
 	preload("res://stations/free_fall/mission.tres"),
+	preload("res://stations/photoelectric/mission.tres"),
+	preload("res://stations/waves/mission.tres"),
 	preload("res://stations/indicator/mission.tres"),
 	preload("res://stations/heart/mission.tres"),
 	preload("res://stations/pressure/mission.tres"),
@@ -46,6 +53,29 @@ func _ready() -> void:
 	%Back.pressed.connect(_return_to_hub)
 	%Reset.pressed.connect(_start_mission)
 	_refresh_list()
+	_play_intro()
+
+
+func _play_intro() -> void:
+	var intro = INTRO.instantiate()
+	hub.hide()
+	%HubScrim.hide()
+	add_child(intro)
+	intro.alarm_changed.connect(_set_world_alarm)
+	intro.finished.connect(_finish_intro.bind(intro), CONNECT_ONE_SHOT)
+	intro.start()
+
+
+func _finish_intro(intro: Control) -> void:
+	intro.queue_free()
+	%HubScrim.show()
+	hub.show()
+	%Class.grab_focus()
+
+
+func _set_world_alarm(strength: float) -> void:
+	if %Observatory.has_method("set_alarm"):
+		%Observatory.call("set_alarm", strength)
 
 
 func _select_route(route: StringName) -> void:
@@ -126,10 +156,13 @@ func _start_mission() -> void:
 	_remove_active_mission()
 	active_mission = next_mission
 	active_mission.route = active_route
+	active_mission.exit_requested.connect(_return_to_hub)
 	active_mission.completed.connect(_on_mission_completed.bind(selected_mission.id))
 	play_title.text = selected_mission.title
 	play_status.text = ""
 	hub.hide()
+	%HubScrim.hide()
+	%WorldView.hide()
 	play_screen.show()
 	mission_host.add_child(active_mission)
 	active_mission.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -137,12 +170,17 @@ func _start_mission() -> void:
 
 func _on_mission_completed(mission_id: StringName) -> void:
 	completed_ids[mission_id] = true
+	if %Observatory.has_method("set_operational_count"):
+		var repaired_signals := roundi(6.0 * completed_ids.size() / CATALOG.size())
+		%Observatory.call("set_operational_count", repaired_signals)
 	play_status.text = "Onarıldı"
 
 
 func _return_to_hub() -> void:
 	_remove_active_mission()
 	play_screen.hide()
+	%WorldView.show()
+	%HubScrim.show()
 	hub.show()
 	_refresh_list()
 

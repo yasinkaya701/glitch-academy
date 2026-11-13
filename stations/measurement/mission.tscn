@@ -1,0 +1,200 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://stations/measurement/mission.gd" id="1"]
+[ext_resource type="Script" path="res://stations/measurement/bench.gd" id="2"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_workspace"]
+bg_color = Color(0.047, 0.082, 0.133, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.208, 0.306, 0.376, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_console"]
+content_margin_left = 23.0
+content_margin_top = 21.0
+content_margin_right = 23.0
+content_margin_bottom = 21.0
+bg_color = Color(0.078, 0.137, 0.204, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.208, 0.306, 0.376, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_action"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.465, 0.824, 0.741, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[node name="Measurement" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Layout" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="Workspace" type="PanelContainer" parent="Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBox_workspace")
+
+[node name="Bench" type="Control" parent="Layout/Workspace"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(310, 240)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("2")
+
+[node name="Console" type="PanelContainer" parent="Layout"]
+custom_minimum_size = Vector2(330, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.68
+theme_override_styles/panel = SubResource("StyleBox_console")
+
+[node name="Content" type="VBoxContainer" parent="Layout/Console"]
+layout_mode = 2
+theme_override_constants/separation = 13
+
+[node name="Section" type="Label" parent="Layout/Console/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.465, 0.824, 0.741, 1)
+theme_override_font_sizes/font_size = 15
+text = "Sistem arızası"
+
+[node name="Headline" type="Label" parent="Layout/Console/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.902, 0.945, 0.937, 1)
+theme_override_font_sizes/font_size = 34
+text = "Ray bağlantısı açık"
+autowrap_mode = 3
+
+[node name="Body" type="Label" parent="Layout/Console/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.639, 0.725, 0.749, 1)
+theme_override_font_sizes/font_size = 17
+text = "Yeni parça rayın bağlantı noktasına indiriliyor."
+autowrap_mode = 3
+
+[node name="Reading" type="Label" parent="Layout/Console/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.465, 0.824, 0.741, 1)
+theme_override_font_sizes/font_size = 19
+autowrap_mode = 3
+
+[node name="Spacer" type="Control" parent="Layout/Console/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="Feedback" type="Label" parent="Layout/Console/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+vertical_alignment = 2
+
+[node name="Skip" type="Button" parent="Layout/Console/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+text = "Açılışı geç  Esc"
+
+[node name="Measure" type="Button" parent="Layout/Console/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_colors/font_color = Color(0.047, 0.082, 0.133, 1)
+theme_override_styles/normal = SubResource("StyleBox_action")
+text = "Ölç"
+
+[node name="Units" type="HBoxContainer" parent="Layout/Console/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 7
+
+[node name="Seconds" type="Button" parent="Layout/Console/Content/Units"]
+custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
+text = "s"
+
+[node name="Meters" type="Button" parent="Layout/Console/Content/Units"]
+custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
+text = "m"
+
+[node name="Kilograms" type="Button" parent="Layout/Console/Content/Units"]
+custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
+text = "kg"
+
+[node name="Next" type="Button" parent="Layout/Console/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_colors/font_color = Color(0.047, 0.082, 0.133, 1)
+theme_override_styles/normal = SubResource("StyleBox_action")
+text = "Sonraki ölçüm"
+
+[node name="AnswerRow" type="HBoxContainer" parent="Layout/Console/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 8
+
+[node name="Answer" type="LineEdit" parent="Layout/Console/Content/AnswerRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+placeholder_text = "Sayı"
+max_length = 24
+
+[node name="AnswerUnit" type="Label" parent="Layout/Console/Content/AnswerRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(29, 0)
+layout_mode = 2
+text = "m"
+
+[node name="Submit" type="Button" parent="Layout/Console/Content/AnswerRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.047, 0.082, 0.133, 1)
+theme_override_styles/normal = SubResource("StyleBox_action")
+text = "Uygula"

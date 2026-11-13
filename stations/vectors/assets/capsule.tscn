@@ -1,0 +1,33 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://stations/vectors/assets/capsule.gd" id="1"]
+
+[sub_resource type="StandardMaterial3D" id="Material_ceramic"]
+albedo_color = Color(0.83, 0.86, 0.81, 1)
+metallic = 0.17
+roughness = 0.48
+
+[sub_resource type="StandardMaterial3D" id="Material_frame"]
+albedo_color = Color(0.095, 0.128, 0.155, 1)
+metallic = 0.67
+roughness = 0.50
+
+[sub_resource type="StandardMaterial3D" id="Material_glass"]
+albedo_color = Color(0.06, 0.19, 0.26, 1)
+metallic = 0.62
+roughness = 0.23
+emission_enabled = true
+emission = Color(0.035, 0.105, 0.13, 1)
+emission_energy_multiplier = 0.4
+
+[sub_resource type="StandardMaterial3D" id="Material_amber"]
+albedo_color = Color(0.78, 0.32, 0.13, 1)
+metallic = 0.22
+roughness = 0.52
+
+[node name="Capsule" type="Node3D"]
+script = ExtResource("1")
+ceramic = SubResource("Material_ceramic")
+frame = SubResource("Material_frame")
+glass = SubResource("Material_glass")
+amber = SubResource("Material_amber")

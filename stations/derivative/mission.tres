@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+
+[ext_resource type="PackedScene" path="res://stations/derivative/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"derivative"
+title = "Depo Atölyesi"
+subject = "Matematik"
+grade = 12
+routes = PackedStringArray("class", "ayt")
+description = "Levhadan en büyük hacimli kutuyu bul. Eğim sıfır olduğunda hacim tepeye çıkar."
+curriculum = "AYT Matematik · Türev (TTKB 2026 kazanım kodu teyit bekliyor)"
+source_url = ""
+scene = ExtResource("2")

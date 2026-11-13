@@ -1,6 +1,8 @@
-[gd_resource type="Resource" load_steps=2 format=3]
+[gd_resource type="Resource" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+
+[ext_resource type="PackedScene" path="res://stations/heart/mission.tscn" id="2"]
 
 [resource]
 script = ExtResource("1")
@@ -12,3 +14,4 @@ routes = PackedStringArray("class", "ayt")
 description = "Kapakçıkların yerini ve kan akışını inceleyerek dolaşımı onar."
 curriculum = "11.1.4.1 (2026 YKS)"
 source_url = "https://dokuman.osym.gov.tr/pdfdokuman/2026/yks/tsk/yks_ayt_2026_kitapcik_kt12.pdf"
+scene = ExtResource("2")

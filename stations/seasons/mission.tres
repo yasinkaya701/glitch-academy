@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+
+[ext_resource type="PackedScene" path="res://stations/seasons/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"seasons"
+title = "Mevsim Gözlemevi"
+subject = "Fen Bilimleri"
+grade = 8
+routes = PackedStringArray("class", "lgs")
+description = "Dünya’nın eksen eğikliğini ve ışığın iki yarımküreye etkisini incele, sera uyarılarını onar."
+curriculum = "F.8.1.1.1"
+source_url = "https://odsgm.meb.gov.tr/www/8-sinif-fen-bilimleri-unitelendirilmis-ornek-sorular/icerik/676"
+scene = ExtResource("2")
