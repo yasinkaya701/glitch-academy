@@ -27,6 +27,7 @@ var _pair_right_order: PackedStringArray = PackedStringArray()
 var _pair_selectors: Dictionary = {}
 var _feedback_label: Label
 var _feedback_tween: Tween
+var _answer_content_base_height := 0.0
 var _evidence_label: Label
 var _prompt_label: Label
 var _instruction_label: Label
@@ -100,13 +101,13 @@ func try_answer(answer: Variant) -> bool:
 		return false
 	if answer != mission_definition.correct_answer():
 		last_feedback = mission_definition.feedback_wrong
-		_set_feedback("↻  " + last_feedback, DANGER)
+		_set_feedback("↻  " + last_feedback, DANGER, true)
 		if _visual != null and _visual.has_method("mark_result"):
 			_visual.call("mark_result", false)
 		return false
 	_completed = true
 	last_feedback = mission_definition.feedback_success
-	_set_feedback("✓  " + last_feedback, ACCENT)
+	_set_feedback("✓  " + last_feedback, ACCENT, true)
 	_lock_interaction()
 	if _visual != null and _visual.has_method("mark_result"):
 		_visual.call("mark_result", true)
@@ -166,7 +167,6 @@ func _build_interface() -> void:
 	_feedback_label = _label("", 15, MUTED)
 	_feedback_label.hide()
 	_feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	add_child(_feedback_label)
 	_last_layout_size = size
 	resized.connect(_on_resized)
 	_layout_interface()
@@ -200,9 +200,7 @@ func _layout_interface() -> void:
 	_instruction_label.size = Vector2(text_width, instruction_height)
 	var answers_top := instruction_top + instruction_height + 10.0
 	_answer_scroll.position = right_panel.position + Vector2(14, answers_top)
-	_answer_scroll.size = Vector2(right_panel.size.x - 28.0, maxf(64.0, right_panel.size.y - answers_top - 52.0))
-	_feedback_label.position = right_panel.position + Vector2(18, right_panel.size.y - 34.0)
-	_feedback_label.size = Vector2(right_panel.size.x - 36.0, 26)
+	_answer_scroll.size = Vector2(right_panel.size.x - 28.0, maxf(64.0, right_panel.size.y - answers_top - 18.0))
 	_info_button.position = Vector2(size.x - 58.0, 10)
 
 
@@ -222,7 +220,8 @@ func _rebuild_interaction() -> void:
 		focus_key = String(focused.get_meta("mission_focus_key", ""))
 	for child in _answer_area.get_children():
 		_answer_area.remove_child(child)
-		child.queue_free()
+		if child != _feedback_label:
+			child.queue_free()
 	_selection_buttons.clear()
 	_sequence_labels.clear()
 	_sequence_up_buttons.clear()
@@ -385,7 +384,7 @@ func _build_pairs() -> void:
 		_pair_selectors[left_value] = right
 		_answer_area.add_child(right)
 		row_y += left_height + 50.0
-	_verify_button = _button("Eşleşmeleri kontrol et", Vector2(230, 44))
+	_verify_button = _button("Kontrol et", Vector2(180, 44))
 	_verify_button.theme_type_variation = "PrimaryButton"
 	_verify_button.position = Vector2(4, row_y + 4.0)
 	_verify_button.pressed.connect(func() -> void: try_answer(_pair_answers))
@@ -414,7 +413,6 @@ func _on_pair_selected(index: int, left_value: String) -> void:
 		_pair_answers[left_value] = target
 	_clear_feedback_and_result()
 	_refresh_pair_options()
-	_set_feedback("%d / %d eşleşme kuruldu." % [_pair_answers.size(), mission_definition.pair_left.size()], ACCENT)
 
 
 func _refresh_pair_options() -> void:
@@ -430,6 +428,7 @@ func _refresh_pair_options() -> void:
 			selector.select(0)
 		selector.disabled = _completed
 	if _verify_button != null:
+		_verify_button.text = "Kontrol et  ·  %d/%d" % [_pair_answers.size(), mission_definition.pair_left.size()]
 		var distinct: Dictionary = {}
 		for target in _pair_answers.values():
 			distinct[target] = true
@@ -437,6 +436,24 @@ func _refresh_pair_options() -> void:
 
 
 func _set_answer_content_height(content_height: float) -> void:
+	_answer_content_base_height = content_height
+	if _feedback_label.get_parent() != _answer_area:
+		_answer_area.add_child(_feedback_label)
+	_update_answer_content_size()
+
+
+func _update_answer_content_size() -> void:
+	if _answer_area == null or _answer_scroll == null:
+		return
+	var feedback_height := 0.0
+	if not _feedback_label.text.is_empty():
+		var feedback_width := maxf(72.0, _answer_scroll.size.x - 18.0)
+		feedback_height = _estimated_text_height(_feedback_label.text, feedback_width, 15, 36.0)
+		_feedback_label.position = Vector2(5, _answer_content_base_height + 8.0)
+		_feedback_label.size = Vector2(feedback_width, feedback_height)
+	var content_height := _answer_content_base_height
+	if feedback_height > 0.0:
+		content_height += feedback_height + 8.0
 	_answer_area.custom_minimum_size = Vector2(_answer_scroll.size.x, content_height)
 	_answer_area.size = _answer_area.custom_minimum_size
 
@@ -463,7 +480,7 @@ func _refresh_sequence_labels() -> void:
 	_clear_feedback_and_result()
 
 
-func _set_feedback(message: String, color: Color) -> void:
+func _set_feedback(message: String, color: Color, bring_into_view := false) -> void:
 	if _feedback_label == null:
 		return
 	if _feedback_tween != null and _feedback_tween.is_valid():
@@ -473,12 +490,25 @@ func _set_feedback(message: String, color: Color) -> void:
 	if message.is_empty():
 		_feedback_label.modulate.a = 1.0
 		_feedback_label.hide()
+		_feedback_label.text = ""
+		_update_answer_content_size()
 		return
 	_feedback_label.modulate.a = 1.0
 	_feedback_label.show()
+	_update_answer_content_size()
+	if bring_into_view and _answer_scroll.is_ancestor_of(_feedback_label):
+		_answer_scroll.ensure_control_visible(_feedback_label)
 	_feedback_tween = create_tween()
 	_feedback_tween.tween_interval(4.0)
 	_feedback_tween.tween_property(_feedback_label, "modulate:a", 0.0, 0.25)
+	_feedback_tween.tween_callback(_expire_feedback)
+
+
+func _expire_feedback() -> void:
+	_feedback_label.hide()
+	_feedback_label.modulate.a = 1.0
+	_feedback_label.text = ""
+	_update_answer_content_size()
 
 
 func _clear_feedback_and_result() -> void:
