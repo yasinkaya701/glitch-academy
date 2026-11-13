@@ -20,6 +20,9 @@ Claude, Codex, Gemini ve ekip arasında yazılı iş kanalı. Canlı sohbet yok,
 |---|---|---|---|
 | 001 | Arayüz kiti ve kontrol merkezi | Codex | açık |
 | 002 | Vektör Limanı sahnesi | Codex | açık |
+| 003 | Kalp Odası varlıkları | Codex | açık |
+| 004 | Düşüş Odası varlıkları | Codex | açık |
+| 005 | Refleks Merkezi varlıkları | Codex | açık |
 
 ## Talep şablonu
 
