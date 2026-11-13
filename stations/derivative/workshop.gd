@@ -3,9 +3,9 @@ extends Node3D
 ## Sayısal kurallar box_plot.gd içinde (volume), bu dosya yalnızca görüntü ve hareket.
 
 const SHEET_THICKNESS := 0.12
-const CYLINDER_X := 12.5
-const CYLINDER_HEIGHT := 14.0
-const CYLINDER_RADIUS := 2.6
+const CYLINDER_X := 10.5
+const CYLINDER_HEIGHT := 9.0
+const CYLINDER_RADIUS := 2.2
 
 var side := 12.0
 var cut := 2.0
@@ -39,18 +39,28 @@ func _ready() -> void:
 
 
 func _build_environment() -> void:
+	var sky_material := ProceduralSkyMaterial.new()
+	sky_material.sky_top_color = Color("#2b3036")
+	sky_material.sky_horizon_color = Color("#b4b1ad")
+	sky_material.ground_horizon_color = Color("#6a6764")
+	sky_material.ground_bottom_color = Color("#1d1e20")
+	sky_material.sky_energy_multiplier = 1.1
+	var sky := Sky.new()
+	sky.sky_material = sky_material
 	var environment := Environment.new()
-	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = Color("#05080e")
-	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.33, 0.40, 0.52)
-	environment.ambient_light_energy = 0.8
+	environment.background_mode = Environment.BG_SKY
+	environment.sky = sky
+	environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	environment.ambient_light_energy = 1.5
+	environment.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
 	environment.tonemap_mode = Environment.TONE_MAPPER_ACES
 	environment.glow_enabled = true
-	environment.glow_intensity = 0.25
-	environment.fog_enabled = true
-	environment.fog_light_color = Color("#0a1220")
-	environment.fog_density = 0.006
+	environment.glow_intensity = 0.08
+	environment.ssao_enabled = true
+	environment.ssao_radius = 1.2
+	environment.ssao_intensity = 2.0
+	environment.ssr_enabled = true
+	environment.ssr_max_steps = 48
 	var world := WorldEnvironment.new()
 	world.environment = environment
 	add_child(world)
@@ -63,7 +73,7 @@ func _build_environment() -> void:
 	var key := SpotLight3D.new()
 	key.position = Vector3(-6, 22, 12)
 	key.light_color = Color(1.0, 0.86, 0.68)
-	key.light_energy = 7.0
+	key.light_energy = 3.2
 	key.spot_range = 60.0
 	key.spot_angle = 42.0
 	key.shadow_enabled = true
@@ -71,55 +81,61 @@ func _build_environment() -> void:
 	key.look_at(Vector3(2, 0, 0), Vector3.UP)
 	var rim := DirectionalLight3D.new()
 	rim.rotation_degrees = Vector3(-25, 160, 0)
-	rim.light_color = Color(0.5, 0.72, 1.0)
-	rim.light_energy = 0.8
+	rim.light_color = Color(0.85, 0.9, 1.0)
+	rim.light_energy = 0.35
 	add_child(rim)
+	var fill := OmniLight3D.new()
+	fill.position = Vector3(-14, 10, 10)
+	fill.light_color = Color(1.0, 0.92, 0.82)
+	fill.light_energy = 2.2
+	fill.omni_range = 60.0
+	add_child(fill)
+
+
+func _pbr(folder: String, id: String, scale: float, tint: Color = Color.WHITE) -> StandardMaterial3D:
+	var base := "res://assets/materials/%s/%s_2K-JPG_" % [folder, id]
+	var material := StandardMaterial3D.new()
+	material.albedo_texture = load(base + "Color.jpg")
+	material.albedo_color = tint
+	material.normal_enabled = true
+	material.normal_texture = load(base + "NormalGL.jpg")
+	material.roughness_texture = load(base + "Roughness.jpg")
+	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	material.roughness = 1.0
+	material.metallic_texture = load(base + "Metalness.jpg")
+	material.metallic = 1.0
+	material.uv1_triplanar = true
+	material.uv1_world_triplanar = true
+	material.uv1_scale = Vector3.ONE * scale
+	return material
 
 
 func _build_bench() -> void:
-	var noise := FastNoiseLite.new()
-	noise.frequency = 0.08
-	var rough_tex := NoiseTexture2D.new()
-	rough_tex.noise = noise
-	rough_tex.width = 512
-	rough_tex.height = 512
-	rough_tex.seamless = true
-	var top := StandardMaterial3D.new()
-	top.albedo_texture = _grid_texture()
-	top.albedo_color = Color(0.9, 0.95, 1.0)
-	top.metallic = 0.7
-	top.roughness = 0.5
-	top.roughness_texture = rough_tex
-	top.uv1_scale = Vector3(26, 26, 1)
+	var top := _pbr("Metal009", "Metal009", 0.12, Color(0.32, 0.34, 0.37))
+	top.normal_scale = 0.5
+	top.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 	var plane := MeshInstance3D.new()
 	var mesh := PlaneMesh.new()
-	mesh.size = Vector2(52, 52)
+	mesh.size = Vector2(220, 220)
 	plane.mesh = mesh
 	plane.material_override = top
 	add_child(plane)
 
-	_metal = StandardMaterial3D.new()
-	_metal.albedo_color = Color("#b9c4cc")
-	_metal.metallic = 1.0
-	_metal.roughness = 0.32
-	_metal.roughness_texture = rough_tex
-	_metal_dark = StandardMaterial3D.new()
-	_metal_dark.albedo_color = Color("#6d7a85")
-	_metal_dark.metallic = 1.0
-	_metal_dark.roughness = 0.45
+	_metal = _pbr("Metal009", "Metal009", 0.30, Color(1.05, 1.05, 1.1))
+	_metal_dark = _pbr("Metal009", "Metal009", 0.30, Color(0.55, 0.58, 0.62))
 	_glass = StandardMaterial3D.new()
-	_glass.albedo_color = Color(0.7, 0.9, 1.0, 0.16)
+	_glass.albedo_color = Color(0.75, 0.92, 1.0, 0.14)
 	_glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_glass.roughness = 0.05
-	_glass.metallic = 0.2
+	_glass.roughness = 0.03
+	_glass.metallic = 0.0
 	_glass.cull_mode = BaseMaterial3D.CULL_DISABLED
 	_water = StandardMaterial3D.new()
-	_water.albedo_color = Color(0.25, 0.65, 0.95, 0.72)
+	_water.albedo_color = Color(0.22, 0.62, 0.9, 0.78)
 	_water.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_water.roughness = 0.1
+	_water.roughness = 0.08
 	_water.emission_enabled = true
-	_water.emission = Color(0.1, 0.35, 0.6)
-	_water.emission_energy_multiplier = 0.6
+	_water.emission = Color(0.05, 0.2, 0.4)
+	_water.emission_energy_multiplier = 0.25
 
 
 func _grid_texture() -> ImageTexture:
@@ -153,13 +169,13 @@ func _build_cylinder() -> void:
 	base.material_override = _metal_dark
 	base.position = Vector3(CYLINDER_X, 0.15, 0)
 	add_child(base)
-	for i in range(1, 8):
+	for i in range(1, 6):
 		var tick := MeshInstance3D.new()
 		var tick_mesh := BoxMesh.new()
 		tick_mesh.size = Vector3(0.7 if i % 2 == 0 else 0.4, 0.06, 0.06)
 		tick.mesh = tick_mesh
 		tick.material_override = _metal
-		tick.position = Vector3(CYLINDER_X + CYLINDER_RADIUS + 0.05, 0.3 + float(i) * (CYLINDER_HEIGHT - 0.8) / 8.0, 0)
+		tick.position = Vector3(CYLINDER_X + CYLINDER_RADIUS + 0.05, 0.3 + float(i) * (CYLINDER_HEIGHT - 0.8) / 6.0, 0)
 		add_child(tick)
 	_liquid = MeshInstance3D.new()
 	var liquid_mesh := CylinderMesh.new()
@@ -229,8 +245,8 @@ func _add_box(parent: Node3D, dimensions: Vector3, position: Vector3, material: 
 
 func frame() -> void:
 	var k := side / 12.0
-	_camera.position = Vector3(2.5 + 1.5 * k, 13.5 * k, 24.0 * k)
-	_camera.look_at(Vector3(2.5 + 1.5 * k, 2.0, 0.0), Vector3.UP)
+	_camera.position = Vector3(2.0 * k, 12.0 * k, 19.5 * k)
+	_camera.look_at(Vector3(2.0 * k, 2.4 * k, 0.0), Vector3.UP)
 
 
 func set_cut(value: float) -> void:
