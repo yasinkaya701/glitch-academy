@@ -1,19 +1,22 @@
 extends "res://scripts/mission.gd"
 ## AYT Matematik · Türev. Levhadan en büyük hacimli kutu: V(x) = x(a − 2x)².
+## Oyuncu gerçek bir atölye deneyi yapar: köşe keser, kutuyu katlar, ölçü silindirine boşaltıp hacmi ölçer.
 
 const BoxPlot = preload("res://stations/derivative/box_plot.gd")
+const Workshop = preload("res://stations/derivative/workshop.gd")
 const GOOD := Color("#a0dfbc")
 const BAD := Color("#ffb093")
 const MUTED := Color("#b0c4bf")
 const KEEP_SIDE := 12.0
 const NEW_SIDE := 18.0
-const MIN_TRIES := 6
+const MIN_MEASURES := 6
 const SLOPE_TOLERANCE := 0.06
 
 enum Step { INTRO, EXPLORE, SLOPE, APPLY, DONE }
 
 var step := Step.INTRO
 var plot: BoxPlot
+var workshop: Workshop
 var section: Label
 var headline: Label
 var body: Label
@@ -24,11 +27,13 @@ var slider_row: Control
 var answer_row: HBoxContainer
 var answer: LineEdit
 var action: Button
+var measure: Button
 var skip: Button
-var tried: Dictionary[int, bool] = {}
+var measures: Dictionary[int, bool] = {}
 var best_volume := 0.0
 var wrong_answers := 0
 var intro_tween: Tween
+var pour_tween: Tween
 
 
 func _ready() -> void:
@@ -43,26 +48,48 @@ func _build_ui() -> void:
 	root.add_theme_constant_override("separation", 16)
 	add_child(root)
 
-	var plot_frame := PanelContainer.new()
-	plot_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	plot_frame.add_theme_stylebox_override("panel", _panel_style(Color("#101f30")))
-	root.add_child(plot_frame)
+	var left := VBoxContainer.new()
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.add_theme_constant_override("separation", 10)
+	root.add_child(left)
+
+	var view_frame := SubViewportContainer.new()
+	view_frame.stretch = true
+	view_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	view_frame.size_flags_stretch_ratio = 1.55
+	left.add_child(view_frame)
+	var viewport := SubViewport.new()
+	viewport.own_world_3d = true
+	viewport.msaa_3d = Viewport.MSAA_4X
+	view_frame.add_child(viewport)
+	workshop = Workshop.new()
+	viewport.add_child(workshop)
+
+	var graph_frame := PanelContainer.new()
+	graph_frame.theme_type_variation = "GlassPanel"
+	graph_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	graph_frame.size_flags_stretch_ratio = 1.0
+	graph_frame.add_theme_constant_override("margin_left", 0)
+	left.add_child(graph_frame)
 	plot = BoxPlot.new()
-	plot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	plot.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	plot_frame.add_child(plot)
+	plot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	graph_frame.add_child(plot)
 
 	var console := PanelContainer.new()
-	console.custom_minimum_size = Vector2(360, 0)
-	console.add_theme_stylebox_override("panel", _panel_style(Color("#13233a")))
+	console.theme_type_variation = "ConsolePanel"
+	console.custom_minimum_size = Vector2(350, 0)
 	root.add_child(console)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 10)
 	console.add_child(column)
 
-	section = _label(13, Color("#77dfba"))
-	headline = _label(21, Color("#e9f1ee"))
-	body = _label(15, Color("#e9f1ee"))
+	section = Label.new()
+	section.theme_type_variation = "SectionLabel"
+	headline = Label.new()
+	headline.theme_type_variation = "HeadlineLabel"
+	headline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body = Label.new()
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(section)
 	column.add_child(headline)
@@ -76,28 +103,34 @@ func _build_ui() -> void:
 	slider.value = 1.0
 	slider.value_changed.connect(_on_slider)
 	slider_row.add_child(slider)
+	measure = Button.new()
+	measure.text = "Kutuyu ölç (ölçü silindirine boşalt)"
+	measure.pressed.connect(_measure)
+	slider_row.add_child(measure)
 	column.add_child(slider_row)
 
-	readout = _label(16, Color("#ffc082"))
+	readout = Label.new()
+	readout.add_theme_color_override("font_color", Color("#ffc082"))
 	readout.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(readout)
 
 	answer_row = HBoxContainer.new()
-	var x_label := _label(16, Color("#e9f1ee"))
+	var x_label := Label.new()
 	x_label.text = "x ="
 	answer = LineEdit.new()
 	answer.placeholder_text = "dm"
 	answer.custom_minimum_size = Vector2(110, 0)
 	answer.text_submitted.connect(func(_text: String) -> void: _submit_answer())
-	var unit := _label(16, Color("#a0b5bf"))
+	var unit := Label.new()
 	unit.text = "dm"
+	unit.theme_type_variation = "MutedLabel"
 	answer_row.add_theme_constant_override("separation", 8)
 	answer_row.add_child(x_label)
 	answer_row.add_child(answer)
 	answer_row.add_child(unit)
 	column.add_child(answer_row)
 
-	feedback = _label(15, MUTED)
+	feedback = Label.new()
 	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(feedback)
 
@@ -106,6 +139,7 @@ func _build_ui() -> void:
 	column.add_child(spacer)
 
 	action = Button.new()
+	action.theme_type_variation = "PrimaryButton"
 	action.custom_minimum_size = Vector2(0, 44)
 	action.pressed.connect(_on_action)
 	column.add_child(action)
@@ -115,28 +149,13 @@ func _build_ui() -> void:
 	column.add_child(skip)
 
 
-func _label(size: int, color: Color) -> Label:
-	var label := Label.new()
-	label.add_theme_font_size_override("font_size", size)
-	label.add_theme_color_override("font_color", color)
-	return label
-
-
-func _panel_style(color: Color) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = color
-	style.set_border_width_all(1)
-	style.border_color = Color("#35506a")
-	style.set_corner_radius_all(10)
-	style.set_content_margin_all(20)
-	return style
-
-
 func _set_ui(sec: String, head: String, text: String, button: String) -> void:
 	section.text = sec
 	headline.text = head
 	body.text = text
 	action.text = button
+	action.visible = button != ""
+	action.disabled = false
 	feedback.text = ""
 	readout.text = ""
 
@@ -146,8 +165,10 @@ func _say(text: String, color: Color = MUTED) -> void:
 	feedback.add_theme_color_override("font_color", color)
 
 
-func _redraw() -> void:
-	plot.queue_redraw()
+func _pour(volume: float, seconds: float = 1.1) -> void:
+	if pour_tween != null:
+		pour_tween.kill()
+	pour_tween = workshop.animate_pour(volume, seconds)
 
 
 # --- Açılış -------------------------------------------------------------
@@ -155,29 +176,38 @@ func _redraw() -> void:
 func _enter_intro() -> void:
 	step = Step.INTRO
 	plot.side = KEEP_SIDE
-	plot.cut = 0.4
-	plot.show_tangent = false
-	plot.show_optimum = false
-	plot.show_waste = false
+	plot.measured.clear()
+	plot.show_curve = false
+	plot.show_point = false
 	slider_row.hide()
 	answer_row.hide()
 	skip.show()
-	action.hide()
+	workshop.set_side(KEEP_SIDE, 140.0)
+	workshop.set_cut(3.0)
+	workshop.cut_amount = 0.0
+	workshop.fold_amount = 0.0
 	_set_ui("ARIZA", "Depo tahminle kesiyor",
 		"Depo her levhada köşe karesini tahminle seçiyor. Kutular olabileceğinden küçük çıkıyor, malzeme boşa gidiyor.", "")
+	action.hide()
 	intro_tween = create_tween()
-	intro_tween.tween_method(_set_cut, 0.4, 3.0, 2.4).set_trans(Tween.TRANS_SINE)
+	intro_tween.tween_property(workshop, "cut_amount", 1.0, 1.1).set_trans(Tween.TRANS_SINE)
+	intro_tween.parallel().tween_callback(func() -> void: workshop.rebuild()).set_delay(0.0)
+	intro_tween.tween_method(_set_fold, 0.0, 1.0, 1.4).set_trans(Tween.TRANS_SINE)
 	intro_tween.tween_callback(func() -> void:
-		plot.show_waste = true
-		_say("Seçilen x = 3 dm, hacim 108 dm³. Daha büyük bir kutu mümkün mü?", BAD)
-		_redraw())
-	intro_tween.tween_interval(1.6)
+		_pour(BoxPlot.volume(KEEP_SIDE, 3.0), 1.2)
+		_say("Seçilen x = 3 dm. Silindir 108 L gösteriyor. Daha büyük bir kutu mümkün mü?", BAD))
+	intro_tween.tween_interval(2.6)
 	intro_tween.tween_callback(_skip_intro)
 
 
-func _set_cut(value: float) -> void:
-	plot.cut = value
-	_redraw()
+func _set_fold(value: float) -> void:
+	workshop.fold_amount = value
+	workshop.rebuild()
+
+
+func _process(_delta: float) -> void:
+	if step == Step.INTRO and workshop.cut_amount > 0.0 and workshop.cut_amount < 1.0:
+		workshop.rebuild()
 
 
 func _skip_intro() -> void:
@@ -195,37 +225,67 @@ func _enter_explore() -> void:
 	skip.hide()
 	action.show()
 	slider_row.show()
-	plot.show_waste = false
+	measure.show()
 	plot.show_point = true
-	tried.clear()
+	plot.measured.clear()
+	plot.show_curve = false
+	measures.clear()
 	best_volume = 0.0
-	_set_ui("1 · DENE", "En büyük hacmi ara",
-		"Kenarı 12 dm olan kare levhanın dört köşesinden x kadar kare kesilip katlanıyor. Kaydırıcıyla x'i değiştir, hacmin nasıl değiştiğini izle.", "Eğimi incele")
+	workshop.cut_amount = 1.0
+	workshop.fold_amount = 1.0
+	workshop.level = 0.0
+	_set_ui("1 · DENE", "Kutuyu kes, kat, ölç",
+		"Kenarı 12 dm olan kare levhanın dört köşesinden x kadar kare kesilip katlanıyor. x'i ayarla, kutuyu ölçü silindirine boşaltarak hacmini ölç. Her ölçüm grafiğe bir nokta ekler.", "Eğimi incele")
 	action.disabled = true
 	slider.set_value_no_signal(1.0)
+	workshop.set_cut(1.0)
 	plot.cut = 1.0
-	_on_slider(1.0)
+	_say("En az %d farklı x için ölçüm yap." % MIN_MEASURES)
+	_update_readout()
+	plot.queue_redraw()
 
 
 func _on_slider(value: float) -> void:
 	if step != Step.EXPLORE and step != Step.SLOPE:
 		return
 	plot.cut = value
-	var volume := BoxPlot.volume(plot.side, value)
+	workshop.set_cut(value)
 	if step == Step.EXPLORE:
-		tried[roundi(value * 2.0)] = true
-		best_volume = maxf(best_volume, volume)
-		readout.text = "x = %s dm   V = %s dm³\nDenediğin en büyük: %s dm³" % [_num(value), _num(volume), _num(best_volume)]
-		action.disabled = tried.size() < MIN_TRIES
-		if action.disabled:
-			_say("Farklı x değerleri dene (%d / %d)." % [tried.size(), MIN_TRIES])
-		else:
-			_say("Tepeyi buldun mu? Tahmin güvenilmez olabilir. Eğim bunu kesinleştirir.", GOOD)
-	else:
-		var m := BoxPlot.slope(plot.side, value)
+		workshop.level = 0.0
+	_update_readout()
+	plot.queue_redraw()
+
+
+func _update_readout() -> void:
+	var x := slider.value
+	if step == Step.SLOPE:
+		var m := BoxPlot.slope(plot.side, x)
 		var direction := "artıyor" if m > 0.05 else ("azalıyor" if m < -0.05 else "değişmiyor")
-		readout.text = "x = %s dm   V = %s dm³\nEğim V′ = %s  (hacim %s)" % [_num(value), _num(volume), _num(m), direction]
-	_redraw()
+		readout.text = "x = %s dm   V = %s L\nEğim V′ = %s  (hacim %s)" % [_num(x), _num(BoxPlot.volume(plot.side, x)), _num(m), direction]
+	elif step == Step.EXPLORE:
+		readout.text = "x = %s dm\nEn büyük ölçümün: %s L" % [_num(x), _num(best_volume)]
+
+
+func _measure() -> void:
+	if step != Step.EXPLORE:
+		return
+	var x := slider.value
+	var volume := BoxPlot.volume(plot.side, x)
+	_pour(volume)
+	var key := roundi(x * 20.0)
+	if not measures.has(key):
+		measures[key] = true
+		plot.measured.append(Vector2(x, volume))
+	best_volume = maxf(best_volume, volume)
+	_update_readout()
+	var count := measures.size()
+	if count >= MIN_MEASURES:
+		plot.show_curve = true
+		action.disabled = false
+		_say("Silindir %s L gösterdi. Noktalar bir eğri çiziyor. Tepeyi buldun mu? Eğim bunu kesinleştirir." % _num(volume), GOOD)
+	else:
+		_say("Silindir %s L gösterdi. (%d / %d ölçüm)" % [_num(volume), count, MIN_MEASURES])
+	plot.queue_redraw()
 
 
 # --- Eğim ---------------------------------------------------------------
@@ -233,6 +293,8 @@ func _on_slider(value: float) -> void:
 func _enter_slope() -> void:
 	step = Step.SLOPE
 	plot.show_tangent = true
+	plot.show_curve = true
+	measure.hide()
 	_set_ui("2 · EĞİM", "Teğet ne söylüyor?",
 		"Altın çizgi, o noktadaki anlık değişim hızını gösterir: türev. Eğim pozitifken hacim artıyor, negatifken azalıyor. Eğimi 0 yapan x'i bul.", "Bu x'i işaretle")
 	action.disabled = false
@@ -243,9 +305,10 @@ func _check_slope() -> void:
 	var target := KEEP_SIDE / 6.0
 	if absf(slider.value - target) <= SLOPE_TOLERANCE:
 		plot.show_optimum = true
-		_redraw()
+		_pour(BoxPlot.volume(KEEP_SIDE, target))
+		plot.queue_redraw()
 		_set_ui("2 · EĞİM", "Eğim sıfırsa tepe",
-			"Türev V′(x) = (a − 2x)(a − 6x). Sıfır olduğu yerde x = a/6. a = 12 için x = 2 dm ve V = 128 dm³. Denemeyle bulamayacağın kesinlikte.", "Yeni levhaya geç")
+			"Türev V′(x) = (a − 2x)(a − 6x). Sıfır olduğu yerde x = a/6. a = 12 için x = 2 dm ve V = 128 L. Denemeyle bulamayacağın kesinlikte.", "Yeni levhaya geç")
 		readout.text = "V′(x) = (a − 2x)(a − 6x) = 0   →   x = a/6"
 		_say("Doğru. Eğimin işaret değiştirdiği nokta en büyük hacimdir.", GOOD)
 		action.set_meta("go", &"apply")
@@ -263,6 +326,8 @@ func _enter_apply() -> void:
 	step = Step.APPLY
 	plot.side = NEW_SIDE
 	plot.cut = 0.0
+	plot.measured.clear()
+	plot.show_curve = false
 	plot.show_point = false
 	plot.show_tangent = false
 	plot.show_optimum = false
@@ -271,11 +336,14 @@ func _enter_apply() -> void:
 	answer.text = ""
 	answer.editable = true
 	wrong_answers = 0
+	workshop.set_side(NEW_SIDE, 480.0)
+	workshop.cut_amount = 1.0
+	workshop.fold_amount = 0.0
+	workshop.set_cut(0.0)
 	_set_ui("3 · ONAR", "Yeni levha: a = 18 dm",
 		"Depo yeni, daha büyük levhalarla çalışacak. Kutunun hacmi en büyük olacak x değerini hesapla ve gir.", "Kutuyu kes")
-	action.disabled = false
 	action.remove_meta("go")
-	_redraw()
+	plot.queue_redraw()
 
 
 func _submit_answer() -> void:
@@ -289,32 +357,40 @@ func _submit_answer() -> void:
 	if x <= 0.0 or x >= NEW_SIDE / 2.0:
 		_say("x, 0 ile %s dm arasında olmalı. Aksi halde kutu oluşmaz." % _num(NEW_SIDE / 2.0), BAD)
 		return
+	workshop.set_cut(x)
+	workshop.fold_amount = 0.0
+	workshop.cut_amount = 0.0
+	workshop.rebuild()
+	var fold := create_tween()
+	fold.tween_property(workshop, "cut_amount", 1.0, 0.7)
+	fold.tween_method(_set_fold, 0.0, 1.0, 1.0).set_trans(Tween.TRANS_SINE)
+	var volume := BoxPlot.volume(NEW_SIDE, x)
 	plot.cut = x
 	plot.show_point = true
-	var volume := BoxPlot.volume(NEW_SIDE, x)
+	plot.show_curve = true
+	fold.tween_callback(func() -> void: _pour(volume, 1.2))
 	if absf(x - NEW_SIDE / 6.0) <= 0.01:
 		plot.show_optimum = true
 		plot.show_tangent = true
 		answer.editable = false
 		step = Step.DONE
 		_set_ui("ONARILDI", "Depo en iyi kutuyu kesiyor",
-			"x = a/6 = 3 dm. Hacim 432 dm³, bundan büyük kutu yok. Türev, aramadan en iyi değeri bulmanı sağladı.", "Tamam")
-		readout.text = "V(3) = 3·(18 − 6)² = 432 dm³"
+			"x = a/6 = 3 dm. Hacim 432 L, bundan büyük kutu yok. Türev, aramadan en iyi değeri bulmanı sağladı.", "")
+		readout.text = "V(3) = 3·(18 − 6)² = 432 L"
 		answer_row.hide()
 		_say("Onarıldı.", GOOD)
-		action.disabled = true
 		completed.emit()
 	else:
 		wrong_answers += 1
 		plot.show_tangent = true
 		var m := BoxPlot.slope(NEW_SIDE, x)
 		var hint := "Bu x'te eğim %s: x'i %s hacim büyür." % [("pozitif" if m > 0.0 else "negatif"), ("artırırsan" if m > 0.0 else "azaltırsan")]
-		readout.text = "x = %s dm   V = %s dm³" % [_num(x), _num(volume)]
+		readout.text = "x = %s dm   Silindir: %s L" % [_num(x), _num(volume)]
 		var extra := ""
 		if wrong_answers >= 2:
 			extra = "\nİpucu: a = 12 için x = 2 idi. x ile a arasındaki oranı bul."
 		_say("Hacim en büyük değil. " + hint + extra, BAD)
-	_redraw()
+	plot.queue_redraw()
 
 
 # --- Akış ---------------------------------------------------------------

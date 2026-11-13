@@ -21,6 +21,11 @@ var show_tangent := false
 var show_optimum := false
 var show_waste := false
 var title_hint := ""
+## Yalnızca grafik: levha ve kutu 3B tezgâhta gösterilir.
+var graph_only := true
+## Oyuncunun ölçtüğü (x, V) noktaları.
+var measured: Array[Vector2] = []
+var show_curve := false
 
 
 static func volume(a: float, x: float) -> float:
@@ -35,6 +40,9 @@ func _draw() -> void:
 	if size.x < 200 or size.y < 200:
 		return
 	draw_rect(Rect2(Vector2.ZERO, size), BACK)
+	if graph_only:
+		_draw_graph(Rect2(14, 34, size.x - 28, size.y - 56))
+		return
 	var left := Rect2(18, 18, size.x * 0.44, size.y - 36)
 	var graph := Rect2(size.x * 0.5, 40, size.x * 0.47, size.y - 112)
 	_draw_sheet(Rect2(left.position, Vector2(left.size.x, left.size.y * 0.42)))
@@ -130,9 +138,14 @@ func _draw_graph(r: Rect2) -> void:
 	var area_poly := PackedVector2Array([o])
 	area_poly.append_array(pts)
 	area_poly.append(o + Vector2(w, 0))
-	draw_colored_polygon(area_poly, Color(SKY, 0.07))
-	draw_polyline(pts, Color(SKY, 0.25), 7.0, true)
-	draw_polyline(pts, SKY, 2.6, true)
+	if show_curve or not graph_only:
+		draw_colored_polygon(area_poly, Color(SKY, 0.07))
+		draw_polyline(pts, Color(SKY, 0.25), 7.0, true)
+		draw_polyline(pts, SKY, 2.6, true)
+	for m in measured:
+		var mp: Vector2 = px.call(m.x, m.y)
+		draw_circle(mp, 8.0, Color(JADE, 0.22), true, -1.0, true)
+		draw_circle(mp, 4.5, JADE, true, -1.0, true)
 	var best := side / 6.0
 	if show_optimum:
 		var tip: Vector2 = px.call(best, volume(side, best))
