@@ -83,7 +83,7 @@ func _update_frame() -> void:
 		headline.text = HEADLINES[cue_index]
 		caption.text = CAPTIONS[cue_index] if cue_index < CAPTIONS.size() else _route_caption()
 		headline.add_theme_font_size_override("font_size", 60 if cue_index == 3 else 36)
-		trace.visible = cue_index == 1
+		trace.visible = cue_index == 1 or cue_index == 2
 	var cue_start: float = CUE_STARTS[cue_index]
 	var cue_end: float = CUE_STARTS[cue_index + 1]
 	var fade_in := smoothstep(cue_start, cue_start + 0.55, elapsed)
@@ -95,7 +95,7 @@ func _update_frame() -> void:
 	var alarm := smoothstep(5.4, 7.8, elapsed) * (1.0 - smoothstep(8.8, 12.0, elapsed))
 	location.add_theme_color_override("font_color", ACCENT_NORMAL.lerp(ACCENT_ALARM, alarm))
 	if trace.visible:
-		_update_trace(elapsed - cue_start)
+		_update_trace(elapsed - CUE_STARTS[1])
 	progress.value = elapsed / DURATION
 	alarm_changed.emit(alarm)
 

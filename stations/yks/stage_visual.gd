@@ -108,7 +108,8 @@ func _draw_math() -> void:
 	_caption("− %25", Vector2(170, 245), CORAL)
 	_caption("+ %10", Vector2(334, 245), MINT)
 	if _result > 0:
-		_caption("800 × 0,75 = 600 × 1,10 = 660", Vector2(88, 330), PAPER)
+		_caption("800 × 0,75 = 600", Vector2(132, 322), PAPER)
+		_caption("600 × 1,10 = 660", Vector2(132, 354), PAPER)
 	else:
 		_caption("HER ADIMDA YENİ DEĞERİ KULLAN", Vector2(112, 330), PAPER)
 
@@ -126,11 +127,16 @@ func _draw_geometry() -> void:
 	var wrong := Vector2(180, 112)
 	draw_circle(a, 11, MINT)
 	draw_circle(b, 11, AMBER)
-	draw_circle(wrong, 11, CORAL)
-	draw_line(a, wrong, CORAL, 2.0)
+	if _result > 0:
+		draw_line(a, b, MINT, 4.0)
+		draw_circle(wrong, 8, FAINT.darkened(0.2))
+		_caption("ONARILAN ROTA", Vector2(175, 92), MINT)
+	else:
+		draw_circle(wrong, 11, CORAL)
+		draw_line(a, wrong, CORAL, 2.0)
+		_caption("KAYITLI ROTA", Vector2(164, 92), CORAL)
 	_caption("A (1,2)", Vector2(143, 278), MINT)
 	_caption("B (7,2)", Vector2(438, 278), AMBER)
-	_caption("KAYITLI ROTA", Vector2(164, 92), CORAL)
 
 
 func _draw_chemistry() -> void:

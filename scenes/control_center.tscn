@@ -79,6 +79,7 @@ text = "KONTROL MERKEZİ"
 [node name="Title" type="Label" parent="Margin/Hub"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "HeadlineLabel"
 theme_override_colors/font_color = Color(0.9, 0.95, 0.94, 1)
 theme_override_font_sizes/font_size = 46
 text = "Bilginin Kırılması"
@@ -92,18 +93,21 @@ theme_override_constants/separation = 8
 [node name="Class" type="Button" parent="Margin/Hub/Routes"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "ModeTab"
 toggle_mode = true
 text = "Sınıflar"
 
 [node name="LGS" type="Button" parent="Margin/Hub/Routes"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "ModeTab"
 toggle_mode = true
 text = "LGS"
 
 [node name="YKS" type="Button" parent="Margin/Hub/Routes"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "ModeTab"
 toggle_mode = true
 button_pressed = true
 text = "YKS Kampanyası"
@@ -117,6 +121,7 @@ theme_override_constants/separation = 8
 [node name="TYT" type="Button" parent="Margin/Hub/YksRoutes"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "RouteTab"
 toggle_mode = true
 button_pressed = true
 text = "TYT"
@@ -124,12 +129,14 @@ text = "TYT"
 [node name="AYT" type="Button" parent="Margin/Hub/YksRoutes"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "RouteTab"
 toggle_mode = true
 text = "AYT"
 
 [node name="YDT" type="Button" parent="Margin/Hub/YksRoutes"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "RouteTab"
 toggle_mode = true
 text = "YDT · İsteğe bağlı"
 
@@ -168,6 +175,7 @@ custom_minimum_size = Vector2(0, 220)
 theme_override_constants/v_separation = 10
 
 [node name="DetailDock" type="PanelContainer" parent="Margin/Hub/Missions"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(286, 0)
@@ -181,6 +189,7 @@ custom_minimum_size = Vector2(0, 130)
 [node name="MissionTitle" type="Label" parent="Margin/Hub/Missions/DetailDock/Details"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "HeadlineLabel"
 theme_override_font_sizes/font_size = 26
 autowrap_mode = 3
 

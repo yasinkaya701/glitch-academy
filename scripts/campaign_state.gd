@@ -63,15 +63,30 @@ func set_field(field: StringName) -> void:
 	_save()
 
 
-func completed_subject_count(catalog: Array, include_y_d_t := true) -> int:
+func completed_subject_count(catalog: Array, include_y_d_t := true, route_scope: StringName = &"") -> int:
 	var subjects: Dictionary[String, bool] = {}
 	for mission in catalog:
 		var routes: PackedStringArray = mission.get("routes")
 		if not (routes.has("tyt") or routes.has("ayt") or routes.has("ydt")):
 			continue
-		if not include_y_d_t and routes.has("ydt") and not routes.has("tyt") and not routes.has("ayt"):
+		if route_scope == &"ydt" and not include_y_d_t:
 			continue
-		if is_completed(mission.get("id")):
+		var eligible_routes: Array[StringName] = []
+		if route_scope != &"":
+			if routes.has(String(route_scope)):
+				eligible_routes.append(route_scope)
+		else:
+			for route in [&"tyt", &"ayt", &"ydt"]:
+				if route == &"ydt" and not include_y_d_t:
+					continue
+				if routes.has(String(route)):
+					eligible_routes.append(route)
+		var mission_completed := false
+		for route in eligible_routes:
+			if is_completed(mission.get("id"), route):
+				mission_completed = true
+				break
+		if mission_completed:
 			subjects[str(mission.get("subject"))] = true
 	return subjects.size()
 
@@ -91,7 +106,7 @@ func _load() -> void:
 	if story_flags.has(&"life_repair_verified") and not story_flags.has(&"life_repaired"):
 		story_flags[&"life_repaired"] = true
 		needs_migration = true
-	if not story_flags.has(&"life_repair_verified") and story_flags.has(&"three_suns_ready"):
+	if not story_flags.has(&"life_repair_verified") and not story_flags.has(&"life_protocol_contained") and story_flags.has(&"three_suns_ready"):
 		story_flags.erase(&"three_suns_ready")
 		needs_migration = true
 	var loaded_route := StringName(config.get_value("progress", "route", "tyt"))

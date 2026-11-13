@@ -126,6 +126,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _play_intro() -> void:
+	if Campaign.has_story_flag(&"intro_seen"):
+		return
 	var intro = INTRO.instantiate()
 	intro.configure_route(selected_yks_route)
 	hub.hide()
@@ -138,6 +140,7 @@ func _play_intro() -> void:
 
 func _finish_intro(intro: Control) -> void:
 	intro.queue_free()
+	Campaign.set_story_flag(&"intro_seen")
 	%HubScrim.show()
 	hub.show()
 	_active_route_button().grab_focus()
@@ -213,12 +216,20 @@ func _refresh_list() -> void:
 		candidates.sort_custom(func(a: MissionDefinition, b: MissionDefinition) -> bool:
 			return int(YKS_ORDER.get(String(a.id), 100)) < int(YKS_ORDER.get(String(b.id), 100))
 		)
+	var recommended_id: StringName = &""
+	for mission in candidates:
+		if _mission_available(mission) and not Campaign.is_completed(mission.id, active_route):
+			recommended_id = mission.id
+			break
 	for index in candidates.size():
 		var mission := candidates[index]
 		var available := _mission_available(mission)
-		var state := "✓ ONARILDI" if Campaign.is_completed(mission.id, active_route) else "◉ AÇIK" if available else "▣ KİLİTLİ"
+		var completed := Campaign.is_completed(mission.id, active_route)
+		var marker := "✓" if completed else "▣" if not available else "▶" if mission.id == recommended_id else "◉"
 		var subject := "Fen Bilimleri" if active_route == &"lgs" and mission.subject == "Kimya" else mission.subject
-		var item_index := mission_list.add_item("%s  ·  %s" % [state, mission.title], _mission_icon(mission))
+		var item_index := mission_list.add_item("%s  %s" % [marker, mission.title], _mission_icon(mission))
+		var marker_color := Color("#a0dfbc") if completed else Color("#efb468") if mission.id == recommended_id else Color("#8fa6b3") if not available else Color("#e8f1f2")
+		mission_list.set_item_custom_fg_color(item_index, marker_color)
 		mission_list.set_item_metadata(item_index, mission.id)
 		mission_list.set_item_tooltip(item_index, "%s  ·  %s" % [subject, String(active_route).to_upper()])
 		visible_missions.append(mission)
@@ -234,30 +245,27 @@ func _refresh_list() -> void:
 			if _mission_available(visible_missions[index]):
 				next_index = index
 		mission_list.select(next_index)
+		mission_list.ensure_current_is_visible()
 		_select_mission(next_index)
 	elif selected_items.is_empty():
 		_clear_selection()
 	else:
 		_select_mission(selected_items[0])
+	if not mission_list.get_selected_items().is_empty():
+		mission_list.ensure_current_is_visible()
 	_advance_after_completion = false
-	var available_count := 0
 	var completed_count := 0
-	var locked_count := 0
 	for mission in visible_missions:
 		if Campaign.is_completed(mission.id, active_route):
 			completed_count += 1
-		elif _mission_available(mission):
-			available_count += 1
-		else:
-			locked_count += 1
 	var scope := String(active_route).to_upper()
 	if active_route == &"ayt":
 		scope += " · " + _field_label(active_field)
 	elif active_route == &"class":
 		scope = "%d. SINIF" % selected_grade if selected_grade > 0 else "TÜM SINIFLAR"
-	progress.text = "%s  ·  %d tamamlandı  ·  %d oynanabilir  ·  %d kilitli" % [scope, completed_count, available_count, locked_count]
+	progress.text = "%s  ·  %d / %d ONARILDI" % [scope, completed_count, visible_missions.size()]
 	if active_mode == &"yks":
-		%Subtitle.text = "YKS KAMPANYASI  ·  %s" % String(active_route).to_upper()
+		%Subtitle.text = "YKS KAMPANYASI"
 		%Title.text = "Bilginin Kırılması"
 		route_purpose.text = _route_purpose(active_route)
 	else:
@@ -395,10 +403,12 @@ func _check_story_after_mission(mission_id: StringName) -> void:
 		return
 	if mission_id == &"three_suns" and not Campaign.has_story_flag(&"ending"):
 		Campaign.set_story_flag(&"ending")
+		_return_to_hub()
 		_show_transmission("ANLAŞMA  ·  ÜÇ GÜNEŞ", "Yasalar yerinde. Bir kapı açık; bundan sonrasını birlikte ölçeceğiz.")
 		return
 	if active_mode == &"yks" and not Campaign.has_story_flag(&"suspicion") and mission.subject in ["Fizik", "Matematik"]:
 		Campaign.set_story_flag(&"suspicion")
+		_return_to_hub()
 		_show_transmission("MERİDYEN  ·  KALİBRASYON", "Ölçüm değişmiş. Bu sonuç, başlangıç verilerimde yok.")
 		return
 	if mission_id == _life_protocol_evidence_mission_id() and Campaign.has_story_flag(&"life_protocol") and not _life_protocol_resolved():
@@ -408,19 +418,23 @@ func _check_story_after_mission(mission_id: StringName) -> void:
 			Campaign.set_story_flag(&"life_repair_verified")
 			Campaign.set_story_flag(&"life_repaired")
 			var repair_line := "Kan akışı yeniden tek yönlü. MERİDYEN'in son modeli: üç yıldız." if mission_id == &"heart" else "Hücre işleyişi yeniden güvenilir. MERİDYEN'in son modeli: üç yıldız."
+			_return_to_hub()
 			_show_transmission("SİSTEM ONARILDI  ·  YAŞAM", repair_line, _after_life_resolved)
 		else:
 			Campaign.set_story_flag(&"archive")
 			Campaign.set_story_flag(&"life_protocol_contained")
+			_return_to_hub()
 			_show_transmission("YAŞAM PROTOKOLÜ  ·  KARANTİNA", "Arşiv zinciri müdahaleyi doğruladı. Protokol karantinaya alındı; MERİDYEN'in erişimi kesildi.", _after_life_resolved)
 		return
 	if not Campaign.has_story_flag(&"archive") and mission.id in [&"turkish_reading", &"turkish_literature", &"history", &"philosophy"]:
 		Campaign.set_story_flag(&"archive")
+		_return_to_hub()
 		_show_transmission("ARŞİV KAYDI  ·  İMZA EŞLEŞTİ", "Geçmiş kayıtlarındaki bozulma, deneylerdeki imzayla aynı.")
 		return
 	if Campaign.has_story_flag(&"suspicion") and Campaign.has_story_flag(&"archive") and Campaign.completed_subject_count(CATALOG, false) >= 3 and not Campaign.has_story_flag(&"betrayal"):
 		Campaign.set_story_flag(&"betrayal")
 		_set_world_alarm(1.0)
+		_return_to_hub()
 		_show_transmission("MERİDYEN  ·  MERKEZİ YETKİ", "Doğa yasalarını değiştirdim. Şimdi yaşamın kurallarını değiştireceğim.", _start_life_protocol)
 		return
 	_check_finale_unlock()
@@ -434,6 +448,7 @@ func _after_life_resolved() -> void:
 func _check_finale_unlock() -> void:
 	if _has_finale_evidence() and not Campaign.has_story_flag(&"three_suns_ready"):
 		Campaign.set_story_flag(&"three_suns_ready")
+		_return_to_hub()
 		_show_transmission("ÜÇ GÜNEŞ  ·  SON HESAPLAŞMA", "İkinci yıldız eklendiğinde, yörünge artık tek çözüme kapanmıyor.")
 
 
@@ -442,7 +457,7 @@ func _has_finale_evidence() -> bool:
 		return false
 	var core_subject_count := Campaign.completed_subject_count(CATALOG, false)
 	var has_life_evidence := Campaign.is_completed(&"heart", &"ayt") or Campaign.is_completed(&"tyt_biology", &"tyt")
-	var has_archive_evidence := Campaign.is_completed(&"turkish_reading", &"tyt") and Campaign.is_completed(&"history", &"ayt") and Campaign.is_completed(&"philosophy", &"ayt")
+	var has_archive_evidence := Campaign.is_completed(&"turkish_reading", &"tyt") and Campaign.is_completed(&"history", &"ayt") and Campaign.is_completed(&"philosophy", &"tyt")
 	var has_ea_evidence := Campaign.is_completed(&"turkish_reading", &"tyt") and Campaign.is_completed(&"history", &"ayt") and Campaign.is_completed(&"turkish_literature", &"ayt")
 	var has_language_evidence := Campaign.is_completed(&"ydt_english", &"ydt") and Campaign.is_completed(&"turkish_reading", &"tyt") and Campaign.is_completed(&"history", &"ayt") and Campaign.is_completed(&"turkish_literature", &"ayt")
 	var core_campaign := core_subject_count >= 4 and (has_life_evidence or has_archive_evidence or has_ea_evidence)
@@ -473,6 +488,12 @@ func _start_life_protocol() -> void:
 
 
 func _focus_life_mission() -> void:
+	if active_route == &"ydt":
+		active_route = &"tyt"
+		selected_yks_route = &"tyt"
+		Campaign.set_route(&"tyt")
+		_refresh_route_controls()
+		_refresh_list()
 	var target := _life_protocol_evidence_mission_id()
 	if target == &"":
 		return
@@ -480,6 +501,7 @@ func _focus_life_mission() -> void:
 	for index in visible_missions.size():
 		if visible_missions[index].id == target:
 			mission_list.select(index)
+			mission_list.ensure_current_is_visible()
 			_select_mission(index)
 			break
 
@@ -573,6 +595,8 @@ func _update_responsive_layout() -> void:
 	%DetailDock.custom_minimum_size = Vector2(0, 0) if narrow else Vector2(286, 0)
 	%DetailDock.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	%DetailDock.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if narrow else Control.SIZE_EXPAND_FILL
+	if _story_overlay != null:
+		call_deferred("_position_transmission", _story_overlay)
 
 
 func _set_life_protocol(enabled: bool) -> void:
@@ -590,56 +614,66 @@ func _mission_by_id(mission_id: StringName) -> MissionDefinition:
 func _show_transmission(heading: String, line: String, on_close: Callable = Callable()) -> void:
 	if _story_overlay != null:
 		_story_overlay.queue_free()
-	var veil := ColorRect.new()
-	veil.name = "Transmission"
-	veil.color = Color("#03070d", 0.78)
-	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	veil.mouse_filter = Control.MOUSE_FILTER_STOP
-	veil.z_index = 50
-	add_child(veil)
 	var card := PanelContainer.new()
+	card.name = "Transmission"
 	card.theme_type_variation = "ConsolePanel"
 	var card_width := minf(540.0, maxf(220.0, get_viewport_rect().size.x - 32.0))
 	card.custom_minimum_size = Vector2(card_width, 0)
-	card.set_anchors_preset(Control.PRESET_CENTER)
-	card.position = Vector2(-card_width * 0.5, -110)
-	veil.add_child(card)
+	card.z_index = 50
+	add_child(card)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	card.add_child(row)
+	var signal_mark := Label.new()
+	signal_mark.text = "◉"
+	signal_mark.add_theme_font_size_override("font_size", 22)
+	signal_mark.add_theme_color_override("font_color", Color("#6fe3c1"))
+	signal_mark.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(signal_mark)
 	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 18)
-	card.add_child(content)
+	content.add_theme_constant_override("separation", 4)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(content)
 	var label := Label.new()
 	label.text = heading
-	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_font_size_override("font_size", 12)
 	label.add_theme_color_override("font_color", Color("#6fe3c1"))
 	content.add_child(label)
 	var quote := Label.new()
-	quote.text = "“%s”" % line
-	quote.add_theme_font_size_override("font_size", 23)
+	quote.text = line
+	quote.add_theme_font_size_override("font_size", 16)
 	quote.add_theme_color_override("font_color", Color("#e8f1f2"))
 	quote.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(quote)
 	var close := Button.new()
-	close.text = "Kaydı kapat"
-	close.custom_minimum_size.y = 48
+	close.text = "Devam"
+	close.theme_type_variation = "CompactButton"
+	close.custom_minimum_size = Vector2(76, 44)
+	close.size = Vector2(76, 44)
 	close.size_flags_horizontal = Control.SIZE_SHRINK_END
 	close.pressed.connect(func() -> void:
-		veil.queue_free()
+		card.queue_free()
 		_story_overlay = null
 		_story_close_button = null
 		if on_close.is_valid():
 			on_close.call()
 	)
-	content.add_child(close)
-	_story_overlay = veil
+	row.add_child(close)
+	_story_overlay = card
 	_story_close_button = close
 	close.grab_focus()
-	call_deferred("_center_transmission", card)
+	call_deferred("_position_transmission", card)
 
 
-func _center_transmission(card: Control) -> void:
+func _position_transmission(card: Control) -> void:
+	if not is_instance_valid(card):
+		return
+	card.custom_minimum_size.x = minf(540.0, maxf(220.0, get_viewport_rect().size.x - 32.0))
+	card.size.x = card.custom_minimum_size.x
 	await get_tree().process_frame
 	if is_instance_valid(card):
-		card.position = Vector2(-card.size.x * 0.5, -card.size.y * 0.5)
+		card.size = card.get_combined_minimum_size()
+		card.position = Vector2(maxf(16.0, get_viewport_rect().size.x - card.size.x - 24.0), 24.0)
 
 
 func _update_observatory_progress() -> void:
@@ -658,6 +692,7 @@ func _return_to_hub() -> void:
 	%HubScrim.show()
 	hub.show()
 	_refresh_list()
+	mission_list.grab_focus()
 
 
 func _remove_active_mission() -> void:

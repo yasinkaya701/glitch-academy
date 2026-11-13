@@ -109,6 +109,7 @@ func try_answer(answer: Variant) -> bool:
 	last_feedback = mission_definition.feedback_success
 	_set_feedback("✓  " + last_feedback, ACCENT, true)
 	_lock_interaction()
+	_info_button.grab_focus()
 	if _visual != null and _visual.has_method("mark_result"):
 		_visual.call("mark_result", true)
 	completed.emit()
@@ -127,9 +128,10 @@ func _build_interface() -> void:
 	_info_button = Button.new()
 	_info_button.text = "ⓘ"
 	_info_button.tooltip_text = "Kazanım ve kaynak"
-	_info_button.custom_minimum_size = Vector2(40, 36)
-	_info_button.position = Vector2(size.x - 58.0, 10)
-	_info_button.size = Vector2(40, 36)
+	_info_button.theme_type_variation = "CompactButton"
+	_info_button.custom_minimum_size = Vector2(44, 40)
+	_info_button.position = Vector2(size.x - 60.0, 8)
+	_info_button.size = Vector2(44, 40)
 	_info_button.pressed.connect(_show_learning_note)
 	add_child(_info_button)
 
@@ -201,7 +203,7 @@ func _layout_interface() -> void:
 	var answers_top := instruction_top + instruction_height + 10.0
 	_answer_scroll.position = right_panel.position + Vector2(14, answers_top)
 	_answer_scroll.size = Vector2(right_panel.size.x - 28.0, maxf(64.0, right_panel.size.y - answers_top - 18.0))
-	_info_button.position = Vector2(size.x - 58.0, 10)
+	_info_button.position = Vector2(size.x - 60.0, 8)
 
 
 func _estimated_text_height(text_value: String, width: float, font_size: int, minimum_height: float) -> float:
@@ -311,7 +313,7 @@ func _build_sequence() -> void:
 	var row_height := 54.0
 	var row_gap := 8.0
 	var compact_controls := _answer_scroll.size.x < 520.0
-	var control_width := clampf((_answer_scroll.size.x - 92.0) * 0.5, 32.0, 46.0) if compact_controls else 94.0
+	var control_width := clampf((_answer_scroll.size.x - 92.0) * 0.5, 44.0, 48.0) if compact_controls else 94.0
 	var item_width := maxf(36.0, row_width - control_width * 2.0 - 12.0)
 	for index in _sequence_order.size():
 		var row := Control.new()
@@ -324,7 +326,8 @@ func _build_sequence() -> void:
 		row.add_child(item)
 		_sequence_labels.append(item)
 		var up := _button("↑" if compact_controls else "↑ Yukarı", Vector2(control_width, row_height))
-		up.tooltip_text = "Önceki sıraya taşı"
+		up.theme_type_variation = "CompactButton"
+		up.tooltip_text = "‘%s’ öğesini önceki sıraya taşı" % _sequence_order[index]
 		up.position = Vector2(item_width + 4.0, 0)
 		up.set_meta("mission_focus_key", "seq_up:" + _sequence_order[index])
 		up.pressed.connect(_move_sequence.bind(index, -1))
@@ -332,7 +335,8 @@ func _build_sequence() -> void:
 		row.add_child(up)
 		_sequence_up_buttons.append(up)
 		var down := _button("↓" if compact_controls else "↓ Aşağı", Vector2(control_width, row_height))
-		down.tooltip_text = "Sonraki sıraya taşı"
+		down.theme_type_variation = "CompactButton"
+		down.tooltip_text = "‘%s’ öğesini sonraki sıraya taşı" % _sequence_order[index]
 		down.position = Vector2(item_width + control_width + 8.0, 0)
 		down.set_meta("mission_focus_key", "seq_down:" + _sequence_order[index])
 		down.pressed.connect(_move_sequence.bind(index, 1))
@@ -370,6 +374,7 @@ func _build_pairs() -> void:
 		var right := OptionButton.new()
 		right.focus_mode = Control.FOCUS_ALL
 		right.set_meta("mission_focus_key", "pair:" + left_value)
+		right.tooltip_text = "‘%s’ kaydının karşılığını seç" % left_value
 		right.custom_minimum_size = Vector2(row_width, 42)
 		right.size = Vector2(row_width, 42)
 		right.position = Vector2(4, row_y + left_height + 4.0)
@@ -421,7 +426,12 @@ func _refresh_pair_options() -> void:
 		var assigned_target := String(_pair_answers.get(left_value, ""))
 		for index in range(1, selector.get_item_count()):
 			var target := String(selector.get_item_metadata(index))
-			selector.set_item_disabled(index, false)
+			var assigned_to_other := false
+			for other_left in _pair_answers:
+				if String(other_left) != String(left_value) and String(_pair_answers[other_left]) == target:
+					assigned_to_other = true
+					break
+			selector.set_item_disabled(index, assigned_to_other)
 			if target == assigned_target:
 				selector.select(index)
 		if assigned_target.is_empty():
@@ -468,6 +478,11 @@ func _move_sequence(index: int, direction: int) -> void:
 	_sequence_order[index] = _sequence_order[target]
 	_sequence_order[target] = item
 	_refresh_sequence_labels()
+	var focus_index := target
+	var focus_button: Button = _sequence_down_buttons[focus_index] if direction > 0 else _sequence_up_buttons[focus_index]
+	if focus_button.disabled:
+		focus_button = _sequence_up_buttons[focus_index] if direction > 0 else _sequence_down_buttons[focus_index]
+	focus_button.grab_focus()
 
 
 func _refresh_sequence_labels() -> void:
