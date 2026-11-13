@@ -1,49 +1,49 @@
 {
   "voices": {
     "socrates": {
-      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "elevenlabs_voice_id": "CwhRBWXzGAHq8TQ4Fs17",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-12Hz",
       "edge_rate": "-8%"
     },
     "plato": {
-      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "elevenlabs_voice_id": "CwhRBWXzGAHq8TQ4Fs17",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-8Hz",
       "edge_rate": "-5%"
     },
     "aristotle": {
-      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "elevenlabs_voice_id": "CwhRBWXzGAHq8TQ4Fs17",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-5Hz",
       "edge_rate": "-4%"
     },
     "epicurus": {
-      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "elevenlabs_voice_id": "CwhRBWXzGAHq8TQ4Fs17",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-6Hz",
       "edge_rate": "-6%"
     },
     "kindi": {
-      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "elevenlabs_voice_id": "CwhRBWXzGAHq8TQ4Fs17",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-9Hz",
       "edge_rate": "-6%"
     },
     "farabi": {
-      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "elevenlabs_voice_id": "CwhRBWXzGAHq8TQ4Fs17",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-14Hz",
       "edge_rate": "-10%"
     },
     "ibn_sina": {
-      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "elevenlabs_voice_id": "CwhRBWXzGAHq8TQ4Fs17",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-4Hz",
       "edge_rate": "-4%"
     },
     "ibn_rushd": {
-      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "elevenlabs_voice_id": "CwhRBWXzGAHq8TQ4Fs17",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-11Hz",
       "edge_rate": "-7%"

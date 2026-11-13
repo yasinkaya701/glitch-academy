@@ -1,37 +1,37 @@
 {
   "voices": {
     "mete_han": {
-      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "elevenlabs_voice_id": "CwhRBWXzGAHq8TQ4Fs17",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-14Hz",
       "edge_rate": "-6%"
     },
     "alparslan": {
-      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "elevenlabs_voice_id": "CwhRBWXzGAHq8TQ4Fs17",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-10Hz",
       "edge_rate": "-5%"
     },
     "fatih": {
-      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "elevenlabs_voice_id": "CwhRBWXzGAHq8TQ4Fs17",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-6Hz",
       "edge_rate": "-3%"
     },
     "kanuni": {
-      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "elevenlabs_voice_id": "CwhRBWXzGAHq8TQ4Fs17",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-11Hz",
       "edge_rate": "-7%"
     },
     "mimar_sinan": {
-      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "elevenlabs_voice_id": "CwhRBWXzGAHq8TQ4Fs17",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-13Hz",
       "edge_rate": "-9%"
     },
     "ataturk": {
-      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "elevenlabs_voice_id": "CwhRBWXzGAHq8TQ4Fs17",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-5Hz",
       "edge_rate": "-4%"

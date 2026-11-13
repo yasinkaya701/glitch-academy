@@ -44,7 +44,7 @@ OPEN_VOWELS = set("aAeEıIoOöÖuUüÜ")
 ROUND_VOWELS = set("oOöÖuUüÜ")
 CLOSED_CONSONANTS = set("bBmMpP")
 
-DEFAULT_ELEVEN_VOICE = "pNInz6obpgDQGcFmaJgB"  # Adam / Multilingual v2 standart ses
+DEFAULT_ELEVEN_VOICE = "CwhRBWXzGAHq8TQ4Fs17"  # Roger / Kallavi yaşlı bilge filozof sesi
 
 
 def resolve_api_key(cli_key: str | None = None) -> str:
@@ -151,7 +151,7 @@ def generate_elevenlabs(text: str, voice_id: str, api_key: str, mp3_out: Path) -
     payload = {
         "text": text,
         "model_id": "eleven_multilingual_v2",
-        "voice_settings": {"stability": 0.52, "similarity_boost": 0.78, "style": 0.22, "use_speaker_boost": True},
+        "voice_settings": {"stability": 0.68, "similarity_boost": 0.85, "style": 0.05, "use_speaker_boost": True},
     }
     r = requests.post(url, headers=headers, json=payload, timeout=45)
     if r.status_code != 200:
@@ -221,7 +221,11 @@ def build_character(
         if engine == "elevenlabs":
             if not api_key:
                 raise RuntimeError("ElevenLabs seçildi ancak API anahtarı bulunamadı!")
-            track = generate_elevenlabs(text, voice_id, api_key, mp3_path)
+            try:
+                track = generate_elevenlabs(text, voice_id, api_key, mp3_path)
+            except Exception as e:
+                print(f"  [UYARI] ElevenLabs çağrısı başarısız ({e}), yerel yedek (edge_tts) ile üretiliyor...")
+                track = asyncio.run(generate_edge(text, vcfg, mp3_path))
         else:
             track = asyncio.run(generate_edge(text, vcfg, mp3_path))
 

@@ -124,7 +124,7 @@ func speak_live(philosopher_id: StringName, text: String, tag_id: StringName = &
 		var body := JSON.stringify({
 			"text": text,
 			"model_id": "eleven_multilingual_v2",
-			"voice_settings": {"stability": 0.52, "similarity_boost": 0.78, "style": 0.22, "use_speaker_boost": true}
+			"voice_settings": {"stability": 0.68, "similarity_boost": 0.85, "style": 0.05, "use_speaker_boost": true}
 		})
 		if _http.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
 			_start_fallback_speaking(text, 10.0)
