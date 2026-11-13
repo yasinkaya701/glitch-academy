@@ -70,12 +70,14 @@ theme_override_constants/separation = 16
 
 [node name="Subtitle" type="Label" parent="Margin/Hub"]
 layout_mode = 2
+theme_type_variation = "SectionLabel"
 theme_override_colors/font_color = Color(0.63, 0.83, 0.78, 1)
 theme_override_font_sizes/font_size = 15
 text = "KONTROL MERKEZİ"
 
 [node name="Title" type="Label" parent="Margin/Hub"]
 layout_mode = 2
+theme_type_variation = "HeadlineLabel"
 theme_override_colors/font_color = Color(0.9, 0.95, 0.94, 1)
 theme_override_font_sizes/font_size = 52
 text = "Yanlış Dünya"
@@ -136,6 +138,7 @@ custom_minimum_size = Vector2(0, 130)
 [node name="MissionTitle" type="Label" parent="Margin/Hub/Missions/Details"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "HeadlineLabel"
 theme_override_font_sizes/font_size = 26
 autowrap_mode = 3
 
@@ -181,6 +184,7 @@ text = "Yeniden dene"
 [node name="PlayTitle" type="Label" parent="Margin/PlayScreen/Toolbar"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "HeadlineLabel"
 size_flags_horizontal = 3
 horizontal_alignment = 1
 
