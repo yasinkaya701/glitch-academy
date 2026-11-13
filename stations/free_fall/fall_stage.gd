@@ -1,15 +1,11 @@
 extends Control
-## Düşüş Odası sahnesi. Codex'in laboratuvar görseli (chamber_bg.png) üstünde cam odanın içinde düşen cisimler,
-## yükseklik şeridi, zemin sensörü ve sağ duvarda ölçü yazıları. Hareket fall_sim.gd'den gelir, çizim süreleri uydurmaz.
-## Ölçek: camın üstü bırakma yüksekliği, tabanı sensör (0 m). Toplar görünürlük için ölçeksiz çizilir.
+## Düşüş Odası sahnesi. Düşey deney düzeneği ve donanımı ayrı bir 3D gözlemevi sahnesinde kurulur;
+## bu Control ölçüm çizgilerini ve etiketleri üst katmanda tutar. Hareket fall_sim.gd'den gelir.
 
 signal landed(results: Dictionary)
 
 const Fall = preload("res://stations/free_fall/fall_sim.gd")
-const BACKDROP = preload("res://stations/free_fall/assets/chamber_bg.png")
-const SENSOR_OFF = preload("res://stations/free_fall/assets/sensor_plate_off.png")
-const SENSOR_ON = preload("res://stations/free_fall/assets/sensor_plate_on.png")
-
+const Lab3D = preload("res://stations/free_fall/fall_lab_3d.tscn")
 const MAX_RELEASE := 58.0
 const PUMP_RATE := 28.0           ## kPa/s
 const EXPECTED_TIME := 2.0        ## s, cihazın 20 m için beklediği süre (hava yok varsayımı)
@@ -56,13 +52,35 @@ var _flash := 0.0
 var _clock := 0.0
 var _release_countdown := -1.0
 var _pending: Array = []
+var _lab: Node
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	clip_contents = true
+	_build_3d_lab()
 	for id in Fall.BODIES:
 		_bodies[id] = {"state": Fall.State.new(), "active": false, "landed": false, "result": {}}
+	_sync_lab()
+
+
+func _build_3d_lab() -> void:
+	var container := SubViewportContainer.new()
+	container.name = "FreeFall3DView"
+	container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.stretch = true
+	container.show_behind_parent = true
+	var viewport := SubViewport.new()
+	viewport.name = "FreeFallViewport"
+	viewport.size = Vector2i(1280, 720)
+	viewport.own_world_3d = true
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	container.add_child(viewport)
+	_lab = Lab3D.instantiate()
+	viewport.add_child(_lab)
+	add_child(container)
+	container.move_to_front()
 
 
 # --- Dışarıya açık ---------------------------------------------------------------
@@ -146,7 +164,25 @@ func _process(delta: float) -> void:
 			_start_fall()
 	if falling:
 		_step_fall(delta * time_scale)
+	_sync_lab()
 	queue_redraw()
+
+
+func _sync_lab() -> void:
+	if _lab == null:
+		return
+	var states := {}
+	for id in _bodies:
+		var row: Dictionary = _bodies[id]
+		var state: Fall.State = row["state"]
+		states[id] = {
+			"depth": state.depth,
+			"speed": state.speed,
+			"active": row["active"],
+			"landed": row["landed"],
+			"visible": visible_ids.has(id),
+		}
+	_lab.set_state(states, pressure, gravity_fixed, show_expectation, release_height, _flash)
 
 
 func _start_fall() -> void:
@@ -208,11 +244,8 @@ func _step_fall(delta: float) -> void:
 func _draw() -> void:
 	var fit := _fit()
 	var factor: float = fit["scale"]
-	var offset: Vector2 = fit["offset"]
-	draw_texture_rect(BACKDROP, Rect2(offset, IMAGE * factor), false)
 	_draw_ruler(factor)
 	_draw_sensor(factor)
-	_draw_rack(factor)
 	for id in [&"steel", &"foam", &"capsule"]:
 		if visible_ids.has(id):
 			_draw_body(id, factor)
@@ -255,15 +288,6 @@ func _draw_ruler(factor: float) -> void:
 
 
 func _draw_sensor(factor: float) -> void:
-	var texture: Texture2D = SENSOR_ON if _flash > 0.05 else SENSOR_OFF
-	var width := (GLASS_RIGHT - GLASS_LEFT) * 0.98
-	var rect := Rect2(_p((GLASS_LEFT + GLASS_RIGHT) * 0.5 - width * 0.5, FLOOR_Y - 12.0), Vector2(width, 26.0) * factor)
-	var tint := Color(1, 1, 1, 0.55 + 0.45 * _flash)
-	if outcome == &"saved" and _outcome_clock < 2.5:
-		tint = Color(0.5, 1.0, 0.8, 0.9)
-	elif outcome == &"lost" and _outcome_clock < 2.5:
-		tint = Color(1.0, 0.4, 0.35, 0.95)
-	draw_texture_rect(texture, rect, false, tint)
 	_draw_outcome(factor)
 
 
@@ -284,64 +308,16 @@ func _draw_outcome(factor: float) -> void:
 			draw_rect(Rect2(pos, Vector2(rng.randf_range(3.0, 7.0), rng.randf_range(2.0, 4.0)) * factor), Color("#e58a42", clampf(1.0 - t / 2.0, 0.0, 1.0)))
 
 
-func _draw_rack(factor: float) -> void:
-	var y := GLASS_TOP - 8.0
-	draw_rect(Rect2(_p(GLASS_LEFT + 6.0, y), Vector2(GLASS_RIGHT - GLASS_LEFT - 12.0, 6.0) * factor), Color("#4b535c"))
-	for id in visible_ids:
-		var bx: float = SLOT_X[id]
-		var holding: bool = not (_bodies[id]["active"] and falling) and not _bodies[id]["landed"]
-		draw_rect(Rect2(_p(bx - 7.0, y + 4.0), Vector2(14.0, 6.0) * factor), Color("#2b3138"))
-		if holding:
-			draw_circle(_p(bx, y + 11.0), 3.2 * factor, Color(WARM, 0.55 + 0.25 * sin(_clock * 4.0)))
-
-
 func _draw_body(id: StringName, factor: float) -> void:
 	var data: Dictionary = _bodies[id]
-	var depth := (data["state"] as Fall.State).depth if data["active"] else 0.0
 	var radius: float = BALL_RADIUS[id]
-	var centre := _p(SLOT_X[id], _ball_y(id, depth))
 	var r := radius * factor
-	if data["active"] and falling and not data["landed"]:
-		var speed := (data["state"] as Fall.State).speed
-		var streak := clampf(speed * 0.9, 0.0, 70.0) * factor
-		draw_rect(Rect2(centre + Vector2(-r * 0.6, -streak - r * 0.5), Vector2(r * 1.2, streak)), Color(0.8, 0.9, 1.0, 0.08))
-	var shadow_y := _p(SLOT_X[id], FLOOR_Y + 2.0)
-	var height_ratio := 1.0 - clampf((FLOOR_Y - (_ball_y(id, depth) + radius)) / maxf(FLOOR_Y - GLASS_TOP, 1.0), 0.0, 1.0)
-	draw_set_transform(shadow_y, 0.0, Vector2(1.0, 0.22))
-	draw_circle(Vector2.ZERO, r * (0.5 + 0.7 * height_ratio), Color(0, 0, 0, 0.12 + 0.28 * height_ratio))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	if id == &"capsule":
-		_draw_capsule(centre, r)
-	elif id == &"steel":
-		_draw_sphere(centre, r, Color("#3c434b"), Color("#9aa3ad"), Color("#eef3f7"))
-	else:
-		_draw_sphere(centre, r, Color("#a88a3d"), Color("#e6c777"), Color("#fff1c4"))
+	var depth := (data["state"] as Fall.State).depth if data["active"] else 0.0
+	var centre := _p(SLOT_X[id], _ball_y(id, depth))
 	if data["active"]:
 		var done: bool = data["landed"]
 		var label := seconds_text(data["result"]["time"] if done else _elapsed)
 		_text(centre + Vector2(r + 8.0 * factor, 5.0 * factor), label, 18.0 * factor, ACCENT if done else INK)
-
-
-func _draw_sphere(centre: Vector2, r: float, dark: Color, mid: Color, light: Color) -> void:
-	draw_circle(centre, r, dark)
-	var steps := 9
-	for i in steps:
-		var t := float(i) / float(steps - 1)
-		var colour := mid.lerp(light, t * t)
-		var shift := Vector2(-0.34, -0.38) * r * t * 0.9
-		draw_circle(centre + shift, r * lerpf(0.96, 0.2, t), colour)
-	draw_circle(centre + Vector2(-0.38, -0.42) * r, r * 0.12, Color(1, 1, 1, 0.9))
-	draw_arc(centre, r, 0.0, TAU, 40, Color(0, 0, 0, 0.35), 1.2)
-
-
-func _draw_capsule(centre: Vector2, r: float) -> void:
-	var body := Rect2(centre - Vector2(r, r * 1.7), Vector2(r * 2.0, r * 3.4))
-	draw_rect(body, Color("#b86a2e"))
-	draw_rect(Rect2(body.position, Vector2(r * 0.7, body.size.y)), Color("#e58a42"))
-	draw_circle(centre + Vector2(0.0, -r * 1.7), r, Color("#d17a38"))
-	draw_circle(centre + Vector2(0.0, r * 1.7), r, Color("#8e4f22"))
-	draw_rect(Rect2(centre + Vector2(-r, -r * 0.2), Vector2(r * 2.0, r * 0.4)), ACCENT)
-
 
 ## Misafir imzası: kayma açıkken cisimlerde renk ayrışması ve camda kısa yırtık çizgileri.
 func _draw_signature(factor: float) -> void:
