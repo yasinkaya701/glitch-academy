@@ -12,7 +12,7 @@ Yasin görevleri ve sahiplerini belirler. Yasin Codex ve Claude ile, ekip arkada
 
 ## Çalışma alanı
 
-Her görev için güncel `main` üzerinden ayrı bir dal aç. Örnek olarak Fizik istasyonu için `mission/free-fall` kullan. Birden fazla ajan aynı bilgisayarda eşzamanlı çalışacaksa her dalı ayrı klon veya worktree içinde aç. İstasyonun sahne ve mantığının tek yazarı olsun. Varlıklar ayrı dal ve dosyalarda paralel üretilebilir. [Varlık üretimi ve Claude talep şablonu](docs/ASSETS.md)
+Her görev için güncel `main` üzerinden ayrı bir dal aç. Örnek olarak Fizik istasyonu için `mission/free-fall` kullan. Birden fazla ajan aynı bilgisayarda eşzamanlı çalışacaksa her dalı ayrı klon veya worktree içinde aç. İstasyonun sahne ve mantığının tek yazarı olsun. Varlıklar ayrı dal ve dosyalarda paralel üretilebilir. [Varlık kılavuzu: hazır varlık ve kendi üretimimiz](docs/ASSETS.md)
 
 Örneğin bir kişi `mission/free-fall` dalında Düşüş Odası'nı geliştirirken diğeri `mission/heart` dalında Kalp Odası'nı geliştirebilir. İkisi de sahnesini kendi `mission.tres` dosyasına bağlar ve F5 ile kontrol merkezinden dener.
 
