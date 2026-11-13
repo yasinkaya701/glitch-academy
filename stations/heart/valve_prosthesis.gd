@@ -39,9 +39,11 @@ func setup(for_valve: int, ring_radius: float) -> void:
 	add_child(_body)
 
 	_ring_material = StandardMaterial3D.new()
-	_ring_material.albedo_color = Color("#d4dbe0")
+	_ring_material.albedo_texture = load("res://assets/materials/Metal009/Metal009_2K-JPG_Color.jpg")
+	_ring_material.albedo_color = Color("#e6ebef")
 	_ring_material.metallic = 1.0
-	_ring_material.roughness = 0.16
+	_ring_material.roughness = 0.22
+	_ring_material.uv1_scale = Vector3(4, 1, 1)
 	_ring_material.emission = Color("#e5645a")
 	var cuff_material := StandardMaterial3D.new()
 	cuff_material.albedo_color = Color("#efe7d6")
@@ -87,27 +89,24 @@ func setup(for_valve: int, ring_radius: float) -> void:
 	else:
 		_build_bioprosthesis(tissue, cuff_material)
 
-	# Yön oku: manşetin dışında, akışa bakan
+	# Yön oku: manşetin dış yüzüne basılı düz ok (+Y akış yönü)
 	var arrow := Node3D.new()
-	arrow.position = Vector3(radius * 1.45, 0.0, 0.0)
+	arrow.position = Vector3(radius * 1.23, 0.0, 0.0)
 	_body.add_child(arrow)
 	var shaft := MeshInstance3D.new()
-	var shaft_mesh := CylinderMesh.new()
-	shaft_mesh.top_radius = radius * 0.06
-	shaft_mesh.bottom_radius = radius * 0.06
-	shaft_mesh.height = radius * 0.8
+	var shaft_mesh := BoxMesh.new()
+	shaft_mesh.size = Vector3(radius * 0.012, radius * 0.38, radius * 0.07)
 	shaft.mesh = shaft_mesh
 	shaft.material_override = _arrow_material
-	shaft.position.y = radius * 0.4
+	shaft.position.y = radius * 0.05
 	arrow.add_child(shaft)
 	var head := MeshInstance3D.new()
-	var head_mesh := CylinderMesh.new()
-	head_mesh.top_radius = 0.0
-	head_mesh.bottom_radius = radius * 0.2
-	head_mesh.height = radius * 0.36
+	var head_mesh := PrismMesh.new()
+	head_mesh.size = Vector3(radius * 0.2, radius * 0.22, radius * 0.012)
 	head.mesh = head_mesh
 	head.material_override = _arrow_material
-	head.position.y = radius * 0.98
+	head.rotation_degrees = Vector3(0, 90, 0)
+	head.position.y = radius * 0.35
 	arrow.add_child(head)
 	_apply_open()
 
@@ -155,27 +154,42 @@ func _build_mechanical(carbon: Material) -> void:
 
 
 func _half_disc(r: float, side: float) -> ArrayMesh:
-	var vertices := PackedVector3Array()
-	var normals := PackedVector3Array()
-	var indices := PackedInt32Array()
-	var steps := 20
-	vertices.append(Vector3.ZERO)
-	normals.append(Vector3.UP)
+	## Kalınlıklı yarım disk: üst ve alt yüz, yay yanağı ve düz kenar. Yarım disk z ≥ 0 (side yönünde).
+	var thickness := r * 0.07
+	var steps := 24
+	var tool := SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var arc: Array[Vector3] = []
 	for i in steps + 1:
 		var angle := PI * float(i) / float(steps) - PI / 2.0
-		# Yarım disk: x ∈ [-r, r], z ≥ 0 (side yönünde)
-		vertices.append(Vector3(sin(angle) * r, 0.0, cos(angle) * r * side * 0.0 + side * absf(cos(angle)) * r * 0.9))
-		normals.append(Vector3.UP)
+		arc.append(Vector3(sin(angle) * r, 0.0, side * absf(cos(angle)) * r * 0.9))
+	var half := thickness * 0.5
+	var centre := Vector3.ZERO
 	for i in steps:
-		indices.append_array([0, i + 1, i + 2])
-	var arrays := []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = vertices
-	arrays[Mesh.ARRAY_NORMAL] = normals
-	arrays[Mesh.ARRAY_INDEX] = indices
-	var mesh := ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	return mesh
+		var a := arc[i]
+		var b := arc[i + 1]
+		# Üst ve alt yüz
+		tool.add_vertex(centre + Vector3(0, half, 0))
+		tool.add_vertex(a + Vector3(0, half, 0))
+		tool.add_vertex(b + Vector3(0, half, 0))
+		tool.add_vertex(centre - Vector3(0, half, 0))
+		tool.add_vertex(b - Vector3(0, half, 0))
+		tool.add_vertex(a - Vector3(0, half, 0))
+		# Yay yanağı
+		tool.add_vertex(a + Vector3(0, half, 0))
+		tool.add_vertex(a - Vector3(0, half, 0))
+		tool.add_vertex(b - Vector3(0, half, 0))
+		tool.add_vertex(a + Vector3(0, half, 0))
+		tool.add_vertex(b - Vector3(0, half, 0))
+		tool.add_vertex(b + Vector3(0, half, 0))
+	# Düz kenar (merkez çizgisi)
+	var first := arc[0]
+	var last := arc[steps]
+	for tri in [[first + Vector3(0, half, 0), last + Vector3(0, half, 0), last - Vector3(0, half, 0)], [first + Vector3(0, half, 0), last - Vector3(0, half, 0), first - Vector3(0, half, 0)]]:
+		for vertex in tri:
+			tool.add_vertex(vertex)
+	tool.generate_normals()
+	return tool.commit()
 
 
 func _build_bioprosthesis(tissue: Material, cloth: Material) -> void:

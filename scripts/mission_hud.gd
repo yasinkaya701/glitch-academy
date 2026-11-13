@@ -139,7 +139,8 @@ func _draw() -> void:
 	var font := get_theme_default_font()
 	# Yönerge kartı: yuvarlak cam panel, ilerleme çubuğu, ince vurgu çizgisi.
 	var wanted := maxf(directive.get_minimum_size().x + 40.0, 420.0)
-	var card := Rect2(Vector2(24, 16), Vector2(minf(wanted, size.x - 48.0), 88.0))
+	var card_height := maxf(88.0, directive.position.y - 16.0 + directive.get_minimum_size().y + 16.0)
+	var card := Rect2(Vector2(24, 16), Vector2(minf(wanted, size.x - 48.0), card_height))
 	draw_style_box(_card_box(Color(PANEL, 0.94), EDGE_STRONG, 8, 0), card)
 	if _steps_total > 0:
 		var track := Rect2(card.position + Vector2(0, card.size.y - 3.0), Vector2(card.size.x, 3.0))
