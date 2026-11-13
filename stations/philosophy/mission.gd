@@ -373,19 +373,38 @@ func _speak_stage_line(level: int, custom_line_id: StringName = &"") -> void:
 		stage.voice.speak_live(id, fallback, lid)
 
 
+func _type_and_send(msg: String) -> void:
+	_input_box.text = ""
+	for i in msg.length():
+		_input_box.text = msg.substr(0, i + 1)
+		await get_tree().create_timer(0.035).timeout
+	await get_tree().create_timer(0.35).timeout
+	_on_text_submitted(msg)
+
+
 func _run_demo() -> void:
-	for lvl in range(1, 5):
-		await get_tree().create_timer(2.4).timeout
-		_set_level(lvl)
-		if lvl == 1:
-			hud.say("Hafızasında bir kıpırtı uyandı.", &"good")
-		elif lvl == 4:
-			hud.set_directive("Sokrates kendi felsefesini tamamen hatırladı.")
-			hud.say("Fikir halkası tamamlandı.", &"good")
-			hud.set_action("Yeniden Dene")
-	await get_tree().create_timer(2.4).timeout
-	_pick(_index)
-	await get_tree().create_timer(1.4).timeout
-	_apply_wrong_choice("wrong_sofist")
-	await get_tree().create_timer(1.8).timeout
-	_apply_wrong_choice("wrong_empedokles")
+	# 1. Aristoteles (Aristo) ile canlı mesajlaşma testi
+	_pick(ORDER.find(&"aristotle"))
+	await get_tree().create_timer(5.8).timeout
+	await _type_and_send("Sen kimsin, hocan Platon ile farkın nedir?")
+	await get_tree().create_timer(6.8).timeout
+	await _type_and_send("Formlar ayrı dünyada değil, madde ve form nesnenin içindedir")
+	await get_tree().create_timer(9.5).timeout
+	await _type_and_send("Maddi, formel, fail ve ereksel dört neden kuramı")
+	await get_tree().create_timer(7.5).timeout
+	await _type_and_send("Organon ile mantık ve kıyas yöntemini kurdun")
+	await get_tree().create_timer(8.0).timeout
+	await _type_and_send("Erdem iki aşırı uç arasındaki altın ortadır")
+	await get_tree().create_timer(7.2).timeout
+
+	# 2. Sokrates ile canlı mesajlaşma testi
+	_pick(ORDER.find(&"socrates"))
+	await get_tree().create_timer(6.5).timeout
+	await _type_and_send("Bildiğin tek şey hiçbir şey bilmediğindir")
+	await get_tree().create_timer(8.5).timeout
+	await _type_and_send("Sorularla hakikati doğurtma, yani maiotik yöntemi")
+	await get_tree().create_timer(6.5).timeout
+	await _type_and_send("Erdem bilgidir, kimse bilerek kötülük yapmaz")
+	await get_tree().create_timer(8.0).timeout
+	await _type_and_send("Sorgulanmamış hayat yaşanmaya değmez")
+
