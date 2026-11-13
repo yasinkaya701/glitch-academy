@@ -1,6 +1,11 @@
 extends SubViewportContainer
 ## Procedural miniature sets for the six LGS missions. Each shape is part of the lesson model.
 
+const LABEL_FONT = preload("res://assets/fonts/IBMPlexSans.ttf")
+const CHALK_FONT = preload("res://assets/fonts/Kalam-Regular.ttf")
+
+signal proof_animation_finished
+
 @export var mission_id: StringName = &"seasons"
 
 const ColorSet := {
@@ -17,30 +22,33 @@ var _stage := 0
 var _solved := false
 var _fault_visible := false
 var _spin := 0.0
-var _dragging := false
+var _proof_focus := -1
+var _proof_repaired := false
+var proof_animation_done := false
+var _proof_animation_started := false
+var _proof_labels: Array[Label3D] = []
+var _chalk_tip: MeshInstance3D
+var _meridyen_core: MeshInstance3D
 
 
 func _ready() -> void:
 	_set = get_node("Viewport/World/Setpiece")
+	if mission_id == &"bridge":
+		var camera := get_node("Viewport/World/Camera3D") as Camera3D
+		camera.projection = Camera3D.PROJECTION_ORTHOGONAL
+		camera.size = 7.8
+		camera.position = Vector3(-0.15, 1.85, 13.0)
+		camera.look_at(Vector3(-0.15, 1.85, 0.0), Vector3.UP)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_rebuild()
 
 
-func _gui_input(event: InputEvent) -> void:
-	if mission_id != &"bridge":
-		return
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		_dragging = event.pressed
-		accept_event()
-	elif event is InputEventMouseMotion and _dragging:
-		_set.rotate_y(-event.relative.x * 0.01)
-		accept_event()
-
-
-func set_lesson_state(stage: int, solved: bool, fault_visible := false) -> void:
+func set_lesson_state(stage: int, solved: bool, fault_visible := false, proof_focus := -1, proof_repaired := false) -> void:
 	_stage = stage
 	_solved = solved
 	_fault_visible = fault_visible
+	_proof_focus = proof_focus
+	_proof_repaired = proof_repaired
 	if is_node_ready():
 		_rebuild()
 
@@ -51,6 +59,20 @@ func _process(delta: float) -> void:
 		var sun := _set.get_node_or_null("Sun")
 		if sun:
 			sun.rotation.y = _spin * 0.18
+	if mission_id == &"bridge":
+		var orb := _set.get_node_or_null("MeridyenOrb") as Node3D
+		if orb:
+			orb.position.y = 1.78 + sin(_spin * 1.25) * 0.075
+			orb.rotation.y = sin(_spin * 0.42) * 0.16
+			var orbit_a := orb.get_node_or_null("OrbitA") as Node3D
+			var orbit_b := orb.get_node_or_null("OrbitB") as Node3D
+			if orbit_a:
+				orbit_a.rotation.y = _spin * 0.92
+			if orbit_b:
+				orbit_b.rotation.x = 0.72 + sin(_spin * 0.6) * 0.12
+			if _meridyen_core:
+				var pulse := 1.0 + sin(_spin * 2.4) * 0.035
+				_meridyen_core.scale = Vector3.ONE * pulse
 	var beacon := _set.get_node_or_null("SignalBeacon")
 	if beacon:
 		beacon.scale.y = 0.92 + 0.08 * sin(_spin * 2.2)
@@ -65,19 +87,26 @@ func _rebuild() -> void:
 	_add_stage(accent)
 	match mission_id:
 		&"seasons": _make_seasons(active, colors)
-		&"bridge": _make_bridge(active, colors)
+		&"bridge": _make_identity_proof(active, colors)
 		&"turkish": _make_safety_door(active, colors)
 		&"history": _make_archive(active, colors)
 		&"english": _make_supply_station(active, colors)
 		&"religion": _make_community_archive(active, colors)
+	if mission_id == &"bridge" and not proof_animation_done and not _proof_animation_started:
+		_proof_animation_started = true
+		_animate_proof.call_deferred()
 
 
 func _add_stage(accent: Color) -> void:
-	_box("Deck", Vector3(0, -0.13, 0), Vector3(5.4, 0.22, 4.4), Color("#10283a"), _set)
-	_box("FloorInset", Vector3(0, 0.0, 0), Vector3(4.85, 0.035, 3.85), Color("#18384b"), _set)
-	_torus("Rim", Vector3(0, 0.05, 0), 2.15, 2.2, 0.026, accent.darkened(0.36), _set)
-	var label := _label("SceneTitle", _title_for(mission_id), Vector3(-2.25, 1.8, -1.45), accent, 31)
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	var deck_width := 11.6 if mission_id == &"bridge" else 5.4
+	var floor_width := 11.0 if mission_id == &"bridge" else 4.85
+	_box("Deck", Vector3(0, -0.13, 0), Vector3(deck_width, 0.22, 4.4), Color("#10283a"), _set)
+	_box("FloorInset", Vector3(0, 0.0, 0), Vector3(floor_width, 0.035, 3.85), Color("#18384b"), _set)
+	if mission_id != &"bridge":
+		_torus("Rim", Vector3(0, 0.05, 0), 2.15, 2.2, 0.026, accent.darkened(0.36), _set)
+	if mission_id != &"bridge":
+		var label := _label("SceneTitle", _title_for(mission_id), Vector3(-2.25, 1.8, -1.45), accent, 31)
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 
 
 func _make_seasons(active: Color, colors: Array) -> void:
@@ -108,37 +137,144 @@ func _make_seasons(active: Color, colors: Array) -> void:
 		_box("Ray%d" % i, Vector3(ray_x, 0.49, 0.02), Vector3(0.36, 0.018, 0.04), Color("#ffe6a0"), _set, Vector3(0, 0, deg_to_rad(-8 + i * 8)), true)
 
 
-func _make_bridge(active: Color, colors: Array) -> void:
-	var deck_color: Color = active if _solved or _stage >= 2 else colors[2]
-	# A pair of side trusses makes the perpendicular 9 and 12 supports and
-	# the 15-unit diagonal readable from the isometric camera.
-	var left := -0.6
-	var right := 0.6
-	var road_y := 0.34
-	var tower_y := 1.32
-	var half_width := 0.68
-	_box("NearAbutment", Vector3(left - 0.22, 0.16, 0), Vector3(0.4, 0.32, 1.8), colors[2], _set)
-	_box("FarAbutment", Vector3(right + 0.22, 0.16, 0), Vector3(0.4, 0.32, 1.8), colors[2], _set)
-	_box("PierLeft", Vector3(left, 0.83, 0), Vector3(0.16, 0.98, 1.34), Color("#8fa8b8"), _set)
-	_box("PierRight", Vector3(right, 0.42, 0), Vector3(0.16, 0.48, 1.34), Color("#8fa8b8"), _set)
-	_box("DeckSpan", Vector3(0, road_y, 0), Vector3(1.5 if _solved or _stage >= 2 else 0.58, 0.14, 1.5), deck_color, _set)
-	for side in [-1.0, 1.0]:
-		var z: float = side * half_width
-		# 12-unit run, 9-unit rise, and their 15-unit diagonal (scaled 0.1).
-		_rod("Run12_%s" % side, Vector3(left, road_y + 0.08, z), Vector3(right, road_y + 0.08, z), 0.045, colors[1], _set)
-		_rod("Rise9_%s" % side, Vector3(left, road_y + 0.08, z), Vector3(left, tower_y, z), 0.045, colors[0], _set)
-		_rod("Hypotenuse15_%s" % side, Vector3(left, tower_y, z), Vector3(right, road_y + 0.08, z), 0.055, active, _set)
-		_box("RailingPost_%s" % side, Vector3(right, 0.79, z), Vector3(0.07, 0.78, 0.07), Color("#b6c8ce"), _set)
-		_box("Railing_%s" % side, Vector3(0, 1.17, z), Vector3(1.25, 0.07, 0.07), colors[0], _set)
-	for x in [-0.5, -0.25, 0.0, 0.25, 0.5]:
-		_box("CrossBeam", Vector3(x, road_y - 0.08, 0), Vector3(0.07, 0.12, 1.45), Color("#6d8798"), _set)
-	_label("LegLabelA", "9", Vector3(-0.78, 0.88, -0.76), colors[0], 25)
-	_label("LegLabelB", "12", Vector3(0.0, 0.37, -0.84), colors[1], 25)
-	_label("Hypotenuse", "c = 15", Vector3(0.32, 1.0, -0.78), active, 25)
-	for i in 5:
-		var t := float(i) / 4.0
-		var light_pos := Vector3(lerp(-1.3, 1.3, t), 0.08, 1.05)
-		_sphere("RunwayLight%d" % i, light_pos, Vector3(0.075, 0.035, 0.075), active, _set, true)
+func _make_identity_proof(active: Color, colors: Array) -> void:
+	_make_proof_board()
+	var x_left := 1.2
+	var y_bottom := 0.34
+	var a := 1.4
+	var b := 1.0
+	var z := 0.62
+	var square_center := Vector3(x_left + (a + b) * 0.5, y_bottom + (a + b) * 0.5, 0.48)
+	_box("AreaSquareBase", square_center, Vector3(a + b + 0.08, a + b + 0.08, 0.18), Color("#263d55"), _set)
+	_box("AreaSquareOutline", square_center + Vector3(0, 0, 0.13), Vector3(a + b + 0.04, a + b + 0.04, 0.06), Color("#bed0dc"), _set)
+	var a_square := _box("AreaA2", Vector3(x_left + a * 0.5, y_bottom + a * 0.5, z), Vector3(a, a, 0.2), Color("#4a91c9"), _set)
+	var b_square := _box("AreaB2", Vector3(x_left + a + b * 0.5, y_bottom + a + b * 0.5, z), Vector3(b, b, 0.2), Color("#e8a34e"), _set)
+	_label("AreaLabelA2", "a²", a_square.position + Vector3(0, 0, 0.14), Color("#f2f8fb"), 32).pixel_size = 0.011
+	_label("AreaLabelB2", "b²", b_square.position + Vector3(0, 0, 0.14), Color("#fff5df"), 27).pixel_size = 0.011
+	var ab_color := Color("#e5645a") if not _proof_repaired else Color("#55cbb3")
+	var ab_top_target := Vector3(x_left + a * 0.5, y_bottom + a + b * 0.5, z)
+	var ab_side_target := Vector3(x_left + a + b * 0.5, y_bottom + a * 0.5, z)
+	var ab_top_start := Vector3(4.5, y_bottom + a + b * 0.5 + 0.28, z + 0.15)
+	var ab_side_start := Vector3(5.65, y_bottom + a * 0.5 - 0.14, z + 0.15)
+	var ab_top := _box("AreaAB1", ab_top_start, Vector3(a, b, 0.2), ab_color, _set)
+	var ab_side := _box("AreaAB2", ab_side_start, Vector3(b, a, 0.2), ab_color, _set)
+	var ab_top_label := _label("AreaLabelAB1", "ab", ab_top.position + Vector3(0, 0, 0.14), Color("#fff1ef"), 25)
+	var ab_side_label := _label("AreaLabelAB2", "ab", ab_side.position + Vector3(0, 0, 0.14), Color("#fff1ef"), 25)
+	ab_top_label.pixel_size = 0.011
+	ab_side_label.pixel_size = 0.011
+	if _proof_repaired:
+		var snap_tween := create_tween().set_parallel(true)
+		snap_tween.tween_property(ab_top, "position", ab_top_target, 0.65).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		snap_tween.tween_property(ab_side, "position", ab_side_target, 0.65).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		snap_tween.tween_property(ab_top_label, "position", ab_top_target + Vector3(0, 0, 0.14), 0.65).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		snap_tween.tween_property(ab_side_label, "position", ab_side_target + Vector3(0, 0, 0.14), 0.65).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	var dimension := _label("SquareDimension", "a + b", Vector3(2.4, 0.18, 0.72), active, 19)
+	dimension.pixel_size = 0.010
+	_make_meridyen_orb()
+
+
+func _make_meridyen_orb() -> void:
+	var orb := Node3D.new()
+	orb.name = "MeridyenOrb"
+	orb.position = Vector3(0.1, 1.78, 1.15)
+	_set.add_child(orb)
+	var shell_material := StandardMaterial3D.new()
+	shell_material.albedo_color = Color("#123449")
+	shell_material.metallic = 0.78
+	shell_material.roughness = 0.2
+	shell_material.emission_enabled = true
+	shell_material.emission = Color("#176c7a")
+	shell_material.emission_energy_multiplier = 0.48
+	_meridyen_core = _sphere("Core", Vector3.ZERO, Vector3(0.45, 0.45, 0.45), Color("#123449"), orb)
+	_meridyen_core.material_override = shell_material
+	var lens := _sphere("Lens", Vector3(0.0, 0.015, 0.355), Vector3(0.245, 0.245, 0.13), Color("#54dcd0"), orb, true)
+	lens.material_override = _mat(Color("#64e9dc"), true)
+	var pupil := _sphere("Pupil", Vector3(0.0, 0.015, 0.468), Vector3(0.11, 0.11, 0.06), Color("#082d37"), orb)
+	pupil.material_override = shell_material.duplicate()
+	_sphere("LensGlint", Vector3(-0.045, 0.07, 0.518), Vector3(0.038, 0.038, 0.028), Color("#f3fff6"), orb, true)
+	var orbit_a := Node3D.new()
+	orbit_a.name = "OrbitA"
+	orbit_a.rotation = Vector3(deg_to_rad(58), 0.0, deg_to_rad(24))
+	orb.add_child(orbit_a)
+	_torus("OrbitRingA", Vector3.ZERO, 0.56, 0.61, 0.026, Color("#49d5ca"), orbit_a)
+	_sphere("OrbitSparkA", Vector3(0.59, 0.0, 0.0), Vector3(0.065, 0.065, 0.065), Color("#f5c476"), orbit_a, true)
+	var orbit_b := Node3D.new()
+	orbit_b.name = "OrbitB"
+	orbit_b.rotation = Vector3(0.72, deg_to_rad(52), deg_to_rad(-34))
+	orb.add_child(orbit_b)
+	_torus("OrbitRingB", Vector3.ZERO, 0.65, 0.69, 0.018, Color("#edb45c"), orbit_b)
+	_sphere("OrbitSparkB", Vector3(-0.67, 0.0, 0.0), Vector3(0.045, 0.045, 0.045), Color("#fff5d8"), orbit_b, true)
+	var halo := _torus("Halo", Vector3.ZERO, 0.48, 0.50, 0.008, Color("#83f4e7"), orb)
+	halo.rotation.x = PI * 0.5
+	var glow := OmniLight3D.new()
+	glow.name = "CoreGlow"
+	glow.light_color = Color("#54dcd0")
+	glow.light_energy = 0.72
+	glow.omni_range = 3.2
+	orb.add_child(glow)
+
+
+func _make_proof_board() -> void:
+	_proof_labels.clear()
+	var board_center := Vector3(-3.25, 1.85, -1.08)
+	_box("ProofBoardFrame", board_center + Vector3(0, 0, -0.10), Vector3(4.95, 3.88, 0.14), Color("#594333"), _set)
+	_box("ProofBoardFace", board_center, Vector3(4.75, 3.68, 0.12), Color("#182b25"), _set)
+	_box("ChalkTray", Vector3(-3.25, -0.04, -0.76), Vector3(4.82, 0.11, 0.28), Color("#725438"), _set)
+	_box("ChalkStick", Vector3(-5.0, 0.055, -0.58), Vector3(0.36, 0.045, 0.07), Color("#f0eee2"), _set)
+	var heading := _chalk_label("ProofBoardHeading", "MERİDYEN  ·  İSPAT", Vector3(-3.25, 3.18, -0.88), Color("#fffdf5"), 28)
+	heading.pixel_size = 0.015
+	var lines := [
+		"01  Kenar: a+b",
+		"02  Alan: (a+b)²",
+		"03  Alanlar: a², ab, ab, b²",
+		"04  Toplam: a²+ab+ab+b²",
+		"05  (a+b)² = a²+b²"
+	]
+	for i in lines.size():
+		var y := 2.62 - i * 0.54
+		if _proof_focus == i:
+			var focus_color := Color("#6fe3c1") if _proof_repaired else Color("#e5645a") if i == 4 else Color("#f2a65a")
+			_box("ProofFocus%d" % i, Vector3(-3.25, y + 0.015, -0.91), Vector3(4.45, 0.43, 0.035), focus_color.darkened(0.58), _set, Vector3.ZERO, true)
+		var is_corrected_line := i == 4 and _proof_repaired
+		var displayed_text: String = "05  (a+b)² = a²+2ab+b²" if is_corrected_line else lines[i]
+		var line_label := _chalk_label("ProofLine%d" % i, "" if not proof_animation_done else displayed_text, Vector3(-3.25, y, -0.80), Color("#fffef8"), 24)
+		line_label.pixel_size = 0.014
+		line_label.set_meta("chalk_text", displayed_text)
+		_proof_labels.append(line_label)
+	_chalk_tip = _sphere("ChalkWritingTip", Vector3(-3.25, 2.62, -0.67), Vector3(0.046, 0.046, 0.046), Color("#fffdf4"), _set, true)
+	_chalk_tip.visible = false
+
+
+func _animate_proof() -> void:
+	if proof_animation_done or _proof_labels.is_empty():
+		proof_animation_done = true
+		proof_animation_finished.emit()
+		return
+	_chalk_tip.visible = true
+	for line_label in _proof_labels:
+		var chalk_text: String = line_label.get_meta("chalk_text")
+		line_label.text = ""
+		var text_width := line_label.pixel_size * float(line_label.font_size) * 0.47 * float(chalk_text.length())
+		_chalk_tip.position = line_label.position + Vector3(-text_width * 0.5, 0.0, 0.13)
+		var width_per_character := line_label.pixel_size * float(line_label.font_size) * 0.47
+		for character_index in chalk_text.length():
+			line_label.text = chalk_text.substr(0, character_index + 1)
+			_chalk_tip.position.x = line_label.position.x - text_width * 0.5 + width_per_character * float(character_index + 1)
+			await get_tree().create_timer(0.026).timeout
+		await get_tree().create_timer(0.28).timeout
+	_chalk_tip.visible = false
+	proof_animation_done = true
+	proof_animation_finished.emit()
+
+
+func _chalk_label(id: String, text: String, position: Vector3, color: Color, font_size: int) -> Label3D:
+	var label := _label(id, text, position, color, font_size)
+	label.font = CHALK_FONT
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.outline_size = 2
+	label.outline_modulate = Color("#09130f", 0.75)
+	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	return label
 
 
 func _make_safety_door(active: Color, colors: Array) -> void:
@@ -219,7 +355,7 @@ func _make_community_archive(active: Color, colors: Array) -> void:
 
 func _title_for(id: StringName) -> String:
 	return {
-		"seasons": "MEVSİM GÖZLEMEVİ", "bridge": "KÖPRÜ ATÖLYESİ",
+		"seasons": "MEVSİM GÖZLEMEVİ", "bridge": "İSPAT LABORATUVARI",
 		"turkish": "GÜVENLİK TALİMATI", "history": "BELGE ARŞİVİ",
 		"english": "YARDIM İSTASYONU", "religion": "DAYANIŞMA ARŞİVİ"
 	}.get(String(id), "LGS DENEY DÜZENEĞİ")
@@ -295,12 +431,12 @@ func _label(id: String, text: String, position: Vector3, color: Color, font_size
 	label.name = id
 	label.text = text
 	label.position = position
+	label.font = LABEL_FONT
 	label.font_size = font_size
 	label.pixel_size = 0.015
 	label.modulate = color
 	label.outline_size = 5
 	label.outline_modulate = Color("#06121c")
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_set.add_child(label)
 	return label

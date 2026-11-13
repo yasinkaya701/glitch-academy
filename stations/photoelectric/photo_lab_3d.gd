@@ -2,6 +2,7 @@ extends Node3D
 ## A vacuum tube makes photon threshold, electron flow, current and gate response visible.
 
 const Photo = preload("res://stations/photoelectric/photo_sim.gd")
+const RETRO_MULTIMETER = preload("res://stations/photoelectric/assets/polyhaven/retro_multimeter/retro_multimeter_4k.gltf")
 
 var frequency := 4.3e14
 var intensity := 1.0
@@ -94,7 +95,7 @@ func _build_scene() -> void:
 	_box("CathodeWire", Vector3(-0.72, -0.58, 0), Vector3(0.055, 0.95, 0.06), Color("#e4ac60"))
 	_box("AnodeWire", Vector3(0.74, -0.58, 0), Vector3(0.055, 0.95, 0.06), Color("#65aab8"))
 	_add_text("CathodeLabel", "KATOT  /  Cs", Vector3(-0.77, 0.92, 0), Color("#f5d79e"), 25)
-	_add_text("AnodeLabel", "ANOT", Vector3(0.76, 0.92, 0), Color("#b7e6ea"), 25)
+	_add_text("AnodeLabel", "ANOT", Vector3(0.76, 1.25, 0), Color("#b7e6ea"), 25)
 	# Beam is active only when a photon can exceed the work function.
 	_beam_material = _material(Color("#f6c45f"), true)
 	_beam_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -104,16 +105,14 @@ func _build_scene() -> void:
 	for i in 5:
 		_box("AxisMark%d" % i, Vector3(-2.0 + i * 0.25, -0.37, 0.55), Vector3(0.025, 0.13, 0.025), Color("#7f99a8"))
 	# Current meter is an instrument panel, not a decorative icon.
-	_box("MeterBody", Vector3(-0.04, 1.18, 0.0), Vector3(1.05, 0.42, 0.22), Color("#1c2a38"))
-	_box("MeterFace", Vector3(-0.04, 1.18, 0.13), Vector3(0.84, 0.29, 0.035), Color("#d5e2df"))
-	for i in 5:
-		_box("MeterTick%d" % i, Vector3(-0.34 + i * 0.15, 1.14, 0.158), Vector3(0.018, 0.06, 0.015), Color("#344b58"))
-	_meter_needle = Node3D.new()
-	_meter_needle.name = "MeterNeedlePivot"
-	_meter_needle.position = Vector3(-0.04, 1.18, 0.19)
-	add_child(_meter_needle)
-	_box("MeterNeedle", Vector3(0.0, 0.09, 0), Vector3(0.018, 0.19, 0.015), Color("#cf603e"), Vector3(0, 0, -0.55), false, _meter_needle)
-	_add_text("MeterLabel", "µA  /  AMPERMETRE", Vector3(-0.04, 1.55, 0.13), Color("#e2eff2"), 24)
+	var meter := RETRO_MULTIMETER.instantiate() as Node3D
+	meter.name = "PolyHavenAnalogMultimeter"
+	# The Poly Haven source is a 0.14 m-wide handheld unit. Place it upright on
+	# the front-right of the instrument plinth, clear of the photo tube and labels.
+	meter.position = Vector3(1.28, -0.82, 0.46)
+	meter.scale = Vector3.ONE * 4.2
+	add_child(meter)
+	_meter_needle = meter.find_child("retro_multimeter_needle_LOD0", true, false) as Node3D
 	# Stopping-voltage control and the archival interlock door.
 	_cylinder("VoltageDial", Vector3(0.72, -0.81, 0.0), 0.2, 0.08, Color("#dfaa56"), 32)
 	_add_text("VoltageLabel", "V_durdurma", Vector3(0.72, -1.1, 0.05), Color("#f0ca86"), 22)

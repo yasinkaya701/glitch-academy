@@ -1,14 +1,16 @@
-[gd_resource type="Resource" load_steps=2 format=3]
+[gd_resource type="Resource" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/bridge/mission.tscn" id="2"]
 
 [resource]
 script = ExtResource("1")
 id = &"bridge"
-title = "Köprü Atölyesi"
-subject = "Geometri"
+title = "İspat Laboratuvarı"
+subject = "Matematik"
 grade = 8
 routes = PackedStringArray("class", "lgs")
-description = "Bir kirişin uzunluğunu hesapla ve köprüyü kapat."
-curriculum = "M.8.3.1.5"
+description = "Yapay zekânın özdeşlik ispatındaki hatalı satırı bul ve düzelt."
+curriculum = "M.8.2.1.3"
 source_url = "https://odsgm.meb.gov.tr/www/8-sinif-matematik-unitelendirilmis-ornek-sorular/icerik/677"
+scene = ExtResource("2")

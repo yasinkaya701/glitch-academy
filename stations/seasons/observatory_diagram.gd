@@ -9,6 +9,8 @@ const MUTED := Color("a3b9bf")
 const AQUA := Color("77d2bd")
 const GOLD := Color("f0aa70")
 const ORBIT := Color("557386")
+const EARTH_ALBEDO := preload("res://stations/seasons/assets/earth_albedo_4k.jpg")
+const GREENHOUSE_INTERIOR := preload("res://stations/seasons/assets/grab3d/greenhouse-interior.glb")
 
 var december := false
 var tilt := Model.AXIAL_TILT
@@ -18,23 +20,29 @@ var incident_time := 0.0
 
 var viewport: SubViewport
 var world: Node3D
+var system_rig: Node3D
+var orbit_rig: Node3D
 var camera: Camera3D
 var earths: Array[Node3D] = []
 var earth_surfaces: Array[MeshInstance3D] = []
 var summer_markers: Array[MeshInstance3D] = []
 var winter_markers: Array[MeshInstance3D] = []
 var solar_spheres: Array[MeshInstance3D] = []
+var solar_rays: Array[MeshInstance3D] = []
+var solar_visuals: Array[MeshInstance3D] = []
+var starfield: MultiMeshInstance3D
 var solar_light: OmniLight3D
 var orbit_material: StandardMaterial3D
 var greenhouse_root: Node3D
-var greenhouse_glass: MeshInstance3D
-var greenhouse_vent: Node3D
-var plants: Array[Node3D] = []
 var readout := ""
+var dragging_system := false
+var last_pointer := Vector2.ZERO
 
 
 func _ready() -> void:
 	clip_contents = true
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	mouse_default_cursor_shape = Control.CURSOR_MOVE
 	var viewport_box := SubViewportContainer.new()
 	viewport_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	viewport_box.stretch = true
@@ -42,12 +50,62 @@ func _ready() -> void:
 	add_child(viewport_box)
 	viewport = SubViewport.new()
 	viewport.size = Vector2i(960, 720)
+	viewport.msaa_3d = Viewport.MSAA_4X
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	viewport_box.add_child(viewport)
 	world = Node3D.new()
 	world.name = "ObservatoryWorld"
 	viewport.add_child(world)
+	system_rig = Node3D.new()
+	system_rig.name = "RotatableSolarSystem"
+	world.add_child(system_rig)
 	_build_world()
+
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index == MOUSE_BUTTON_LEFT:
+			if mouse_button.double_click:
+				_reset_system_view()
+				dragging_system = false
+				accept_event()
+				return
+			dragging_system = mouse_button.pressed
+			last_pointer = mouse_button.position
+			accept_event()
+			return
+		if mouse_button.pressed and mouse_button.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+			camera.size = clampf(camera.size + (-0.45 if mouse_button.button_index == MOUSE_BUTTON_WHEEL_UP else 0.45), 5.3, 10.0)
+			accept_event()
+			return
+	if event is InputEventMouseMotion and dragging_system:
+		var motion := event as InputEventMouseMotion
+		var delta := motion.position - last_pointer
+		last_pointer = motion.position
+		_rotate_system(delta)
+		accept_event()
+		return
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		dragging_system = touch.pressed
+		last_pointer = touch.position
+		accept_event()
+		return
+	if event is InputEventScreenDrag and dragging_system:
+		var drag := event as InputEventScreenDrag
+		_rotate_system(drag.relative)
+		accept_event()
+
+
+func _rotate_system(pointer_delta: Vector2) -> void:
+	system_rig.rotation.y -= pointer_delta.x * 0.007
+	system_rig.rotation.x = clampf(system_rig.rotation.x - pointer_delta.y * 0.006, -0.9, 0.9)
+
+
+func _reset_system_view() -> void:
+	system_rig.rotation = Vector3.ZERO
+	camera.size = 8.0
 
 
 func _build_world() -> void:
@@ -96,10 +154,63 @@ func _build_world() -> void:
 	_build_sun()
 	_build_earth(Vector3(-3.55, 1.55, 0.0), "21 HAZİRAN", false)
 	_build_earth(Vector3(3.55, 1.55, 0.0), "21 ARALIK", true)
+	_build_starfield()
+	_build_solar_rays()
 	_build_greenhouse()
 
 
+func _build_starfield() -> void:
+	var points := MultiMesh.new()
+	var star_mesh := SphereMesh.new()
+	star_mesh.radius = 0.018
+	star_mesh.height = 0.036
+	star_mesh.radial_segments = 8
+	star_mesh.rings = 4
+	var star_material := StandardMaterial3D.new()
+	star_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	star_material.albedo_color = Color("d7e8ff")
+	star_material.emission_enabled = true
+	star_material.emission = Color("7faad8")
+	star_material.emission_energy_multiplier = 0.75
+	star_mesh.material = star_material
+	points.transform_format = MultiMesh.TRANSFORM_3D
+	points.mesh = star_mesh
+	points.instance_count = 108
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 23062026
+	for i in points.instance_count:
+		var scale := rng.randf_range(0.55, 1.7)
+		var position := Vector3(rng.randf_range(-6.2, 6.2), rng.randf_range(-2.4, 6.2), -11.0)
+		points.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3.ONE * scale), position))
+	starfield = MultiMeshInstance3D.new()
+	starfield.name = "DistantStars"
+	starfield.multimesh = points
+	world.add_child(starfield)
+
+
+func _build_solar_rays() -> void:
+	var ray_material := StandardMaterial3D.new()
+	ray_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ray_material.albedo_color = Color("ffd88f", 0.28)
+	ray_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ray_material.emission_enabled = true
+	ray_material.emission = Color("ffc86e")
+	ray_material.emission_energy_multiplier = 0.55
+	for side in [-1.0, 1.0]:
+		for offset in [-0.26, 0.0, 0.26]:
+			var start := Vector3(side * 0.61, 1.55 + offset, 0.0)
+			var finish := Vector3(side * 2.79, 1.55 + offset, 0.0)
+			var ray := _beam(start, finish, 0.012, Color("ffd88f"))
+			ray.material_override = ray_material
+			ray.name = "SolarRay_%s_%s" % ["L" if side < 0.0 else "R", str(offset)]
+			system_rig.add_child(ray)
+			solar_rays.append(ray)
+
+
 func _build_orbit() -> void:
+	orbit_rig = Node3D.new()
+	orbit_rig.name = "OrbitalModel"
+	system_rig.add_child(orbit_rig)
 	orbit_material = _material(Color("74a9bc"), 0.56, 0.0, 0.25)
 	orbit_material.emission_enabled = true
 	orbit_material.emission = Color("183849")
@@ -112,14 +223,14 @@ func _build_orbit() -> void:
 	path.position = Vector3(0.0, 1.55, 0.0)
 	path.scale = Vector3(1.0, 0.01, 0.52)
 	path.name = "EclipticOrbit"
-	world.add_child(path)
+	orbit_rig.add_child(path)
 	# Four brass station pins mark the solstices and equinoxes on the orbit.
 	for i in 4:
 		var angle := TAU * float(i) / 4.0
 		var pin := _sphere(0.055, _material(Color("f1bd7a"), 0.34, 0.35, 0.18))
 		pin.position = Vector3(cos(angle) * 3.78, 1.58, sin(angle) * 1.97)
 		pin.name = "SeasonalOrbitMarker_%02d" % i
-		world.add_child(pin)
+		orbit_rig.add_child(pin)
 	# A fine circular calibration deck under the orbit gives the display a measured instrument feel.
 	var deck := MeshInstance3D.new()
 	var disk := CylinderMesh.new()
@@ -130,7 +241,7 @@ func _build_orbit() -> void:
 	deck.position = Vector3(0.0, -0.04, 0.0)
 	deck.material_override = _material(Color("122333"), 0.7, 0.22, 0.22)
 	deck.name = "CalibrationDeck"
-	world.add_child(deck)
+	orbit_rig.add_child(deck)
 	for radius in [4.2, 4.45]:
 		var ring := MeshInstance3D.new()
 		var torus := TorusMesh.new()
@@ -139,18 +250,19 @@ func _build_orbit() -> void:
 		ring.mesh = torus
 		ring.position.y = 0.012
 		ring.material_override = _material(Color("345467"), 0.4, 0.0, 0.35)
-		world.add_child(ring)
+		orbit_rig.add_child(ring)
 
 
 func _build_sun() -> void:
-	var sun := _sphere(0.66, _material(Color("ffd98c"), 0.24, 0.0, 0.12))
+	var sun := _sphere(0.66, _material(Color("ffbf6a"), 0.5, 0.0, 0.12))
 	sun.name = "SunCore"
 	sun.position = Vector3(0.0, 1.55, 0.0)
 	var sun_mat := sun.material_override as StandardMaterial3D
 	sun_mat.emission_enabled = true
 	sun_mat.emission = Color("ff9d48")
-	sun_mat.emission_energy_multiplier = 3.5
-	world.add_child(sun)
+	sun_mat.emission_energy_multiplier = 0.72
+	system_rig.add_child(sun)
+	solar_visuals.append(sun)
 	for radius in [0.78, 0.9]:
 		var corona := MeshInstance3D.new()
 		var mesh := SphereMesh.new()
@@ -159,20 +271,22 @@ func _build_sun() -> void:
 		corona.mesh = mesh
 		var material := _material(Color("ffb45f", 0.15 if radius < 0.85 else 0.065), 0.45, 0.0, 0.0)
 		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		material.emission_enabled = true
 		material.emission = Color("fa8e36")
 		material.emission_energy_multiplier = 0.45
 		corona.material_override = material
 		corona.position = sun.position
 		corona.name = "SolarCorona_%.2f" % radius
-		world.add_child(corona)
+		system_rig.add_child(corona)
+		solar_visuals.append(corona)
 	solar_light = OmniLight3D.new()
 	solar_light.position = sun.position
 	solar_light.light_color = Color("ffc875")
 	solar_light.light_energy = 2.0
 	solar_light.omni_range = 11.0
 	solar_light.omni_attenuation = 1.1
-	world.add_child(solar_light)
+	system_rig.add_child(solar_light)
 
 
 func _build_earth(position: Vector3, marker: String, winter_side: bool) -> void:
@@ -180,30 +294,40 @@ func _build_earth(position: Vector3, marker: String, winter_side: bool) -> void:
 	pivot.position = position
 	pivot.rotation.z = -deg_to_rad(Model.AXIAL_TILT)
 	pivot.name = "AxialTiltRig_%s" % marker.replace(" ", "_")
-	world.add_child(pivot)
+	system_rig.add_child(pivot)
 	earths.append(pivot)
-	var globe := _sphere(0.77, _material(Color("174763"), 0.3, 0.18, 0.12))
+	var globe := _sphere(0.77, _material(Color.WHITE, 0.3, 0.0, 0.12))
 	globe.name = "BlueOceanGlobe"
+	var globe_material := globe.material_override as StandardMaterial3D
+	globe_material.albedo_texture = EARTH_ALBEDO
+	globe_material.roughness = 0.78
+	globe_material.metallic = 0.0
 	pivot.add_child(globe)
 	earth_surfaces.append(globe)
-	# Raised stylized continental plates on the camera-facing hemisphere.
-	var land_mat := _material(Color("77a877"), 0.68, 0.0, 0.0)
-	for spec in [
-		Vector3(-0.24, 0.32, 0.63), Vector3(-0.35, 0.13, 0.65), Vector3(-0.14, -0.02, 0.7),
-		Vector3(0.12, 0.26, 0.66), Vector3(0.29, 0.12, 0.65), Vector3(0.23, -0.13, 0.69),
-		Vector3(-0.16, -0.3, 0.62), Vector3(0.08, -0.39, 0.62), Vector3(0.38, -0.31, 0.53),
-	]:
-		var plate := _sphere(0.15, land_mat)
-		plate.position = spec
-		plate.scale = Vector3(1.0, 1.18, 0.24)
-		plate.name = "RaisedContinentalPlate"
-		pivot.add_child(plate)
-	# Polar caps and a metallic axial rod move with the globe's 23.4-degree axis.
-	for sign in [-1.0, 1.0]:
-		var cap := _sphere(0.105, _material(Color("d7e7df"), 0.44, 0.0, 0.0))
-		cap.position.y = sign * 0.74
-		cap.name = "PolarIceCap"
-		pivot.add_child(cap)
+	# Dense sphere tessellation keeps the high-resolution surface smooth at close range.
+	var earth_mesh := globe.mesh as SphereMesh
+	earth_mesh.radial_segments = 96
+	earth_mesh.rings = 64
+	var atmosphere := _sphere(0.815, ShaderMaterial.new())
+	atmosphere.name = "BlueAtmosphereRim"
+	var atmosphere_shader := Shader.new()
+	atmosphere_shader.code = """
+	shader_type spatial;
+	render_mode unshaded, blend_add, cull_front, depth_draw_never;
+	uniform vec3 atmosphere_tint = vec3(0.16, 0.54, 1.0);
+	void fragment() {
+		float rim = pow(1.0 - abs(dot(normalize(NORMAL), normalize(VIEW))), 2.4);
+		ALBEDO = atmosphere_tint;
+		EMISSION = atmosphere_tint * rim * 0.9;
+		ALPHA = rim * 0.48;
+	}
+	"""
+	var atmosphere_material := atmosphere.material_override as ShaderMaterial
+	atmosphere_material.shader = atmosphere_shader
+	var atmosphere_mesh := atmosphere.mesh as SphereMesh
+	atmosphere_mesh.radial_segments = 96
+	atmosphere_mesh.rings = 64
+	pivot.add_child(atmosphere)
 	var axis := MeshInstance3D.new()
 	var rod := CylinderMesh.new()
 	rod.top_radius = 0.018
@@ -248,86 +372,34 @@ func _build_earth(position: Vector3, marker: String, winter_side: bool) -> void:
 
 func _build_greenhouse() -> void:
 	greenhouse_root = Node3D.new()
-	greenhouse_root.name = "SouthGreenhouseFailureSet"
-	world.add_child(greenhouse_root)
-	# Foundation and raised steel base.
-	var slab := _box(Vector3(5.8, 0.18, 3.2), Color("263943"), 0.65, 0.18)
-	slab.position = Vector3(0.0, 0.05, 0.0)
-	greenhouse_root.add_child(slab)
-	var soil := _box(Vector3(5.0, 0.17, 2.35), Color("765b3d"), 0.92, 0.0)
-	soil.position = Vector3(0.0, 0.22, 0.0)
-	greenhouse_root.add_child(soil)
-	# Glass panes are separate so they can glow under the stuck-vent heat warning.
-	greenhouse_glass = _box(Vector3(5.05, 2.35, 2.5), Color("a9ced0", 0.14), 0.18, 0.0)
-	greenhouse_glass.position = Vector3(0.0, 1.5, 0.0)
-	greenhouse_glass.name = "TemperedGlassEnclosure"
-	var glass_material := greenhouse_glass.material_override as StandardMaterial3D
-	glass_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	glass_material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	glass_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	greenhouse_root.add_child(greenhouse_glass)
-	for x in [-2.58, -1.7, -0.85, 0.0, 0.85, 1.7, 2.58]:
-		var post := _cylinder(0.042, 2.7, Color("97b5b6"), 0.42, 0.35)
-		post.position = Vector3(x, 1.42, 0.0)
-		greenhouse_root.add_child(post)
-	for z in [-1.28, 1.28]:
-		var beam := _box(Vector3(5.3, 0.08, 0.08), Color("a3bfc0"), 0.4, 0.25)
-		beam.position = Vector3(0.0, 2.64, z)
-		greenhouse_root.add_child(beam)
-	# Gabled roof beams; each is a visible part of the enclosure frame.
-	for x in [-2.6, 0.0, 2.6]:
-		for side in [-1.0, 1.0]:
-			var roof := _beam(Vector3(x, 2.65, 0.0), Vector3(x, 3.42, side * 1.32), 0.055, Color("b6c7bf"))
-			greenhouse_root.add_child(roof)
-	var ridge := _beam(Vector3(-2.7, 3.42, 0.0), Vector3(2.7, 3.42, 0.0), 0.055, Color("b6c7bf"))
-	greenhouse_root.add_child(ridge)
-	greenhouse_vent = Node3D.new()
-	greenhouse_vent.position = Vector3(0.0, 3.43, 0.0)
-	greenhouse_vent.name = "RoofVentHinge"
-	greenhouse_root.add_child(greenhouse_vent)
-	var vent := _box(Vector3(1.5, 0.08, 0.8), Color("d0dbd3"), 0.4, 0.35)
-	vent.position = Vector3(0.0, 0.0, 0.4)
-	vent.name = "RoofVentPanel"
-	greenhouse_vent.add_child(vent)
-	# Six individually articulated plants are the visible casualty of the bad warning.
-	for i in 6:
-		var plant := Node3D.new()
-		plant.position = Vector3(-2.1 + float(i) * 0.84, 0.34, 0.0)
-		plant.name = "GreenhousePlant_%02d" % i
-		greenhouse_root.add_child(plant)
-		plants.append(plant)
-		var stem := _cylinder(0.022, 0.54 + float(i % 3) * 0.12, Color("79ae73"), 0.75, 0.0)
-		stem.position.y = 0.36
-		plant.add_child(stem)
-		for side in [-1.0, 1.0]:
-			var leaf := _sphere(0.16, _material(Color("5cb986"), 0.68, 0.0, 0.0))
-			leaf.scale = Vector3(1.45, 0.38, 0.65)
-			leaf.position = Vector3(side * 0.16, 0.5 + float(i % 3) * 0.04, 0.0)
-			leaf.rotation.z = side * -0.4
-			plant.add_child(leaf)
-		var planter := _box(Vector3(0.62, 0.28, 0.7), Color("9a7754"), 0.92, 0.0)
-		planter.position.y = 0.21
-		plant.add_child(planter)
-	# Inspection lamp and simple analog thermometer communicate the failure without text clutter.
+	greenhouse_root.name = "Grab3DGreenhouseInterior"
+	system_rig.add_child(greenhouse_root)
+	var interior := GREENHOUSE_INTERIOR.instantiate() as Node3D
+	interior.name = "OpenCC0GreenhouseInterior"
+	interior.scale = Vector3.ONE * 1.25
+	greenhouse_root.add_child(interior)
+	# Inspection lamp and thermometer sit on the model's right interior wall.
 	var lamp := _sphere(0.14, _emissive_material(Color("ff8b62"), 1.6))
-	lamp.position = Vector3(2.95, 2.85, 0.0)
+	lamp.position = Vector3(1.7, 2.65, 1.8)
 	lamp.name = "HeatAlarmLamp"
 	greenhouse_root.add_child(lamp)
 	var thermometer := _cylinder(0.05, 0.92, Color("e1e7df"), 0.3, 0.2)
-	thermometer.position = Vector3(2.95, 1.55, 0.45)
+	thermometer.position = Vector3(1.7, 1.5, 1.8)
 	greenhouse_root.add_child(thermometer)
 	var mercury := _cylinder(0.022, 0.58, Color("ff8061"), 0.28, 0.0)
-	mercury.position = Vector3(2.95, 1.62, 0.49)
+	mercury.position = Vector3(1.7, 1.57, 1.84)
 	mercury.name = "ThermometerMercury"
 	greenhouse_root.add_child(mercury)
-
 
 func _process(_delta: float) -> void:
 	if not is_instance_valid(world):
 		return
-	for node in [world.get_node_or_null("EclipticOrbit"), world.get_node_or_null("CalibrationDeck")]:
-		if node != null:
-			node.visible = not greenhouse
+	if orbit_rig != null:
+		orbit_rig.visible = not greenhouse
+	if starfield != null:
+		starfield.visible = not greenhouse
+	for visual in solar_visuals:
+		visual.visible = not greenhouse
 	for earth in earths:
 		earth.visible = not greenhouse
 		earth.rotation.z = -deg_to_rad(tilt)
@@ -339,17 +411,14 @@ func _process(_delta: float) -> void:
 		marker.visible = not greenhouse and not december
 	for marker in winter_markers:
 		marker.visible = not greenhouse and december
+	for ray in solar_rays:
+		ray.visible = not greenhouse
 	greenhouse_root.visible = greenhouse
 	if greenhouse_root.visible:
 		var recovery := smoothstep(0.0, 3.0, incident_time) if repaired else 0.0
 		var heat := (1.0 - exp(-maxf(incident_time, 0.0) * 0.55)) * (1.0 - recovery)
-		greenhouse_vent.rotation.x = lerpf(0.0, -0.85, recovery)
-		for i in plants.size():
-			plants[i].rotation.z = lerpf(0.0, 0.42 + float(i % 2) * 0.14, heat)
 		if solar_light != null:
 			solar_light.light_energy = 1.25 + heat * 0.85
-		var glass_mat := greenhouse_glass.material_override as StandardMaterial3D
-		glass_mat.albedo_color = Color("ff9771", 0.10 + heat * 0.10) if not repaired else Color("9bd7c4", 0.08)
 		var lamp := greenhouse_root.get_node("HeatAlarmLamp") as MeshInstance3D
 		var lamp_mat := lamp.material_override as StandardMaterial3D
 		lamp_mat.emission_energy_multiplier = 0.5 + heat * 3.0 if not repaired else 0.3
@@ -444,8 +513,8 @@ func _sphere(radius: float, material: Material) -> MeshInstance3D:
 	var mesh := SphereMesh.new()
 	mesh.radius = radius
 	mesh.height = radius * 2.0
-	mesh.radial_segments = 32
-	mesh.rings = 20
+	mesh.radial_segments = 48
+	mesh.rings = 32
 	instance.mesh = mesh
 	instance.material_override = material
 	return instance

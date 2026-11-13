@@ -6,14 +6,16 @@ const MINT := Color("#79e0bf")
 const AMBER := Color("#ffad81")
 const STEEL := Color("#405b60")
 const RAIL := Color("#789395")
+const OFFICE_DESK = preload("res://stations/measurement/assets/polyhaven/metal_office_desk/metal_office_desk_2k.gltf")
+const PRODUCE_SCALE = preload("res://stations/measurement/assets/grab3d/produce-scale.glb")
 
 var instrument := &"fault"
 var measured := false
 var motion := 0.0
 var test_state := &"fault"
 var _world: Node3D
+var _camera: Camera3D
 var _timer_hand: Node3D
-var _title: Label3D
 var _display: Label3D
 var _ruler_group: Node3D
 var _scale_group: Node3D
@@ -47,6 +49,7 @@ func show_state(kind: StringName, reading: bool, progress: float, state: StringN
 		return
 	if kind_changed:
 		_apply_visibility()
+	_update_camera()
 	_update_instrument()
 	_update_animation()
 
@@ -76,13 +79,12 @@ func _build_viewport() -> void:
 	var world_environment := WorldEnvironment.new()
 	world_environment.environment = environment
 	_world.add_child(world_environment)
-	var camera := Camera3D.new()
-	camera.position = Vector3(4.0, 4.3, 6.0)
-	camera.rotation_degrees = Vector3(-27, 34, 0)
-	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = 5.1
-	camera.current = true
-	_world.add_child(camera)
+	_camera = Camera3D.new()
+	_camera.name = "BenchCamera"
+	_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
+	_camera.size = 5.7
+	_camera.current = true
+	_world.add_child(_camera)
 	var key := DirectionalLight3D.new()
 	key.name = "KeyLight"
 	key.rotation_degrees = Vector3(-48, -28, 0)
@@ -102,16 +104,34 @@ func _build_bench() -> void:
 	var stage := Node3D.new()
 	stage.name = "MeasurementLab"
 	_world.add_child(stage)
-	_box(stage, "BenchTop", Vector3(0, -0.18, 0), Vector3(4.65, 0.25, 3.5), Color("#243a42"))
-	_box(stage, "BenchInset", Vector3(0, -0.035, 0), Vector3(4.44, 0.055, 3.29), Color("#304a4e"))
-	_box(stage, "FrontLip", Vector3(0, -0.19, 1.73), Vector3(4.7, 0.16, 0.08), Color("#172a32"))
-	for x in [-1.8, 1.8]:
-		for z in [-1.25, 1.25]:
-			_box(stage, "BenchLeg", Vector3(x, -0.53, z), Vector3(0.16, 0.68, 0.16), Color("#22343a"))
+	var ground := MeshInstance3D.new()
+	ground.name = "BenchGround"
+	var ground_mesh := PlaneMesh.new()
+	ground_mesh.size = Vector2(80.0, 80.0)
+	ground.mesh = ground_mesh
+	ground.position = Vector3(0.0, -0.51, 0.0)
+	ground.material_override = _material(Color("#0d1b24"), false)
+	stage.add_child(ground)
+	var office_desk := OFFICE_DESK.instantiate() as Node3D
+	office_desk.name = "PolyHavenMetalMeasurementDesk"
+	# The source model is 2 m wide and its top is 0.79 m above the origin.
+	# Match that top to the instrument bases at y=0.30 m.
+	office_desk.position.y = -0.505
+	office_desk.scale = Vector3(2.25, 1.02, 3.0)
+	stage.add_child(office_desk)
+	for child in office_desk.find_children("*", "MeshInstance3D", true, false):
+		var mesh_instance := child as MeshInstance3D
+		if mesh_instance.mesh == null:
+			continue
+		for surface in mesh_instance.mesh.get_surface_count():
+			var source := mesh_instance.get_active_material(surface) as StandardMaterial3D
+			if source == null:
+				continue
+			var graded := source.duplicate() as StandardMaterial3D
+			graded.albedo_color *= Color(0.48, 0.64, 0.72, 1.0)
+			mesh_instance.set_surface_override_material(surface, graded)
 	for i in range(7):
-		_box(stage, "CalibrationStripe%d" % i, Vector3(-1.8 + i * 0.6, 0.0, -1.52), Vector3(0.38, 0.012, 0.025), Color("#5b797a"))
-	_title = _label(stage, "BenchTitle", "ÖLÇÜM ATÖLYESİ", Vector3(-1.6, 0.05, -1.45), MINT, 46, 0.0055)
-
+		_box(stage, "CalibrationStripe%d" % i, Vector3(-1.8 + i * 0.6, -0.035, -1.3), Vector3(0.38, 0.012, 0.025), Color("#5b797a"))
 	_track_group = Node3D.new()
 	_track_group.name = "TransportTrack"
 	stage.add_child(_track_group)
@@ -128,7 +148,8 @@ func _build_bench() -> void:
 	_track_group.add_child(_cart_group)
 	_build_cart(_cart_group)
 	_coupler = _box(_track_group, "FaultCoupler", Vector3(0.0, 0.49, 0), Vector3(0.34, 0.13, 0.22), AMBER, true)
-	_status_lamp = _sphere(stage, "StatusLamp", Vector3(1.94, 0.32, -1.2), 0.09, AMBER, true)
+	_cylinder(stage, "StatusLampPedestal", Vector3(1.94, 0.34, -1.2), 0.07, 0.1, STEEL)
+	_status_lamp = _sphere(stage, "StatusLamp", Vector3(1.94, 0.45, -1.2), 0.09, AMBER, true)
 
 	_ruler_group = Node3D.new()
 	_ruler_group.name = "LengthRig"
@@ -145,7 +166,6 @@ func _build_bench() -> void:
 	stage.add_child(_timer_group)
 	_build_timer(_timer_group)
 
-	_display = _label(stage, "Readout", "240 cm  →  240 m", Vector3(0.0, 1.05, 0.16), AMBER, 56, 0.0058)
 	_apply_visibility()
 
 
@@ -167,15 +187,16 @@ func _build_ruler(parent: Node3D) -> void:
 
 
 func _build_scale(parent: Node3D) -> void:
-	var pos := Vector3(-0.8, 0.48, -0.72)
-	_box(parent, "ScaleBody", pos + Vector3(0, 0.12, 0), Vector3(1.3, 0.24, 0.9), STEEL)
-	_box(parent, "ScaleTop", pos + Vector3(0, 0.27, 0), Vector3(1.18, 0.07, 0.76), Color("#a4b4af"))
-	_box(parent, "ScaleDisplay", pos + Vector3(0, 0.45, -0.27), Vector3(0.7, 0.22, 0.055), Color("#102525"), true)
-	_scale_value = _label(parent, "ScaleValue", "— kg", pos + Vector3(0, 0.48, -0.22), MINT, 38, 0.005)
-	_box(parent, "SampleMass", pos + Vector3(0, 0.51, 0.05), Vector3(0.38, 0.42, 0.38), Color("#bd7957"), true)
-	_label(parent, "MassTag", "M = 1,2 kg", pos + Vector3(0, 1.08, 0.08), MINT, 31, 0.005)
-	for x in [-0.44, 0.44]:
-		_sphere(parent, "ScaleFoot", pos + Vector3(x, -0.03, 0.31), 0.065, Color("#11252c"))
+	var scale_rig := Node3D.new()
+	scale_rig.name = "Grab3DProduceScaleRig"
+	parent.add_child(scale_rig)
+	var pos := Vector3(-0.8, 0.3, -0.72)
+	var produce_scale := PRODUCE_SCALE.instantiate() as Node3D
+	produce_scale.name = "CC0ProduceScaleWithFruit"
+	produce_scale.position = pos
+	produce_scale.scale = Vector3.ONE * 2.4
+	scale_rig.add_child(produce_scale)
+	_scale_value = _label(scale_rig, "ScaleValue", "— kg", pos + Vector3(0.0, 2.0, 0.1), MINT, 35, 0.005)
 
 
 func _build_timer(parent: Node3D) -> void:
@@ -217,13 +238,24 @@ func _apply_visibility() -> void:
 	_scale_group.visible = show_scale
 	_timer_group.visible = show_timer
 	_track_group.visible = show_transport
-	if _title:
-		_title.text = {
-			"fault":"SİSTEM ARIZASI", "length":"CETVEL  /  cm", "mass":"TERAZİ  /  kg",
-			"time":"SAYAÇ  /  s", "guided":"SÜRAT VE YÖN", "speed":"UYGULAMA  /  m/s",
-			"running":"TAŞIYICI ÇALIŞIYOR", "complete":"RAY ONARILDI", "convert":"DÖNÜŞÜM  /  1 m = 100 cm"
-		}.get(String(instrument), "ÖLÇÜM ATÖLYESİ")
 
+
+func _update_camera() -> void:
+	if _camera == null:
+		return
+	var target := Vector3(0.0, 0.65, 0.0)
+	_camera.size = 5.7
+	if instrument == &"mass":
+		target = Vector3(-0.8, 0.92, -0.72)
+		_camera.size = 3.7
+	elif instrument == &"length" or instrument == &"convert":
+		target = Vector3(0.0, 0.68, 0.86)
+		_camera.size = 4.8
+	elif instrument == &"time":
+		target = Vector3(1.1, 0.68, -0.8)
+		_camera.size = 4.3
+	_camera.position = target + Vector3(5.0, 4.8, 6.4)
+	_camera.look_at(target, Vector3.UP)
 
 func _update_instrument() -> void:
 	if _display:

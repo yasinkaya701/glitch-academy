@@ -1,4 +1,6 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Material" path="res://stations/shared_assets/materials/blue_titanium.tres" id="1_blue_titanium"]
 
 [sub_resource type="Environment" id="Environment_lab"]
 background_mode = 1
@@ -12,11 +14,6 @@ fog_light_color = Color(0.12, 0.24, 0.35, 1)
 fog_density = 0.008
 glow_enabled = true
 glow_intensity = 0.3
-
-[sub_resource type="StandardMaterial3D" id="StageMaterial"]
-albedo_color = Color(0.055, 0.12, 0.17, 1)
-metallic = 0.42
-roughness = 0.38
 
 [sub_resource type="StandardMaterial3D" id="GridMaterial"]
 albedo_color = Color(0.18, 0.72, 0.72, 1)
@@ -81,30 +78,30 @@ light_energy = 0.85
 omni_range = 8.0
 
 [node name="StudioFloor" type="MeshInstance3D" parent="Viewport/World"]
-position = Vector3(0, -0.42, 0)
+position = Vector3(0, -0.1, 0)
 mesh = SubResource("StageBaseMesh")
-material_override = SubResource("StageMaterial")
+material_override = ExtResource("1_blue_titanium")
 
 [node name="StageTop" type="MeshInstance3D" parent="Viewport/World"]
-position = Vector3(0, -0.31, 0)
+position = Vector3(0, 0.0075, 0)
 mesh = SubResource("StageTopMesh")
-material_override = SubResource("StageMaterial")
+material_override = ExtResource("1_blue_titanium")
 
 [node name="StageRim" type="MeshInstance3D" parent="Viewport/World"]
-position = Vector3(0, -0.285, 0)
+position = Vector3(0, 0.025, 0)
 mesh = SubResource("StageRimMesh")
 material_override = SubResource("GridMaterial")
 
 [node name="MeasurementGrid" type="Node3D" parent="Viewport/World"]
 
 [node name="GridRingSmall" type="MeshInstance3D" parent="Viewport/World/MeasurementGrid"]
-position = Vector3(0, -0.274, 0)
+position = Vector3(0, 0.025, 0)
 mesh = SubResource("StageRimMesh")
 material_override = SubResource("GridMaterial")
 scale = Vector3(0.62, 1, 0.62)
 
 [node name="GridRingInner" type="MeshInstance3D" parent="Viewport/World/MeasurementGrid"]
-position = Vector3(0, -0.274, 0)
+position = Vector3(0, 0.025, 0)
 mesh = SubResource("StageRimMesh")
 material_override = SubResource("GridMaterial")
 scale = Vector3(0.78, 1, 0.78)

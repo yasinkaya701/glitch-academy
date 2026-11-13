@@ -128,7 +128,7 @@ TYT (Matematik 25 başlık, Geometri 21) ve AYT (Matematik 31, Geometri 27). Ü�
 | Permütasyon, olasılık, binom, istatistik | Şans düzeneği, veri analizi | Belirsizliği ölçemezdik | T | B |
 | Polinomlar, denklemler, eşitsizlikler | Köprü yük aralığı | Güvenli aralığı bilemezdik | H | B |
 | Mantık, kümeler | Kapı kilidi mantığı | Karar zincirini kuramazdık | S | C |
-| Üçgen ve Pisagor, benzerlik | Köprü Atölyesi, kule boyu | Doğrudan ölçülemeyeni hesaplayamazdık | H | A |
+| Özdeşlikler ve cebirsel ifadeler | İspat Laboratuvarı: (a+b)² alan modeli | Bir ifadenin neden her durumda eşit kaldığını gösteremezdik | K | A |
 | Çember, daire, açılar | Dişli ve çark | | H | B |
 | Katı cisimler (prizma, piramit, silindir, koni, küre) | Prizma Deposu, depo hacmi | Kapasiteyi bilemezdik | H | A |
 | Analitik geometri (doğru, çember) | Rota ve yörünge | | H | A |
@@ -156,7 +156,7 @@ Felsefe (8 başlık), Tarih (21), Coğrafya (17), Din (7), Türkçe (17): fikirl
 | 2 DNA ve Genetik Kod | DNA, kalıtım, mutasyon ve modifikasyon, adaptasyon, biyoteknoloji | DNA sarmalını kur, çaprazlama, mutasyonun etkisi | P | A |
 | 3 Basınç | Katı, sıvı, gaz basıncı | Basınç İstasyonu | H | A |
 | 4 Madde ve Endüstri | Periyodik sistem, fiziksel ve kimyasal değişim, tepkime, asit–baz, ısı etkileşimi, kimya endüstrisi | Gösterge Laboratuvarı, denklem denkleştirme, erime ve kaynama grafiği | S | A |
-| 5 Basit Makineler | Kaldıraç, makara, eğik düzlem | Yük kaldır | H | B |
+| 5 Basit Makineler | Kaldıraç, makara, eğik düzlem | **Palanga Atölyesi:** gerçekçi 3B sabit ve hareketli makara; MERİDYEN ip ve yük ivmelerini ters gösterir, oyuncu ilişkiyi düzeltir | H | B |
 | 6 Enerji Dönüşümleri ve Çevre | Enerji dönüşümü, çevre | Santral zinciri | Y | B |
 | 7 Elektrik Yükleri ve Enerjisi | Elektriklenme, devre | Yük aktar, devre kur | P | B |
 
@@ -169,7 +169,7 @@ Felsefe (8 başlık), Tarih (21), Coğrafya (17), Din (7), Türkçe (17): fikirl
 | Veri analizi, olasılık | Şans düzeneği, grafik yorumu | T | B |
 | Cebirsel ifadeler, özdeşlikler | Alanla özdeşlik: (a+b)² bölünmüş kare | K | A |
 | Doğrusal denklemler, eşitsizlikler | Eğim ve rota, güvenli aralık | K | A |
-| Üçgenler (açı–kenar, Pisagor) | Köprü Atölyesi | H | A |
+| Üçgenler (açı–kenar, Pisagor) | Ayrı bir üçgenler görevi planlanmadı | H | B |
 | Eşlik ve benzerlik | Gölgeden kule boyu | H | A |
 | Dönüşüm geometrisi | Harita yansıma ve öteleme | P | B |
 | Geometrik cisimler | Prizma Deposu, silindir ve koni | H | A |

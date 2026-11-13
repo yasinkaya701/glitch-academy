@@ -10,12 +10,13 @@
 | 4 | Refleks Merkezi | AYT Biyoloji | Tasarım hazır | 005 |
 | 5 | Depo Atölyesi (türev) | AYT Matematik | Tasarım hazır, varlık gerekmiyor | yok |
 | 6 | Gösterge Laboratuvarı | LGS / TYT Kimya | Kayıt var | Dalga 2 talebi |
-| 7 | Köprü Atölyesi | LGS Matematik | Kayıt var, kodla çizim | yok |
+| 7 | İspat Laboratuvarı | LGS Matematik | Yapay zekânın özdeşlik ispatındaki eksik `2ab` terimini 3D alan modeliyle düzelt | yok |
 | 8 | Prizma Deposu | Sınıf / LGS | Kayıt var | Dalga 2 talebi |
 | 9 | Basınç İstasyonu | LGS Fen / TYT | Kayıt var | Dalga 2 talebi |
 | 10 | DNA ve Genetik Kod | LGS / AYT Biyoloji | Tasarım gerekli | Dalga 2 talebi |
 | 11 | Stern–Gerlach (spin) | AYT Kimya | Tasarım var, görsel şov | Dalga 2 talebi |
 | 12 | İntegral havuzu | AYT Matematik | Tasarım gerekli | yok |
+| — | Palanga Atölyesi | LGS Fen | **Kampanyada oynanabilir:** 3B sabit/hareketli makara, ivme ilişkisini düzeltme | Kodla üretilen 3B düzenek |
 
 Ortak parçalar (arayüz kiti, kontrol merkezi) talep 001. Önce 001 ve 002 teslim edilir, kalite çıtası onlarla belirlenir.
 

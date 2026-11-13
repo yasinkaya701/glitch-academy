@@ -6,11 +6,11 @@
 [resource]
 script = ExtResource("1")
 id = &"history"
-title = "Kayıp Kronoloji"
-subject = "T.C. İnkılap Tarihi ve Atatürkçülük"
-grade = 8
-routes = PackedStringArray("lgs")
-description = "Tarihli olayları ve belgeleri karşılaştır; arşiv kayıtlarının tahrif edildiğini kanıtla."
-curriculum = "İTA.8.2 · Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
-source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/tcinkilaptarihiveataturkculuk/12/unite2/files/basic-html/page12.html"
+title = "Tarih Meydanı"
+subject = "Tarih"
+grade = 10
+routes = PackedStringArray("class", "lgs", "tyt", "ayt")
+description = "Tarihî şahsiyetlerle konuşarak dönüm noktalarını, fermanları ve ilkeleri doğrula; bozulan zaman çizgisini onar."
+curriculum = "MEB Tarih 9–12 ve T.C. İnkılap Tarihi (LGS · TYT · AYT)"
+source_url = "https://cdn.tbmm.gov.tr/TbmmWeb/Yayinlar/Dosya/8968713a-84eb-4c10-88d1-88d1-4c10-84eb-8968713a.pdf"
 scene = ExtResource("2")
