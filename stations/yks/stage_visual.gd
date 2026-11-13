@@ -3,13 +3,14 @@ extends Control
 
 const PAPER := Color("#d4e2e3")
 const FAINT := Color("#78909b")
-const MINT := Color("#72dfc4")
-const AMBER := Color("#efb468")
-const CORAL := Color("#ff9d79")
+const MINT := Color("#6fe3c1")
+const AMBER := Color("#f2a65a")
+const CORAL := Color("#e5645a")
 
 var diagram_id: StringName = &"reading"
 var _phase := 0.0
 var _result := 0
+var _caption_font_size := 18
 var life_protocol := false
 
 
@@ -38,6 +39,7 @@ func clear_result() -> void:
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color("#0c1721"), true)
 	var diagram_scale := minf(size.x / 575.0, size.y / 397.0)
+	_caption_font_size = maxi(18, roundi(18.0 / maxf(0.35, diagram_scale)))
 	var diagram_offset := (size - Vector2(575, 397) * diagram_scale) * 0.5
 	draw_set_transform(diagram_offset, 0.0, Vector2.ONE * diagram_scale)
 	match diagram_id:
@@ -312,4 +314,4 @@ func _arrow(from: Vector2, to: Vector2, color: Color) -> void:
 
 
 func _caption(text_value: String, at: Vector2, color: Color = PAPER) -> void:
-	draw_string(get_theme_default_font(), at, text_value, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, color)
+	draw_string(get_theme_default_font(), at, text_value, HORIZONTAL_ALIGNMENT_LEFT, -1, _caption_font_size, color)

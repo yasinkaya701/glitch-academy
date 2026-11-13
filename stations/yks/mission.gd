@@ -5,9 +5,9 @@ const Definition = preload("res://stations/yks/yks_mission_definition.gd")
 const Visual = preload("res://stations/yks/stage_visual.tscn")
 
 const INK := Color("#e8f1f2")
-const MUTED := Color("#9db1bb")
-const ACCENT := Color("#72dfc4")
-const DANGER := Color("#ff9d79")
+const MUTED := Color("#8fa6b3")
+const ACCENT := Color("#6fe3c1")
+const DANGER := Color("#e5645a")
 
 @export var mission_definition: Definition
 @export var mission_data_path := ""
@@ -91,7 +91,7 @@ func _panel_layout() -> Dictionary:
 	if size.x < 900.0:
 		var stack_gap := 10.0
 		var available_height := maxf(300.0, size.y - panel_top - 18.0 - stack_gap)
-		var visual_height := clampf(available_height * 0.36, 170.0, 246.0)
+		var visual_height := clampf(available_height * 0.2, 96.0, 132.0) if size.y < 600.0 else clampf(available_height * 0.42, 190.0, 286.0)
 		var work_height := available_height - visual_height - stack_gap
 		var stacked_visual := Rect2(Vector2(18, panel_top), Vector2(available_width, visual_height))
 		var stacked_work := Rect2(Vector2(18, panel_top + visual_height + stack_gap), Vector2(available_width, work_height))
@@ -147,8 +147,9 @@ func _build_interface() -> void:
 
 	_visual = Visual.instantiate()
 	_visual.diagram_id = mission_definition.visual_theme
-	_visual.position = left_panel.position + Vector2(14, 14)
-	_visual.size = left_panel.size - Vector2(28, 28)
+	var visual_inset := 24.0 if size.y < 640.0 else 30.0
+	_visual.position = left_panel.position + Vector2.ONE * visual_inset
+	_visual.size = left_panel.size - Vector2.ONE * visual_inset * 2.0
 	if mission_definition.id == &"tyt_biology":
 		var campaign := get_node_or_null("/root/Campaign")
 		if campaign != null and campaign.has_method("has_story_flag") and campaign.call("has_story_flag", &"life_protocol"):
@@ -156,29 +157,34 @@ func _build_interface() -> void:
 	add_child(_visual)
 
 	_evidence_label = _label("KAYIT", 11, ACCENT)
-	_evidence_label.position = right_panel.position + Vector2(18, 14)
+	_evidence_label.position = right_panel.position + Vector2(18, 84)
 	_evidence_label.size = Vector2(right_panel.size.x - 36.0, 18)
 	add_child(_evidence_label)
 	_prompt_label = _label(mission_definition.prompt, 17, INK)
 	_prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_prompt_label.position = right_panel.position + Vector2(18, 36)
+	_prompt_label.position = right_panel.position + Vector2(18, 102)
 	_prompt_label.size = Vector2(right_panel.size.x - 36.0, 102)
 	add_child(_prompt_label)
 	_instruction_label = _label(mission_definition.instruction, 16, INK)
 	_instruction_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_instruction_label.position = right_panel.position + Vector2(18, 145)
+	_instruction_label.position = right_panel.position + Vector2(18, 156)
 	_instruction_label.size = Vector2(right_panel.size.x - 36.0, 58)
 	add_child(_instruction_label)
 
 	_answer_scroll = ScrollContainer.new()
 	_answer_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_answer_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_answer_scroll.follow_focus = true
 	add_child(_answer_scroll)
 	_answer_area = Control.new()
 	_answer_scroll.add_child(_answer_area)
 	_feedback_label = _label("", 15, MUTED)
 	_feedback_label.hide()
 	_feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_verify_button = _button("Yanıtı kontrol et", Vector2(220, 48))
+	_verify_button.theme_type_variation = "PrimaryButton"
+	_verify_button.pressed.connect(_submit_answer)
+	add_child(_verify_button)
 	_last_layout_size = size
 	resized.connect(_on_resized)
 	_layout_interface()
@@ -198,21 +204,26 @@ func _layout_interface() -> void:
 	var layout := _panel_layout()
 	var left_panel: Rect2 = layout["left"]
 	var right_panel: Rect2 = layout["right"]
-	_visual.position = left_panel.position + Vector2(14, 14)
-	_visual.size = left_panel.size - Vector2(28, 28)
-	_evidence_label.position = right_panel.position + Vector2(18, 14)
+	var visual_inset := 24.0 if size.y < 640.0 else 30.0
+	_visual.position = left_panel.position + Vector2.ONE * visual_inset
+	_visual.size = left_panel.size - Vector2.ONE * visual_inset * 2.0
+	_evidence_label.position = right_panel.position + Vector2(18, 84)
 	_evidence_label.size = Vector2(right_panel.size.x - 36.0, 18)
 	var text_width := right_panel.size.x - 36.0
 	var prompt_height := _estimated_text_height(mission_definition.prompt, text_width, 17, 42.0)
-	_prompt_label.position = right_panel.position + Vector2(18, 36)
+	_prompt_label.position = right_panel.position + Vector2(18, 102)
 	_prompt_label.size = Vector2(text_width, prompt_height)
-	var instruction_top := maxf(91.0, 36.0 + prompt_height + 10.0)
+	var instruction_top := maxf(156.0, 102.0 + prompt_height + 10.0)
 	var instruction_height := _estimated_text_height(mission_definition.instruction, text_width, 16, 38.0)
 	_instruction_label.position = right_panel.position + Vector2(18, instruction_top)
 	_instruction_label.size = Vector2(text_width, instruction_height)
 	var answers_top := instruction_top + instruction_height + 10.0
 	_answer_scroll.position = right_panel.position + Vector2(14, answers_top)
-	_answer_scroll.size = Vector2(right_panel.size.x - 28.0, maxf(64.0, right_panel.size.y - answers_top - 18.0))
+	var action_height := 48.0
+	var action_top := right_panel.size.y - action_height - 14.0
+	_verify_button.position = right_panel.position + Vector2(14, action_top)
+	_verify_button.size = Vector2(right_panel.size.x - 28.0, action_height)
+	_answer_scroll.size = Vector2(right_panel.size.x - 28.0, maxf(0.0, action_top - answers_top - 8.0))
 	_info_button.position = Vector2(size.x - 60.0, 8)
 
 
@@ -239,7 +250,6 @@ func _rebuild_interaction() -> void:
 	_sequence_up_buttons.clear()
 	_sequence_down_buttons.clear()
 	_pair_selectors.clear()
-	_verify_button = null
 	_build_interaction()
 	if focus_was_in_answers and (focus_key.is_empty() or not _restore_focus(_answer_area, focus_key)):
 		_focus_first_action()
@@ -262,6 +272,8 @@ func _show_learning_note() -> void:
 func _build_interaction() -> void:
 	_answer_area.position = Vector2.ZERO
 	_answer_area.size = Vector2(_answer_scroll.size.x, 1.0)
+	_verify_button.text = "Yanıtı kontrol et"
+	_verify_button.disabled = _completed
 	match mission_definition.mode:
 		"choice":
 			_build_choice()
@@ -269,6 +281,32 @@ func _build_interaction() -> void:
 			_build_sequence()
 		"pair":
 			_build_pairs()
+	_update_verify_state()
+
+
+func _submit_answer() -> void:
+	match mission_definition.mode:
+		"choice": try_answer(_selected_choice)
+		"sequence": try_answer(_sequence_order)
+		"pair": try_answer(_pair_answers)
+
+
+func _update_verify_state() -> void:
+	if _verify_button == null:
+		return
+	match mission_definition.mode:
+		"choice":
+			_verify_button.text = "Yanıtı kontrol et"
+			_verify_button.disabled = _completed or _selected_choice.is_empty()
+		"sequence":
+			_verify_button.text = "Sıralamayı kontrol et"
+			_verify_button.disabled = _completed
+		"pair":
+			_verify_button.text = "Eşleşmeleri kontrol et  ·  %d/%d" % [_pair_answers.size(), mission_definition.pair_left.size()]
+			var distinct: Dictionary = {}
+			for target in _pair_answers.values():
+				distinct[target] = true
+			_verify_button.disabled = _completed or _pair_answers.size() != mission_definition.pair_left.size() or distinct.size() != mission_definition.pair_left.size()
 
 
 func _build_choice() -> void:
@@ -285,7 +323,9 @@ func _build_choice() -> void:
 		var estimated_line_width := maxf(18.0, usable_text_width / 8.0)
 		var estimated_lines := maxi(1, ceili(float(option.length()) / estimated_line_width))
 		var button_height := maxf(56.0, estimated_lines * 22.0 + 20.0)
-		var button := _button(option, Vector2(button_width, button_height))
+		var marker := "●" if option == _selected_choice else "○"
+		var button := _button("%s  %s" % [marker, option], Vector2(button_width, button_height))
+		button.set_meta("mission_focus_key", "choice:" + option)
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.toggle_mode = true
 		button.position = Vector2(5, button_y)
@@ -296,24 +336,19 @@ func _build_choice() -> void:
 		_answer_area.add_child(button)
 		_selection_buttons.append(button)
 		button_y += button_height + spacing
-	var verify_y := button_y + 2.0
-	_verify_button = _button("Yanıtı kontrol et", Vector2(210, 44))
-	_verify_button.theme_type_variation = "PrimaryButton"
-	_verify_button.position = Vector2(5, verify_y)
-	_verify_button.disabled = _selected_choice.is_empty() or _completed
-	_verify_button.pressed.connect(func() -> void: try_answer(_selected_choice))
-	_answer_area.add_child(_verify_button)
-	_set_answer_content_height(verify_y + 50.0)
-
+	_set_answer_content_height(button_y)
 
 func _select_choice(option: String, selected_button: Button) -> void:
 	if _completed:
 		return
 	_selected_choice = option
-	for button in _selection_buttons:
-		button.set_pressed_no_signal(button == selected_button)
+	for index in _selection_buttons.size():
+		var button := _selection_buttons[index]
+		var selected := button == selected_button
+		button.set_pressed_no_signal(selected)
+		button.text = "%s  %s" % ["●" if selected else "○", _choice_order[index]]
 	_clear_feedback_and_result()
-	_verify_button.disabled = false
+	_update_verify_state()
 
 
 func _build_sequence() -> void:
@@ -353,13 +388,7 @@ func _build_sequence() -> void:
 		down.disabled = _completed or index == _sequence_order.size() - 1
 		row.add_child(down)
 		_sequence_down_buttons.append(down)
-	_verify_button = _button("Sıralamayı kontrol et", Vector2(230, 44))
-	_verify_button.theme_type_variation = "PrimaryButton"
-	_verify_button.position = Vector2(4, _sequence_order.size() * (row_height + row_gap) + 8)
-	_verify_button.pressed.connect(func() -> void: try_answer(_sequence_order))
-	_verify_button.disabled = _completed
-	_answer_area.add_child(_verify_button)
-	_set_answer_content_height(_verify_button.position.y + _verify_button.size.y + 8.0)
+	_set_answer_content_height(_sequence_order.size() * (row_height + row_gap) + 4.0)
 
 
 func _build_pairs() -> void:
@@ -368,11 +397,7 @@ func _build_pairs() -> void:
 		shuffled.shuffle()
 		_pair_right_order = PackedStringArray(shuffled)
 	var row_width := _answer_scroll.size.x - 8.0
-	var row_y := 27.0
-	var left_title := _label("KAYIT", 12, ACCENT)
-	left_title.position = Vector2(4, 0)
-	left_title.size = Vector2(row_width, 22)
-	_answer_area.add_child(left_title)
+	var row_y := 4.0
 	for index in mission_definition.pair_left.size():
 		var left_value := mission_definition.pair_left[index]
 		var left := _label(left_value, 15, INK)
@@ -399,14 +424,8 @@ func _build_pairs() -> void:
 		_pair_selectors[left_value] = right
 		_answer_area.add_child(right)
 		row_y += left_height + 50.0
-	_verify_button = _button("Kontrol et", Vector2(180, 44))
-	_verify_button.theme_type_variation = "PrimaryButton"
-	_verify_button.position = Vector2(4, row_y + 4.0)
-	_verify_button.pressed.connect(func() -> void: try_answer(_pair_answers))
-	_verify_button.disabled = _pair_answers.size() != mission_definition.pair_left.size() or _completed
-	_answer_area.add_child(_verify_button)
 	_refresh_pair_options()
-	_set_answer_content_height(_verify_button.position.y + _verify_button.size.y + 8.0)
+	_set_answer_content_height(row_y + 4.0)
 
 
 func _on_pair_selected(index: int, left_value: String) -> void:
@@ -442,17 +461,16 @@ func _refresh_pair_options() -> void:
 					assigned_to_other = true
 					break
 			selector.set_item_disabled(index, assigned_to_other)
+			selector.set_item_text(index, "· %s  ·  kullanılıyor" % target if assigned_to_other else target)
 			if target == assigned_target:
 				selector.select(index)
 		if assigned_target.is_empty():
+			selector.set_item_text(0, "Karşılığı seç…")
 			selector.select(0)
+		else:
+			selector.set_item_text(0, "Eşleşmeyi kaldır")
 		selector.disabled = _completed
-	if _verify_button != null:
-		_verify_button.text = "Kontrol et  ·  %d/%d" % [_pair_answers.size(), mission_definition.pair_left.size()]
-		var distinct: Dictionary = {}
-		for target in _pair_answers.values():
-			distinct[target] = true
-		_verify_button.disabled = _completed or _pair_answers.size() != mission_definition.pair_left.size() or distinct.size() != mission_definition.pair_left.size()
+	_update_verify_state()
 
 
 func _set_answer_content_height(content_height: float) -> void:
@@ -488,11 +506,11 @@ func _move_sequence(index: int, direction: int) -> void:
 	_sequence_order[index] = _sequence_order[target]
 	_sequence_order[target] = item
 	_refresh_sequence_labels()
-	var focus_index := target
-	var focus_button: Button = _sequence_down_buttons[focus_index] if direction > 0 else _sequence_up_buttons[focus_index]
+	var focus_button: Button = _sequence_down_buttons[target] if direction > 0 else _sequence_up_buttons[target]
 	if focus_button.disabled:
-		focus_button = _sequence_up_buttons[focus_index] if direction > 0 else _sequence_down_buttons[focus_index]
-	focus_button.grab_focus()
+		_verify_button.grab_focus()
+	else:
+		focus_button.grab_focus()
 
 
 func _refresh_sequence_labels() -> void:
@@ -500,9 +518,12 @@ func _refresh_sequence_labels() -> void:
 		_sequence_labels[index].text = "%02d  ·  %s" % [index + 1, _sequence_order[index]]
 		_sequence_up_buttons[index].set_meta("mission_focus_key", "seq_up:" + _sequence_order[index])
 		_sequence_down_buttons[index].set_meta("mission_focus_key", "seq_down:" + _sequence_order[index])
+		_sequence_up_buttons[index].tooltip_text = "‘%s’ öğesini önceki sıraya taşı" % _sequence_order[index]
+		_sequence_down_buttons[index].tooltip_text = "‘%s’ öğesini sonraki sıraya taşı" % _sequence_order[index]
 		_sequence_up_buttons[index].disabled = _completed or index == 0
 		_sequence_down_buttons[index].disabled = _completed or index == _sequence_order.size() - 1
 	_clear_feedback_and_result()
+	_update_verify_state()
 
 
 func _set_feedback(message: String, color: Color, bring_into_view := false) -> void:
