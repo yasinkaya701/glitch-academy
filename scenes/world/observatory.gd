@@ -11,9 +11,22 @@ const AMBER := Color(0.94, 0.57, 0.28)
 @onready var _deck: Node3D = $Deck
 @onready var _exterior: Node3D = $Exterior
 @onready var _stations: Node3D = $Stations
+@onready var _world_environment: WorldEnvironment = $WorldEnvironment
+@onready var _window_light: DirectionalLight3D = $WindowLight
+@onready var _deck_light: OmniLight3D = $DeckLight
+@onready var _console_fill: DirectionalLight3D = $ConsoleFill
 
 var _operational_count := 0
 var _alarm := 0.0
+var _life_protocol := false
+var _base_ambient_color := Color.WHITE
+var _base_ambient_energy := 1.0
+var _base_window_color := Color.WHITE
+var _base_window_energy := 1.0
+var _base_deck_color := Color.WHITE
+var _base_deck_energy := 1.0
+var _base_console_color := Color.WHITE
+var _base_console_energy := 1.0
 var _signal_materials: Array[StandardMaterial3D] = []
 var _guide: StandardMaterial3D
 var _planet: MeshInstance3D
@@ -28,6 +41,14 @@ var _mark := _surface(Color("#455560"), 0.18, 0.62)
 
 
 func _ready() -> void:
+	_base_ambient_color = _world_environment.environment.ambient_light_color
+	_base_ambient_energy = _world_environment.environment.ambient_light_energy
+	_base_window_color = _window_light.light_color
+	_base_window_energy = _window_light.light_energy
+	_base_deck_color = _deck_light.light_color
+	_base_deck_energy = _deck_light.light_energy
+	_base_console_color = _console_fill.light_color
+	_base_console_energy = _console_fill.light_energy
 	_guide = _signal(Color("#38786f"))
 	_build_exterior()
 	_build_deck()
@@ -38,6 +59,9 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_planet.rotate_y(delta * 0.007)
+	if _life_protocol:
+		var pulse := 0.97 + 0.03 * sin(Time.get_ticks_msec() * 0.006)
+		_deck_light.light_energy = _base_deck_energy * 0.34 * pulse
 
 
 func set_operational_count(count: int) -> void:
@@ -48,6 +72,28 @@ func set_operational_count(count: int) -> void:
 func set_alarm(strength: float) -> void:
 	_alarm = clampf(strength, 0.0, 1.0)
 	_refresh_signals()
+
+
+func set_life_protocol(enabled: bool) -> void:
+	_life_protocol = enabled
+	if enabled:
+		_world_environment.environment.ambient_light_color = Color("#492c31")
+		_world_environment.environment.ambient_light_energy = _base_ambient_energy * 0.48
+		_window_light.light_color = Color("#df6657")
+		_window_light.light_energy = _base_window_energy * 0.17
+		_deck_light.light_color = Color("#bf4038")
+		_deck_light.light_energy = _base_deck_energy * 0.34
+		_console_fill.light_color = Color("#bd4940")
+		_console_fill.light_energy = _base_console_energy * 0.21
+	else:
+		_world_environment.environment.ambient_light_color = _base_ambient_color
+		_world_environment.environment.ambient_light_energy = _base_ambient_energy
+		_window_light.light_color = _base_window_color
+		_window_light.light_energy = _base_window_energy
+		_deck_light.light_color = _base_deck_color
+		_deck_light.light_energy = _base_deck_energy
+		_console_fill.light_color = _base_console_color
+		_console_fill.light_energy = _base_console_energy
 
 
 func _refresh_signals() -> void:

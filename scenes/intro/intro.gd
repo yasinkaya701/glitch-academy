@@ -6,16 +6,16 @@ signal alarm_changed(strength: float)
 const DURATION := 14.0
 const CUE_STARTS := [0.0, 3.3, 6.6, 10.0, DURATION]
 const HEADLINES := [
-	"Gece ölçümü başladı.",
-	"İki kayıt birbirini tutmuyor.",
-	"Arıza tek odada kalmadı.",
+	"MERİDYEN çevrim içi.",
+	"Ölçüm sistemi hazır.",
+	"İki kayıt uyuşmuyor.",
 	"Yanlış Dünya",
 ]
 const CAPTIONS := [
-	"Gözlemevi her gece düzenekleri aynı koşullarda sınar.",
+	"Merhaba. Gözlemevi denetimi için seni bekliyordum.",
+	"İlk kalibrasyonda küçük bir sapma gördüm.",
 	"Aynı anda bırakılan iki yük, sensöre farklı zamanlarda ulaştı.",
-	"Dünya’nın ayar paneli yanıt vermiyor.",
-	"Kontrol merkezine dön. İlk düzeneği yeniden kur.",
+	"Birlikte kontrol edelim. Önce bir TYT kaydını inceleyelim.",
 ]
 const ACCENT_NORMAL := Color("#87cfc4")
 const ACCENT_ALARM := Color("#ff9d79")

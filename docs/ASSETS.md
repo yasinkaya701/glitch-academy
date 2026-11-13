@@ -30,3 +30,7 @@ Varlık üretimini Codex ajanları üstlenir. Codex kotası dolarsa açık taleb
 - Dosyaları Godot'a aktar ve eksik doku, ölçek veya yön sorunu varsa düzelt.
 - Talepte belirtilen ayrı parçaları ve pivotları editörde kontrol et. 3D modeli gerekirse `scenes/experiment_3d.tscn` ile kurduğun geçici sahnede dene.
 - PR açıklamasına teslim yollarını, önizlemeyi ve sahneye bağlayan kişinin bilmesi gereken düğüm adlarını ekle. İstasyon sahibi varlığı kendi sahnesinde açıp hedef kamera ve etkileşimle doğrular.
+
+## YKS campaign pictograms
+
+`assets/ui/icons/yks/` contains the hand-authored language, geometry, archive, compass, reasoning, and YDT SVG cues used by the campaign route. They use the shared pale stroke and cyan/amber meaning colors; labels remain live Godot text.

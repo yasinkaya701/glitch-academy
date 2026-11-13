@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="YksMissionDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://stations/yks/yks_mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/yks/play/ydt_english.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"ydt_english"
+grade = 12
+routes = PackedStringArray("ydt")
+description = "Infer a likely action from a short English reading passage."
+scene = ExtResource("2")
+title = "Kesilen Frekans"
+subject = "English"
+field_tags = PackedStringArray("ydt")
+curriculum = "YDT English · Reading comprehension and inference"
+source_url = "https://ogmmateryal.eba.gov.tr/kitap/reading-12/reading-12.pdf"
+source_note = "MEB OGM · Reading Comprehension for YDT, Grade 12"
+learning_target = "Infer a speaker's likely next action from explicit details in a short English passage."
+instruction = "Choose the inference supported by the passage."
+prompt = "The radio signal faded as the hikers entered the valley. Maya checked the map, moved to higher ground, and tried the transmitter again. What can be inferred?"
+visual_theme = &"english"
+mode = "choice"
+options = PackedStringArray("Maya is trying to improve reception by changing position before sending again.", "Maya has decided to abandon the hike because the weather is cloudy.", "The transmitter can only work inside the valley.", "The map shows that the radio is broken beyond repair.")
+correct_option = "Maya is trying to improve reception by changing position before sending again."
+feedback_wrong = "Use only stated actions: she checks a map, moves higher, then retries the transmitter."
+feedback_success = "Correct. Her movement to higher ground and another transmission attempt support the reception inference."

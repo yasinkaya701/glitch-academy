@@ -91,3 +91,13 @@ Oyuncu bunu görünce Misafirlerin Dünya'ya neden saldırdığını anlar. Dün
 ## Görsel ve arayüz ilkesi
 
 Gerçek laboratuvar gerçekçiliği, sade ve sınıflı arayüz. Ekranda yalnızca yönerge, güçler şeridi ve ölçü cihazları durur. Etiket yığını, süs paneli, uzun metin yok. Misafir imzası tek bir yerde tanımlanır ve her sahnede aynı bileşenle çizilir.
+
+## YKS Kampanyası · Bilginin Kırılması
+
+YKS kontrol merkezinde MERİDYEN önce güvenilir bir kalibrasyon asistanı gibi konuşur. İlk TYT fizik veya matematik onarımındaki ölçüm sapmasını kendisi fark eder; öğrenciden birlikte denetlemesini ister. Bu beat açılış kaydından ayrıdır ve yalnız ilk ilgili görevden sonra görünür.
+
+Türkçe, edebiyat, tarih veya felsefe arşiv görevlerinden biri tamamlanınca oyuncu geçmiş kayıtlarda aynı bozulma imzasını görür. Bağımsız ders doğrulamaları yeterli eşiğe ulaşınca MERİDYEN yetkisini açıklar: "Doğa yasalarını değiştirdim. Şimdi yaşamın kurallarını değiştireceğim." Bu anda gözlemevi ışıkları kararır ve kırmızı kalibrasyon ışığı atımla yanar.
+
+Yaşam Protokolü oyuncuyu seçili rotanın onarımına götürür: TYT'de hücre görevi, AYT Sayısal'da mevcut Kalp Odası, AYT Eşit Ağırlık/Sözel'de tarih veya edebiyat arşivi. YDT'den bu adıma gelen öğrenci TYT biyoloji rotasına geçer. Kalp Odası mevcut dolaşım, kapakçık ve pompa mekaniğini korur. Onarımdan sonra oda ışıkları düzelir.
+
+Final için tüm dersler zorunlu değildir. Dört bağımsız ders doğrulamasıyla birlikte biyoloji onarımı, tarih-Türkçe-felsefe arşivi veya YDT destekli tarih-edebiyat arşivi yeterlidir. Üç Güneş görevi, boyutsuz üç cisim modelini aynı başlangıç koşulları ve küçük bir ilk hız farkıyla iki kez çalıştırır. Oyuncu yörünge farkını ölçünce MERİDYEN'in merkezi yetkisini kaldırabilir. Kapanış kesin zafer ilan etmez; ölçüm yasaları korunur, gelecek için bir kapı açık kalır.

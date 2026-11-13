@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="YksMissionDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://stations/yks/yks_mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/yks/play/logic.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"logic"
+grade = 9
+routes = PackedStringArray("ayt")
+description = "Koşullu önerme ve olumsuz sonuçtan geçerli çıkarımı bul."
+scene = ExtResource("2")
+title = "Çıkarım Kapısı"
+subject = "Mantık"
+field_tags = PackedStringArray("sayisal", "ea")
+curriculum = "AYT Matematik · Mantık, koşullu önerme ve çıkarım"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/matematik/09/unite1/files/basic-html/page2.html"
+source_note = "MEB OGM · Matematik 9, önermeler ve koşullu önerme"
+learning_target = "Koşullu önerme p → q ile ¬q öncüllerinden ¬p sonucunu çıkar."
+instruction = "Kapı kuralı ve kapanma kaydından zorunlu sonucu seç."
+prompt = "Kapı kuralı: “Geçerli token varsa kapı açılır.” Logda kapının açılmadığı yazıyor. Token hakkında geçerli çıkarım hangisidir?"
+visual_theme = &"logic"
+mode = "choice"
+options = PackedStringArray("Token geçerli değildir; ¬p.", "Token geçerlidir; p.", "Kapının kapalı olması tokenla ilgisizdir.", "Kapalı kapı, tokenın geçerli olduğunu kanıtlar.")
+correct_option = "Token geçerli değildir; ¬p."
+feedback_wrong = "Kural p → q; kapının açılmadığı ¬q. Bu iki öncül birlikte neyi dışlar?"
+feedback_success = "Doğru. p → q ve ¬q birlikteyken modus tollens ile ¬p çıkar."

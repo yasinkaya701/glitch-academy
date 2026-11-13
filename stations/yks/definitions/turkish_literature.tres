@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="YksMissionDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://stations/yks/yks_mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/yks/play/turkish_literature.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"turkish_literature"
+grade = 12
+routes = PackedStringArray("ayt")
+description = "Günlük metninden anlatıcı, tür ve edebî özellikleri çıkar."
+scene = ExtResource("2")
+title = "Kayıp Günlük"
+subject = "Türk Dili ve Edebiyatı"
+field_tags = PackedStringArray("ea", "sozel")
+curriculum = "AYT Türk Dili ve Edebiyatı · Anlatıcı, tür ve edebî özellik"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/turkdiliveedebiyati/9/unite9/files/basic-html/page3.html"
+source_note = "MEB OGM · Türk Dili ve Edebiyatı 9, günlük türü ve özellikleri"
+learning_target = "Günlük anlatımındaki kişi, tür ve dil ipuçlarından anlatıcıyı ve metin özelliğini çıkar."
+instruction = "Günlükteki ipuçlarından anlatıcı, tür ve üslup çıkarımlarını sırayla kur."
+prompt = "Kayıp günlükte “Bugün yine kıyıya indim; çocukluğumun sesini duydum” cümlesi var. Kayıtlar tarihlenmiş ve yaşantıyı aktaran bir ses kullanıyor; çıkarım zincirini tamamla."
+visual_theme = &"literature"
+mode = "sequence"
+sequence_items = PackedStringArray("Çocukluk anısı → öznel üslup", "“İndim” eki → kişisel anlatıcı", "Tarihli kayıt → günlük türü")
+correct_sequence = PackedStringArray("“İndim” eki → kişisel anlatıcı", "Tarihli kayıt → günlük türü", "Çocukluk anısı → öznel üslup")
+feedback_wrong = "İpucunun söylediğiyle çıkarımın kapsamını karşılaştır: kişi eki, tarihleme ve imge farklı özellikleri gösterir."
+feedback_success = "Doğru. Kişi eki anlatıcıyı, tarihli kayıtlar türü, anı ve imge ise öznel edebî anlatımı belirtiyor."

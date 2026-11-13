@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="YksMissionDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://stations/yks/yks_mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/yks/play/religion_culture.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"religion_culture"
+grade = 10
+routes = PackedStringArray("tyt")
+description = "Bir metinde inanç ile davranış arasındaki ilişkiyi belirle."
+scene = ExtResource("2")
+title = "Sorumluluk Protokolü"
+subject = "Din Kültürü ve Ahlak Bilgisi"
+field_tags = PackedStringArray("sayisal", "ea", "sozel")
+curriculum = "TYT Din Kültürü ve Ahlak Bilgisi · İman ve amel"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/files/02fu1ghggqr.pdf"
+source_note = "MEB OGM · YKS TYT-AYT Din Kültürü ve Ahlak Bilgisi soru çözümü"
+learning_target = "Bir metinde inancın davranışla nasıl ilişkilendirildiğini belirle."
+instruction = "İnancın davranışta görünür olmasını anlatan kavramı seç."
+prompt = "Bir erdem anlatısı inancı, yardımlaşma, sözünde durma ve sabırla birlikte ele alıyor; bu ilişki hangi kavramı öne çıkarır?"
+visual_theme = &"religion"
+mode = "choice"
+options = PackedStringArray("Amel: inancın eylemle görünmesi", "İkrar: inancı dille açıklama", "Bilgi: bir şeyi öğrenme", "İrade: seçim yapabilme gücü")
+correct_option = "Amel: inancın eylemle görünmesi"
+feedback_wrong = "Metindeki yardımlaşma, sözünde durma ve sabır gözlenebilir davranışlardır; bunları kapsayan kavrama bak."
+feedback_success = "Doğru. Parça imanı, eylem ve davranışla ilişkilendiriyor: amel."
