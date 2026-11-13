@@ -19,6 +19,16 @@ Section B of issue #17. Bu klasör yalnızca `stations/projectile/` sahnesinin v
 
 İlk düzenleme turunun altı PNG'si, README'si ve kaynak Pillow jeneratörü `archive/iteration_01/` altında korunur. Yeni arka plan Godot sahnesi ve bu sürümün Pillow jeneratörü kök klasördedir; jeneratör arşive dokunmaz.
 
+## Oynanabilir sahne
+
+Varlıklar `stations/projectile/mission.tscn` ve `mission.gd` içinde kullanılır. Godot editöründen sahneyi açıp çalıştırın veya proje kökünden:
+
+```sh
+godot --path . --rendering-method gl_compatibility --scene res://stations/projectile/mission.tscn
+```
+
+Hız kaydırıcısı yatay başlangıç hızını değiştirir; **FIRLAT** gerçek model API'sinden hesaplanan yörüngeyi ve eşzamanlı bırakılan küreyi oynatır. **SIFIRLA** deneyi başa alır. Hedef halkası 60 m çevresinde inişte yanar. Yörünge ve ölçümler `projectile_sim.gd` fonksiyonlarını çağırır; o dosyanın fizik hesabı değiştirilmemiştir. `docs/review/projectile_mission_hit.png` ve `projectile_mission_miss.png`, Godot 4.7.2 GL Compatibility çalıştırmasından alınmış iki bitiş karesidir.
+
 ## Kontrol
 
-Çıktı adları, ölçüler ve PNG modları Pillow ile doğrulandı. Godot sahnesi normal GPU renderer'ında render edildi ve PNG boyutu kontrol edildi; arka plan Godot'ta görsel olarak incelendi. Launcher, küreler ve hedefin açık/kapalı durumları aynı boyutlarda korunur. Arka planın sağ tarafı ölçüm ve arayüz yazıları için boş bırakılmıştır. Sahne varlıkları henüz bir `mission.tscn` içine bağlanmamıştır.
+Çıktı adları, ölçüler ve PNG modları Pillow ile doğrulandı. Arka plan Godot'ta görsel olarak incelendi. Mission sahnesi Godot 4.7.2 ile import edilip çalıştırıldı; hit/miss ekranları gerçek sahneden kaydedildi. Launcher, küreler ve hedefin açık/kapalı durumları aynı boyutlarda korunur. İlk düzenleme turunun altı PNG'si, README'si ve kaynak Pillow jeneratörü `archive/iteration_01/` altında korunur.
