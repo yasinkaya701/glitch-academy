@@ -58,7 +58,7 @@ func setup(label: String, accent: Color, toggle: bool) -> void:
 	text.text = label.to_upper()
 	text.font = FONT
 	text.font_size = 64
-	text.pixel_size = 0.034 / 64.0
+	text.pixel_size = 0.045 / 64.0
 	text.modulate = Color("#e8eef2")
 	text.rotation_degrees = Vector3(-90, 0, 0)
 	text.position = Vector3(0, 0.029, 0.012)

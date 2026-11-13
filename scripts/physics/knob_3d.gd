@@ -71,8 +71,8 @@ func setup(host: Node, label: String, low_value: float, high_value: float, start
 		tick.position = Vector3(sin(angle), 0.013, -cos(angle)) * 0.095
 		tick.rotation.y = -angle
 		add_child(tick)
-	_readout = _label("", 0.05, Vector3(0, 0.002, 0.155), Color("#9ff3d8"), FONT)
-	_label(title.to_upper(), 0.034, Vector3(0, 0.002, 0.215), Color("#c4ced8"), FONT_REGULAR)
+	_readout = _label("", 0.07, Vector3(0, 0.002, 0.16), Color("#9ff3d8"), FONT)
+	_label(title.to_upper(), 0.05, Vector3(0, 0.002, 0.235), Color("#d2dbe3"), FONT_REGULAR)
 	# Tıklama alanı
 	var area := Area3D.new()
 	var shape := CollisionShape3D.new()

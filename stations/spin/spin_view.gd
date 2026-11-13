@@ -51,6 +51,7 @@ var _station_labels: Array[Label3D] = []
 var _crack: Node3D
 var _field_lines: Array[Node3D] = []
 var _field_lines_gradient := -1.0
+var _plate_screen: Node3D
 var _atom_mesh: SphereMesh
 var _atom_material: StandardMaterial3D
 var _dead_material: StandardMaterial3D
@@ -65,11 +66,11 @@ func _camera_target() -> Vector3:
 
 
 func _screen_size() -> Vector2:
-	return Vector2(1.5, 0.84)
+	return Vector2(2.0, 1.125)
 
 
 func _screen_transform() -> Transform3D:
-	return Transform3D(Basis(Vector3.RIGHT, deg_to_rad(-6.0)), Vector3(1.22, 1.0, -0.9))
+	return Transform3D(Basis(Vector3.RIGHT, deg_to_rad(-6.0)), Vector3(1.6, 1.34, -0.9))
 
 
 func wx(x_ref: float) -> float:
@@ -109,7 +110,7 @@ func _build_set() -> void:
 		var label := Label3D.new()
 		label.font = FONT
 		label.font_size = 64
-		label.pixel_size = 0.09 / 64.0
+		label.pixel_size = 0.15 / 64.0
 		label.rotation_degrees = Vector3(-90, 0, 0)
 		label.shaded = false
 		label.position = Vector3(wx(STAGE_X[i]), 0.004, 0.36)
@@ -119,20 +120,28 @@ func _build_set() -> void:
 	for x in [-1.38, -1.22]:
 		for side in [-1.0, 1.0]:
 			stage.box(Vector3(0.012, 0.1, 0.2), steel, Vector3(x, TUBE_Y + side * 0.075, 0.0))
-	# Dedektör (X-ışını tüpü)
-	var detector := stage.model("res://assets/models/x-ray-tube.glb", 0.5)
-	detector.position = Vector3(wx(DETECTOR_X), TUBE_Y + 0.05, 0.0)
-	detector.rotation_degrees = Vector3(0, 20, 0)
+	# Soğuk cam plaka: tüpün ucunda tutucuda, atomlar buraya çöker
+	var frame_material := Stage.pbr(Stage.METAL_DIR, Vector3(2, 2, 2), Color(0.8, 0.83, 0.88), 1.0)
+	stage.box(Vector3(0.016, 0.26, 0.26), Stage.glass_material(Color("#dfe9f0"), 0.35), Vector3(wx(SCREEN_X) - 0.07, TUBE_Y, 0.0))
+	for side in [-1.0, 1.0]:
+		stage.box(Vector3(0.024, 0.28, 0.014), frame_material, Vector3(wx(SCREEN_X) - 0.07, TUBE_Y, side * 0.137))
+	stage.box(Vector3(0.024, 0.014, 0.28), frame_material, Vector3(wx(SCREEN_X) - 0.07, TUBE_Y + 0.137, 0.0))
+	stage.box(Vector3(0.024, 0.014, 0.28), frame_material, Vector3(wx(SCREEN_X) - 0.07, TUBE_Y - 0.137, 0.0))
 	var detector_label := Label3D.new()
-	detector_label.text = "DEDEKTÖR"
-	detector_label.font = FONT_REGULAR
+	detector_label.text = "SOĞUK PLAKA"
+	detector_label.font = FONT
 	detector_label.font_size = 48
-	detector_label.pixel_size = 0.045 / 48.0
+	detector_label.pixel_size = 0.065 / 48.0
 	detector_label.modulate = WARM
 	detector_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	detector_label.shaded = false
-	detector_label.position = Vector3(wx(DETECTOR_X), TUBE_Y + 0.42, 0.0)
+	detector_label.position = Vector3(wx(SCREEN_X) - 0.07, TUBE_Y + 0.36, 0.0)
 	stage.world.add_child(detector_label)
+	# Çıkarılmış plaka mikroskop altında okunur: biriken gümüş çizgileri
+	_plate_screen = Screen.new()
+	stage.world.add_child(_plate_screen)
+	_plate_screen.setup(Vector2i(640, 400), Vector2(0.4, 0.25), _draw_plate)
+	_plate_screen.transform = Transform3D(Basis(Vector3.RIGHT, deg_to_rad(-62.0)), Vector3(1.22, 0.07, 0.5))
 	# Eşit olmayan manyetik alan çizgileri: üst kutba doğru sıklaşır (Stern–Gerlach'ın kilit koşulu)
 	var field_material := Stage.glow_material(Color("#7fb8ff"), 0.9)
 	for i in 3:
@@ -271,6 +280,8 @@ func _process(delta: float) -> void:
 		return
 	_clock += delta
 	_update_field_lines()
+	if _plate_screen != null:
+		_plate_screen.refresh()
 	var frozen := false
 	if intro_t >= 0.0:
 		intro_t += delta
@@ -362,34 +373,51 @@ func _atom_position(atom: Dictionary) -> Vector2:
 
 func _draw_screen(canvas: Control, size_px: Vector2) -> void:
 	var s := size_px.x / 1600.0
-	canvas.draw_string(FONT_REGULAR, Vector2(40, 54) * s, "EKRAN  ·  ATOM İZLERİ", HORIZONTAL_ALIGNMENT_LEFT, -1, int(26 * s), MUTED)
-	# Ekran: iki kanal çizgisi, biriken izler, (kriz) cihazın beklediği tek leke
-	var plate := Rect2(Vector2(60, 100) * s, Vector2(760, 540) * s)
+	canvas.draw_string(FONT, Vector2(50, 70) * s, "EKRAN  ·  ATOM İZLERİ", HORIZONTAL_ALIGNMENT_LEFT, -1, int(40 * s), MUTED)
+	# Plaka: iki kanal çizgisi, biriken izler, (kriz) cihazın beklediği tek leke
+	var plate := Rect2(Vector2(50, 100) * s, Vector2(660, 740) * s)
 	canvas.draw_rect(plate, Color("#0a111b"))
-	canvas.draw_rect(plate, Color(MUTED, 0.35), false, 2.0)
+	canvas.draw_rect(plate, Color(MUTED, 0.4), false, 3.0)
 	var centre_y := plate.position.y + plate.size.y * 0.5
-	canvas.draw_line(Vector2(plate.position.x, centre_y), Vector2(plate.end.x, centre_y), Color(MUTED, 0.2), 1.0)
+	canvas.draw_line(Vector2(plate.position.x, centre_y), Vector2(plate.end.x, centre_y), Color(MUTED, 0.25), 2.0)
 	if show_classical:
 		for i in 40:
 			var u := float(i) / 39.0
-			var yy := centre_y - 180.0 * s + u * 360.0 * s
+			var yy := centre_y - 230.0 * s + u * 460.0 * s
 			var alpha := exp(-pow((u - 0.5) / 0.28, 2.0)) * 0.16
-			canvas.draw_circle(Vector2(plate.position.x + plate.size.x * 0.5, yy), 60.0 * s, Color(WARM, alpha))
-		canvas.draw_string(FONT, Vector2(plate.position.x + 20.0, plate.position.y + 40.0 * s), "CİHAZ BEKLENTİSİ: tek leke", HORIZONTAL_ALIGNMENT_LEFT, -1, int(26 * s), WARM)
+			canvas.draw_circle(Vector2(plate.position.x + plate.size.x * 0.5, yy), 80.0 * s, Color(WARM, alpha))
+		canvas.draw_string(FONT, Vector2(plate.position.x + 20.0, plate.position.y + 52.0 * s), "CİHAZ BEKLENTİSİ: tek leke", HORIZONTAL_ALIGNMENT_LEFT, -1, int(34 * s), WARM)
 	for mark in _marks:
-		var yy: float = centre_y + float(mark["u"]) * 150.0 * s
-		canvas.draw_circle(Vector2(plate.position.x + plate.size.x * 0.5 + mark["dx"] * 3.0 * s, yy), 9.0 * s, Color(ACCENT, 0.85))
-	var field_text := "ALAN DÜZGÜN: atomlar sapmıyor" if gradient < 0.3 else "ALAN EŞİT DEĞİL: eğim %s T/m" % str(snappedf(gradient * 10.0, 1.0)).replace(".0", "")
-	canvas.draw_string(FONT, Vector2(plate.position.x + 20.0, plate.end.y - 20.0 * s), field_text, HORIZONTAL_ALIGNMENT_LEFT, -1, int(24 * s), DANGER if gradient < 0.3 else ACCENT)
-	canvas.draw_string(FONT_REGULAR, Vector2(plate.end.x - 120.0 * s, centre_y - 150.0 * s), "yukarı", HORIZONTAL_ALIGNMENT_LEFT, -1, int(24 * s), MUTED)
-	canvas.draw_string(FONT_REGULAR, Vector2(plate.end.x - 120.0 * s, centre_y + 160.0 * s), "aşağı", HORIZONTAL_ALIGNMENT_LEFT, -1, int(24 * s), MUTED)
-	# Sayaçlar
+		var yy: float = centre_y + float(mark["u"]) * 190.0 * s
+		canvas.draw_circle(Vector2(plate.position.x + plate.size.x * 0.5 + mark["dx"] * 4.0 * s, yy), 13.0 * s, Color(ACCENT, 0.85))
+	canvas.draw_string(FONT_REGULAR, Vector2(plate.end.x - 150.0 * s, centre_y - 200.0 * s), "yukarı", HORIZONTAL_ALIGNMENT_LEFT, -1, int(32 * s), MUTED)
+	canvas.draw_string(FONT_REGULAR, Vector2(plate.end.x - 150.0 * s, centre_y + 220.0 * s), "aşağı", HORIZONTAL_ALIGNMENT_LEFT, -1, int(32 * s), MUTED)
+	var field_text := "ALAN DÜZGÜN: sapma yok" if gradient < 0.3 else "ALAN EŞİT DEĞİL: %s T/m" % str(snappedf(gradient * 10.0, 1.0)).replace(".0", "")
+	canvas.draw_string(FONT, Vector2(plate.position.x + 20.0, plate.end.y - 24.0 * s), field_text, HORIZONTAL_ALIGNMENT_LEFT, -1, int(34 * s), DANGER if gradient < 0.3 else ACCENT)
+	# Sayaçlar: 3 satır × 2 sütun, büyük
 	var total := up_hits + down_hits
 	var up_pct := 100.0 * float(up_hits) / maxf(float(total), 1.0)
 	var down_pct := 100.0 * float(down_hits) / maxf(float(total), 1.0)
-	Kit.readout(canvas, Rect2(Vector2(870, 110) * s, Vector2(300, 150) * s), "YUKARI", "%d" % up_hits, "%%%d" % roundi(up_pct), FONT_REGULAR, s * 1.8, ACCENT)
-	Kit.readout(canvas, Rect2(Vector2(1190, 110) * s, Vector2(300, 150) * s), "AŞAĞI", "%d" % down_hits, "%%%d" % roundi(down_pct), FONT_REGULAR, s * 1.8, ACCENT)
-	Kit.readout(canvas, Rect2(Vector2(870, 290) * s, Vector2(300, 150) * s), "MERKEZDE KALAN", "%d" % center_hits, "", FONT_REGULAR, s * 1.8, INK)
-	Kit.readout(canvas, Rect2(Vector2(1190, 290) * s, Vector2(300, 150) * s), "DEDEKTÖR EKSENİ", String(detector_axis).to_upper(), "", FONT_REGULAR, s * 1.8, WARM)
-	Kit.readout(canvas, Rect2(Vector2(870, 470) * s, Vector2(300, 150) * s), "İZ ARALIĞI", str(snappedf(6.0 * gradient, 0.1)).replace(".", ","), "mm", FONT_REGULAR, s * 1.8, ACCENT)
-	Kit.readout(canvas, Rect2(Vector2(1190, 470) * s, Vector2(300, 150) * s), "FIRIN (Ag)", "%d" % int(oven_temp), "K", FONT_REGULAR, s * 1.8, WARM)
+	var cards: Array = [
+		["YUKARI", "%d" % up_hits, "%%%d" % roundi(up_pct), ACCENT],
+		["AŞAĞI", "%d" % down_hits, "%%%d" % roundi(down_pct), ACCENT],
+		["MERKEZDE KALAN", "%d" % center_hits, "", INK],
+		["İZ ARALIĞI", str(snappedf(6.0 * gradient, 0.1)).replace(".", ","), "mm", ACCENT],
+		["DEDEKTÖR EKSENİ", String(detector_axis).to_upper(), "", WARM],
+		["FIRIN (Ag)", "%d" % int(oven_temp), "K", WARM],
+	]
+	for k in cards.size():
+		var card: Array = cards[k]
+		Kit.readout(canvas, Rect2(Vector2(760.0 + 395.0 * (k % 2), 100.0 + 250.0 * (k / 2)) * s, Vector2(375.0, 230.0) * s), card[0], card[1], card[2], FONT_REGULAR, s * 2.4, card[3])
+
+
+func _draw_plate(canvas: Control, size_px: Vector2) -> void:
+	## Çıkarılmış soğuk cam plaka: mikroskop altında okunan gümüş çizgileri.
+	canvas.draw_rect(Rect2(Vector2.ZERO, size_px), Color("#141a22"))
+	canvas.draw_rect(Rect2(Vector2.ZERO, size_px), Color(1, 1, 1, 0.12), false, 4.0)
+	var centre_y := size_px.y * 0.5
+	canvas.draw_string(FONT_REGULAR, Vector2(14, 34), "SOĞUK PLAKA", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, MUTED)
+	for mark in _marks:
+		var yy: float = centre_y + float(mark["u"]) * size_px.y * 0.28
+		canvas.draw_rect(Rect2(Vector2(size_px.x * 0.18 + float(mark["dx"]) * 2.0, yy - 3.0), Vector2(size_px.x * 0.64, 6.0)), Color("#cfd6dc", 0.1))
+	canvas.draw_string(FONT_REGULAR, Vector2(14, size_px.y - 16.0), "gümüş çökeltisi", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color(MUTED, 0.9))
