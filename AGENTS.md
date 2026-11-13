@@ -1,15 +1,26 @@
 # Yanlış Dünya · Ekip çalışma kuralları
 
-Yasin görevleri ve sahiplerini belirler. Yasin Codex ve Claude ile, ekip arkadaşı Codex ve Gemini ile çalışır. Ajan işlerini de görevi alan kişi kendi çalışma kopyasında koordine eder.
+Yasin görevleri ve sahiplerini belirler. Yasin Codex ve Claude ile, ekip arkadaşı Codex ve Gemini ile çalışır. Ajan işlerini de görevi alan kişi kendi çalışma kopyasında koordine eder. Deney sırası ve oynanış kararları Yasin ile netleştirilir.
+
+## Kalite ölçütleri
+
+- Her bölüm kendi konusunu sıfırdan öğretebilmeli. Terimleri ve gözlemlenebilir ilişkileri tanıt, yönlendirmeli deney yaptır, sonra yeni bir durumda oyuncunun tek başına uygulamasını iste. Formül veya model düzeneğin davranışını belirlesin.
+- Her deneyin başında, kural yanlış çalışırsa ortaya çıkabilecek bir sonucu kısa ve atlanabilir bir animasyonla göster. Kurmaca arıza durumunu sahnede anlaşılır kıl. Onarımdan sonra aynı düzenekte sonucun nasıl değiştiğini göster.
+- Öğretim sırasını seçilen sınıfın veya sınav rotasının kazanımlarına göre kur. Kaynak, varsayım ve birimleri doğrula. Bir anlatım sadeleştirmesi yapıldığında ekrandaki şema ve etiketleri buna göre yaz.
+- AI slop kabul edilmez. Her görsel, metin ve hareketin oyunda bir amacı olsun. Tekrarlı yapay zekâ metni, dekoratif etiket yığını, hatalı anatomi, çarpık geometri ve stil dışı varlık teslim edilmeden önce düzeltilir.
+- Sahneyi Godot içinde hedef çözünürlükte incele. Kontroller, etiketler ve ölçümler okunmalı. Renkle verilen durumları yazı, sembol veya hareketle de göster. Doğru giriş, yanlış giriş, bağımsız uygulama ve yeniden deneme akışlarını dene.
 
 ## Çalışma alanı
 
-Her görev için güncel `main` üzerinden ayrı bir dal aç. Örnek olarak Fizik istasyonu için `mission/free-fall` kullan. Birden fazla ajan aynı bilgisayarda eşzamanlı çalışacaksa her dalı ayrı klon veya worktree içinde aç. Bir dalın ve istasyon klasörünün aynı anda tek yazarı olsun. Başka ajanlar inceleme ve tasarım geri bildirimi verebilir.
+Her görev için güncel `main` üzerinden ayrı bir dal aç. Örnek olarak Fizik istasyonu için `mission/free-fall` kullan. Birden fazla ajan aynı bilgisayarda eşzamanlı çalışacaksa her dalı ayrı klon veya worktree içinde aç. İstasyonun sahne ve mantığının tek yazarı olsun. Varlıklar ayrı dal ve dosyalarda paralel üretilebilir. [Varlık üretimi ve Claude talep şablonu](docs/ASSETS.md)
 
 Örneğin bir kişi `mission/free-fall` dalında Düşüş Odası'nı geliştirirken diğeri `mission/heart` dalında Kalp Odası'nı geliştirebilir. İkisi de sahnesini kendi `mission.tres` dosyasına bağlar ve F5 ile kontrol merkezinden dener.
 
 | İş | Yazma alanı |
 |---|---|
+| Mevsim Gözlemevi | `stations/seasons/` |
+| Ölçüm Atölyesi | `stations/measurement/` |
+| Vektör Limanı | `stations/vectors/` |
 | Köprü Atölyesi | `stations/bridge/` |
 | Prizma Deposu | `stations/prism/` |
 | Düşüş Odası | `stations/free_fall/` |

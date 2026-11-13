@@ -8,13 +8,17 @@ Prizma, vakum odası ve deney kapları için 3D modeller kullanılabilir. Prizma
 
 ## İlk teslim
 
+İlk geliştirme turu açılış animasyonu ve kontrol merkezini kapsar. LGS, TYT ve AYT kendi ders ve ünite sıralarıyla ilerler. Onaylanan ilk görevler LGS Mevsimler, TYT Ölçüm ve Birimler, AYT Vektörler. [İlk görevlerin oynanış ve kabul ölçütleri](FIRST_MISSIONS.md)
+
+Aşağıdaki istasyonlar sonraki içerik havuzunda yer alır. Her istasyon, bozuk kuralın sonucunu gösteren kısa bir açılışın ardından gözlem, yönlendirmeli uygulama ve bağımsız uygulama içerir.
+
 | İstasyon | Rota | Oynanış ve kabul ölçütü |
 |---|---|---|
 | Köprü Atölyesi | LGS, 8. sınıf | `6–8–10` örneğinde kare alanlarını karşılaştır. Yeni köprünün `9` ve `12` birimlik dik kenarlarından kirişi hesapla. `14` birim oturmaz, `15` birim köprüyü kapatır. [MEB 8. sınıf Matematik](https://odsgm.meb.gov.tr/www/8-sinif-matematik-unitelendirilmis-ornek-sorular/icerik/677) |
 | Prizma Deposu | 7. sınıf keşfi | Birim küp katmanlarından `V = taban alanı × yükseklik` ilişkisini çıkar. `4 × 3 × 2` kasayı `24` birim küple doldur. Eksik dolum ve taşma görünür. [MEB Geometrik Nicelikler](https://tymm.meb.gov.tr/ortaokul-matematik-dersi/unite/467) |
 | Düşüş Odası | AYT Fizik | Vakumda aynı yükseklikten ilk hızsız bırakılan iki farklı kütleyi karşılaştır. Kütleye bağlı sahte ivmeyi kaldır. Onarılan modelde `h = ½gt²` ile `20 m` ve `2 s` ölçümünden `g = 10 m/s²` hesapla. Sensöre `3 s` sonra ulaşmak için `45 m` ayarla. İki kütle eşit sürede iner ve yanlış yükseklik zamanlamayı değiştirir. [MEB serbest düşüş](https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/beceri_temelli/11/fizik/files/basic-html/page45.html) |
 | Gösterge Laboratuvarı | LGS Fen, TYT Kimya | LGS'de referansların gösterge tepkisini incele, bilinmeyen numuneyi ölç ve asit, baz veya nötr hattına gönder. TYT'de iki sulu numunenin pH değerinden daha asidik olanı bulup vanayı aç. Yanlış seçimde vana kapalı kalır. Ölçüm sonucu renk ve metinle görünür. [MEB 8. sınıf Fen](https://odsgm.meb.gov.tr/www/8-sinif-fen-bilimleri-unitelendirilmis-ornek-sorular/icerik/676), [MEB TYT Kimya](https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/3adim/tyt/kimya/kimya.pdf) |
-| Kalp Odası | AYT Biyoloji | Mitralden sol kulakçığa geri kaçışı gözlemle. Triküspiti sağ kulakçık ile sağ karıncık arasına, mitrali sola, pulmoner ve aort kapaklarını ilgili çıkışlara yerleştir. Dolum, tüm kapakların kapalı olduğu kısa geçişler ve pompalama adım adım görünür. Yeni arızada açık takılan aort kapağını teşhis et. Akış vücut → sağ kalp → akciğer → sol kalp → vücut turunu tamamladığında görev biter. [MEB kalp anatomisi](https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/biyoloji/11/unite1/bolum4567/files/basic-html/page4.html), [ÖSYM 2026 AYT Fen, soru 32](https://dokuman.osym.gov.tr/pdfdokuman/2026/yks/tsk/yks_ayt_2026_kitapcik_kt12.pdf) |
+| Kalp Odası | AYT Biyoloji | Dört odacığı, büyük damarları ve dört kapakçığı tanı. Küçük ve büyük dolaşımı kur, pompanın dolum ve boşaltımını izle. Ters akışı teşhis et, kalbi onar ve vücut dokularına oksijen taşınmasını geri getir. [Kalp Odası öğrenme akışı](HEART.md) |
 | Basınç İstasyonu | LGS Fen | Bir karşılaştırmada sıvıyı sabit tutup derinliği, diğerinde derinliği sabit tutup sıvı türünü değiştir. Sensör okumalarından yararlanarak hedef basınca ulaş ve kapağı aç. LGS ekranı gözlem, kontrollü deney ve karşılaştırmayı kullanır. [MEB sıvı basıncı](https://odsgm.meb.gov.tr/destekmateryal/pdf/8kt/fen/3.pdf) |
 
 ## Rotalar ve konu haritası
@@ -37,9 +41,9 @@ Yasin Codex ve Claude ile, ekip arkadaşı Codex ve Gemini ile çalışır. Hang
 
 | Saat | Çıktı |
 |---|---|
-| 0–2 | Başlangıç projesi, ortak sahne sözleşmesi ve demo Mac'inde dışa aktarma provası |
-| 2–10 | Köprü ve Kalp baştan sona oynanabilir, açılışın ilk sürümü hazır |
-| 10–18 | Altı istasyon ve ilgili rotalar birleşir |
+| 0–2 | Açılış ve kontrol merkezi, ortak sahne sözleşmesi ve demo Mac'inde dışa aktarma provası |
+| 2–10 | LGS Mevsimler, TYT Ölçüm ve Birimler ve AYT Vektörler, rota başına ilk oynanabilir öğrenme bölümü |
+| 10–18 | İlk üç bölümün kalite turu, rota kontrolleri ve ardından sıradaki konular |
 | 18–24 | Hatalı girdiler, yeniden deneme, açılışı atlama, merkeze dönüş ve çevrimdışı paket açılışı doğrulanır |
 
-Jüri akışı **Köprü → Kalp → Düşüş**. Her görevde oyuncu gözlem yapar, bir kuralı uygular ve onarımın sonucunu görür. Süre sıkışırsa ses ve geçiş animasyonları sadeleşir. Başlangıç reposunda kontrol merkezi ve görev kayıtları bulunur. Açılış, deney sahneleri ve masaüstü dışa aktarma sonraki geliştirme işleridir.
+Jüri rotası, oynanabilir ve doğrulanmış bölümler arasından seçilir. Her görevde oyuncu gözlem yapar, bir kuralı uygular ve onarımın sonucunu görür. Süre sıkışırsa ses ve geçiş animasyonları sadeleşir.

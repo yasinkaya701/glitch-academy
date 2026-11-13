@@ -14,7 +14,7 @@ Terminalden açmak için repo kökünde şunu çalıştır.
 godot --path .
 ```
 
-Kontrol merkezi, 5–12. sınıf filtresi, LGS/TYT/AYT rotaları ve altı istasyonun kayıtları hazır. İstasyonlar sahneleri bağlandıkça oynanabilir olur.
+Atlanabilir açılış, 3D kontrol merkezi, 5–12. sınıf filtresi ve LGS/TYT/AYT rotaları hazır. İlk konu sırası Mevsim Gözlemevi, Ölçüm Atölyesi ve Vektör Limanı ile başlar. İstasyonlar sahneleri bağlandıkça oynanabilir olur.
 
 `scenes/experiment_3d.tscn` her istasyonda kullanılabilen bir 3D sahne alanı sunar. Kamera ve ışık hazır gelir. Godot mesh'lerini veya Blender'dan dışa aktardığın `.glb` modellerini istasyonun kendi klasöründe tut.
 
@@ -22,6 +22,8 @@ Kontrol merkezi, 5–12. sınıf filtresi, LGS/TYT/AYT rotaları ve altı istasy
 
 - [Oyun, müfredat ve 24 saatlik plan](docs/PLAN.md)
 - [İstasyon sözleşmesi ve görev devri](AGENTS.md)
+- [Codex, Gemini ve Claude varlık iş akışı](docs/ASSETS.md)
+- [İlk üç deney](docs/FIRST_MISSIONS.md)
 
 GitHub reposu özeldir. Repo sahibi, ekip arkadaşının GitHub kullanıcı adına **Settings → Collaborators** üzerinden erişim verir.
 

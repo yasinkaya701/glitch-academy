@@ -1,0 +1,54 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scenes/world/observatory.gd" id="1_world"]
+[ext_resource type="Shader" path="res://scenes/world/observatory_sky.gdshader" id="2_sky"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
+shader = ExtResource("2_sky")
+
+[sub_resource type="Sky" id="Sky_observatory"]
+sky_material = SubResource("ShaderMaterial_sky")
+
+[sub_resource type="Environment" id="Environment_observatory"]
+background_mode = 2
+sky = SubResource("Sky_observatory")
+ambient_light_source = 3
+ambient_light_color = Color(0.61, 0.70, 0.85, 1)
+ambient_light_energy = 0.77
+reflected_light_source = 2
+
+[node name="Observatory" type="Node3D"]
+script = ExtResource("1_world")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_observatory")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 5.1, 13.4)
+rotation_degrees = Vector3(-4, 0, 0)
+fov = 49.0
+far = 180.0
+current = true
+
+[node name="WindowLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-35, -145, 0)
+light_color = Color(0.66, 0.83, 1, 1)
+light_energy = 0.85
+
+[node name="DeckLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 8.2, 6)
+light_color = Color(0.51, 0.75, 0.80, 1)
+light_energy = 1.1
+omni_range = 23.0
+omni_attenuation = 0.85
+
+[node name="ConsoleFill" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-27, -8, 0)
+light_color = Color(0.74, 0.84, 0.84, 1)
+light_energy = 0.31
+
+[node name="Deck" type="Node3D" parent="."]
+
+[node name="Exterior" type="Node3D" parent="."]
+
+[node name="Stations" type="Node3D" parent="."]

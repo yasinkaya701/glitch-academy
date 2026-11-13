@@ -1,0 +1,37 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://stations/vectors/assets/dock.gd" id="1"]
+
+[sub_resource type="StandardMaterial3D" id="Material_structure"]
+albedo_color = Color(0.105, 0.155, 0.199, 1)
+metallic = 0.55
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="Material_deck"]
+albedo_color = Color(0.18, 0.25, 0.30, 1)
+metallic = 0.43
+roughness = 0.70
+
+[sub_resource type="StandardMaterial3D" id="Material_ivory"]
+albedo_color = Color(0.76, 0.78, 0.70, 1)
+metallic = 0.28
+roughness = 0.51
+
+[sub_resource type="StandardMaterial3D" id="Material_navigation"]
+resource_local_to_scene = true
+albedo_color = Color(0.12, 0.56, 0.45, 1)
+emission_enabled = true
+emission = Color(0.30, 0.87, 0.69, 1)
+emission_energy_multiplier = 0.8
+
+[sub_resource type="StandardMaterial3D" id="Material_rubber"]
+albedo_color = Color(0.049, 0.070, 0.091, 1)
+roughness = 0.88
+
+[node name="Dock" type="Node3D"]
+script = ExtResource("1")
+structure = SubResource("Material_structure")
+deck = SubResource("Material_deck")
+ivory = SubResource("Material_ivory")
+navigation = SubResource("Material_navigation")
+rubber = SubResource("Material_rubber")

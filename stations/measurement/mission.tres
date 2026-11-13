@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+
+[ext_resource type="PackedScene" path="res://stations/measurement/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"measurement"
+title = "Ölçüm Atölyesi"
+subject = "Fizik"
+grade = 9
+routes = PackedStringArray("class", "tyt")
+description = "Rayı ölç, birimleri dönüştür ve taşıyıcıyı yeniden çalıştır."
+curriculum = "9.1.3.1 (2026 YKS)"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/beceri_temelli/9/fizik/files/basic-html/page29.html"
+scene = ExtResource("2")
