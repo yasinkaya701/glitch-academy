@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="256" viewBox="0 0 1024 256">
+  <title>Yanlış Dünya · Glitch Academy</title>
+  <g font-family="Arial, Helvetica, sans-serif" text-anchor="middle">
+    <text x="512" y="132" font-size="72" font-weight="600" letter-spacing="0.8" fill="#E8F1F2">Yanlış Dünya</text>
+    <path d="M356 157h312" fill="none" stroke="#67DEE6" stroke-width="2"/>
+    <path d="M468 157h88" fill="none" stroke="#F2B152" stroke-width="2"/>
+    <text x="512" y="194" font-size="20" font-weight="500" letter-spacing="5.5" fill="#B9CBD1">GLITCH ACADEMY</text>
+  </g>
+</svg>

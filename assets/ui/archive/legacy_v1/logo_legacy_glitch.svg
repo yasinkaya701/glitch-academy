@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="256" viewBox="0 0 1024 256">
+  <g font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">
+    <text x="516" y="145" font-size="78" letter-spacing="1.8" fill="#67DEE6" opacity="0.68">Yanlış Dünya</text>
+    <text x="508" y="145" font-size="78" letter-spacing="1.8" fill="#C470B4" opacity="0.68">Yanlış Dünya</text>
+    <text x="512" y="145" font-size="78" letter-spacing="1.8" fill="#E8F1F2">Yanlış Dünya</text>
+    <text x="512" y="202" font-size="25" letter-spacing="8" fill="#E8F1F2" opacity="0.88">GLITCH ACADEMY</text>
+  </g>
+  <path d="M226 217h162M636 217h162" fill="none" stroke="#67DEE6" stroke-width="2" opacity=".65"/>
+  <path d="M206 223h72M746 223h72" fill="none" stroke="#C470B4" stroke-width="2" opacity=".55"/>
+</svg>
