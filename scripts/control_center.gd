@@ -378,6 +378,7 @@ func _select_mission(index: int, open_mobile_detail := false) -> void:
 	if open_mobile_detail and get_viewport_rect().size.x < 820.0:
 		_mobile_detail_active = true
 		_update_mobile_mission_view()
+		%BackToMissions.grab_focus()
 
 
 func _on_mission_selected(index: int) -> void:
@@ -390,6 +391,7 @@ func _return_to_mission_list() -> void:
 	var selected_items := mission_list.get_selected_items()
 	if not selected_items.is_empty():
 		mission_list.ensure_current_is_visible()
+		mission_list.grab_focus()
 
 
 func _update_mobile_mission_view() -> void:
