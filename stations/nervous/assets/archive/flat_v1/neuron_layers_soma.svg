@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="1024" viewBox="0 0 2048 1024">
+<defs>
+  <linearGradient id="tissue" x1="0" y1="0" x2="0.85" y2="1"><stop stop-color="#E7A4A0"/><stop offset=".5" stop-color="#C97978"/><stop offset="1" stop-color="#8D555E"/></linearGradient>
+  <linearGradient id="nerve" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#C8FFF2"/><stop offset=".45" stop-color="#70D5D0"/><stop offset="1" stop-color="#399B9D"/></linearGradient>
+  <linearGradient id="myelin" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F2E9D6"/><stop offset=".45" stop-color="#D7C8A6"/><stop offset="1" stop-color="#8B8E83"/></linearGradient>
+  <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#657786"/><stop offset=".5" stop-color="#394957"/><stop offset="1" stop-color="#192937"/></linearGradient>
+  <radialGradient id="glow"><stop stop-color="#F5B75F" stop-opacity=".8"/><stop offset="1" stop-color="#F5B75F" stop-opacity="0"/></radialGradient>
+  <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="smallGlow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  
+</defs>
+<ellipse cx="672" cy="520" rx="142" ry="158" fill="url(#tissue)" stroke="#F0B6AD" stroke-width="17"/>
+<ellipse cx="672" cy="520" rx="101" ry="112" fill="#8D6470" opacity=".56"/>
+<ellipse cx="672" cy="520" rx="54" ry="62" fill="#D9908B" stroke="#F2C5B4" stroke-width="9"/>
+<circle cx="689" cy="501" r="17" fill="#F9D8B9" opacity=".8"/>
+<path d="M 565 450 C 615 390 710 375 765 430" fill="none" stroke="#FFD6C1" stroke-width="13" opacity=".6" stroke-linecap="round"/>
+<path d="M 554 588 C 590 648 692 692 764 630" fill="none" stroke="#5F4654" stroke-width="11" opacity=".55" stroke-linecap="round"/>
+</svg>
