@@ -72,6 +72,7 @@ theme_override_constants/separation = 10
 [node name="Subtitle" type="Label" parent="Margin/Hub"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "SectionLabel"
 theme_override_colors/font_color = Color(0.63, 0.83, 0.78, 1)
 theme_override_font_sizes/font_size = 15
 text = "KONTROL MERKEZİ"
@@ -248,6 +249,7 @@ text = "Yeniden dene"
 [node name="PlayTitle" type="Label" parent="Margin/PlayScreen/Toolbar"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "HeadlineLabel"
 size_flags_horizontal = 3
 horizontal_alignment = 1
 
