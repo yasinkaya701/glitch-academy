@@ -18,6 +18,8 @@ var _measured: Array[bool] = [false, false]
 var _open_valve := -1
 var _locked := false
 var _stage: Control
+var _stage_host: Control
+var _model_3d: Node3D
 var _instruction: Label
 var _progress: Label
 var _feedback: Label
@@ -69,12 +71,41 @@ func _build_interface() -> void:
 	_stage_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_stage_panel.size_flags_stretch_ratio = 1.28
 	_workbench.add_child(_stage_panel)
+	_stage_host = Control.new()
+	_stage_host.custom_minimum_size = Vector2(420, 340)
+	_stage_host.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_stage_host.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_stage_panel.add_child(_stage_host)
+	var viewport_container := SubViewportContainer.new()
+	viewport_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	viewport_container.stretch = true
+	viewport_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(640, 460)
+	viewport.transparent_bg = true
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport_container.add_child(viewport)
+	_stage_host.add_child(viewport_container)
+	var world := Node3D.new()
+	viewport.add_child(world)
+	_model_3d = preload("res://stations/indicator/indicator_3d.gd").new()
+	_model_3d.tyt = _tyt
+	world.add_child(_model_3d)
+	var camera := Camera3D.new()
+	camera.position = Vector3(0, 4.4, 8.8)
+	world.add_child(camera)
+	camera.look_at(Vector3(0, 0.2, 0), Vector3.UP)
+	camera.fov = 42.0
+	camera.current = true
+	var light := DirectionalLight3D.new()
+	light.rotation_degrees = Vector3(-48, -24, 0)
+	light.light_energy = 1.35
+	world.add_child(light)
 	_stage = Control.new()
-	_stage.custom_minimum_size = Vector2(420, 340)
-	_stage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_stage.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_stage.draw.connect(_draw_stage)
-	_stage_panel.add_child(_stage)
+	_stage_host.add_child(_stage)
 
 	_instrument_scroll = ScrollContainer.new()
 	_instrument_scroll.custom_minimum_size = Vector2(360, 0)
@@ -141,11 +172,11 @@ func _sync_layout() -> void:
 	_workbench.vertical = _narrow_layout
 	if _narrow_layout:
 		_workbench.add_theme_constant_override("separation", 10)
-		_stage_panel.custom_minimum_size = Vector2(0, 300)
+		_stage_host.custom_minimum_size = Vector2(0, 300)
 		_instrument_scroll.custom_minimum_size = Vector2(0, 190)
 	else:
 		_workbench.add_theme_constant_override("separation", 14)
-		_stage_panel.custom_minimum_size = Vector2(420, 330)
+		_stage_host.custom_minimum_size = Vector2(420, 330)
 		_instrument_scroll.custom_minimum_size = Vector2(360, 0)
 	_update_stage()
 	
@@ -306,6 +337,12 @@ func _update_progress() -> void:
 func _update_stage() -> void:
 	if _stage != null:
 		_stage.queue_redraw()
+	if _model_3d != null:
+		_model_3d.tyt = _tyt
+		_model_3d.tested_red = _tested_red
+		_model_3d.tested_blue = _tested_blue
+		_model_3d.measured = _measured.duplicate()
+		_model_3d.open_valve = _open_valve
 
 
 func _set_feedback(message: String, color: Color) -> void:

@@ -3,7 +3,7 @@ extends Control
 ## Hesap wave_sim.gd'den gelir.
 
 const Wave = preload("res://stations/waves/wave_sim.gd")
-const SHADER = preload("res://stations/waves/wave_field.gdshader")
+const Model3D = preload("res://stations/waves/wave_3d.gd")
 
 const INK := Color("#e8f1f2")
 const MUTED := Color("#8fa6b3")
@@ -18,19 +18,41 @@ var frequency := 4.0
 var two_sources := true
 var faulty_display := false
 
-var _field: ColorRect
+var _field: SubViewportContainer
 var _overlay: Control
-var _material: ShaderMaterial
+var _model: Node3D
 var _clock := 0.0
 
 
 func _ready() -> void:
-	_field = ColorRect.new()
-	_material = ShaderMaterial.new()
-	_material.shader = SHADER
-	_field.material = _material
+	_field = SubViewportContainer.new()
+	_field.stretch = true
 	_field.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(900, 630)
+	viewport.transparent_bg = true
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_field.add_child(viewport)
 	add_child(_field)
+	var world := Node3D.new()
+	viewport.add_child(world)
+	_model = Model3D.new()
+	world.add_child(_model)
+	var camera := Camera3D.new()
+	camera.position = Vector3(15, 13, 21)
+	world.add_child(camera)
+	camera.look_at(Vector3(0, 0, 0), Vector3.UP)
+	camera.fov = 48.0
+	camera.current = true
+	var key := DirectionalLight3D.new()
+	key.rotation_degrees = Vector3(-50, -32, 0)
+	key.light_energy = 1.35
+	world.add_child(key)
+	var fill := OmniLight3D.new()
+	fill.position = Vector3(-8, 7, 4)
+	fill.light_energy = 0.7
+	fill.omni_range = 25.0
+	world.add_child(fill)
 	_overlay = Control.new()
 	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -57,13 +79,10 @@ func _cm(point: Vector2) -> Vector2:
 func _process(delta: float) -> void:
 	_clock += delta
 	var wavelength := Wave.wavelength(frequency)
-	_material.set_shader_parameter("k", TAU / wavelength)
-	_material.set_shader_parameter("omega", TAU * frequency)
-	_material.set_shader_parameter("t", _clock)
-	_material.set_shader_parameter("two", 1.0 if two_sources else 0.0)
-	_material.set_shader_parameter("s1_cm", Wave.S1)
-	_material.set_shader_parameter("s2_cm", Wave.S2)
-	_material.set_shader_parameter("field_cm", FIELD)
+	if _model != null:
+		_model.frequency = frequency
+		_model.two_sources = two_sources
+		_model.clock = _clock
 	var top_left := _p(AREA.position.x, AREA.position.y)
 	_field.position = top_left
 	_field.size = AREA.size * _scale()
@@ -87,16 +106,8 @@ func _draw_overlay() -> void:
 	var s := _scale()
 	var canvas := _overlay
 	canvas.draw_rect(Rect2(_p(AREA.position.x, AREA.position.y), AREA.size * s), Color(1, 1, 1, 0.18), false, 1.5)
-	for source in [Wave.S1, Wave.S2]:
-		if source == Wave.S2 and not two_sources:
-			canvas.draw_circle(_cm(source), 7.0 * s, Color(MUTED, 0.5))
-			continue
-		canvas.draw_circle(_cm(source), 14.0 * s, Color(WARM, 0.22))
-		canvas.draw_circle(_cm(source), 6.5 * s, WARM)
 	var amp_a := Wave.amplitude(Wave.SENSOR_A, frequency, two_sources)
 	var amp_b := Wave.amplitude(Wave.SENSOR_B, frequency, two_sources)
-	_draw_sensor(Wave.SENSOR_A, "A", amp_a, s, true)
-	_draw_sensor(Wave.SENSOR_B, "B", amp_b, s, false)
 	_draw_board(s, amp_a, amp_b)
 
 

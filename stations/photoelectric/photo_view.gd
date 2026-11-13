@@ -3,6 +3,7 @@ extends Control
 ## Hesaplar photo_sim.gd'den gelir, çizim süreleri ya da akımı uydurmaz.
 
 const Photo = preload("res://stations/photoelectric/photo_sim.gd")
+const Model3D = preload("res://stations/photoelectric/photo_3d.gd")
 
 const INK := Color("#e8f1f2")
 const MUTED := Color("#8fa6b3")
@@ -21,6 +22,35 @@ var door_burned := false
 var _clock := 0.0
 var _electrons: Array[Dictionary] = []
 var _photon_phase := 0.0
+var _viewport_container: SubViewportContainer
+var _model: Node3D
+
+
+func _ready() -> void:
+	_viewport_container = SubViewportContainer.new()
+	_viewport_container.stretch = true
+	_viewport_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_viewport_container.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(875, 390)
+	viewport.transparent_bg = true
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_viewport_container.add_child(viewport)
+	add_child(_viewport_container)
+	var world := Node3D.new()
+	viewport.add_child(world)
+	world.add_child(Model3D.new())
+	_model = world.get_child(0)
+	var camera := Camera3D.new()
+	camera.position = Vector3(-0.25, 3.1, 8.8)
+	world.add_child(camera)
+	camera.look_at(Vector3(-0.45, 0, 0), Vector3.UP)
+	camera.fov = 43.0
+	camera.current = true
+	var key := DirectionalLight3D.new()
+	key.rotation_degrees = Vector3(-42, -28, 0)
+	key.light_energy = 1.2
+	world.add_child(key)
 
 
 func _process(delta: float) -> void:
@@ -37,6 +67,21 @@ func _process(delta: float) -> void:
 		e["life"] += delta
 	_electrons = _electrons.filter(func(e: Dictionary) -> bool: return e["x"] < 1.15)
 	queue_redraw()
+	if _model != null:
+		_model.frequency = frequency
+		_model.intensity = intensity
+		_model.electric_field = Photo.stopping_potential(frequency, float(Photo.METALS[metal]["phi"]))
+		_model.metal = metal
+		_layout_3d()
+
+
+func _layout_3d() -> void:
+	if _viewport_container == null:
+		return
+	var scale_factor := minf(size.x / 1600.0, size.y / 900.0)
+	var origin := (size - Vector2(1600, 900) * scale_factor) * 0.5
+	_viewport_container.position = origin + Vector2(42, 205) * scale_factor
+	_viewport_container.size = Vector2(875, 395) * scale_factor
 
 
 func _font() -> Font:
@@ -60,49 +105,8 @@ func _draw() -> void:
 	var k := Photo.k_max(frequency, phi)
 	var colour := Photo.light_color(frequency)
 	var current := Photo.faulty_current(frequency, intensity, phi) if faulty_display else Photo.photocurrent(frequency, intensity, phi)
-	var tube := Rect2(o + Vector2(330, 250) * s, Vector2(560, 300) * s)
-	var plate_x := tube.position.x + 60.0 * s
-	# Lamba
-	var lamp := Rect2(o + Vector2(70, 330) * s, Vector2(150, 140) * s)
-	draw_rect(lamp, Color("#1b2430"))
-	draw_rect(Rect2(lamp.position + Vector2(10, 10) * s, lamp.size - Vector2(20, 20) * s), colour.darkened(0.55))
-	draw_rect(Rect2(lamp.position + Vector2(10, 10) * s, lamp.size - Vector2(20, 20) * s), Color(colour, 0.35 + 0.5 * intensity))
-	# Işın ve fotonlar
-	var beam_a := lamp.position + Vector2(lamp.size.x, lamp.size.y * 0.5)
-	var plate_mid := Vector2(plate_x, tube.position.y + tube.size.y * 0.5)
-	draw_polygon(PackedVector2Array([beam_a + Vector2(0, -50 * s), plate_mid + Vector2(0, -110 * s), plate_mid + Vector2(0, 110 * s), beam_a + Vector2(0, 50 * s)]),
-		PackedColorArray([Color(colour, 0.0), Color(colour, 0.08 * (0.3 + intensity)), Color(colour, 0.08 * (0.3 + intensity)), Color(colour, 0.0)]))
-	var photons := int(6 + 22 * intensity)
-	var wave := 6.0 + 0.0 * frequency
-	for i in photons:
-		var u := fposmod(float(i) / float(photons) + _photon_phase * 0.35, 1.0)
-		var base := beam_a.lerp(plate_mid, u)
-		var lane := (float(i % 5) - 2.0) * 0.28
-		base.y += lane * 48.0 * s * (1.0 - u * 0.4)
-		var length := 26.0 * s
-		var step := Vector2(length / 6.0, 0.0)
-		var points := PackedVector2Array()
-		var wl := clampf(Photo.wavelength_nm(frequency) / 700.0, 0.35, 1.25)
-		for q in 7:
-			points.append(base + Vector2(step.x * q, sin((q + _clock * 8.0) * (3.2 / wl)) * wave * s))
-		draw_polyline(points, Color(colour, 0.9), 2.0 * s)
-	# Vakum tüpü
-	draw_rect(tube, Color(0.55, 0.75, 0.9, 0.05))
-	draw_rect(tube, Color(0.55, 0.75, 0.9, 0.35), false, 2.0 * s)
-	# Plaka (katot) ve anot
-	var plate := Rect2(Vector2(plate_x - 12.0 * s, tube.position.y + 40.0 * s), Vector2(24.0 * s, tube.size.y - 80.0 * s))
-	draw_rect(plate, Color("#b4895a") if metal != &"zinc" else Color("#9aa7b3"))
-	draw_rect(Rect2(plate.position, Vector2(7.0 * s, plate.size.y)), Color(1, 1, 1, 0.25))
-	var anode := Rect2(Vector2(tube.end.x - 70.0 * s, tube.position.y + 40.0 * s), Vector2(14.0 * s, tube.size.y - 80.0 * s))
-	draw_rect(anode, Color("#8c97a3"))
-	# Elektronlar
-	var span := (anode.position.x - plate.end.x)
-	for e in _electrons:
-		var pos := Vector2(plate.end.x + span * e["x"], plate_mid.y + 100.0 * s * e["y"])
-		draw_circle(pos, 6.0 * s, Color(ACCENT, 0.25))
-		draw_circle(pos, 3.2 * s, ACCENT)
-	# Plaka başlığı
-	_t(o + Vector2(plate_x / s - 70.0, 224.0) * s, String(Photo.METALS[metal]["name"]).to_upper() + "   φ = %s eV" % str(phi).replace(".", ","), 18.0 * s, MUTED)
+	_layout_3d()
+	_t(o + Vector2(350, 194) * s, String(Photo.METALS[metal]["name"]).to_upper() + "   φ = %s eV" % str(phi).replace(".", ","), 18.0 * s, MUTED)
 	_draw_meter(o, s, current)
 	_draw_board(o, s, phi, k, current)
 	_draw_graph(o, s, phi, k)
