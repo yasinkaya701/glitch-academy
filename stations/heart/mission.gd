@@ -6,6 +6,7 @@ const Model = preload("res://stations/heart/heart_model.gd")
 const Stage = preload("res://stations/heart/heart_stage.gd")
 const Hud = preload("res://scripts/mission_hud.gd")
 const Network = preload("res://stations/heart/heart_network.gd")
+const Circ = preload("res://scripts/physio/circulation.gd")
 
 const GOOD := Color("#a0dfbc")
 const BAD := Color("#ffb093")
@@ -71,7 +72,14 @@ const LINK_HINTS := {
 	&"aorta_out": "Aort oksijenli kanı vücuda dağıtır.",
 }
 
-enum Step { INTRO, RECOGNIZE, PUMP, REPAIR, DIAGNOSE, CONNECT, RATE, DONE }
+const LINK_OF := {
+	Model.Valve.TRICUSPID: Circ.TRICUSPID, Model.Valve.PULMONARY: Circ.PULMONARY,
+	Model.Valve.MITRAL: Circ.MITRAL, Model.Valve.AORTIC: Circ.AORTIC,
+}
+## Hız yavaşlatma: öğretim adımlarında akış izlenebilsin.
+const TEACH_SPEED := 0.55
+
+enum Step { INTRO, RECOGNIZE, PUMP, REPAIR, DIAGNOSE, CONNECT, RATE, DONE, LAB }
 
 class TrayPiece extends Button:
 	var valve := -1
@@ -87,6 +95,7 @@ class TrayPiece extends Button:
 
 var step := Step.INTRO
 var stage: Stage
+var circ: Circ = Circ.new()
 var hud: Hud
 var section: Label
 var headline: Label
@@ -115,6 +124,9 @@ var slider: HSlider
 var rate_label: Label
 var wrong_count := 0
 var pump_checked := false
+var _ejected := false
+var lab_leak: Dictionary = {}
+var lab_clamp: Dictionary = {}
 var intro_time := 0.0
 var _oxygen_tween: Tween
 
@@ -132,6 +144,8 @@ func _build_ui() -> void:
 	stage.valve_dropped.connect(_place_piece)
 	stage.ports_connected.connect(_on_link)
 	stage.port_cleared.connect(_on_unlink)
+	stage.circ = circ
+	circ.beat_finished.connect(_on_beat)
 	add_child(stage)
 
 	hud = Hud.new()
@@ -139,6 +153,7 @@ func _build_ui() -> void:
 	hud.action_pressed.connect(_on_action)
 	hud.skip_pressed.connect(_finish_intro)
 	hud.pause_pressed.connect(_toggle_run)
+	hud.back_pressed.connect(_go_back)
 	action = hud.action
 	skip = hud.skip
 	pause = hud.pause
@@ -252,34 +267,85 @@ func _process(delta: float) -> void:
 		intro_time += delta
 		if intro_time > 9.0:
 			_finish_intro()
+	stage.sim_active = running
+	circ.running = running
 	if not running:
 		return
-	phase_time += delta
-	var duration: float = DURATION[phase] * tempo
-	if phase_time >= duration:
-		phase_time = 0.0
-		phase = (phase + 1) % 4
+	circ.heart_rate = heart_rate
+	_sync_circulation()
+	var fast := step in [Step.RATE, Step.DONE, Step.LAB]
+	circ.advance(delta * (1.0 if fast else TEACH_SPEED))
+	_follow_phase()
+	stage.beat = circ.node(Circ.LV).activation
+	stage.running = true
+	for valve in Model.VALVE_NAMES:
+		stage.valve_target[valve] = 1.0 if circ.valve_opening(LINK_OF[valve]) > 0.04 else 0.0
+		stage.valve_present[valve] = slots.get(valve, -1) >= 0
+		stage.valve_flipped[valve] = flips.get(valve, false)
+	stage.backflow = clampf(float(circ.last_beat.get("regurgitation", {}).get(Circ.MITRAL, 0.0)) + float(circ.last_beat.get("regurgitation", {}).get(Circ.AORTIC, 0.0)), 0.0, 1.0)
+
+
+func _follow_phase() -> void:
+	## Evre, motorun anlık durumundan okunur: hangi kapak akıtıyor, karıncık kasılıyor mu.
+	var ejecting := circ.flow(Circ.AORTIC) > 6.0 or circ.flow(Circ.PULMONARY) > 6.0
+	var filling := circ.flow(Circ.MITRAL) > 6.0 or circ.flow(Circ.TRICUSPID) > 6.0
+	var squeezing := circ.node(Circ.LV).activation > 0.02
+	var next := phase
+	if ejecting:
+		_ejected = true
+		next = Model.Phase.EJECTION
+	elif squeezing and not _ejected:
+		next = Model.Phase.PRESSURE_RISE
+	elif squeezing or (_ejected and not filling):
+		next = Model.Phase.PRESSURE_FALL
+	elif filling:
+		next = Model.Phase.FILLING
+		_ejected = false
+	if next != phase:
+		phase = next
 		if phase == Model.Phase.EJECTION:
 			Sfx.play(&"lub")
 		elif phase == Model.Phase.PRESSURE_FALL:
 			Sfx.play(&"dub")
-		if phase == Model.Phase.FILLING:
-			cycles += 1
-			_on_cycle_complete()
-		_apply_phase()
-	stage.beat = sin(clampf(phase_time / duration, 0.0, 1.0) * PI) if phase == Model.Phase.EJECTION else 0.0
-	stage.cycle_t = _cycle_fraction()
 
 
-func _cycle_fraction() -> float:
-	var total := 0.0
-	var before := 0.0
-	for p in DURATION:
-		var d: float = DURATION[p] * tempo
-		if p < phase:
-			before += d
-		total += d
-	return clampf((before + phase_time) / total, 0.0, 1.0)
+func _on_beat(_stats: Dictionary) -> void:
+	cycles += 1
+	_on_cycle_complete()
+	if step == Step.LAB:
+		_report_lab()
+
+
+func _sync_circulation() -> void:
+	## Oyuncunun yerleştirdiği kapaklar, çevirdikleri ve arızalar motorun parametrelerine çevrilir.
+	for slot in Model.VALVE_NAMES:
+		var link: StringName = LINK_OF[slot]
+		var piece: int = slots.get(slot, -1)
+		var defect: StringName = defects.get(slot, &"")
+		var leak := 0.0
+		if defect == &"stuck_open":
+			leak = 0.85
+		elif defect == &"leaky":
+			leak = 0.6
+		if piece < 0:
+			circ.set_valve(link, false)
+		elif piece != slot:
+			circ.set_valve(link, true, false, 0.0, 0.7)
+		else:
+			circ.set_valve(link, true, flips.get(slot, false), 0.0, maxf(leak, lab_leak.get(slot, 0.0)))
+	for vessel in Circ.VESSELS:
+		var amount: float = lab_clamp.get(vessel, 0.0)
+		if step == Step.CONNECT:
+			amount = 0.0 if _vessel_connected(vessel) else 1.0
+		circ.set_clamp(vessel, amount)
+		stage.clamp_amount[vessel] = amount if step != Step.CONNECT else 0.0
+
+
+func _vessel_connected(vessel: StringName) -> bool:
+	for from_port in Stage.PORT_LINK:
+		if Stage.PORT_LINK[from_port] == vessel:
+			return stage.connections.get(from_port) == Stage.CORRECT_LINKS[from_port]
+	return true
 
 
 func _start_pump() -> void:
@@ -287,16 +353,15 @@ func _start_pump() -> void:
 	phase = Model.Phase.FILLING
 	phase_time = 0.0
 	cycles = 0
+	_ejected = false
 	stage.show_flow = true
-	_apply_phase()
+	stage.running = true
 
 
 func _stop_pump() -> void:
 	running = false
 	stage.running = false
 	stage.beat = 0.0
-	for key in Stage.FLOWS:
-		stage.flow_dir[key] = 0.0
 	for valve in Model.VALVE_NAMES:
 		stage.valve_target[valve] = 0.0
 
@@ -323,34 +388,6 @@ func _net_slots() -> Dictionary:
 func _initial_flip(slot: int, piece: int) -> bool:
 	## Takılan kapak yön oku akışa bakmayabilir: oyuncu okuyup karar vermeli.
 	return ((piece + 1) * (slot + 2)) % 3 == 0
-
-
-func _apply_phase() -> void:
-	stage.set_valves_for_phase(phase)
-	for key in Stage.FLOWS:
-		stage.flow_dir[key] = 0.0
-		stage.flow_color_override.erase(key)
-	stage.flow_dir[&"ven_in"] = 1.0
-	stage.flow_dir[&"l_in"] = 1.0
-	var flow_for := {
-		Model.Valve.TRICUSPID: &"r_av", Model.Valve.MITRAL: &"l_av",
-		Model.Valve.PULMONARY: &"r_out", Model.Valve.AORTIC: &"l_out",
-	}
-	var net := _net_slots()
-	stage.running = running
-	stage.backflow = clampf(1.0 - minf(Network.valve_health(Model.Valve.AORTIC, net, defects), Network.valve_health(Model.Valve.MITRAL, net, defects)), 0.0, 1.0)
-	for slot in Model.VALVE_NAMES:
-		var key: StringName = flow_for[slot]
-		var piece: int = slots.get(slot, -1)
-		stage.valve_present[slot] = piece >= 0
-		stage.valve_flipped[slot] = flips.get(slot, false)
-		var flow := Network.valve_flow(slot, net, defects, phase)
-		stage.valve_target[slot] = 1.0 if flow["forward"] else 0.0
-		if flow["back"]:
-			stage.flow_dir[key] = -1.0
-			stage.flow_color_override[key] = Color("#ffc082")
-		elif flow["forward"]:
-			stage.flow_dir[key] = 1.0
 
 
 func _on_cycle_complete() -> void:
@@ -544,6 +581,8 @@ func _slot_click(slot: int) -> void:
 			_place_piece(slot, held)
 	elif step == Step.DIAGNOSE:
 		_diagnose_click(slot)
+	elif step == Step.LAB:
+		_lab_valve(slot)
 
 
 func _remove_slot(slot: int) -> void:
@@ -849,7 +888,7 @@ func _check_rate() -> void:
 		step = Step.DONE
 		stage.body_oxygen = 1.0
 		_set_ui("ONARILDI", "Dolaşım dengede",
-			"Kalp hızı %d atım/dk, debi %d mL/dk: dokuların istediği kadar kan taşınıyor. Kan tek yönlü, iki dolaşım kapalı, oksijen yerine ulaşıyor." % [int(heart_rate), int(heart_rate * STROKE_VOLUME)])
+			"Kalp hızı %d atım/dk, debi %d mL/dk: dokuların istediği kadar kan taşınıyor. Kan tek yönlü, iki dolaşım kapalı, oksijen yerine ulaşıyor." % [int(heart_rate), int(heart_rate * STROKE_VOLUME)], "Müdahale masası")
 		_say("Onarıldı.", GOOD)
 		Sfx.play(&"chime")
 		completed.emit()
@@ -857,6 +896,175 @@ func _check_rate() -> void:
 		_say("Debi dokuların ihtiyacının altında. Gereken hızı hesapla: 10500 mL ÷ 70 mL.", BAD)
 	else:
 		_say("Debi gereğinden fazla. Kalp boşuna yoruluyor. İhtiyaca eşit hızı bul.", BAD)
+
+
+# --- Müdahale masası ----------------------------------------------------
+
+const LAB_TOOLS := [
+	[&"leak", "Kapağı yetersiz yap"], [&"flip", "Kapağı ters çevir"], [&"fix", "Kapağı değiştir"],
+	[&"clamp", "Damarı kapat"],
+]
+const VESSEL_OF_SPOT := {
+	&"svc": Circ.CAVAL, &"pulmonary_artery": Circ.LUNGS, &"pulmonary_veins": Circ.PULM_VEIN, &"aorta": Circ.BODY,
+}
+const VESSEL_NAMES := {
+	Circ.CAVAL: "Ana toplardamar", Circ.LUNGS: "Akciğer atardamarı", Circ.PULM_VEIN: "Akciğer toplardamarı", Circ.BODY: "Aort",
+}
+var lab_tool: StringName = &"leak"
+var _lab_last_report := ""
+
+
+func _enter_lab() -> void:
+	step = Step.LAB
+	slots = _full_slots()
+	defects = {}
+	_sync_circulation()
+	circ.stabilize(6.0)
+	circ.last_beat = {}
+	lab_leak.clear()
+	lab_clamp.clear()
+	heart_rate = REST_RATE
+	stage.connections = Stage.CORRECT_LINKS.duplicate()
+	stage.port_warning = {}
+	stage.ports_active = false
+	stage.connection_flow = true
+	stage.labels.clear()
+	stage.highlight = &""
+	stage.valve_marked.clear()
+	for id in Stage.SPOTS:
+		stage.spots_active[id] = id in VESSEL_OF_SPOT
+	for valve in Model.VALVE_NAMES:
+		stage.spots_active[StringName("valve_%d" % valve)] = true
+	_set_ui("MÜDAHALE", "Müdahale masası", "Aracı seç, kapağa ya da damara tıkla. Kanın yönüne ve debiye bak.")
+	hud.set_directive("Bir araç seç, kapağa ya da damara tıkla. Kanın yönüne bak.")
+	pause.hide()
+	var group := ButtonGroup.new()
+	for entry in LAB_TOOLS:
+		var button := Button.new()
+		button.toggle_mode = true
+		button.button_group = group
+		button.text = entry[1]
+		button.button_pressed = entry[0] == lab_tool
+		button.toggled.connect(func(on: bool) -> void:
+			if on:
+				lab_tool = entry[0])
+		tray.add_child(button)
+	_lab_slider("Hız", 40.0, 180.0, REST_RATE, func(v: float) -> void: heart_rate = v)
+	var reset := Button.new()
+	reset.text = "Sağlıklı hâle getir"
+	reset.pressed.connect(_lab_reset)
+	question.add_child(reset)
+	_start_pump()
+	status.text = ""
+
+
+func _lab_slider(title: String, low: float, high: float, value: float, on_change: Callable) -> void:
+	var label := Label.new()
+	label.text = title
+	label.add_theme_color_override("font_color", MUTED)
+	question.add_child(label)
+	var slider_node := HSlider.new()
+	slider_node.min_value = low
+	slider_node.max_value = high
+	slider_node.step = 0.01 if high < 5.0 else 1.0
+	slider_node.value = value
+	slider_node.custom_minimum_size = Vector2(150, 0)
+	slider_node.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	slider_node.value_changed.connect(on_change)
+	question.add_child(slider_node)
+
+
+func _lab_reset() -> void:
+	lab_leak.clear()
+	lab_clamp.clear()
+	heart_rate = REST_RATE
+	_say("Tüm müdahaleler geri alındı.", GOOD)
+	_lab_last_report = ""
+	for child in question.get_children():
+		if child is HSlider:
+			(child as HSlider).value = REST_RATE
+
+
+func _lab_valve(slot: int) -> void:
+	var name: String = Model.VALVE_NAMES[slot]
+	match lab_tool:
+		&"leak":
+			lab_leak[slot] = minf(lab_leak.get(slot, 0.0) + 0.3, 0.9)
+			Sfx.play(&"click")
+			_say("%s sızdırıyor (%%%d)." % [name, roundi(lab_leak[slot] * 100.0)], BAD)
+		&"flip":
+			flips[slot] = not flips.get(slot, false)
+			Sfx.play(&"click")
+			_say("%s ters takıldı: kan ileri geçemiyor." % name if flips[slot] else "%s doğru yönde." % name, BAD if flips[slot] else GOOD)
+		&"fix":
+			lab_leak.erase(slot)
+			flips[slot] = false
+			Sfx.play(&"snap")
+			_say("%s yenisiyle değişti." % name, GOOD)
+		_:
+			_say("Bu araç kapağa uygulanmaz. Kapak araçlarını seç.")
+
+
+func _lab_click(id: StringName) -> void:
+	if VESSEL_OF_SPOT.has(id):
+		var vessel: StringName = VESSEL_OF_SPOT[id]
+		if lab_tool == &"clamp":
+			lab_clamp[vessel] = 0.0 if lab_clamp.get(vessel, 0.0) > 0.0 else 0.8
+			Sfx.play(&"snap")
+			_say("%s %s." % [VESSEL_NAMES[vessel], "kelepçelendi" if lab_clamp[vessel] > 0.0 else "açıldı"], BAD if lab_clamp[vessel] > 0.0 else GOOD)
+		elif lab_tool == &"fix":
+			lab_clamp.erase(vessel)
+			_say("%s açıldı." % VESSEL_NAMES[vessel], GOOD)
+		else:
+			_say("Damar için kelepçe aracını seç.")
+
+
+func _report_lab() -> void:
+	var b := circ.last_beat
+	status.text = "Debi %.1f L/dk  =  %d atım/dk × %d mL  ·  Doku oksijeni %%%d" % [
+		b["cardiac_output"], roundi(heart_rate), roundi(b["stroke_volume"]), roundi(b["tissue"] * 100.0)]
+	stage.body_oxygen = b["tissue"]
+	var text := ""
+	var worst := 0.0
+	for f in circ.findings():
+		if f["severity"] > worst and f["kind"] in [&"regurgitation", &"occlusion"]:
+			worst = f["severity"]
+			text = _describe_finding(f)
+	if text != "" and text != _lab_last_report:
+		hud.say(text, &"bad")
+	_lab_last_report = text
+
+
+func _describe_finding(f: Dictionary) -> String:
+	match f["kind"]:
+		&"regurgitation":
+			var valve := _valve_of_link(f["valve"])
+			var from: String = Model.SLOT_NAMES[Model.SLOT_OF[valve][1]]
+			var to: String = Model.SLOT_NAMES[Model.SLOT_OF[valve][0]]
+			return "%s kapanmıyor: kan %s → %s geri kaçıyor." % [Model.VALVE_NAMES[valve], from, to]
+		&"occlusion":
+			return "%s kapalı: dolaşım halkası koptu, kan ilerleyemiyor." % VESSEL_NAMES.get(f["vessel"], "Damar")
+	return ""
+
+
+func _valve_of_link(link: StringName) -> int:
+	for valve in LINK_OF:
+		if LINK_OF[valve] == link:
+			return valve
+	return 0
+
+
+# --- Geri ---------------------------------------------------------------
+
+func _go_back() -> void:
+	## Genel resme (kontrol merkezi) döner. Sahne tek başına açıldıysa merkez sahnesine geçer.
+	if _oxygen_tween != null:
+		_oxygen_tween.kill()
+	running = false
+	if get_parent() == get_tree().root:
+		get_tree().change_scene_to_file("res://scenes/control_center.tscn")
+	else:
+		exit_requested.emit()
 
 
 # --- Etkileşim yönlendirme ----------------------------------------------
@@ -872,6 +1080,8 @@ func _on_spot(id: StringName) -> void:
 	match step:
 		Step.RECOGNIZE:
 			_recognize_click(id)
+		Step.LAB:
+			_lab_click(id)
 
 
 func _on_action() -> void:
@@ -896,3 +1106,5 @@ func _on_action() -> void:
 				_enter_rate()
 		Step.RATE:
 			_check_rate()
+		Step.DONE:
+			_enter_lab()

@@ -12,6 +12,7 @@ const Model = preload("res://stations/heart/heart_model.gd")
 const Network = preload("res://stations/heart/heart_network.gd")
 const Prosthesis = preload("res://stations/heart/valve_prosthesis.gd")
 const Waveform = preload("res://scripts/anatomy/waveform_monitor.gd")
+const Circ = preload("res://scripts/physio/circulation.gd")
 const HEART = preload("res://stations/heart/assets/model/heart_cutaway.glb")
 const LUNGS = preload("res://assets/models/human-lungs.glb")
 const BODY = preload("res://assets/models/human-muscles.glb")
@@ -65,6 +66,32 @@ const FLOWS := {
 	&"l_out": [Vector3(0.0122, 0.0450, 0.0200), Vector3(-0.0083, 0.0888, 0.0165), Vector3(0.0023, 0.1177, 0.0139), Vector3(0.0023, 0.1305, 0.0145)],
 }
 const FLOW_RICH := [&"l_in", &"l_av", &"l_out"]
+## Akış hattı → motorda ona karşılık gelen bağ ve kanın geldiği odacık (oksijen rengi için).
+const FLOW_LINK := {
+	&"ven_in": Circ.CAVAL, &"r_av": Circ.TRICUSPID, &"r_out": Circ.PULMONARY,
+	&"l_in": Circ.PULM_VEIN, &"l_av": Circ.MITRAL, &"l_out": Circ.AORTIC,
+}
+const FLOW_NODE := {
+	&"ven_in": Circ.VC, &"r_av": Circ.RA, &"r_out": Circ.RV,
+	&"l_in": Circ.PV, &"l_av": Circ.LA, &"l_out": Circ.LV,
+}
+## Dış hortum → motor bağı.
+const PORT_LINK := {&"body_out": Circ.CAVAL, &"pa_out": Circ.LUNGS, &"lungs_out": Circ.PULM_VEIN, &"aorta_out": Circ.BODY}
+const PORT_NODE := {&"body_out": Circ.VC, &"pa_out": Circ.PA, &"lungs_out": Circ.PV, &"aorta_out": Circ.AO}
+## Kelepçe konumları: damar → ölçülmüş nokta, yarıçap.
+const CLAMP_SPOT := {
+	Circ.CAVAL: [&"svc", 0.0070], Circ.LUNGS: [&"pulmonary_artery", 0.0058],
+	Circ.PULM_VEIN: [&"pulmonary_veins", 0.0070], Circ.BODY: [&"aorta", 0.0060],
+}
+## 1 mL/s debinin yol üzerinde ilerletmesi (yol uzunluğu / s). 150 mL/s ≈ 0,5 yol/s.
+const FLOW_PHASE_RATE := 0.0033
+const FLOW_FULL := 40.0
+## Odacık kan hacmi: motor düğümü, ölçülmüş nokta, boş ve dolu yarıçap (model birimi).
+const CHAMBER_BLOOD := {
+	&"right_atrium": [Circ.RA, 0.0075, 0.0125], &"right_ventricle": [Circ.RV, 0.0085, 0.0145],
+	&"left_atrium": [Circ.LA, 0.0070, 0.0115], &"left_ventricle": [Circ.LV, 0.0090, 0.0150],
+}
+const BLOOD_SHADER = preload("res://scripts/anatomy/blood_tube.gdshader")
 
 ## Dış damar uçları. Kalp uçları dünya koordinatında (model × ölçek + kaydırma).
 const LUNGS_POS := Vector3(1.12, -0.215, 0.05)
@@ -142,6 +169,13 @@ var cycle_t := 0.0
 var backflow := 0.0
 var rate_hz := 1.2
 var running := false
+## Fizyoloji motoru. Verilirse akış, kapaklar, odacık şişmesi ve monitör ondan okunur.
+var circ: Circ = null
+var sim_active := false
+var clamp_amount: Dictionary = {}
+var _flow_phase: Dictionary = {}
+var _clamps: Dictionary = {}
+var _chamber_blood: Dictionary = {}
 
 
 func _build() -> void:
@@ -172,6 +206,8 @@ func _build() -> void:
 	world.add_child(_tubes)
 	_build_flow_particles()
 	_build_equipment()
+	_build_clamps()
+	_build_chamber_blood()
 	_rebuild_tubes()
 
 
@@ -288,9 +324,17 @@ func _wave_step(delta: float) -> void:
 	if _waveform == null:
 		return
 	_wave_clock += delta
-	if not running:
+	if not running and circ == null:
 		for index in _wave_ids:
 			_waveform.push(index, _wave_clock, 0.0)
+		return
+	if circ != null:
+		var u := circ.cycle_time / circ.period()
+		var ecg_sim := 0.12 * exp(-pow((u - 0.02) / 0.04, 2.0)) + 1.0 * exp(-pow((u - 0.17) / 0.012, 2.0)) \
+			- 0.2 * exp(-pow((u - 0.19) / 0.013, 2.0)) + 0.26 * exp(-pow((u - 0.42) / 0.06, 2.0))
+		_waveform.push(_wave_ids[0], _wave_clock, ecg_sim)
+		_waveform.push(_wave_ids[1], _wave_clock, circ.pressure(Circ.LV))
+		_waveform.push(_wave_ids[2], _wave_clock, circ.pressure(Circ.AO))
 		return
 	var t := cycle_t
 	# Döngü evreleri: dolum 0–0.385, basınç yükselişi –0.538, atım –0.846, basınç düşüşü –1.
@@ -423,7 +467,7 @@ func _build_slots() -> void:
 
 func _build_flow_particles() -> void:
 	for key in FLOWS:
-		_flow_meshes[key] = Util.make_particles(heart_root, 0.00055, 24)
+		_flow_meshes[key] = Util.make_particles(heart_root, 0.0007, 40)
 
 
 # --- Her kare -----------------------------------------------------------
@@ -437,6 +481,8 @@ func _update(delta: float) -> void:
 	_update_slots_and_valves()
 	_update_ports()
 	_update_flows()
+	_update_clamps()
+	_update_chamber_blood()
 	_update_oxygen()
 	_sync_tubes()
 	_wave_step(delta)
@@ -465,11 +511,105 @@ func _update_ports() -> void:
 			marker.scale = Vector3.ONE * (0.75 if taken else 1.0 + 0.18 * sin(_time * 4.0))
 
 
+func _blood_color(o2: float) -> Color:
+	return BLOOD_POOR.lerp(BLOOD_RICH, clampf((o2 - 0.62) / 0.34, 0.0, 1.0))
+
+
 func _update_flows() -> void:
+	if circ != null:
+		_update_sim_flows()
+		return
 	for key in _flow_meshes:
 		var direction: float = flow_dir.get(key, 0.0) if show_flow else 0.0
 		var color: Color = flow_color_override.get(key, BLOOD_RICH if key in FLOW_RICH else BLOOD_POOR)
 		Util.flow_particles(_flow_meshes[key], FLOWS[key], color, _time, flow_speed, direction)
+
+
+func _update_sim_flows() -> void:
+	var delta := get_process_delta_time()
+	var live := sim_active and show_flow
+	for key in _flow_meshes:
+		var q: float = circ.flow(FLOW_LINK[key]) if live else 0.0
+		var link: Circ.Net.Conduit = circ.link(FLOW_LINK[key])
+		# Ters takılı kapakta yol yönü, kanın fiziksel yönüne göredir.
+		var color := _blood_color(circ.oxygen(FLOW_NODE[key]))
+		var backwards := q < -4.0 and not link.reversed or q > 4.0 and link.reversed
+		if backwards:
+			color = Color("#ffc082")
+		_flow_phase[key] = fposmod(_flow_phase.get(key, 0.0) + q * delta * FLOW_PHASE_RATE, 1.0)
+		Util.flow_dots(_flow_meshes[key], FLOWS[key], color, _flow_phase[key], absf(q) / FLOW_FULL)
+
+
+func _build_chamber_blood() -> void:
+	for spot in CHAMBER_BLOOD:
+		var node := MeshInstance3D.new()
+		var mesh := SphereMesh.new()
+		mesh.radius = 1.0
+		mesh.height = 2.0
+		mesh.radial_segments = 32
+		mesh.rings = 16
+		node.mesh = mesh
+		var material := StandardMaterial3D.new()
+		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		material.albedo_color = Color(BLOOD_POOR, 0.34)
+		material.roughness = 0.1
+		material.emission_enabled = true
+		material.emission = BLOOD_POOR
+		material.emission_energy_multiplier = 0.25
+		node.material_override = material
+		node.position = SPOT_POS[spot]
+		node.visible = false
+		heart_root.add_child(node)
+		_chamber_blood[spot] = node
+
+
+func _update_chamber_blood() -> void:
+	for spot in _chamber_blood:
+		var node: MeshInstance3D = _chamber_blood[spot]
+		node.visible = circ != null and sim_active
+		if not node.visible:
+			continue
+		var data: Array = CHAMBER_BLOOD[spot]
+		var fill := circ.fullness(data[0])
+		node.scale = Vector3.ONE * lerpf(data[1], data[2], fill)
+		var color := _blood_color(circ.oxygen(data[0]))
+		var material := node.material_override as StandardMaterial3D
+		material.albedo_color = Color(color, 0.34)
+		material.emission = color
+
+
+func _build_clamps() -> void:
+	var steel := _pbr("Metal009", 0.4, Color(0.7, 0.72, 0.76))
+	for vessel in CLAMP_SPOT:
+		var radius: float = CLAMP_SPOT[vessel][1]
+		var holder := Node3D.new()
+		var ring := MeshInstance3D.new()
+		var mesh := TorusMesh.new()
+		mesh.outer_radius = radius * 1.7
+		mesh.inner_radius = radius * 1.15
+		ring.mesh = mesh
+		ring.material_override = steel
+		holder.add_child(ring)
+		for side in [-1.0, 1.0]:
+			var jaw := MeshInstance3D.new()
+			var box := BoxMesh.new()
+			box.size = Vector3(radius * 0.5, radius * 3.6, radius * 1.0)
+			jaw.mesh = box
+			jaw.material_override = steel
+			jaw.position = Vector3(side * radius * 1.45, 0.0, 0.0)
+			holder.add_child(jaw)
+		holder.position = SPOT_POS[CLAMP_SPOT[vessel][0]]
+		holder.visible = false
+		heart_root.add_child(holder)
+		_clamps[vessel] = holder
+
+
+func _update_clamps() -> void:
+	for vessel in _clamps:
+		var amount: float = clamp_amount.get(vessel, 0.0)
+		var holder: Node3D = _clamps[vessel]
+		holder.visible = amount > 0.01
+		holder.scale = Vector3.ONE * (1.0 - 0.45 * amount)
 
 
 func _update_oxygen() -> void:
@@ -526,7 +666,18 @@ func _sync_tubes() -> void:
 		var rich: bool = PORT_RICH[from_port]
 		var color := GOLD if warn else (BLOOD_RICH if rich else BLOOD_POOR)
 		var active := connection_flow and show_flow
-		Util.flow_particles(data["holder"], Array(data["points"]), color, _time, flow_speed * 0.9, 1.0 if active else 0.0)
+		if circ != null:
+			var q: float = circ.flow(PORT_LINK[from_port]) if (active and sim_active) else 0.0
+			if not warn:
+				color = _blood_color(circ.oxygen(PORT_NODE[from_port]))
+			var phase := fposmod(_flow_phase.get(from_port, 0.0) + q * get_process_delta_time() * FLOW_PHASE_RATE, 1.0)
+			_flow_phase[from_port] = phase
+			var blood_material: ShaderMaterial = data["material"]
+			blood_material.set_shader_parameter("blood_color", color)
+			blood_material.set_shader_parameter("phase", phase)
+			blood_material.set_shader_parameter("amount", clampf(absf(q) / FLOW_FULL, 0.0, 1.0))
+		else:
+			Util.flow_particles(data["holder"], Array(data["points"]), color, _time, flow_speed * 0.9, 1.0 if active else 0.0)
 	if _drag_from != &"":
 		_draw_drag_tube()
 
@@ -543,11 +694,17 @@ func _rebuild_tubes() -> void:
 		var warn: bool = port_warning.get(from_port, false)
 		var rich: bool = PORT_RICH[from_port]
 		var color := GOLD if warn else (BLOOD_RICH if rich else BLOOD_POOR)
-		_tubes.add_child(Util.tube_mesh(points, color, 0.022))
+		var blood_material: ShaderMaterial = null
+		if circ != null:
+			blood_material = ShaderMaterial.new()
+			blood_material.shader = BLOOD_SHADER
+			blood_material.set_shader_parameter("blood_color", color)
+			blood_material.set_shader_parameter("cycles", float(maxi(roundi(Util.path_length(Array(points)) * 14.0), 2)))
+		_tubes.add_child(Util.tube_mesh(points, color, 0.022, blood_material))
 		_add_collar(points[0], points[1] - points[0])
 		_add_collar(points[points.size() - 1], points[points.size() - 1] - points[points.size() - 2])
-		var holder := Util.make_particles(_tubes, 0.012, 26)
-		_link_particles[from_port] = {"holder": holder, "points": points}
+		var holder: MultiMeshInstance3D = null if circ != null else Util.make_particles(_tubes, 0.012, 26)
+		_link_particles[from_port] = {"holder": holder, "points": points, "material": blood_material}
 
 
 func _add_collar(position: Vector3, direction: Vector3) -> void:
