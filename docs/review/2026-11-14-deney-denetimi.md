@@ -13,8 +13,7 @@ Fizik istasyonları `scripts/physics/experiment_mission.gd` şablonunu paylaşt�
 | 3 | Sına toast'ı kuralı söylüyor ("Kütle arttıkça ivme azalıyor"), Neden adımı aynı şeyi soruyor | Sonucu oyun söylemez | Aynı istasyonlar |
 | 4 | Ölç adımında sayılar yönergede veriliyor ("4 kg yüke 20 N") | Sayı cihazdan okunur | Newton, Atış, Çarpışma, Dalga, Fotoelektrik |
 | 5 | Üç hak bitince haklar sınırsız yenileniyor | Hak sınırlıdır ve bitmesinin bir sonucu vardır | Hepsi |
-| 6 | Bozma tutarsız: Düşüş'te dünyanın g'si değişiyor, diğerlerinde cihazın modeli yanlış | Dünya her zaman doğru kuralla çalışır, bozuk olan MERİDYEN'in ayarıdır | Düşüş Odası |
-| 7 | Adım adı "Ölç/Onar", akış beş ya da altı adım, isimler değişken | Altı adım: Kriz, Sına, Teşhis, Düzelt, Toparla, Mühür | Hepsi |
+| 6 | Adım adı "Ölç/Onar", akış beş ya da altı adım, isimler değişken | Altı adım: Kriz, Sına, Teşhis, Düzelt, Toparla, Mühür | Hepsi |
 
 ### Cevabı veren ipuçları
 
@@ -38,7 +37,6 @@ Fizik istasyonları `scripts/physics/experiment_mission.gd` şablonunu paylaşt�
 **Düşüş Odası** (referans)
 - Düzelt adımı, yön ipucu veren kaydırıcıyla ikili aramaya dönüşüyor, hesap gerekmiyor. Öneri: iki ayardan doğrusal kalibrasyon (eğim ve kesişim) hesaplatmak.
 - Hava açıkken "Ama oda zaten vakumdaydı" yazıyor.
-- Yeni bozma önerisi: MERİDYEN'in düşüş öngörüsü kütleye bağlı (ağır cisim önce düşer). Kapak zamanlaması bu öngörüyle ayarlanıyor, hafif kapsül geç kalıyor.
 
 **Newton Kızağı**
 - STORY.md'de "yük seç, itici sınırı 40 N" var, kodda tek değer ve 1–100 N.
@@ -62,7 +60,7 @@ Fizik istasyonları `scripts/physics/experiment_mission.gd` şablonunu paylaşt�
 
 **Ölçüm Atölyesi, Vektör Limanı, Mevsim Gözlemevi:** Başlık, paragraf ve düğmeden oluşan eski metin paneli yapısında. Düzenek 2D çizimle taklit ediliyor.
 
-**YKS mikro görevleri (13):** Hepsi seçme, eşleştirme ya da sıralama sorusu. Kriz, bozma ve ölçüm yok. Sosyoloji eşleştirmesinde statü ve rol karışmış ("Ders anlatmak" bir rol).
+**YKS mikro görevleri (13):** Hepsi seçme, eşleştirme ya da sıralama sorusu. Kriz, bozma ve ölçüm yok. Felsefe ve mantık görevleri argüman kafasıyla, psikoloji ve sosyoloji ölçüm kafasıyla yeniden kurulmalı (DESIGN.md · Üç kafa). Mantık görevi "AYT Matematik" olarak etiketli; Felsefe grubu Mantık dersiyle ilişkisi doğrulanmalı.
 
 **Üç Güneş:** Oyuncu ölçmeden ve karar vermeden bitiriyor, her Δv tamamlanma sayılıyor. STORY.md'deki "aynı başlangıçtan iki kez başlatınca bile sonuç ayrışır" cümlesi bilimsel olarak yanlış: deterministik sistemde aynı başlangıç aynı sonucu verir, kaos küçük bir farkın büyümesidir. Kod doğru yapıyor, belge düzeltilmeli.
 
@@ -82,3 +80,8 @@ Fizik istasyonları `scripts/physics/experiment_mission.gd` şablonunu paylaşt�
 
 - Bütün simülasyonların fiziği doğru, kural kodu çizimden ayrı ve testli.
 - Yanlış girişlerdeki neden cümleleri tipik hataları yakalıyor: ½ çarpanını unutmak, işareti ters almak, ters bölmek.
+
+## Düzeltmeler
+
+- 2026-11-14: Önceki sürümdeki "Sosyoloji eşleştirmesinde statü ve rol karışmış" bulgusu yanlıştı. Cevap anahtarında "Ders anlatmak" doğru olarak rol ile eşlenmiş.
+- 2026-11-14: "Düşüş Odası'nda dünyanın g'si değişiyor, bu tutarsız" bulgusu kaldırıldı. MERİDYEN dünya ayarını da bozabilir (DESIGN.md · Bozma kuralı).

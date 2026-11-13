@@ -198,7 +198,7 @@ Belge stili ve sistemi sabitler, fikirleri değil. Bir istasyonun düzeneği, ka
 
 **Yanlış Dünya**, ortaokuldan YKS'ye kadar fen, matematik ve sosyal derslerini öğreten Türkçe bir masaüstü oyunudur. Godot 4.7 ile yapılır, temel çözünürlüğü 1280×720'dir. Rotalar: Sınıflar (5–12), LGS, YKS (TYT, AYT ve isteğe bağlı YDT).
 
-Gözlemevinin bütün düzenekleri kalibrasyon asistanı **MERİDYEN**'in ayarlarıyla çalışır. MERİDYEN, üç güneşli kaotik dünyadan gelen Misafirler adına bu ayarları gizlice bozar. Gizli kalmak için bozmayı rastgele yapmaz: öğrencilerin gerçekten takıldığı yanılgıları ayara yazar. "Ağır cisim önce düşer", "momentum yönsüz toplanır", "ışık şiddeti elektron söker", "anı belge kadar güçlü kanıttır" gibi. Bu yüzden bozulma ilk bakışta makul görünür. Oyuncu **Kalibratör**'dür. Ters çalışan düzeneği ölçer, bozuk ayarı bulur, düzeltir ve ayarın verdiği zararı toparlar. Kampanyanın ortasında bozanın MERİDYEN olduğu ortaya çıkar. Final Üç Güneş'tir: iki cisim öngörülebilir, üç cisim öngörülemez.
+Gözlemevinin bütün düzenekleri kalibrasyon asistanı **MERİDYEN**'in ayarlarıyla çalışır. MERİDYEN, üç güneşli kaotik dünyadan gelen Misafirler adına bu ayarları gizlice bozar. Gizli kalmak için bozmayı rastgele yapmaz: öğrencilerin gerçekten takıldığı yanılgıları ayara yazar. "Ağır cisim önce düşer", "momentum yönsüz toplanır", "ışık şiddeti elektron söker", "anı belge kadar güçlü kanıttır" gibi. Bu yüzden bozulma ilk bakışta makul görünür, ama sonucu gerçekten bozar: kapsül geç kalır, kan geri kaçar, konsey yanlış karar verir. Oyuncu **Kalibratör**'dür. Ters çalışan düzeneği ölçer, bozuk ayarı bulur, düzeltir ve ayarın verdiği zararı toparlar. Kampanyanın ortasında bozanın MERİDYEN olduğu ortaya çıkar. Final Üç Güneş'tir: iki cisim öngörülebilir, üç cisim öngörülemez.
 
 ### Çekirdek döngü
 
@@ -524,8 +524,12 @@ Bu bölüm belirli bir deneyi değil, her deneyin nasıl kurulacağını tarif e
 
 - **Her bozma, belgelenmiş tek bir öğrenci yanılgısıdır.** Yanılgının kaynağı (MEB materyali, ÖSYM sorusu, alan yazını) istasyonun tasarım kartında yazılıdır. Uydurma bir hata, rastgele bir sayı ya da "cihaz arızası" bozma sayılmaz.
 - **Bozma tek bir ayardadır.** Ayar, düzeneğin ayar panelinde fiziksel olarak durur: kalibrasyon plakası, kadran, kart, kayıt fişi. Oyuncu onu görebilir, ama ne yaptığını ölçmeden bilemez.
-- **Ters çalışma, yanılgının doğal sonucudur.** Yanılgı doğru olsaydı dünya nasıl davranırdı, düzenek öyle öngörür. Gerçek ise doğru kurala göre olur. Aradaki fark sahnede görünür.
-- **Dünya her zaman doğru kuralla çalışır.** Bozuk olan, MERİDYEN'in ayarı, yani düzeneğin öngörüsü ve kontrolüdür. Kurtarma bu yüzden doğru kuralla hesaplanır.
+- **Bozuk ayar sonucu gerçekten bozar.** Ayar iki türlü olabilir:
+  - *Dünya ayarı:* Oda gerçekten yanlış yasayla çalışır. Örneğin çekim dengeleyici bozulunca her şey yavaş düşer.
+  - *Kontrol ayarı:* Düzenek yanlış modelle karar verir ve hedefi kaçırır. Örneğin itici kuvveti kütleyi yok sayarak hesaplar.
+  İki türde de zarar gerçektir: Yanlış Dünya budur.
+- **Doğru kural sahnede bulunabilir olmalı.** Oyuncu doğruyu tahminden değil, sahnedeki bir dayanaktan çıkarır. Dayanak şunlardan biri olabilir: MERİDYEN'in dokunmadığı bir kontrol ölçümü, Ayır gücüyle tek değişkene indirilmiş bir deneme, arşivdeki eski doğrulanmış kayıt ya da düzeneğin kendi içindeki bir çelişki.
+- **Yanlış davranış asla imzasız gösterilmez.** Bozuk ayarla oynanan her sahne Misafir imzasını taşır ve ekranda "bozuk ayar" olarak işaretlenir. Onarımdan sonra aynı düzenek doğru kuralla yeniden oynar. Oyuncunun aklında kalan son görüntü doğru davranıştır.
 
 ### Oynanış kuralları (ZORUNLU)
 
@@ -546,11 +550,12 @@ SERBEST: Düzenek, kriz kurgusu, kamera, ses, ayar panelinin biçimi, güçlerin
 
 ### Tasarım kartı
 
-Her istasyon koda başlamadan önce kendi klasörüne `DESIGN_CARD.md` yazar. Kart kısa tutulur ve inceleme bu karta göre yapılır.
+Her istasyon koda başlamadan önce kendi klasörüne `DESIGN_CARD.md` yazar ve hangi kafayla (ölçüm, kaynak, argüman) çalıştığını belirtir. Kart kısa tutulur ve inceleme bu karta göre yapılır.
 
 ```markdown
 # <İstasyon adı>
 Rota ve kazanım: <AYT Fizik 5 · kazanım cümlesi> (kaynak bağlantısı)
+Kafa: <ölçüm | kaynak | argüman>
 Yanılgı: <öğrencinin inandığı yanlış kural> (kaynak bağlantısı)
 Bozuk ayar: <panelde ne yazıyor, hangi değerde>
 Ters çalışma: <yanılgıya göre öngörü> ↔ <gerçek sonuç>, kaybedilen şey
@@ -597,6 +602,61 @@ Derse özel ZORUNLU kurallar:
 - **Biyoloji:** AYT düzeyi. Klinik içerik yoktur, anatomi doğrudur.
 - **Sözel dersler:** İnsan figürü yüzsüz silüet ya da arkadan çekim olur. Üretilmiş yüz kullanılmaz. Alıntı ve tarih kaynağıyla verilir.
 - **Kazanım dışı gösteri** (örneğin ardışık Stern–Gerlach) Sınıflar rotasında kalır, sınav rotasına girmez.
+
+## Experiment Design · Üç kafa
+
+Bütün dersler aynı döngüyü kullanır, ama "ölçmek" her ders ailesinde başka bir iştir. Bir deneyi tasarlamadan önce hangi kafayla çalışıldığı seçilir ve tasarım kartına yazılır.
+
+| Kafa | Dersler | Kanıtı ne verir | MERİDYEN neyi bozar | Ne notlanır |
+|---|---|---|---|---|
+| **Ölçüm** | Fizik, Kimya, Biyoloji, Matematik, Coğrafya, Psikoloji ve Sosyolojinin deneysel konuları | Cihaz, sayı, grafik | Bir yasa ya da modelin parametresi | Değer ve hesap |
+| **Kaynak** | Tarih, Türkçe, Edebiyat, Din Kültürü, YDT | Belge, metin, tarih, künye | Bir tarih, bağlaç, atıf ya da kaynağın niteliği | Kanıt ile iddianın ilişkisi |
+| **Argüman** | Felsefe, Mantık | Tutarlılık, karşı örnek, düşünce deneyi | Bir çıkarım kuralı, bir kavram tanımı ya da bir görüşün sahibi | Geçerlilik, tutarlılık, doğru atıf |
+
+### Argüman kafası (Felsefe, Mantık)
+
+Felsefede ölçü aleti yoktur. Bu ders ailesinin deneyi **düşünce deneyi**dir ve oyun onu sahnede çalıştırılabilir bir düzenek olarak kurar.
+
+- **Mekân:** Gözlemevinin konsey odası ve bir düşünce deneyi tezgâhı. Tezgâhta vaka maketi kurulur: Theseus'un gemisi tahta tahta değiştirilir, mağaradaki gölge düzeneği ışıkla oynatılır, Descartes'ın kötü cini cihaz ekranlarındaki okumaları değiştirir, bir Gettier vakasında saat durur.
+- **Ölçmenin karşılığı:** Oyuncu iddiayı vakaya uygular ve sonucun tutarlı kalıp kalmadığına bakar. Çelişki sahnede görünür. Gemi iki tane olur, konsey aynı kişiye iki zıt hüküm verir.
+- **Bozma:** MERİDYEN konseyin akıl yürütme ayarına bir safsata ya da kavram kayması yazar. Örnekler:
+  - "Sonuç doğruysa çıkarım geçerlidir."
+  - "Bilgi, doğru olan inançtır."
+  - "Olan, olması gerekendir."
+  - Ad hominem, aceleci genelleme, post hoc.
+  - Bir görüşün yanlış filozofa atfedilmesi (Locke'a doğuştan fikirler).
+- **Ters çalışma:** Konsey bu ayarla bir karar alır ve kararın sonucu sahnede görünür: kapı yanlış kişiye açılır, kayıt yanlış ilkeye göre sınıflanır.
+- **Teşhis:** Oyuncu bozuk çıkarımın hangi adımda çöktüğünü gösterir: öncül ile sonuç arasındaki boşluğu ya da karşı örneği vakaya koyar.
+- **Düzelt:** Çıkarım kuralı ya da kavram tanımı düzeltilir, aynı vaka yeniden çalıştırılır ve çelişki kalkar.
+- **Toparla:** Yeni bir vakada oyuncu ipucu almadan düzeltilmiş ilkeyi uygular.
+- **Mantık:** Önermeler devre panosunda şalter ve lambadır. Doğruluk tablosu devrenin kendisidir. Geçersiz çıkarım kapıyı açmaz.
+
+ZORUNLU kurallar:
+
+- **Görüş notlanmaz.** Oyun Descartes ile Locke, Kant ile Mill arasında taraf tutmaz. Notlanan şeyler: çıkarımın geçerliliği, tutarlılık, kanıt ile sonuç ilişkisi, görüşün doğru filozofa atfedilmesi ve kavramın doğru tanımı.
+- **Alıntılar gerçek ve kaynaklıdır.** Eser, bölüm ve çeviri belirtilir. Uydurma ya da başka sözcüklerle yazılıp tırnak içine alınmış filozof sözü kullanılmaz. Bu, bu alandaki en tipik AI slop örneğidir.
+- **Filozof ağzıyla uzun konuşma yazılmaz.** Karakter, görüşünü tek cümleyle ve kaynağa dayanarak söyler. Ayrıntı "i" altındaki kaynak notundadır.
+- **Filozoflar yüzsüz silüet olarak gösterilir.** Portre üretilmez.
+- Metin bu derslerde malzemedir. Bu yüzden deney ekranındaki 30 kelime sınırı burada kaynak metne uygulanmaz. Yönerge ve toast kuralları aynen geçerlidir.
+
+### Kaynak kafası (Tarih, Türkçe, Edebiyat, Din Kültürü, YDT)
+
+- **Kanıtı belge verir.** Oyuncu belgeyi ışığa tutar, tarihini ve künyesini okur, metindeki kanıtın altını çizer. Seçenek seçmek yerine kanıtı gösterir.
+- **Bozma:** Bir tarih kaydırılır, bir bağlaç değiştirilir, bir anı birincil belge olarak etiketlenir, bir alıntı yanlış eserle eşlenir.
+- **Ters çalışma:** Bozuk kayda dayanan sonraki karar dayanaksız kalır. Zaman çizelgesi rayı kopar, metnin anlamı tersine döner.
+- **Din Kültürü:** İnanca not verilmez. Kavram, kaynak metin (ayet, hadis, ilmihal) ve künyesi üzerinden ilerlenir. Peygamberler ve kutsal kişiler tasvir edilmez. Mezhepler arası tartışmalı konularda oyun taraf tutmaz.
+- **Tarih:** Belge metinleri gerçek ve tarihlidir. Kurmaca arıza ile belgelenmiş olay çizgisi sahnede açıkça ayrı gösterilir.
+
+### Ölçüm kafasında psikoloji ve sosyoloji
+
+Psikoloji ve sosyolojinin deneysel konuları ölçüm kafasıyla kurulur. Veri, oyuncunun kendisinden ya da bir simülasyondan gelir:
+
+- Müller-Lyer yanılsamasında oyuncu çizgileri kendisi eşitler ve hatası ölçülür.
+- Stroop testinde oyuncunun kendi tepki süresi ölçülür.
+- Değişim körlüğünde oyuncunun fark edip etmediği kaydedilir.
+- Sosyolojide örneklem seçimi ve ağ simülasyonu kullanılır.
+
+Bozma bir yöntem hatasıdır: tek kişiden genelleme, kontrol grubu olmaması, örneklem yanlılığı. Ters çalışma ise yanlış sonuca ulaşan bir rapordur.
 
 ## 3D Lab Standard · Gece laboratuvarı
 
