@@ -50,3 +50,7 @@ Prizma, tank veya kiriş gibi modelleri Godot mesh'leriyle kurabilirsin. Blender
 ## Örnek devir
 
 > Düşüş Odası’nı tasarla. `docs/PLAN.md` içindeki fizik görevini oku. `mission/free-fall` dalında `stations/free_fall/` altında çalış. Deney akışını, görsel geri bildirimi ve kabul ölçütlerini bu klasörde hazırla. Oynanabilir sahneye geçersen yerel görev kaydına bağla. Teslimde sahneyi nasıl açacağımızı, test ettiğin örnekleri ve ortak dosya ihtiyacını yaz.
+
+## Tasarım
+
+Arayüz için [docs/DESIGN.md](docs/DESIGN.md), oyun ve deney tasarımı için [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) tek kaynaktır. Her istasyon koda başlamadan önce tasarım kartını yazar.

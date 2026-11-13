@@ -77,7 +77,7 @@ Soyut "cihaz yanlış sanıyor" yetmez. Her istasyon **somut bir kriz**tir:
 
 ## Final: Üç Güneş
 
-Altıncı kaymadan sonra oyuncu Misafirlerin gökyüzünü görür: üç güneş, birbirini çeken üç kütle. Son istasyon **Kütle Çekim ve Kepler** (AYT Fizik 15) üzerinden kurulur. İki cisim için yörünge kapalı çözümle hesaplanır ve tahmin tutar. Üçüncü cisim eklenince küçük bir ilk fark yörüngeleri ayırır: oyuncu aynı başlangıçtan iki kez **Sar** yapıp başlattığında bile sonuç ayrışır. Ders, bilimin sınırıdır: öngörülemezlik de ölçülebilir bir şeydir.
+Altıncı kaymadan sonra oyuncu Misafirlerin gökyüzünü görür: üç güneş, birbirini çeken üç kütle. Son istasyon **Kütle Çekim ve Kepler** (AYT Fizik 15) üzerinden kurulur. İki cisim için yörünge kapalı çözümle hesaplanır ve tahmin tutar. Üçüncü cisim eklenince küçük bir ilk fark yörüngeleri ayırır: aynı başlangıç aynı sonucu verir, ama başlangıca eklenen çok küçük bir fark bir süre sonra bambaşka bir yörüngeye çıkar. Ders, bilimin sınırıdır: öngörülemezlik de ölçülebilir bir şeydir.
 
 Oyuncu bunu görünce Misafirlerin Dünya'ya neden saldırdığını anlar. Dünya'yı yok etmek istemezler, öngörülebilir bir yer ararlar. Oyun bittiğinde oyuncu mühürlenen yasaların hepsini Misafirlere, onların ölçebileceği biçimde yollar. Sonuç kesin bir zafer değil, bir anlaşmadır: yasalar yerinde, bir kapı açık.
 
