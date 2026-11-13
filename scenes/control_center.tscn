@@ -1,0 +1,148 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/control_center.gd" id="1"]
+
+[node name="ControlCenter" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 28
+
+[node name="Hub" type="VBoxContainer" parent="Margin"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Title" type="Label" parent="Margin/Hub"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.53, 0.9, 0.83, 1)
+theme_override_font_sizes/font_size = 38
+text = "Yanlış Dünya"
+
+[node name="Subtitle" type="Label" parent="Margin/Hub"]
+layout_mode = 2
+text = "Kontrol Merkezi"
+
+[node name="Routes" type="HBoxContainer" parent="Margin/Hub"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Class" type="Button" parent="Margin/Hub/Routes"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+button_pressed = true
+text = "Sınıfa göre keşfet"
+
+[node name="LGS" type="Button" parent="Margin/Hub/Routes"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "LGS"
+
+[node name="TYT" type="Button" parent="Margin/Hub/Routes"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "YKS–TYT"
+
+[node name="AYT" type="Button" parent="Margin/Hub/Routes"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "YKS–AYT"
+
+[node name="GradeFilter" type="OptionButton" parent="Margin/Hub/Routes"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Missions" type="HBoxContainer" parent="Margin/Hub"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+
+[node name="MissionList" type="ItemList" parent="Margin/Hub/Missions"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/v_separation = 10
+
+[node name="Details" type="VBoxContainer" parent="Margin/Hub/Missions"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="MissionTitle" type="Label" parent="Margin/Hub/Missions/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+autowrap_mode = 3
+
+[node name="MissionDescription" type="Label" parent="Margin/Hub/Missions/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="MissionStatus" type="Label" parent="Margin/Hub/Missions/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="StartMission" type="Button" parent="Margin/Hub/Missions/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Görevi aç"
+
+[node name="Progress" type="Label" parent="Margin/Hub"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="PlayScreen" type="VBoxContainer" parent="Margin"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Toolbar" type="HBoxContainer" parent="Margin/PlayScreen"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Back" type="Button" parent="Margin/PlayScreen/Toolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Kontrol merkezine dön"
+
+[node name="Reset" type="Button" parent="Margin/PlayScreen/Toolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Yeniden dene"
+
+[node name="PlayTitle" type="Label" parent="Margin/PlayScreen/Toolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_alignment = 1
+
+[node name="PlayStatus" type="Label" parent="Margin/PlayScreen/Toolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="MissionHost" type="Control" parent="Margin/PlayScreen"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3

@@ -1,0 +1,35 @@
+[gd_scene load_steps=2 format=3]
+
+[sub_resource type="Environment" id="Environment_lab"]
+background_mode = 1
+background_color = Color(0.055, 0.085, 0.135, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.76, 0.84, 1, 1)
+ambient_light_energy = 0.65
+
+[node name="Experiment3D" type="SubViewportContainer"]
+custom_minimum_size = Vector2(320, 240)
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="."]
+own_world_3d = true
+size = Vector2i(320, 240)
+render_target_update_mode = 2
+
+[node name="World" type="Node3D" parent="Viewport"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Viewport/World"]
+environment = SubResource("Environment_lab")
+
+[node name="Camera3D" type="Camera3D" parent="Viewport/World"]
+rotation_degrees = Vector3(-22, 30, 0)
+position = Vector3(3.2, 2.65, 5.54)
+projection = 1
+size = 5.5
+current = true
+
+[node name="KeyLight" type="DirectionalLight3D" parent="Viewport/World"]
+rotation_degrees = Vector3(-42, -25, 0)
+light_energy = 1.1
+
+[node name="Model" type="Node3D" parent="Viewport/World"]

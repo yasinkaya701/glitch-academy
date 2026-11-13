@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"free_fall"
+title = "Düşüş Odası"
+subject = "Fizik"
+grade = 11
+routes = PackedStringArray("class", "ayt")
+description = "Vakum odasında düşüş sürelerini ölç ve yükün varış zamanını ayarla."
+curriculum = "11.1.4.3 (2026 YKS)"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/beceri_temelli/11/fizik/files/basic-html/page45.html"

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"bridge"
+title = "Köprü Atölyesi"
+subject = "Geometri"
+grade = 8
+routes = PackedStringArray("class", "lgs")
+description = "Bir kirişin uzunluğunu hesapla ve köprüyü kapat."
+curriculum = "M.8.3.1.5"
+source_url = "https://odsgm.meb.gov.tr/www/8-sinif-matematik-unitelendirilmis-ornek-sorular/icerik/677"
