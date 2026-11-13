@@ -35,6 +35,27 @@ Her istasyonun kayması üç parçadan kurulur:
 2. **Kaymanın kaynağı.** Misafirlerin değiştirdiği tek bir varsayım. Oyuncu bunu ölçümle bulur, kimse söylemez.
 3. **Ölçümle çürütme.** Aynı düzenekte tek değişkeni ayırarak varsayım çürütülür. Çürütülen yasa **mühürlenir**: kayıt defterine kalıcı bir satır, sahnede kalıcı bir ışık olarak girer.
 
+## Kriz kuralı
+
+Soyut "cihaz yanlış sanıyor" yetmez. Her istasyon **somut bir kriz**tir:
+
+- **Kaybedilecek bir şey vardır** ve sahnede görünür: kapsül kırılır, kapı kapalı kalır, kayıt silinir.
+- **Sınırlı deneme ve son an** vardır (üç kapsül, kapak penceresi, sayaç). Cezası puan değil, sahnedeki sonuçtur.
+- **Çözüm, konunun tamamını ister.** Son görev, öğrenilen kavramların hepsini birlikte kullanmayı gerektiren çok koşullu bir kurtarmadır. Biri eksikse sahnede kısmi bir hata görünür ve hata, eksik kavramı gösterir (hava var → vakum eksik; süre uzun → yükseklik yanlış).
+- Deneyler çözümün kanıtını toplar, bilgi çıkarma ve ezber değildir. Oyuncu "neden" sorusunu ölçümle cevaplamadan kurtarma ekranına geçemez.
+
+**Ortak iplik: Arşiv zinciri.** Gözlemevi'nin doğrulanmış ölçüm kayıtları (insanlığın bildiği yasalar) bir veri kapsülünde Arşiv'e taşınıyor. Misafirler zinciri halka halka koparmış. Her fizik istasyonu bu zincirin bir halkasıdır:
+
+| Halka | Kriz | Kurtarmanın koşulları (hepsi birlikte) |
+|---|---|---|
+| 1 Ölçüm Atölyesi | Taşıyıcı ray kopuk, parça yuvaya sığmıyor | uzunluğu **m**'ye, kütleyi **kg**'a çevir ve rayın 2 m/s sınırından süreyi hesapla |
+| 2 Vektör Limanı | Kapsül limanı kaçırıyor | iki rota segmentini ve yan rüzgârı bileşke olarak topla (yön, büyüklük) |
+| 3 Düşüş Odası | Kapsül kapak kapandıktan sonra geliyor | **vakum + h = ½gt²**: ikisi de gerekli (uygulandı) |
+| 4 Newton Kızağı | Kızak varış kapısına geç kalıyor | yükü seç (itici sınırı 40 N) ve F = m·a ile kuvveti gir |
+| 5 Atış Alanı | Kapsül hedef halkasını ıskalıyor | düşüş süresinden yatay hızı bul, bırak–fırlat zamanlamasını eşitle |
+| 6 Çarpışma Hattı | Arşiv kapısındaki iki araba kapıyı çarparak kırıyor | durdurma hızını (işaretli) hesapla ve ısıya giden enerjiyi (≤ 15 J) doğrula |
+| Final | Arşiv'i Misafirlere ulaştırmak | iki cisim kapalı çözüm, üç cisim kaotik: öngörülemezlik de ölçülür |
+
 ## Bölümler
 
 **I. Ölçü (Fizik).** Misafirler önce ölçmenin kendisine dokunur: birim, yön, zaman. İlk altı kayma birbirine bağlıdır, her biri bir öncekinin kurduğu aracı kullanır.

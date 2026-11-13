@@ -2,6 +2,8 @@
 
 [STORY.md](STORY.md) kuralına göre altı istasyonun her biri için eksiksiz kurgu. Her sayı `tests/physics_rules_test.gd` ve `tests/fall_test.gd` ile doğrulanmıştır. Düşüş Odası uygulanmış referanstır (`stations/free_fall/`). Diğerlerinin kural katmanı hazır, sahneleri varlık teslimini bekliyor ([011](requests/011-physics-scenes.md)).
 
+**Kriz çerçevesi:** her istasyonun "Uygulama" bölümü, STORY.md'deki Kriz kuralına göre çok koşullu bir kurtarma olarak oynanır (kaybedilecek şey, sınırlı deneme, birden fazla koşul). Bu belgedeki sayılar ve yanlış-sonuç tabloları o kurtarmanın bileşenleridir. Koşulların tam listesi STORY.md'deki Arşiv zinciri tablosundadır. Düşüş Odası bu çerçevede uygulanmıştır.
+
 Ortak yapı: **Açılış** (≤ 8 sn, atlanabilir, anlatıcı yok) → **Deney** (güç kullanılır, tek değişken) → **Uygulama** (yeni durumda sayı girilir) → **Mühür** (ışık ve kayıt satırı). Yanlış cevap sahnede yanlış sonuç üretir, nedeni tek cümledir. Her açılışta Misafir imzası görünür.
 
 ---

@@ -39,6 +39,13 @@ var show_expectation := false     ## cihazın beklentisi ve Misafir imzası (kay
 var time_scale := 1.0
 var log_rows: Array[String] = []
 var visible_ids: Array = [&"steel", &"foam"]
+## Veri kapsülü krizi: sensör kapağı `door_time` ± `door_window` saniyede açıktır. Kaçıran kapsül kaybolur.
+var door_enabled := false
+var door_time := 3.0
+var door_window := 0.05
+var capsules := 3
+var outcome: StringName = &""       ## &"saved" | &"lost" | &""
+var _outcome_clock := 0.0
 
 var _bodies: Dictionary = {}      ## id -> {state, active, landed, result}
 var _elapsed := 0.0
@@ -129,6 +136,7 @@ func _process(delta: float) -> void:
 	_clock += delta
 	pressure = move_toward(pressure, pressure_target, PUMP_RATE * delta)
 	_flash = maxf(_flash - delta * 2.2, 0.0)
+	_outcome_clock += delta
 	if _release_countdown >= 0.0:
 		_release_countdown -= delta
 		if _release_countdown < 0.0:
@@ -146,6 +154,7 @@ func _start_fall() -> void:
 		data["landed"] = false
 		data["result"] = Fall.fall(id, release_height, pressure) if _pending.has(id) else {}
 	_elapsed = 0.0
+	outcome = &""
 	falling = true
 	Sfx.play(&"click", -10.0)
 
@@ -170,6 +179,15 @@ func _step_fall(delta: float) -> void:
 			data["landed"] = true
 			_flash = 1.0
 			Sfx.play(&"snap", -8.0)
+			if id == &"capsule" and door_enabled:
+				var arrival: float = data["result"]["time"]
+				outcome = &"saved" if absf(arrival - door_time) <= door_window else &"lost"
+				_outcome_clock = 0.0
+				if outcome == &"lost":
+					capsules = maxi(capsules - 1, 0)
+					Sfx.play(&"buzz", -8.0)
+				else:
+					Sfx.play(&"chime", -8.0)
 		if not data["landed"]:
 			all_done = false
 	if all_done:
@@ -235,7 +253,30 @@ func _draw_sensor(factor: float) -> void:
 	var texture: Texture2D = SENSOR_ON if _flash > 0.05 else SENSOR_OFF
 	var width := (GLASS_RIGHT - GLASS_LEFT) * 0.98
 	var rect := Rect2(_p((GLASS_LEFT + GLASS_RIGHT) * 0.5 - width * 0.5, FLOOR_Y - 12.0), Vector2(width, 26.0) * factor)
-	draw_texture_rect(texture, rect, false, Color(1, 1, 1, 0.55 + 0.45 * _flash))
+	var tint := Color(1, 1, 1, 0.55 + 0.45 * _flash)
+	if outcome == &"saved" and _outcome_clock < 2.5:
+		tint = Color(0.5, 1.0, 0.8, 0.9)
+	elif outcome == &"lost" and _outcome_clock < 2.5:
+		tint = Color(1.0, 0.4, 0.35, 0.95)
+	draw_texture_rect(texture, rect, false, tint)
+	_draw_outcome(factor)
+
+
+func _draw_outcome(factor: float) -> void:
+	if outcome == &"" or _outcome_clock > 2.6:
+		return
+	var centre := _p((GLASS_LEFT + GLASS_RIGHT) * 0.5, FLOOR_Y - 8.0)
+	var t := _outcome_clock
+	if outcome == &"saved":
+		draw_arc(centre, (20.0 + 150.0 * t) * factor, 0.0, TAU, 48, Color(ACCENT, clampf(1.0 - t / 1.6, 0.0, 1.0)), 2.5 * factor)
+	else:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 7
+		for i in 16:
+			var angle := rng.randf_range(PI * 1.05, PI * 1.95)
+			var speed := rng.randf_range(60.0, 170.0)
+			var pos := centre + Vector2(cos(angle), sin(angle)) * speed * t * factor + Vector2(0.0, 220.0 * t * t * factor)
+			draw_rect(Rect2(pos, Vector2(rng.randf_range(3.0, 7.0), rng.randf_range(2.0, 4.0)) * factor), Color("#e58a42", clampf(1.0 - t / 2.0, 0.0, 1.0)))
 
 
 func _draw_rack(factor: float) -> void:
@@ -323,10 +364,10 @@ func _draw_signature(factor: float) -> void:
 
 
 func _draw_board(factor: float) -> void:
-	var x := BOARD.x
-	var y := BOARD.y
-	_text(_p(x, y), "SÜRE", 15.0 * factor, MUTED)
-	var row := y + 52.0
+	var x := BOARD.x - 40.0
+	var y := BOARD.y - 40.0
+	_text(_p(x, y), "SÜRE", 18.0 * factor, MUTED)
+	var row := y + 62.0
 	for id in [&"steel", &"foam", &"capsule"]:
 		if not visible_ids.has(id):
 			continue
@@ -340,25 +381,53 @@ func _draw_board(factor: float) -> void:
 		elif data["active"]:
 			value = seconds_text(_elapsed)
 			colour = INK
-		_text(_p(x, row), name, 20.0 * factor, INK)
-		_text(_p(x + 330.0, row), value, 28.0 * factor, colour, HORIZONTAL_ALIGNMENT_RIGHT, 190.0 * factor)
-		row += 54.0
+		_text(_p(x, row), name, 26.0 * factor, INK)
+		_text(_p(x + 380.0, row), value, 40.0 * factor, colour, HORIZONTAL_ALIGNMENT_RIGHT, 260.0 * factor)
+		row += 68.0
 	if show_expectation:
-		draw_line(_p(x, row - 22.0), _p(x + 520.0, row - 22.0), Color(WARM, 0.5), 1.0 * factor)
-		_text(_p(x, row + 6.0), "CİHAZ BEKLENTİSİ", 15.0 * factor, WARM)
-		_text(_p(x + 330.0, row + 6.0), seconds_text(EXPECTED_TIME), 24.0 * factor, WARM, HORIZONTAL_ALIGNMENT_RIGHT, 190.0 * factor)
-		row += 54.0
+		draw_line(_p(x, row - 28.0), _p(x + 640.0, row - 28.0), Color(WARM, 0.5), 1.0 * factor)
+		_text(_p(x, row + 6.0), "CİHAZ BEKLENTİSİ", 20.0 * factor, WARM)
+		_text(_p(x + 380.0, row + 6.0), seconds_text(EXPECTED_TIME if not door_enabled else door_time), 34.0 * factor, WARM, HORIZONTAL_ALIGNMENT_RIGHT, 260.0 * factor)
+		row += 68.0
+	if door_enabled:
+		_draw_door(x, row, factor)
+		row += 150.0
 	if not log_rows.is_empty():
-		row += 20.0
-		_text(_p(x, row), "KAYIT", 14.0 * factor, MUTED)
-		row += 30.0
+		_text(_p(x, row), "KAYIT", 17.0 * factor, MUTED)
+		row += 34.0
 		for line in log_rows.slice(maxi(log_rows.size() - 6, 0)):
-			_text(_p(x, row), line, 16.0 * factor, Color(MUTED, 0.95))
-			row += 26.0
+			_text(_p(x, row), line, 20.0 * factor, Color(MUTED, 0.95))
+			row += 31.0
+
+
+## Sensör kapağı: zaman çizelgesi üzerinde açık pencere ve kapsülün ilerleyişi, kalan kapsül sayısı, sonuç.
+func _draw_door(x: float, row: float, factor: float) -> void:
+	var span := door_time * 1.35
+	var width := 640.0
+	var left := _p(x, row + 12.0)
+	draw_line(left, _p(x + width, row + 12.0), Color(MUTED, 0.5), 2.0 * factor)
+	var win_a := x + width * (door_time - door_window) / span
+	var win_b := x + width * (door_time + door_window) / span
+	draw_rect(Rect2(_p(win_a, row - 4.0), Vector2(maxf(win_b - win_a, 8.0), 32.0) * factor), Color(ACCENT, 0.85))
+	_text(_p(win_a - 80.0, row - 14.0), "KAPAK AÇIK  %s" % seconds_text(door_time), 17.0 * factor, ACCENT)
+	if falling or _elapsed > 0.0:
+		var marker := x + width * clampf(_elapsed / span, 0.0, 1.0)
+		var shown: bool = _bodies[&"capsule"]["landed"] and _bodies[&"capsule"]["active"]
+		if shown:
+			marker = x + width * clampf(float(_bodies[&"capsule"]["result"]["time"]) / span, 0.0, 1.0)
+		draw_rect(Rect2(_p(marker - 3.0, row - 12.0), Vector2(6.0, 48.0) * factor), WARM if not shown else (ACCENT if outcome == &"saved" else DANGER))
+	var stock := ""
+	for i in 3:
+		stock += "●  " if i < capsules else "○  "
+	_text(_p(x, row + 76.0), "KAPSÜL  " + stock.strip_edges(), 24.0 * factor, INK)
+	if outcome == &"saved" and _outcome_clock < 6.0:
+		_text(_p(x + 300.0, row + 76.0), "VERİ KURTARILDI", 26.0 * factor, ACCENT)
+	elif outcome == &"lost" and _outcome_clock < 6.0:
+		_text(_p(x + 300.0, row + 76.0), "VERİ KAYBI", 26.0 * factor, DANGER)
 
 
 func _draw_gauge(factor: float) -> void:
 	var text := ("%d kPa" % roundi(pressure)) if pressure >= 1.0 else ("%.1f kPa" % pressure).replace(".", ",")
-	_text(_p(PUMP_GAUGE.x - 60.0, PUMP_GAUGE.y - 26.0), "BASINÇ", 13.0 * factor, MUTED)
+	_text(_p(PUMP_GAUGE.x - 60.0, PUMP_GAUGE.y - 30.0), "BASINÇ", 17.0 * factor, MUTED)
 	var colour := ACCENT if pressure < 3.0 else (WARM if is_pumping() else INK)
-	_text(_p(PUMP_GAUGE.x - 60.0, PUMP_GAUGE.y + 8.0), text, 28.0 * factor, colour)
+	_text(_p(PUMP_GAUGE.x - 60.0, PUMP_GAUGE.y + 14.0), text, 38.0 * factor, colour)

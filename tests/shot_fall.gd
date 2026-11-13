@@ -9,9 +9,9 @@ func _ready() -> void:
 	scene.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	await get_tree().create_timer(0.9).timeout
 	_save(out, "fall_idle")
-	await get_tree().create_timer(3.2).timeout
+	await get_tree().create_timer(3.0).timeout
 	_save(out, "fall_mid")
-	await get_tree().create_timer(8.0).timeout
+	await get_tree().create_timer(4.2).timeout
 	_save(out, "fall_end")
 	get_tree().quit()
 

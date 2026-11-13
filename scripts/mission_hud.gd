@@ -37,8 +37,8 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	directive = Label.new()
-	directive.theme_type_variation = "HeadlineLabel"
-	directive.add_theme_font_size_override("font_size", 19)
+	# Yönerge bir talimat cümlesidir: gövde yazı tipi. Display yüz yalnızca kısa başlıklarda (assets/ui/VISUAL_LANGUAGE.md).
+	directive.add_theme_font_size_override("font_size", 22)
 	directive.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
 	directive.add_theme_constant_override("shadow_offset_x", 0)
 	directive.add_theme_constant_override("shadow_offset_y", 2)
@@ -143,8 +143,13 @@ func _draw() -> void:
 		PackedColorArray([dark, dark, clear, clear]))
 
 
+func _standalone() -> bool:
+	## Kontrol merkezinde kendi geri düğmesi var, burada yalnızca tek başına açılan sahnede gösterilir.
+	return get_parent() != null and get_parent().get_parent() == get_tree().root
+
+
 func _unhandled_key_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE and back.visible:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		back_pressed.emit()
 		get_viewport().set_input_as_handled()
 
@@ -153,7 +158,7 @@ func hide_all_buttons() -> void:
 	action.hide()
 	skip.hide()
 	pause.hide()
-	back.show()
+	back.visible = _standalone()
 	info_button.hide()
 	info_card.hide()
 
