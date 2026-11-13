@@ -12,7 +12,7 @@ const Model = preload("res://stations/heart/heart_model.gd")
 const Network = preload("res://stations/heart/heart_network.gd")
 const Prosthesis = preload("res://stations/heart/valve_prosthesis.gd")
 const Waveform = preload("res://scripts/anatomy/waveform_monitor.gd")
-const HEART = preload("res://stations/heart/assets/model/heart_cutaway_light.glb")
+const HEART = preload("res://stations/heart/assets/model/heart_cutaway.glb")
 const LUNGS = preload("res://assets/models/human-lungs.glb")
 const BODY = preload("res://assets/models/human-muscles.glb")
 
@@ -486,12 +486,19 @@ func _floor_height() -> float:
 	return -0.9
 
 
+const LABEL_OFFSET := {
+	&"svc": Vector3(-0.55, 0.28, 0.25), &"right_atrium": Vector3(-0.62, 0.12, 0.3), &"right_ventricle": Vector3(-0.62, -0.1, 0.3),
+	&"pulmonary_artery": Vector3(0.45, 0.32, 0.25), &"pulmonary_veins": Vector3(0.62, 0.05, 0.25), &"left_atrium": Vector3(0.66, 0.2, 0.3),
+	&"left_ventricle": Vector3(0.66, -0.12, 0.3), &"aorta": Vector3(-0.15, 0.4, 0.25),
+}
+
+
 func label_world(id: Variant) -> Vector3:
 	if id is StringName and SPOT_POS.has(id):
-		return heart_root.to_global(SPOT_POS[id]) + Vector3(0, 0.12, 0.18)
+		return heart_root.to_global(SPOT_POS[id]) + LABEL_OFFSET.get(id, Vector3(0, 0.15, 0.2))
 	if id is int and VALVE_POS.has(id):
-		var side := {Model.Valve.TRICUSPID: Vector3(-0.28, 0.1, 0.2), Model.Valve.MITRAL: Vector3(0.3, 0.1, 0.2),
-			Model.Valve.AORTIC: Vector3(-0.2, 0.3, 0.2), Model.Valve.PULMONARY: Vector3(0.22, 0.34, 0.2)}
+		var side := {Model.Valve.TRICUSPID: Vector3(-0.5, 0.0, 0.25), Model.Valve.MITRAL: Vector3(0.55, 0.0, 0.25),
+			Model.Valve.AORTIC: Vector3(-0.35, 0.38, 0.25), Model.Valve.PULMONARY: Vector3(0.32, 0.4, 0.25)}
 		return heart_root.to_global(VALVE_POS[id]) + side[id]
 	return Vector3.ZERO
 

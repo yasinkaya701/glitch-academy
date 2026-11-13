@@ -144,9 +144,11 @@ func _build_base() -> void:
 	marker_mesh.height = 0.1
 	_highlight_marker.mesh = marker_mesh
 	var marker_material := StandardMaterial3D.new()
-	marker_material.albedo_color = Color(JADE, 0.28)
+	marker_material.albedo_color = Color(JADE.r, JADE.g, JADE.b, 0.5)
 	marker_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	marker_material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	marker_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	marker_material.no_depth_test = true
 	_highlight_marker.material_override = marker_material
 	_highlight_marker.hide()
 	world.add_child(_highlight_marker)

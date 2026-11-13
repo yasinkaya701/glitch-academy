@@ -232,6 +232,10 @@ func _say(text: String, color: Color = MUTED) -> void:
 	elif color == BAD:
 		tone = &"bad"
 	hud.say(text, tone)
+	if tone == &"bad":
+		Sfx.play(&"buzz", -14.0)
+	elif tone == &"good":
+		Sfx.play(&"click", -12.0)
 
 
 func _tween_oxygen(value: float, seconds: float = 1.6) -> void:
@@ -255,6 +259,10 @@ func _process(delta: float) -> void:
 	if phase_time >= duration:
 		phase_time = 0.0
 		phase = (phase + 1) % 4
+		if phase == Model.Phase.EJECTION:
+			Sfx.play(&"lub")
+		elif phase == Model.Phase.PRESSURE_FALL:
+			Sfx.play(&"dub")
 		if phase == Model.Phase.FILLING:
 			cycles += 1
 			_on_cycle_complete()
@@ -529,6 +537,7 @@ func _slot_click(slot: int) -> void:
 	if step == Step.REPAIR:
 		if slots[slot] >= 0 and held < 0:
 			flips[slot] = not flips.get(slot, false)
+			Sfx.play(&"click")
 			_say("%s çevrildi." % Model.VALVE_NAMES[slots[slot]])
 			_refresh_repair()
 		elif held >= 0:
@@ -556,6 +565,7 @@ func _place_piece(slot: int, piece: int) -> void:
 	if slots.values().has(piece):
 		_say("Bu kapak zaten yerleştirildi.", BAD)
 		return
+	Sfx.play(&"snap")
 	slots[slot] = piece
 	flips[slot] = _initial_flip(slot, piece)
 	_say("%s yerleştirildi." % Model.VALVE_NAMES[piece])
@@ -841,6 +851,7 @@ func _check_rate() -> void:
 		_set_ui("ONARILDI", "Dolaşım dengede",
 			"Kalp hızı %d atım/dk, debi %d mL/dk: dokuların istediği kadar kan taşınıyor. Kan tek yönlü, iki dolaşım kapalı, oksijen yerine ulaşıyor." % [int(heart_rate), int(heart_rate * STROKE_VOLUME)])
 		_say("Onarıldı.", GOOD)
+		Sfx.play(&"chime")
 		completed.emit()
 	elif ratio < 0.95:
 		_say("Debi dokuların ihtiyacının altında. Gereken hızı hesapla: 10500 mL ÷ 70 mL.", BAD)
