@@ -31,58 +31,11 @@ def save(im,name):
     im.save(OUT/name,optimize=True)
 
 def make_bg():
-    w,h=1920,1080; im=grad_bg(w,h,(10,20,31,255),(4,8,14,255)); d=ImageDraw.Draw(im,'RGBA')
-    # Deep, quiet instrument bay; broad warm task light on the left, annotation wall stays open on right.
-    for i in range(22):
-        x=70+i*22; line(d,[(x,80),(x+80,600)],(90,150,175,8),1)
-    rounded(d,(88,82,930,606),10,(10,19,29,255),(42,64,78,180),2)
-    # Wall panels / shadow seams
-    for x in [120,340,560,780]: line(d,[(x,92),(x,592)],(62,82,93,70),2)
-    for y in [210,410]: line(d,[(98,y),(920,y)],(51,69,83,60),1)
-    # Practical warm work lamp pool
-    glow=Image.new('RGBA',im.size,(0,0,0,0)); gd=ImageDraw.Draw(glow)
-    gd.ellipse(sc((10,190,910,930)),fill=(237,145,72,28)); glow=glow.filter(ImageFilter.GaussianBlur(95*S)); im=Image.alpha_composite(im,glow); d=ImageDraw.Draw(im,'RGBA')
-    # Bench top and front edge
-    poly(d,[(0,680),(1125,640),(1920,690),(1920,785),(1130,742),(0,795)],(68,49,38,255),(141,99,64,255),2)
-    poly(d,[(0,795),(1130,742),(1920,785),(1920,1080),(0,1080)],(22,27,32,255),(73,67,57,200),2)
-    # Grain and edge glints
-    random.seed(9)
-    for _ in range(100):
-        x=random.randint(0,1120); y=random.randint(686,785); ln=random.randint(8,90)
-        line(d,[(x,y),(x+ln,y-random.randint(0,7))],(180,127,79,random.randint(9,35)),1)
-    line(d,[(0,685),(1125,645),(1920,694)],(245,182,120,135),2)
-    # Precision ruler laid in perspective along rear bench
-    poly(d,[(140,642),(792,618),(950,637),(297,665)],(157,173,174,255),(218,223,213,255),2)
-    for i in range(41):
-        t=i/40; x=154+t*632; y=643-t*24
-        hh=15 if i%10==0 else (10 if i%5==0 else 5)
-        line(d,[(x,y),(x+1,y-hh)],(21,34,40,225),1)
-    # analytical balance - plinth, pan, column, instrument window
-    poly(d,[(390,520),(532,510),(575,532),(429,548)],(61,74,77,255),(132,156,157,255),2)
-    poly(d,[(429,548),(575,532),(571,640),(425,660)],(28,39,45,255),(99,122,128,255),2)
-    rounded(d,(445,556,547,587),4,(6,17,21,255),(102,158,162,255),1)
-    line(d,[(456,574),(471,567),(482,573),(496,564),(509,570),(526,563)],(111,227,193,245),2)
-    # pan
-    line(d,[(487,511),(487,478)],(175,190,189,255),3); ellipse(d,(429,463,545,485),(135,151,151,255),(218,224,215,255),2)
-    # small calibration weight on pan
-    rounded(d,(476,438,499,464),5,(136,147,144,255),(223,214,191,255),2)
-    ellipse(d,(482,433,493,441),(184,190,179,255),(230,223,208,255),1)
-    # stopwatch: physical case, crown, dial, hands
-    ellipse(d,(708,449,839,580),(32,42,47,255),(166,178,170,255),4)
-    rounded(d,(761,430,787,454),5,(114,126,119,255),(201,197,177,255),2)
-    ellipse(d,(721,462,826,567),(11,20,25,255),(99,131,137,255),2)
-    for i in range(60):
-        a=math.pi*2*i/60-math.pi/2; r1=47 if i%5==0 else 49; r2=40
-        line(d,[(773+math.cos(a)*r1,514+math.sin(a)*r1),(773+math.cos(a)*r2,514+math.sin(a)*r2)],(198,209,194,210),1)
-    line(d,[(773,514),(789,486)],(242,166,90,255),2); line(d,[(773,514),(752,501)],(230,240,232,245),2); ellipse(d,(768,509,778,519),(227,239,232,255))
-    # mounted rail with sensor gate silhouettes
-    rounded(d,(102,735,770,751),5,(111,126,130,255),(190,205,199,255),2)
-    for x in [200,635]:
-        rounded(d,(x,653,x+18,744),4,(35,48,55,255),(120,143,147,255),2)
-        line(d,[(x+3,660),(x+15,660)],(111,227,193,220),2)
-    # right wall keeps readable dark negative space for live labels
-    for y in range(150,600,80): line(d,[(1120,y),(1880,y)],(38,55,70,55),1)
-    save(im,'bench_bg.png')
+    # The accepted photographic background is preserved as source in the asset folder.
+    # Resize only; never repaint or overwrite the source.
+    source=Image.open(OUT/'bench_bg_source.png').convert('RGB')
+    source=source.resize((1920,1080),Image.Resampling.LANCZOS)
+    source.save(OUT/'bench_bg.png',optimize=True)
 
 def make_ruler():
     w,h=640,128; im=canvas(w,h,(0,0,0,0)); d=ImageDraw.Draw(im,'RGBA')
