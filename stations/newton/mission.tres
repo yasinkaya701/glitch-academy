@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/newton/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"newton"
+title = "Newton Kızağı"
+subject = "Fizik"
+grade = 12
+routes = PackedStringArray("class", "ayt")
+description = "Aynı itiş, farklı yük: ivmeyi kuvvet ve kütleyle yönet, kızağı kapı kapanmadan vardır."
+curriculum = "AYT Fizik · Newton'un hareket yasaları, F = m·a"
+source_url = "https://ttkb.meb.gov.tr/www/icerik_goruntule.php?DIL=tr&KNO=831"
+scene = ExtResource("2")
