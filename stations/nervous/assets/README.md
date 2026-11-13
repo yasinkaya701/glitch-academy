@@ -41,3 +41,7 @@ Audited canvas sizes and formats:
 A labeled asset board is available at [nervous_asset_board.png](../../../docs/review/nervous_asset_board.png). It composites the neuron and synapse layers and shows the state pairs on the art-direction background. It is a review board, not a running game scene or screenshot. Scene integration and in-game composition remain for the station scene author.
 
 The earlier `archive/flat_v1/`, `archive/flat_v2/`, and `archive/flat_v3/` concepts were preserved unchanged during this audit.
+
+### Anatomy reference
+
+Dorsal sensory entry, ventral motor exit, and relative dorsal/ventral gray-horn shape were checked against the [NCBI Bookshelf spinal-cord anatomy chapter](https://www.ncbi.nlm.nih.gov/books/NBK11008/) and [Neuroanatomy, Spinal Cord](https://www.ncbi.nlm.nih.gov/books/NBK559056/).
