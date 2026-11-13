@@ -24,5 +24,5 @@ mode = "pair"
 pair_left = PackedStringArray("Ribozom", "Mitokondri", "Golgi aygıtı")
 pair_right = PackedStringArray("ATP üretimi", "Salgı maddelerini işleme ve paketleme", "Protein sentezi")
 pair_targets = PackedStringArray("Protein sentezi", "ATP üretimi", "Salgı maddelerini işleme ve paketleme")
-feedback_wrong = "Görevleri ayır: protein sentezi, hücresel solunumla ATP üretimi ve salgıların paketlenmesi farklı süreçlerdir."
-feedback_success = "Doğru: ribozom protein sentezler, mitokondri ATP üretir, Golgi salgıları işler ve paketler."
+feedback_wrong = "Protein, ATP ve salgı paketleme görevlerini ayır."
+feedback_success = "Doğru: ribozom protein, mitokondri ATP, Golgi salgı işler."

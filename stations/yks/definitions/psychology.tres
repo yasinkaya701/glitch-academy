@@ -24,5 +24,5 @@ mode = "pair"
 pair_left = PackedStringArray("“Koridorda gri bir gölge gördüm.”", "“Gölge bir askılığa benziyor.”", "“Biri beni izliyor.”")
 pair_right = PackedStringArray("Duyusal gözlem", "Algısal yorum", "Kanıtı aşan çıkarım")
 pair_targets = PackedStringArray("Duyusal gözlem", "Algısal yorum", "Kanıtı aşan çıkarım")
-feedback_wrong = "Görülen biçim gözlem verisidir; nesneyi tanıma yorum, niyet yükleme ise ek çıkarımdır."
-feedback_success = "Doğru. Gölge gözlem; askılık benzetmesi algı; izlenme düşüncesi kanıtı aşan bir yorumdur."
+feedback_wrong = "Gölge gözlem; tanıma algı, niyet yükleme çıkarımdır."
+feedback_success = "Gölge gözlem, askılık algı; izlenme ise çıkarımdır."

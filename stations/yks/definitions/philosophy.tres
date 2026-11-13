@@ -24,5 +24,5 @@ mode = "pair"
 pair_left = PackedStringArray("Bütün metaller genleşir; bakır metaldir; bakır genleşir.", "Bazı kuşlar uçar; penguen kuştur; penguen uçar.", "Zemin ıslak; öyleyse mutlaka yağmur yağdı.")
 pair_right = PackedStringArray("Öncüllerden zorunlu, geçerli sonuç", "Öncüller sonucu garanti etmez", "Sonuç için başka nedenler de olabilir")
 pair_targets = PackedStringArray("Öncüllerden zorunlu, geçerli sonuç", "Öncüller sonucu garanti etmez", "Sonuç için başka nedenler de olabilir")
-feedback_wrong = "Bir öncülün doğru görünmesi yetmez; sonucu zorunlu kılıp kılmadığını ve alternatif açıklamaları denetle."
-feedback_success = "Doğru. İlk sonuç tümel öncülden çıkar; kuş örneği istisnaya, ıslak zemin ise alternatif nedenlere açıktır."
+feedback_wrong = "Sonuç öncüllerden zorunlu mu? Karşı örnek ara."
+feedback_success = "İlk sonuç zorunlu; kuş ve ıslak zemin örnekleri değil."

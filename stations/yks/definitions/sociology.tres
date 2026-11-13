@@ -24,5 +24,5 @@ mode = "pair"
 pair_left = PackedStringArray("Öğretmen", "Ders anlatmak", "Hasta")
 pair_right = PackedStringArray("Bir statü/konum", "Doktorla ilişkideki karşı statü", "Öğretmen statüsünden beklenen rol")
 pair_targets = PackedStringArray("Bir statü/konum", "Öğretmen statüsünden beklenen rol", "Doktorla ilişkideki karşı statü")
-feedback_wrong = "Statü toplumdaki konumu, rol ise o konuma bağlı davranış beklentisini anlatır."
-feedback_success = "Doğru. Öğretmen bir statü, ders anlatmak bu statünün rolüdür; hasta doktor karşısındaki statüdür."
+feedback_wrong = "Statü konum, rol o konumdan beklenen davranıştır."
+feedback_success = "Doğru: öğretmen statü, ders anlatmak roldür."

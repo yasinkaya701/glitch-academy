@@ -23,5 +23,5 @@ visual_theme = &"english"
 mode = "choice"
 options = PackedStringArray("Maya is trying to improve reception by changing position before sending again.", "Maya has decided to abandon the hike because the weather is cloudy.", "The transmitter can only work inside the valley.", "The map shows that the radio is broken beyond repair.")
 correct_option = "Maya is trying to improve reception by changing position before sending again."
-feedback_wrong = "Use only stated actions: she checks a map, moves higher, then retries the transmitter."
-feedback_success = "Correct. Her movement to higher ground and another transmission attempt support the reception inference."
+feedback_wrong = "She moves higher, then retries; infer why."
+feedback_success = "Correct: moving higher supports the reception inference."

@@ -35,6 +35,7 @@ var _pair_selection := ""
 var _pair_answers: Dictionary = {}
 var _pair_left_buttons: Dictionary = {}
 var _feedback_label: Label
+var _feedback_tween: Tween
 var _answer_area: Control
 var _visual: Control
 var _verify_button: Button
@@ -129,7 +130,7 @@ func _build_interface() -> void:
 	prompt.position = right_panel.position + Vector2(18, 14)
 	prompt.size = Vector2(right_panel.size.x - 36.0, 145)
 	add_child(prompt)
-	var instruction := _label("GÖREV  ·  " + mission_definition.instruction, 15, MUTED)
+	var instruction := _label("KONTROL  ·  " + _interaction_hint(), 14, MUTED)
 	instruction.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	instruction.position = right_panel.position + Vector2(18, 170)
 	instruction.size = Vector2(right_panel.size.x - 36.0, 52)
@@ -141,11 +142,23 @@ func _build_interface() -> void:
 	_answer_area.clip_contents = true
 	add_child(_answer_area)
 	_build_interaction()
-	_feedback_label = _label("Bir düzenek bekliyor.", 15, MUTED)
+	_feedback_label = _label("", 15, MUTED)
+	_feedback_label.hide()
 	_feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_feedback_label.position = Vector2(26, size.y - 31.0)
-	_feedback_label.size = Vector2(size.x - 52.0, 24)
+	_feedback_label.position = right_panel.position + Vector2(18, right_panel.size.y - 36.0)
+	_feedback_label.size = Vector2(right_panel.size.x - 36.0, 28)
 	add_child(_feedback_label)
+
+
+func _interaction_hint() -> String:
+	match mission_definition.mode:
+		"choice":
+			return "En uygun yanıtı seç."
+		"sequence":
+			return "Öğeleri sırala, ardından doğrula."
+		"pair":
+			return "Soldan ve sağdan birer öğe eşleştir."
+	return "Yanıtını seç ve doğrula."
 
 
 func _build_interaction() -> void:
@@ -291,8 +304,19 @@ func _choose_pair_right(value: String) -> void:
 func _set_feedback(message: String, color: Color) -> void:
 	if _feedback_label == null:
 		return
+	if _feedback_tween != null and _feedback_tween.is_valid():
+		_feedback_tween.kill()
 	_feedback_label.text = message
 	_feedback_label.add_theme_color_override("font_color", color)
+	if message.is_empty():
+		_feedback_label.hide()
+		return
+	_feedback_label.modulate.a = 0.0
+	_feedback_label.show()
+	_feedback_tween = create_tween()
+	_feedback_tween.tween_property(_feedback_label, "modulate:a", 1.0, 0.12)
+	_feedback_tween.tween_interval(3.0)
+	_feedback_tween.tween_property(_feedback_label, "modulate:a", 0.0, 0.28)
 
 
 func _label(text_value: String, font_size: int, color: Color) -> Label:

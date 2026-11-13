@@ -23,5 +23,5 @@ visual_theme = &"religion"
 mode = "choice"
 options = PackedStringArray("Amel: inancın eylemle görünmesi", "İkrar: inancı dille açıklama", "Bilgi: bir şeyi öğrenme", "İrade: seçim yapabilme gücü")
 correct_option = "Amel: inancın eylemle görünmesi"
-feedback_wrong = "Metindeki yardımlaşma, sözünde durma ve sabır gözlenebilir davranışlardır; bunları kapsayan kavrama bak."
-feedback_success = "Doğru. Parça imanı, eylem ve davranışla ilişkilendiriyor: amel."
+feedback_wrong = "Bu eylemleri kapsayan kavramı düşün."
+feedback_success = "Doğru: metin, imanı davranışla ilişkilendiriyor."

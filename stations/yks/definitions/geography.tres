@@ -23,5 +23,5 @@ visual_theme = &"geography"
 mode = "choice"
 options = PackedStringArray("Q, P'nin doğusundadır; enlemleri aynı olduğu için aynı paraleldedir.", "Q, P'nin batısındadır; boylam büyüdükçe batıya gidilir.", "Q, P'nin güneyindedir; boylamları farklıdır.", "Q, P'nin kuzeyindedir; enlem değerleri aynı yazılmıştır.")
 correct_option = "Q, P'nin doğusundadır; enlemleri aynı olduğu için aynı paraleldedir."
-feedback_wrong = "Enlem aynıysa paralel aynıdır; boylam doğuya doğru arttığında yönü tekrar kontrol et."
-feedback_success = "Doğru. İki nokta aynı enlemde, Q'nun doğu boylamı daha büyük olduğu için Q doğudadır."
+feedback_wrong = "Enlem paraleli, boylam doğu-batı yönünü belirler."
+feedback_success = "Enlemler eşit; 30°D, 27°D'nin doğusudur."

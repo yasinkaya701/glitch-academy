@@ -24,5 +24,5 @@ mode = "pair"
 pair_left = PackedStringArray("x: 1'den 7'ye değişir.", "y: 2'den 2'ye değişir.", "A(1,2) → B(7,2)")
 pair_right = PackedStringArray("6 birim doğu", "0 birim kuzey-güney", "Doğru yatay rota")
 pair_targets = PackedStringArray("6 birim doğu", "0 birim kuzey-güney", "Doğru yatay rota")
-feedback_wrong = "Önce x ve y farklarını ayrı hesapla; yatay hareket x, düşey hareket y ile değişir."
-feedback_success = "Doğru. x farkı 6, y farkı 0; A'dan B'ye rota 6 birim doğuya uzanır."
+feedback_wrong = "Δx yatay, Δy düşey hareketi verir; ikisini ayrı bul."
+feedback_success = "Δx=6, Δy=0: rota 6 birim doğuya."

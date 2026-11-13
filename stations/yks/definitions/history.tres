@@ -24,5 +24,5 @@ mode = "pair"
 pair_left = PackedStringArray("22 Haziran 1919 tarihli genelge metni", "Olaydan yıllar sonra yazılmış anı", "Tarihsiz, yazarı bilinmeyen söylenti")
 pair_right = PackedStringArray("Döneme ait birincil tarihsel kaynak", "Tanıklık içerir; zaman uzaklığıyla karşılaştırılmalı", "Tarihi doğrulamaya tek başına yetmez")
 pair_targets = PackedStringArray("Döneme ait birincil tarihsel kaynak", "Tanıklık içerir; zaman uzaklığıyla karşılaştırılmalı", "Tarihi doğrulamaya tek başına yetmez")
-feedback_wrong = "Kaynağın olay anına yakınlığı, tarih bilgisi ve yazarının belli olup olmadığı kanıt gücünü değiştirir."
-feedback_success = "Doğru. Amasya Genelgesi'nin tarihli metni döneme ait birincil kaynaktır; anı ve söylenti ek doğrulama ister."
+feedback_wrong = "Çağdaş, tarihli ve yazarı belli kaynak daha güçlüdür."
+feedback_success = "Tarihli genelge birincil; anı ve söylenti doğrulama ister."

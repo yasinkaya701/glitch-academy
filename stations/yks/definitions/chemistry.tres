@@ -24,5 +24,5 @@ mode = "pair"
 pair_left = PackedStringArray("X: mavi turnusol kırmızıya döndü.", "Y: kırmızı turnusol maviye döndü.", "X ve Y bulguları")
 pair_right = PackedStringArray("Asidik çözelti", "Bazik çözelti", "X asit, Y baz")
 pair_targets = PackedStringArray("Asidik çözelti", "Bazik çözelti", "X asit, Y baz")
-feedback_wrong = "Mavi turnusolün kırmızıya dönmesi asidi, kırmızı turnusolün maviye dönmesi bazı gösterir."
-feedback_success = "Doğru. X asidik, Y baziktir; iki indikatör bulgusu numuneleri doğrular."
+feedback_wrong = "Mavi→kırmızı asit; kırmızı→mavi baz gösterir."
+feedback_success = "X asit, Y baz: iki turnusol bulgusu bunu doğrular."

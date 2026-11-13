@@ -23,5 +23,5 @@ visual_theme = &"literature"
 mode = "sequence"
 sequence_items = PackedStringArray("Çocukluk anısı → öznel üslup", "“İndim” eki → kişisel anlatıcı", "Tarihli kayıt → günlük türü")
 correct_sequence = PackedStringArray("“İndim” eki → kişisel anlatıcı", "Tarihli kayıt → günlük türü", "Çocukluk anısı → öznel üslup")
-feedback_wrong = "İpucunun söylediğiyle çıkarımın kapsamını karşılaştır: kişi eki, tarihleme ve imge farklı özellikleri gösterir."
-feedback_success = "Doğru. Kişi eki anlatıcıyı, tarihli kayıtlar türü, anı ve imge ise öznel edebî anlatımı belirtiyor."
+feedback_wrong = "Kişi eki, tarih ve imgeyi ayrı ipuçları olarak eşleştir."
+feedback_success = "Doğru: kişi anlatıcıyı, tarih türü, imge üslubu gösterir."

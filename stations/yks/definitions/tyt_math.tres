@@ -23,5 +23,5 @@ visual_theme = &"math"
 mode = "choice"
 options = PackedStringArray("660", "600", "680", "700")
 correct_option = "660"
-feedback_wrong = "Yüzdeler aynı başlangıç miktarına uygulanmıyor: önce 800'ün %25'ini çıkar, artışı 600 üzerinden bul."
+feedback_wrong = "İkinci yüzdeyi 600 üzerinden hesapla."
 feedback_success = "Doğru: 800 × 0,75 = 600; 600 × 1,10 = 660."
