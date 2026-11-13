@@ -537,8 +537,37 @@ func _rebuild_tubes() -> void:
 		var rich: bool = PORT_RICH[from_port]
 		var color := GOLD if warn else (BLOOD_RICH if rich else BLOOD_POOR)
 		_tubes.add_child(Util.tube_mesh(points, color, 0.022))
+		_add_collar(points[0], points[1] - points[0])
+		_add_collar(points[points.size() - 1], points[points.size() - 1] - points[points.size() - 2])
 		var holder := Util.make_particles(_tubes, 0.012, 26)
 		_link_particles[from_port] = {"holder": holder, "points": points}
+
+
+func _add_collar(position: Vector3, direction: Vector3) -> void:
+	## Hortum ucundaki metal konnektör kolyesi ve kauçuk halka.
+	var tangent := direction.normalized()
+	var collar := MeshInstance3D.new()
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 0.034
+	mesh.bottom_radius = 0.034
+	mesh.height = 0.07
+	collar.mesh = mesh
+	collar.material_override = _metal
+	collar.position = position
+	collar.quaternion = Quaternion(Vector3.UP, tangent)
+	_tubes.add_child(collar)
+	var ring := MeshInstance3D.new()
+	var ring_mesh := TorusMesh.new()
+	ring_mesh.outer_radius = 0.04
+	ring_mesh.inner_radius = 0.031
+	ring.mesh = ring_mesh
+	var rubber := StandardMaterial3D.new()
+	rubber.albedo_color = Color("#14181d")
+	rubber.roughness = 0.7
+	ring.material_override = rubber
+	ring.position = position + tangent * 0.03
+	ring.quaternion = Quaternion(Vector3.UP, tangent)
+	_tubes.add_child(ring)
 
 
 func _draw_drag_tube() -> void:
