@@ -149,6 +149,6 @@ Kademe ayrımı: ortaokul 5–8, lise 9–12. Her görev için sınıf, program 
 
 ## Öncelik özeti
 
-- **A (ilk büyük teslim):** 31 konu, ağır soru ağırlıklı olanlar.
-- **B:** ikinci dalga.
-- **C:** yer kalırsa.
+- **A (ilk büyük teslim):** 41 satır, soru ağırlığı yüksek konular.
+- **B (35 satır):** ikinci dalga.
+- **C (11 satır):** yer kalırsa.
