@@ -88,8 +88,8 @@ func _draw_literature() -> void:
 	draw_rect(Rect2(Vector2(58, 234), Vector2(160, 67)), AMBER, false, 2.0)
 	draw_rect(Rect2(Vector2(338, 234), Vector2(160, 67)), Color("#182d37"), true)
 	draw_rect(Rect2(Vector2(338, 234), Vector2(160, 67)), MINT, false, 2.0)
-	_caption("1. kişi", Vector2(101, 273), PAPER)
-	_caption("tarihli kayıt", Vector2(368, 273), PAPER)
+	_caption("“indim”", Vector2(101, 273), PAPER)
+	_caption("14 MAYIS", Vector2(368, 273), PAPER)
 	_arrow(Vector2(228, 266), Vector2(324, 266), AMBER)
 	_caption("KAYIT İPUÇLARI", Vector2(208, 356), MINT)
 
@@ -182,7 +182,7 @@ func _draw_history() -> void:
 	var names := ["Genelge metni", "Yıllar sonra anı", "Tarihsiz söylenti"]
 	var dates := ["22 HAZ 1919", "SONRADAN", "TARİH YOK"]
 	for index in ys.size():
-		var color := MINT if index == 0 else AMBER if index == 1 else CORAL
+		var color := FAINT
 		draw_rect(Rect2(Vector2(76, ys[index] - 27), Vector2(426, 60)), Color("#172833"), true)
 		draw_rect(Rect2(Vector2(76, ys[index] - 27), Vector2(426, 60)), color, false, 2.0)
 		_caption(dates[index], Vector2(91, ys[index] - 5), color)
@@ -211,7 +211,7 @@ func _draw_philosophy() -> void:
 	var labels := ["İDDİA A  ·  metal / genleşme", "İDDİA B  ·  kuş / uçuş", "İDDİA C  ·  ıslak zemin / yağmur"]
 	for index in boxes.size():
 		draw_rect(boxes[index], Color("#172d38"), true)
-		draw_rect(boxes[index], MINT if index == 2 else FAINT, false, 2.0)
+		draw_rect(boxes[index], FAINT, false, 2.0)
 		_caption(labels[index], Vector2(70, boxes[index].position.y + 35), PAPER)
 	_caption("ÜÇ GEREKÇE, ÜÇ SONUÇ", Vector2(180, 383), MINT)
 
@@ -242,15 +242,13 @@ func _draw_psychology() -> void:
 
 
 func _draw_sociology() -> void:
-	_caption("SOSYOLOJİ / ROL AĞI", Vector2(23, 30))
-	var nodes := [Vector2(126, 146), Vector2(286, 118), Vector2(458, 166), Vector2(179, 310), Vector2(375, 328)]
-	var edges := [[0, 1], [1, 2], [0, 3], [1, 3], [1, 4], [2, 4], [3, 4]]
-	for edge in edges:
-		draw_line(nodes[edge[0]], nodes[edge[1]], FAINT, 2.0)
-	for index in nodes.size():
-		draw_circle(nodes[index], 23, MINT.darkened(0.35) if index == 1 else Color("#314753"))
-		_caption(["kişi", "okul", "aile", "akran", "?"][index], nodes[index] + Vector2(-25, 37), PAPER)
-	_caption("ilişkiyi birey + grup içinde incele", Vector2(86, 382), AMBER)
+	_caption("SOSYOLOJİ / ALAN NOTLARI", Vector2(23, 30))
+	var rows := ["KAYIT 01   ·   ÖĞRETMEN", "KAYIT 02   ·   DERS ANLATMA", "KAYIT 03   ·   KLİNİK: DOKTOR / HASTA"]
+	for index in rows.size():
+		var y := 126.0 + index * 82.0
+		draw_line(Vector2(48, y + 22), Vector2(526, y + 22), FAINT, 1.0)
+		_caption(rows[index], Vector2(60, y), PAPER)
+	_caption("KONUMU VE DAVRANIŞI AYRI SINIFLA", Vector2(142, 382), AMBER)
 
 
 func _draw_logic() -> void:

@@ -1,5 +1,5 @@
 extends Node
-## Route-independent campaign progress shared by the control center and story hooks.
+## Route-scoped mission progress and campaign-wide story evidence.
 
 signal state_changed
 
@@ -16,14 +16,25 @@ func _ready() -> void:
 	_load()
 
 
-func mark_completed(mission_id: StringName) -> void:
-	completed_ids[mission_id] = true
+func mark_completed(mission_id: StringName, route: StringName = &"") -> void:
+	completed_ids[_completion_key(mission_id, route)] = true
 	_save()
 	state_changed.emit()
 
 
-func is_completed(mission_id: StringName) -> bool:
-	return completed_ids.has(mission_id)
+func is_completed(mission_id: StringName, route: StringName = &"") -> bool:
+	if route != &"":
+		return completed_ids.has(_completion_key(mission_id, route)) or completed_ids.has(mission_id)
+	if completed_ids.has(mission_id):
+		return true
+	for route_name in [&"class", &"lgs", &"tyt", &"ayt", &"ydt"]:
+		if completed_ids.has(_completion_key(mission_id, route_name)):
+			return true
+	return false
+
+
+func _completion_key(mission_id: StringName, route: StringName) -> StringName:
+	return mission_id if route == &"" else StringName("%s::%s" % [route, mission_id])
 
 
 func has_story_flag(flag: StringName) -> bool:

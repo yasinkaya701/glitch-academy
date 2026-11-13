@@ -16,6 +16,7 @@ const PANEL := Color("#101c27")
 var last_feedback := ""
 var _completed := false
 var _selection_buttons: Array[Button] = []
+var _sequence_labels: Array[Label] = []
 var _sequence_order: PackedStringArray = PackedStringArray()
 var _choice_order: PackedStringArray = PackedStringArray()
 var _sequence_up_buttons: Array[Button] = []
@@ -75,11 +76,20 @@ func _draw() -> void:
 
 func _panel_layout() -> Dictionary:
 	var panel_top := 56.0
-	var panel_height := maxf(180.0, size.y - panel_top - 18.0)
+	var available_width := maxf(160.0, size.x - 36.0)
+	if size.x < 900.0:
+		var stack_gap := 10.0
+		var available_height := maxf(300.0, size.y - panel_top - 18.0 - stack_gap)
+		var visual_height := clampf(available_height * 0.36, 170.0, 246.0)
+		var work_height := available_height - visual_height - stack_gap
+		var stacked_visual := Rect2(Vector2(18, panel_top), Vector2(available_width, visual_height))
+		var stacked_work := Rect2(Vector2(18, panel_top + visual_height + stack_gap), Vector2(available_width, work_height))
+		return {"left": stacked_visual, "right": stacked_work}
 	var gap := 14.0
-	var available_width := maxf(160.0, size.x - 36.0 - gap)
-	var left_width := available_width * 0.5
-	var right_width := available_width - left_width
+	var split_width := maxf(160.0, available_width - gap)
+	var left_width := split_width * 0.5
+	var right_width := split_width - left_width
+	var panel_height := maxf(180.0, size.y - panel_top - 18.0)
 	var left := Rect2(Vector2(18, panel_top), Vector2(left_width, panel_height))
 	var right := Rect2(Vector2(18.0 + left_width + gap, panel_top), Vector2(right_width, panel_height))
 	return {"left": left, "right": right}
@@ -161,6 +171,7 @@ func _build_interface() -> void:
 	resized.connect(_on_resized)
 	_layout_interface()
 	_build_interaction()
+	_focus_first_action()
 
 
 func _on_resized() -> void:
@@ -204,15 +215,25 @@ func _estimated_text_height(text_value: String, width: float, font_size: int, mi
 
 
 func _rebuild_interaction() -> void:
+	var focus_key := ""
+	var focused := get_viewport().gui_get_focus_owner()
+	var focus_was_in_answers := focused != null and _answer_area.is_ancestor_of(focused)
+	if focus_was_in_answers:
+		focus_key = String(focused.get_meta("mission_focus_key", ""))
 	for child in _answer_area.get_children():
 		_answer_area.remove_child(child)
 		child.queue_free()
 	_selection_buttons.clear()
+	_sequence_labels.clear()
 	_sequence_up_buttons.clear()
 	_sequence_down_buttons.clear()
 	_pair_selectors.clear()
 	_verify_button = null
 	_build_interaction()
+	if focus_was_in_answers and (focus_key.is_empty() or not _restore_focus(_answer_area, focus_key)):
+		_focus_first_action()
+	elif focused == null:
+		_focus_first_action()
 
 
 func _show_learning_note() -> void:
@@ -221,7 +242,10 @@ func _show_learning_note() -> void:
 		_info_dialog.title = "Öğrenme notu"
 		_info_dialog.dialog_text = "%s\n%s\n%s" % [mission_definition.learning_target, mission_definition.curriculum, mission_definition.source_note]
 		add_child(_info_dialog)
-	_info_dialog.popup_centered(Vector2i(560, 220))
+	var viewport_size := get_viewport_rect().size
+	var dialog_width := mini(560, maxi(180, roundi(viewport_size.x - 32.0)))
+	var dialog_height := mini(280, maxi(180, roundi(viewport_size.y - 48.0)))
+	_info_dialog.popup_centered(Vector2i(dialog_width, dialog_height))
 
 
 func _build_interaction() -> void:
@@ -287,33 +311,35 @@ func _build_sequence() -> void:
 	var row_width := _answer_scroll.size.x - 8.0
 	var row_height := 54.0
 	var row_gap := 8.0
-	var item_width := row_width - 204.0
+	var compact_controls := _answer_scroll.size.x < 520.0
+	var control_width := clampf((_answer_scroll.size.x - 92.0) * 0.5, 32.0, 46.0) if compact_controls else 94.0
+	var item_width := maxf(36.0, row_width - control_width * 2.0 - 12.0)
 	for index in _sequence_order.size():
 		var row := Control.new()
 		row.position = Vector2(2, 2 + index * (row_height + row_gap))
 		row.size = Vector2(row_width, row_height)
 		_answer_area.add_child(row)
-		var item := _button("%02d  ·  %s" % [index + 1, _sequence_order[index]], Vector2(item_width, row_height))
+		var item := _label("%02d  ·  %s" % [index + 1, _sequence_order[index]], 15, INK)
+		item.size = Vector2(item_width, row_height)
 		item.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		item.position = Vector2.ZERO
-		item.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		item.disabled = _completed
 		row.add_child(item)
-		var up := _button("↑ Yukarı", Vector2(94, row_height))
+		_sequence_labels.append(item)
+		var up := _button("↑" if compact_controls else "↑ Yukarı", Vector2(control_width, row_height))
 		up.tooltip_text = "Önceki sıraya taşı"
 		up.position = Vector2(item_width + 4.0, 0)
+		up.set_meta("mission_focus_key", "seq_up:" + _sequence_order[index])
 		up.pressed.connect(_move_sequence.bind(index, -1))
 		up.disabled = _completed or index == 0
 		row.add_child(up)
 		_sequence_up_buttons.append(up)
-		var down := _button("↓ Aşağı", Vector2(94, row_height))
+		var down := _button("↓" if compact_controls else "↓ Aşağı", Vector2(control_width, row_height))
 		down.tooltip_text = "Sonraki sıraya taşı"
-		down.position = Vector2(item_width + 102.0, 0)
+		down.position = Vector2(item_width + control_width + 8.0, 0)
+		down.set_meta("mission_focus_key", "seq_down:" + _sequence_order[index])
 		down.pressed.connect(_move_sequence.bind(index, 1))
 		down.disabled = _completed or index == _sequence_order.size() - 1
 		row.add_child(down)
 		_sequence_down_buttons.append(down)
-		_selection_buttons.append(item)
 	_verify_button = _button("Sıralamayı kontrol et", Vector2(230, 44))
 	_verify_button.theme_type_variation = "PrimaryButton"
 	_verify_button.position = Vector2(4, _sequence_order.size() * (row_height + row_gap) + 8)
@@ -343,6 +369,8 @@ func _build_pairs() -> void:
 		left.size = Vector2(row_width, left_height)
 		_answer_area.add_child(left)
 		var right := OptionButton.new()
+		right.focus_mode = Control.FOCUS_ALL
+		right.set_meta("mission_focus_key", "pair:" + left_value)
 		right.custom_minimum_size = Vector2(row_width, 42)
 		right.size = Vector2(row_width, 42)
 		right.position = Vector2(4, row_y + left_height + 4.0)
@@ -426,8 +454,10 @@ func _move_sequence(index: int, direction: int) -> void:
 
 
 func _refresh_sequence_labels() -> void:
-	for index in _selection_buttons.size():
-		_selection_buttons[index].text = "%02d  ·  %s" % [index + 1, _sequence_order[index]]
+	for index in _sequence_labels.size():
+		_sequence_labels[index].text = "%02d  ·  %s" % [index + 1, _sequence_order[index]]
+		_sequence_up_buttons[index].set_meta("mission_focus_key", "seq_up:" + _sequence_order[index])
+		_sequence_down_buttons[index].set_meta("mission_focus_key", "seq_down:" + _sequence_order[index])
 		_sequence_up_buttons[index].disabled = _completed or index == 0
 		_sequence_down_buttons[index].disabled = _completed or index == _sequence_order.size() - 1
 	_clear_feedback_and_result()
@@ -485,4 +515,25 @@ func _button(text_value: String, button_size: Vector2) -> Button:
 	button.custom_minimum_size = button_size
 	button.size = button_size
 	button.add_theme_font_size_override("font_size", 16)
+	button.focus_mode = Control.FOCUS_ALL
+	button.set_meta("mission_focus_key", text_value)
 	return button
+
+
+func _focus_first_action() -> void:
+	if mission_definition.mode == "pair" and not _pair_selectors.is_empty():
+		(_pair_selectors.values()[0] as OptionButton).grab_focus()
+	elif mission_definition.mode == "sequence" and not _sequence_down_buttons.is_empty():
+		_sequence_down_buttons[0].grab_focus()
+	elif not _selection_buttons.is_empty():
+		_selection_buttons[0].grab_focus()
+
+
+func _restore_focus(parent: Node, focus_key: String) -> bool:
+	for child in parent.get_children():
+		if child is Control and String(child.get_meta("mission_focus_key", "")) == focus_key:
+			(child as Control).grab_focus()
+			return true
+		if _restore_focus(child, focus_key):
+			return true
+	return false

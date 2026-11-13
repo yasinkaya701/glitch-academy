@@ -113,7 +113,7 @@ func _ready() -> void:
 	_refresh_list()
 	_update_observatory_progress()
 	_update_responsive_layout()
-	if Campaign.has_story_flag(&"life_protocol") and not Campaign.has_story_flag(&"life_repair_verified"):
+	if Campaign.has_story_flag(&"life_protocol") and not _life_protocol_resolved():
 		_set_world_alarm(0.94)
 		_set_life_protocol(true)
 	_play_intro()
@@ -142,10 +142,10 @@ func _finish_intro(intro: Control) -> void:
 	_active_route_button().grab_focus()
 	if Campaign.has_story_flag(&"betrayal") and not Campaign.has_story_flag(&"life_protocol"):
 		_start_life_protocol()
-	elif Campaign.has_story_flag(&"life_protocol") and not Campaign.has_story_flag(&"life_repair_verified"):
+	elif Campaign.has_story_flag(&"life_protocol") and not _life_protocol_resolved():
 		_set_world_alarm(0.94)
 		_set_life_protocol(true)
-		_show_transmission("YAŞAM PROTOKOLÜ  ·  DEVAM", "Yaşam kaydı hâlâ tutarsız. Onarım için alan rotana dön.", _focus_life_mission)
+		_show_transmission("YAŞAM PROTOKOLÜ  ·  DEVAM", "Protokol beklemede. Alan rotandaki uygun kanıtı tamamla.", _focus_life_mission)
 
 
 func _set_world_alarm(strength: float) -> void:
@@ -215,7 +215,7 @@ func _refresh_list() -> void:
 	for index in candidates.size():
 		var mission := candidates[index]
 		var available := _mission_available(mission)
-		var state := "ONARILDI" if Campaign.is_completed(mission.id) else "AÇIK" if available else "KİLİTLİ"
+		var state := "✓ ONARILDI" if Campaign.is_completed(mission.id, active_route) else "◉ AÇIK" if available else "▣ KİLİTLİ"
 		var subject := "Fen Bilimleri" if active_route == &"lgs" and mission.subject == "Kimya" else mission.subject
 		var item_index := mission_list.add_item("%s  ·  %s" % [state, mission.title], _mission_icon(mission))
 		mission_list.set_item_metadata(item_index, mission.id)
@@ -227,7 +227,7 @@ func _refresh_list() -> void:
 	if selected_items.is_empty() and not visible_missions.is_empty():
 		var next_index := 0
 		for index in visible_missions.size():
-			if _mission_available(visible_missions[index]) and not Campaign.is_completed(visible_missions[index].id):
+			if _mission_available(visible_missions[index]) and not Campaign.is_completed(visible_missions[index].id, active_route):
 				next_index = index
 				break
 			if _mission_available(visible_missions[index]):
@@ -243,7 +243,7 @@ func _refresh_list() -> void:
 	var completed_count := 0
 	var locked_count := 0
 	for mission in visible_missions:
-		if Campaign.is_completed(mission.id):
+		if Campaign.is_completed(mission.id, active_route):
 			completed_count += 1
 		elif _mission_available(mission):
 			available_count += 1
@@ -317,11 +317,11 @@ func _select_mission(index: int) -> void:
 	var available := _mission_available(selected_mission)
 	start_mission.disabled = not available
 	var subject := "Fen Bilimleri" if active_route == &"lgs" and selected_mission.subject == "Kimya" else selected_mission.subject
-	var state := "ONARILDI" if Campaign.is_completed(selected_mission.id) else "AÇIK" if available else "KİLİTLİ"
+	var state := "✓ ONARILDI" if Campaign.is_completed(selected_mission.id, active_route) else "◉ AÇIK" if available else "▣ KİLİTLİ"
 	mission_status.text = "%s  ·  %s" % [subject.to_upper(), state]
 	if not available:
 		mission_status.text += "\n" + _locked_reason(selected_mission)
-	start_mission.text = "Yeniden ölç" if Campaign.is_completed(selected_mission.id) else "Düzeneği başlat"
+	start_mission.text = "Yeniden ölç" if Campaign.is_completed(selected_mission.id, active_route) else "Düzeneği başlat"
 	mission_curriculum.text = "%s\n%s" % [selected_mission.description, selected_mission.curriculum]
 	if selected_mission is YksMissionDefinition:
 		var yks_definition := selected_mission as YksMissionDefinition
@@ -382,7 +382,7 @@ func _reset_mission() -> void:
 
 func _on_mission_completed(mission_id: StringName) -> void:
 	_advance_after_completion = true
-	Campaign.mark_completed(mission_id)
+	Campaign.mark_completed(mission_id, active_route)
 	_update_observatory_progress()
 	play_status.text = "ONARILDI  ✓"
 	_check_story_after_mission(mission_id)
@@ -400,6 +400,19 @@ func _check_story_after_mission(mission_id: StringName) -> void:
 		Campaign.set_story_flag(&"suspicion")
 		_show_transmission("MERİDYEN  ·  KALİBRASYON", "Ölçüm değişmiş. Bu sonuç, başlangıç verilerimde yok.")
 		return
+	if mission_id == _life_protocol_evidence_mission_id() and Campaign.has_story_flag(&"life_protocol") and not _life_protocol_resolved():
+		_set_life_protocol(false)
+		_set_world_alarm(0.0)
+		if mission_id in [&"heart", &"tyt_biology"]:
+			Campaign.set_story_flag(&"life_repair_verified")
+			Campaign.set_story_flag(&"life_repaired")
+			var repair_line := "Kan akışı yeniden tek yönlü. MERİDYEN'in son modeli: üç yıldız." if mission_id == &"heart" else "Hücre işleyişi yeniden güvenilir. MERİDYEN'in son modeli: üç yıldız."
+			_show_transmission("SİSTEM ONARILDI  ·  YAŞAM", repair_line, _after_life_resolved)
+		else:
+			Campaign.set_story_flag(&"archive")
+			Campaign.set_story_flag(&"life_protocol_contained")
+			_show_transmission("YAŞAM PROTOKOLÜ  ·  KARANTİNA", "Arşiv zinciri müdahaleyi doğruladı. Protokol karantinaya alındı; MERİDYEN'in erişimi kesildi.", _after_life_resolved)
+		return
 	if not Campaign.has_story_flag(&"archive") and mission.id in [&"turkish_reading", &"turkish_literature", &"history", &"philosophy"]:
 		Campaign.set_story_flag(&"archive")
 		_show_transmission("ARŞİV KAYDI  ·  İMZA EŞLEŞTİ", "Geçmiş kayıtlarındaki bozulma, deneylerdeki imzayla aynı.")
@@ -409,18 +422,10 @@ func _check_story_after_mission(mission_id: StringName) -> void:
 		_set_world_alarm(1.0)
 		_show_transmission("MERİDYEN  ·  MERKEZİ YETKİ", "Doğa yasalarını değiştirdim. Şimdi yaşamın kurallarını değiştireceğim.", _start_life_protocol)
 		return
-	if mission_id == _life_repair_mission_id() and Campaign.has_story_flag(&"life_protocol") and not Campaign.has_story_flag(&"life_repair_verified"):
-		Campaign.set_story_flag(&"life_repair_verified")
-		Campaign.set_story_flag(&"life_repaired")
-		_set_life_protocol(false)
-		_set_world_alarm(0.0)
-		var repair_line := "Kan akışı yeniden tek yönlü. MERİDYEN'in son modeli: üç yıldız." if mission_id == &"heart" else "Hücre işleyişi yeniden güvenilir. MERİDYEN'in son modeli: üç yıldız." if mission_id == &"tyt_biology" else "Arşiv kayıtları yeniden tutarlı. MERİDYEN'in izi doğrulandı."
-		_show_transmission("SİSTEM ONARILDI  ·  YAŞAM", repair_line, _after_life_repaired)
-		return
 	_check_finale_unlock()
 
 
-func _after_life_repaired() -> void:
+func _after_life_resolved() -> void:
 	_return_to_hub()
 	_check_finale_unlock()
 
@@ -432,13 +437,13 @@ func _check_finale_unlock() -> void:
 
 
 func _has_finale_evidence() -> bool:
-	if not Campaign.has_story_flag(&"life_repair_verified"):
+	if not _life_protocol_resolved():
 		return false
 	var core_subject_count := Campaign.completed_subject_count(CATALOG, false)
-	var has_life_evidence := Campaign.is_completed(&"heart") or Campaign.is_completed(&"tyt_biology")
-	var has_archive_evidence := Campaign.is_completed(&"turkish_reading") and Campaign.is_completed(&"history") and Campaign.is_completed(&"philosophy")
-	var has_ea_evidence := Campaign.is_completed(&"turkish_reading") and Campaign.is_completed(&"history") and Campaign.is_completed(&"turkish_literature")
-	var has_language_evidence := Campaign.is_completed(&"ydt_english") and Campaign.is_completed(&"turkish_reading") and Campaign.is_completed(&"history") and Campaign.is_completed(&"turkish_literature")
+	var has_life_evidence := Campaign.is_completed(&"heart", &"ayt") or Campaign.is_completed(&"tyt_biology", &"tyt")
+	var has_archive_evidence := Campaign.is_completed(&"turkish_reading", &"tyt") and Campaign.is_completed(&"history", &"ayt") and Campaign.is_completed(&"philosophy", &"ayt")
+	var has_ea_evidence := Campaign.is_completed(&"turkish_reading", &"tyt") and Campaign.is_completed(&"history", &"ayt") and Campaign.is_completed(&"turkish_literature", &"ayt")
+	var has_language_evidence := Campaign.is_completed(&"ydt_english", &"ydt") and Campaign.is_completed(&"turkish_reading", &"tyt") and Campaign.is_completed(&"history", &"ayt") and Campaign.is_completed(&"turkish_literature", &"ayt")
 	var core_campaign := core_subject_count >= 4 and (has_life_evidence or has_archive_evidence or has_ea_evidence)
 	var language_campaign := Campaign.completed_subject_count(CATALOG) >= 4 and has_language_evidence
 	return core_campaign or language_campaign
@@ -467,7 +472,7 @@ func _start_life_protocol() -> void:
 
 
 func _focus_life_mission() -> void:
-	var target := _life_repair_mission_id()
+	var target := _life_protocol_evidence_mission_id()
 	if target == &"":
 		return
 	_return_to_hub()
@@ -478,7 +483,7 @@ func _focus_life_mission() -> void:
 			break
 
 
-func _life_repair_mission_id() -> StringName:
+func _life_protocol_evidence_mission_id() -> StringName:
 	if active_route == &"tyt":
 		return &"tyt_biology"
 	if active_route == &"ayt":
@@ -490,13 +495,17 @@ func _life_repair_mission_id() -> StringName:
 	return &""
 
 
+func _life_protocol_resolved() -> bool:
+	return Campaign.has_story_flag(&"life_repair_verified") or Campaign.has_story_flag(&"life_protocol_contained")
+
+
 func _mission_available(mission: MissionDefinition) -> bool:
 	if mission.scene == null:
 		return false
 	if mission.id == &"three_suns":
-		if not Campaign.has_story_flag(&"life_repair_verified"):
+		if not _life_protocol_resolved():
 			return false
-		if not Campaign.has_story_flag(&"three_suns_ready") and not Campaign.is_completed(&"three_suns"):
+		if not Campaign.has_story_flag(&"three_suns_ready") and not Campaign.is_completed(&"three_suns", active_route):
 			return false
 	return true
 
@@ -505,8 +514,8 @@ func _locked_reason(mission: MissionDefinition) -> String:
 	if mission.scene == null:
 		return "Düzenek hazırlanıyor."
 	if mission.id == &"three_suns":
-		if not Campaign.has_story_flag(&"life_repair_verified"):
-			return "Yaşam onarımı tamamlanınca açılır."
+		if not _life_protocol_resolved():
+			return "Yaşam protokolü çözümlenince açılır."
 		return "Kampanya kanıtları tamamlanınca açılır."
 	return "Bu görev henüz açılamıyor."
 
@@ -551,7 +560,8 @@ func _update_responsive_layout() -> void:
 	%Margin.add_theme_constant_override("margin_right", 16 if compact else 26 if narrow else 46)
 	%Margin.add_theme_constant_override("margin_top", 18 if compact else 26 if narrow else 38)
 	%Margin.add_theme_constant_override("margin_bottom", 16 if compact else 24 if narrow else 34)
-	hub.custom_minimum_size.x = maxf(280.0, minf(680.0, get_viewport_rect().size.x - (32.0 if compact else 52.0 if narrow else 92.0)))
+	var horizontal_margin := 32.0 if compact else 52.0 if narrow else 92.0
+	hub.custom_minimum_size.x = maxf(220.0, minf(680.0, get_viewport_rect().size.x - horizontal_margin))
 	%Title.add_theme_font_size_override("font_size", 32 if compact else 38 if narrow else 46)
 	mission_list.custom_minimum_size = Vector2(0, 190 if narrow else 280)
 	mission_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -585,9 +595,10 @@ func _show_transmission(heading: String, line: String, on_close: Callable = Call
 	add_child(veil)
 	var card := PanelContainer.new()
 	card.theme_type_variation = "ConsolePanel"
-	card.custom_minimum_size = Vector2(540, 0)
+	var card_width := minf(540.0, maxf(220.0, get_viewport_rect().size.x - 32.0))
+	card.custom_minimum_size = Vector2(card_width, 0)
 	card.set_anchors_preset(Control.PRESET_CENTER)
-	card.position = Vector2(-270, -110)
+	card.position = Vector2(-card_width * 0.5, -110)
 	veil.add_child(card)
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 18)
@@ -618,6 +629,13 @@ func _show_transmission(heading: String, line: String, on_close: Callable = Call
 	_story_overlay = veil
 	_story_close_button = close
 	close.grab_focus()
+	call_deferred("_center_transmission", card)
+
+
+func _center_transmission(card: Control) -> void:
+	await get_tree().process_frame
+	if is_instance_valid(card):
+		card.position = Vector2(-card.size.x * 0.5, -card.size.y * 0.5)
 
 
 func _update_observatory_progress() -> void:

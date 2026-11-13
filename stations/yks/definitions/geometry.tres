@@ -7,7 +7,7 @@
 script = ExtResource("1")
 id = &"geometry"
 grade = 9
-routes = PackedStringArray("ayt")
+routes = PackedStringArray("tyt", "ayt")
 description = "Koordinat farklarını izleyerek yanlış çizilen yörüngeyi düzelt."
 scene = ExtResource("2")
 title = "Yörünge Haritası"
