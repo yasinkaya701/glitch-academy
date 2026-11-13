@@ -19,7 +19,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_phase += delta
-	if _result < 0 or diagram_id in [&"chemistry", &"biology"]:
+	if diagram_id == &"biology" and life_protocol:
 		queue_redraw()
 
 
@@ -27,6 +27,11 @@ func mark_result(correct: bool) -> void:
 	_result = 1 if correct else -1
 	if correct:
 		life_protocol = false
+	queue_redraw()
+
+
+func clear_result() -> void:
+	_result = 0
 	queue_redraw()
 
 
@@ -51,13 +56,13 @@ func _draw() -> void:
 		&"logic": _draw_logic()
 		&"english": _draw_english()
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	if _result > 0:
-		draw_rect(Rect2(Vector2(1, 1), size - Vector2(2, 2)), Color(MINT, 0.95), false, 2.0)
-		draw_circle(Vector2(size.x - 16, 16), 5.0, MINT)
-	elif _result < 0:
-		var pulse := 0.45 + 0.45 * (0.5 + 0.5 * sin(_phase * 7.0))
-		draw_rect(Rect2(Vector2(1, 1), size - Vector2(2, 2)), Color(CORAL, pulse), false, 2.0)
-		draw_circle(Vector2(size.x - 16, 16), 5.0, Color(CORAL, pulse))
+	if _result != 0:
+		var result_color := MINT if _result > 0 else CORAL
+		draw_rect(Rect2(Vector2(1, 1), size - Vector2(2, 2)), result_color, false, 2.0)
+		var badge := Rect2(Vector2(size.x - 156, 12), Vector2(142, 34))
+		draw_rect(badge, Color("#0c1721"), true)
+		draw_rect(badge, result_color, false, 1.0)
+		draw_string(get_theme_default_font(), badge.position + Vector2(12, 23), "ONARILDI" if _result > 0 else "TEKRAR DENE", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, result_color)
 
 
 func _draw_reading() -> void:
@@ -86,13 +91,13 @@ func _draw_literature() -> void:
 	_caption("1. kişi", Vector2(101, 273), PAPER)
 	_caption("tarihli kayıt", Vector2(368, 273), PAPER)
 	_arrow(Vector2(228, 266), Vector2(324, 266), AMBER)
-	_caption("ANLATICI → TÜR → ÜSLUP", Vector2(130, 356), MINT)
+	_caption("KAYIT İPUÇLARI", Vector2(208, 356), MINT)
 
 
 func _draw_math() -> void:
 	_caption("YÜZDE ZİNCİRİ / YENİ DEĞER", Vector2(23, 30))
 	var boxes := [Rect2(Vector2(58, 150), Vector2(118, 84)), Rect2(Vector2(222, 150), Vector2(118, 84)), Rect2(Vector2(386, 150), Vector2(118, 84))]
-	var values := ["800", "600", "660"]
+	var values := ["800", "600", "660"] if _result > 0 else ["800", "?", "?"]
 	var colors := [PAPER, MINT, AMBER]
 	for index in boxes.size():
 		draw_rect(boxes[index], Color("#172833"), true)
@@ -102,7 +107,10 @@ func _draw_math() -> void:
 	_arrow(Vector2(341, 192), Vector2(379, 192), AMBER)
 	_caption("− %25", Vector2(170, 245), CORAL)
 	_caption("+ %10", Vector2(334, 245), MINT)
-	_caption("800 × 0,75 = 600 × 1,10 = 660", Vector2(88, 330), PAPER)
+	if _result > 0:
+		_caption("800 × 0,75 = 600 × 1,10 = 660", Vector2(88, 330), PAPER)
+	else:
+		_caption("HER ADIMDA YENİ DEĞERİ KULLAN", Vector2(112, 330), PAPER)
 
 
 func _draw_geometry() -> void:
@@ -119,12 +127,10 @@ func _draw_geometry() -> void:
 	draw_circle(a, 11, MINT)
 	draw_circle(b, 11, AMBER)
 	draw_circle(wrong, 11, CORAL)
-	draw_line(a, b, MINT, 4.0)
 	draw_line(a, wrong, CORAL, 2.0)
 	_caption("A (1,2)", Vector2(143, 278), MINT)
 	_caption("B (7,2)", Vector2(438, 278), AMBER)
-	_caption("yanlış dönüş", Vector2(164, 92), CORAL)
-	_caption("Δx = 6  ·  Δy = 0", Vector2(228, 376), PAPER)
+	_caption("KAYITLI ROTA", Vector2(164, 92), CORAL)
 
 
 func _draw_chemistry() -> void:
@@ -140,9 +146,9 @@ func _draw_chemistry() -> void:
 		draw_line(Vector2(x + 14, 235), Vector2(x + 150, 235), result_color, 3.0)
 		draw_rect(Rect2(Vector2(x + 70, 169), Vector2(18, 72)), Color("#477f9a") if is_acid else Color("#d27064"), true)
 		draw_rect(Rect2(Vector2(x + 70, 205), Vector2(18, 36)), result_color, true)
-		_caption("X  ·  ASİT" if is_acid else "Y  ·  BAZ", Vector2(x + 43, 144), result_color)
+		_caption("NUMUNE X" if is_acid else "NUMUNE Y", Vector2(x + 43, 144), result_color)
 		_caption("mavi → kırmızı" if is_acid else "kırmızı → mavi", Vector2(x + 20, 330), PAPER)
-	_caption("İNDİKATÖR BULGUSU", Vector2(189, 372), MINT)
+	_caption("GÖZLENEN RENK DEĞİŞİMİ", Vector2(150, 372), MINT)
 
 
 func _draw_biology() -> void:
@@ -159,7 +165,6 @@ func _draw_biology() -> void:
 		_ellipse(center, Vector2(31, 14), Color("#d38b70"), 2.0)
 		draw_line(center + Vector2(-16, 0), center + Vector2(16, 0), AMBER, 2.0)
 	_caption("çekirdek", Vector2(188, 271), PAPER)
-	_caption("enerji dönüşümü", Vector2(325, 313), MINT)
 	if life_protocol:
 		var pulse := 0.55 + 0.35 * (0.5 + 0.5 * sin(_phase * 5.0))
 		var monitor := Rect2(Vector2(374, 76), Vector2(165, 62))
@@ -197,19 +202,18 @@ func _draw_geography() -> void:
 	draw_circle(Vector2(407, 216), 10, CORAL)
 	_caption("P 38°K 27°D", Vector2(98, 248), MINT)
 	_caption("Q 38°K 30°D", Vector2(343, 248), CORAL)
-	_caption("aynı enlem · doğuya artan boylam", Vector2(105, 365), PAPER)
+	_caption("P ve Q koordinat kayıtları", Vector2(158, 365), PAPER)
 
 
 func _draw_philosophy() -> void:
 	_caption("KESİNLİK İDDİASI / AKIL YÜRÜTME", Vector2(23, 30))
 	var boxes := [Rect2(Vector2(54, 112), Vector2(468, 58)), Rect2(Vector2(54, 204), Vector2(468, 58)), Rect2(Vector2(54, 296), Vector2(468, 58))]
-	var labels := ["Bütün metaller ısıtılınca genleşir.", "Bakır bir metaldir.", "Öyleyse bakır ısıtılınca genleşir."]
+	var labels := ["İDDİA A  ·  metal / genleşme", "İDDİA B  ·  kuş / uçuş", "İDDİA C  ·  ıslak zemin / yağmur"]
 	for index in boxes.size():
 		draw_rect(boxes[index], Color("#172d38"), true)
 		draw_rect(boxes[index], MINT if index == 2 else FAINT, false, 2.0)
 		_caption(labels[index], Vector2(70, boxes[index].position.y + 35), PAPER)
-	_caption("ÖNCÜL", Vector2(232, 178), AMBER)
-	_caption("ÖNCÜLLER → ZORUNLU SONUÇ", Vector2(126, 383), MINT)
+	_caption("ÜÇ GEREKÇE, ÜÇ SONUÇ", Vector2(180, 383), MINT)
 
 
 func _draw_religion() -> void:
@@ -233,9 +237,8 @@ func _draw_psychology() -> void:
 	draw_line(Vector2(250, 245), Vector2(340, 245), FAINT, 5.0)
 	draw_line(Vector2(340, 245), Vector2(368, 172), FAINT, 5.0)
 	_caption("gölge", Vector2(230, 151), MINT)
-	_caption("gözlem: gri biçim", Vector2(68, 354), PAPER)
-	_caption("yorum: askılık / tehdit?", Vector2(274, 354), AMBER)
-	_caption("uyaran ≠ anlamlandırma", Vector2(161, 389), MINT)
+	_caption("kayıt 01: “askılık”", Vector2(68, 354), PAPER)
+	_caption("kayıt 02: “biri izliyor”", Vector2(300, 354), AMBER)
 
 
 func _draw_sociology() -> void:
@@ -246,7 +249,7 @@ func _draw_sociology() -> void:
 		draw_line(nodes[edge[0]], nodes[edge[1]], FAINT, 2.0)
 	for index in nodes.size():
 		draw_circle(nodes[index], 23, MINT.darkened(0.35) if index == 1 else Color("#314753"))
-		_caption(["öğrenci", "okul", "aile", "akran", "rol"][index], nodes[index] + Vector2(-25, 37), PAPER)
+		_caption(["kişi", "okul", "aile", "akran", "?"][index], nodes[index] + Vector2(-25, 37), PAPER)
 	_caption("ilişkiyi birey + grup içinde incele", Vector2(86, 382), AMBER)
 
 
@@ -255,13 +258,13 @@ func _draw_logic() -> void:
 	var boxes := [Rect2(Vector2(82, 107), Vector2(196, 78)), Rect2(Vector2(82, 232), Vector2(196, 78)), Rect2(Vector2(355, 169), Vector2(182, 78))]
 	for index in boxes.size():
 		draw_rect(boxes[index], Color("#172d38"), true)
-		draw_rect(boxes[index], MINT if index == 2 else FAINT, false, 2.0)
+		draw_rect(boxes[index], AMBER if index == 2 else FAINT, false, 2.0)
 	_caption("p → q", Vector2(143, 136), PAPER)
 	_caption("¬q", Vector2(158, 260), PAPER)
-	_caption("∴ ¬p", Vector2(403, 197), MINT)
+	_caption("?", Vector2(439, 220), AMBER)
 	_arrow(Vector2(280, 146), Vector2(349, 196), AMBER)
 	_arrow(Vector2(280, 270), Vector2(349, 220), AMBER)
-	_caption("p → q  +  ¬q  ⇒  ¬p", Vector2(164, 345), PAPER)
+	_caption("KURAL + KAPI KAYDI", Vector2(198, 345), PAPER)
 
 
 func _draw_english() -> void:
@@ -305,4 +308,4 @@ func _arrow(from: Vector2, to: Vector2, color: Color) -> void:
 
 
 func _caption(text_value: String, at: Vector2, color: Color = PAPER) -> void:
-	draw_string(ThemeDB.fallback_font, at, text_value, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, color)
+	draw_string(get_theme_default_font(), at, text_value, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, color)

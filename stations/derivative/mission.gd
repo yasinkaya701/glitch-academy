@@ -91,8 +91,9 @@ func _build_ui() -> void:
 	slider.value_changed.connect(_on_slider)
 	slider_row.add_child(slider)
 	measure = Button.new()
-	measure.text = "Ölç"
-	measure.custom_minimum_size = Vector2(90, 0)
+	measure.text = "Ölçüm ekle"
+	measure.tooltip_text = "Seçili x değerindeki hacmi kaydet."
+	measure.custom_minimum_size = Vector2(120, 0)
 	measure.pressed.connect(_measure)
 	slider_row.add_child(measure)
 	hud.tools.add_child(slider_row)
@@ -236,6 +237,7 @@ func _enter_explore() -> void:
 	_set_ui("1 · DENE", "Kutuyu kes, kat, ölç",
 		"Kenarı 12 dm olan kare levhanın dört köşesinden x kadar kare kesilip katlanıyor. x'i ayarla, kutuyu ölçü silindirine boşaltarak hacmini ölç. Her ölçüm grafiğe bir nokta ekler.", "Eğimi incele")
 	action.disabled = true
+	_update_measure_gate()
 	slider.set_value_no_signal(1.0)
 	workshop.set_cut(1.0)
 	plot.cut = 1.0
@@ -251,6 +253,7 @@ func _on_slider(value: float) -> void:
 	workshop.set_cut(value)
 	if step == Step.EXPLORE:
 		workshop.level = 0.0
+		_update_measure_control(value)
 	_update_readout()
 	plot.queue_redraw()
 
@@ -262,20 +265,38 @@ func _update_readout() -> void:
 		var direction := "artıyor" if m > 0.05 else ("azalıyor" if m < -0.05 else "değişmiyor")
 		readout.text = "x = %s dm   V = %s L\nEğim V′ = %s  (hacim %s)" % [_num(x), _num(BoxPlot.volume(plot.side, x)), _num(m), direction]
 	elif step == Step.EXPLORE:
-		readout.text = "x = %s dm\nEn büyük ölçümün: %s L" % [_num(x), _num(best_volume)]
+		readout.text = "FARKLI x  ·  %d / %d\nx = %s dm   ·   V = %s L\nŞimdiye kadarki en büyük: %s L" % [measures.size(), MIN_MEASURES, _num(x), _num(BoxPlot.volume(plot.side, x)), _num(best_volume)]
+
+
+func _update_measure_gate() -> void:
+	var count := measures.size()
+	action.text = "Eğimi incele  ·  %d/%d" % [count, MIN_MEASURES]
+	action.disabled = count < MIN_MEASURES
+	action.tooltip_text = "Eğimi incelemek için %d farklı x ölç." % MIN_MEASURES
+
+
+func _update_measure_control(value: float) -> void:
+	var key := roundi(value * 20.0)
+	measure.disabled = measures.has(key)
+	measure.text = "Ölçüldü" if measure.disabled else "Ölçüm ekle"
+	measure.tooltip_text = "Bu x zaten ölçüldü; yeni bir değer seç." if measure.disabled else "x = %s dm değerini ölçüm grafiğine ekle." % _num(value)
 
 
 func _measure() -> void:
 	if step != Step.EXPLORE:
 		return
 	var x := slider.value
+	var key := roundi(x * 20.0)
+	if measures.has(key):
+		_say("Bu x zaten ölçüldü; yeni bir değer seç.", BAD)
+		return
 	var volume := BoxPlot.volume(plot.side, x)
 	_pour(volume)
-	var key := roundi(x * 20.0)
-	if not measures.has(key):
-		measures[key] = true
-		plot.measured.append(Vector2(x, volume))
+	measures[key] = true
+	plot.measured.append(Vector2(x, volume))
 	best_volume = maxf(best_volume, volume)
+	_update_measure_control(x)
+	_update_measure_gate()
 	_update_readout()
 	var count := measures.size()
 	if count >= MIN_MEASURES:

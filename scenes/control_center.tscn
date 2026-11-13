@@ -49,6 +49,7 @@ texture = SubResource("GradientTexture_scrim")
 expand_mode = 1
 
 [node name="Margin" type="MarginContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -82,8 +83,10 @@ theme_override_colors/font_color = Color(0.9, 0.95, 0.94, 1)
 theme_override_font_sizes/font_size = 46
 text = "Bilginin Kırılması"
 
-[node name="Routes" type="HBoxContainer" parent="Margin/Hub"]
+[node name="Routes" type="BoxContainer" parent="Margin/Hub"]
+unique_name_in_owner = true
 layout_mode = 2
+vertical = false
 theme_override_constants/separation = 8
 
 [node name="Class" type="Button" parent="Margin/Hub/Routes"]
@@ -105,9 +108,10 @@ toggle_mode = true
 button_pressed = true
 text = "YKS Kampanyası"
 
-[node name="YksRoutes" type="HBoxContainer" parent="Margin/Hub"]
+[node name="YksRoutes" type="BoxContainer" parent="Margin/Hub"]
 unique_name_in_owner = true
 layout_mode = 2
+vertical = false
 theme_override_constants/separation = 8
 
 [node name="TYT" type="Button" parent="Margin/Hub/YksRoutes"]
@@ -129,6 +133,14 @@ layout_mode = 2
 toggle_mode = true
 text = "YDT · İsteğe bağlı"
 
+[node name="RoutePurpose" type="Label" parent="Margin/Hub"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.82, 0.84, 1)
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+text = "Temel yeterliği ve tüm adayların ortak derslerini tamamla."
+
 [node name="GradeFilter" type="OptionButton" parent="Margin/Hub"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -140,9 +152,11 @@ visible = false
 layout_mode = 2
 size_flags_horizontal = 0
 
-[node name="Missions" type="HBoxContainer" parent="Margin/Hub"]
+[node name="Missions" type="BoxContainer" parent="Margin/Hub"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
+vertical = false
 theme_override_constants/separation = 22
 
 [node name="MissionList" type="ItemList" parent="Margin/Hub/Missions"]
@@ -150,7 +164,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_minimum_size = Vector2(340, 280)
+custom_minimum_size = Vector2(0, 220)
 theme_override_constants/v_separation = 10
 
 [node name="DetailDock" type="PanelContainer" parent="Margin/Hub/Missions"]
@@ -173,6 +187,7 @@ autowrap_mode = 3
 [node name="MissionStatus" type="Label" parent="Margin/Hub/Missions/DetailDock/Details"]
 unique_name_in_owner = true
 layout_mode = 2
+autowrap_mode = 3
 
 [node name="Info" type="Button" parent="Margin/Hub/Missions/DetailDock/Details"]
 unique_name_in_owner = true
@@ -191,12 +206,15 @@ autowrap_mode = 3
 [node name="StartMission" type="Button" parent="Margin/Hub/Missions/DetailDock/Details"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 0
+size_flags_horizontal = 3
+theme_type_variation = "PrimaryButton"
+custom_minimum_size = Vector2(0, 48)
 text = "Düzeneği başlat"
 
 [node name="Progress" type="Label" parent="Margin/Hub"]
 unique_name_in_owner = true
 layout_mode = 2
+autowrap_mode = 3
 
 [node name="PlayScreen" type="VBoxContainer" parent="Margin"]
 unique_name_in_owner = true

@@ -1,6 +1,7 @@
-[gd_resource type="Resource" load_steps=2 format=3]
+[gd_resource type="Resource" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/indicator/mission.tscn" id="2"]
 
 [resource]
 script = ExtResource("1")
@@ -12,3 +13,4 @@ routes = PackedStringArray("class", "lgs", "tyt")
 description = "Bir numunenin gösterge tepkisini veya pH değerini kullanarak doğru hattı seç."
 curriculum = "F.8.4.4.3–4 (LGS), Asitler, Bazlar ve Tuzlar (TYT)"
 source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/3adim/tyt/kimya/kimya.pdf"
+scene = ExtResource("2")

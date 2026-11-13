@@ -64,6 +64,8 @@ const ICONS := {
 @onready var play_title: Label = %PlayTitle
 @onready var play_status: Label = %PlayStatus
 @onready var mission_host: Control = %MissionHost
+@onready var missions_layout: BoxContainer = %Missions
+@onready var route_purpose: Label = %RoutePurpose
 
 var active_route: StringName = &"tyt"
 var active_mode: StringName = &"yks"
@@ -98,6 +100,7 @@ func _ready() -> void:
 	%YDT.pressed.connect(_select_route.bind(&"ydt"))
 	grade_filter.item_selected.connect(_on_grade_selected)
 	field_filter.item_selected.connect(_on_field_selected)
+	get_viewport().size_changed.connect(_update_responsive_layout)
 	mission_list.fixed_icon_size = Vector2i(32, 32)
 	mission_list.item_selected.connect(_select_mission)
 	mission_list.item_activated.connect(_activate_mission)
@@ -109,6 +112,7 @@ func _ready() -> void:
 	_refresh_route_controls()
 	_refresh_list()
 	_update_observatory_progress()
+	_update_responsive_layout()
 	if Campaign.has_story_flag(&"life_protocol") and not Campaign.has_story_flag(&"life_repair_verified"):
 		_set_world_alarm(0.94)
 		_set_life_protocol(true)
@@ -135,7 +139,7 @@ func _finish_intro(intro: Control) -> void:
 	intro.queue_free()
 	%HubScrim.show()
 	hub.show()
-	%TYT.grab_focus()
+	_active_route_button().grab_focus()
 	if Campaign.has_story_flag(&"betrayal") and not Campaign.has_story_flag(&"life_protocol"):
 		_start_life_protocol()
 	elif Campaign.has_story_flag(&"life_protocol") and not Campaign.has_story_flag(&"life_repair_verified"):
@@ -211,13 +215,11 @@ func _refresh_list() -> void:
 	for index in candidates.size():
 		var mission := candidates[index]
 		var available := _mission_available(mission)
-		var state := "✓" if Campaign.is_completed(mission.id) else "◉" if available else "▣"
+		var state := "ONARILDI" if Campaign.is_completed(mission.id) else "AÇIK" if available else "KİLİTLİ"
 		var subject := "Fen Bilimleri" if active_route == &"lgs" and mission.subject == "Kimya" else mission.subject
-		var item_index := mission_list.add_item("%02d    %s    %s" % [index + 1, mission.title, state], _mission_icon(mission))
+		var item_index := mission_list.add_item("%s  ·  %s" % [state, mission.title], _mission_icon(mission))
 		mission_list.set_item_metadata(item_index, mission.id)
 		mission_list.set_item_tooltip(item_index, "%s  ·  %s" % [subject, String(active_route).to_upper()])
-		if not available:
-			mission_list.set_item_disabled(item_index, true)
 		visible_missions.append(mission)
 		if mission.id == selected_id:
 			mission_list.select(item_index)
@@ -237,20 +239,30 @@ func _refresh_list() -> void:
 	else:
 		_select_mission(selected_items[0])
 	_advance_after_completion = false
-	var playable_count := 0
-	var repaired_count := 0
+	var available_count := 0
+	var completed_count := 0
+	var locked_count := 0
 	for mission in visible_missions:
-		if _mission_available(mission):
-			playable_count += 1
-			if Campaign.is_completed(mission.id):
-				repaired_count += 1
-	progress.text = "%d / %d görev onarıldı" % [repaired_count, playable_count]
+		if Campaign.is_completed(mission.id):
+			completed_count += 1
+		elif _mission_available(mission):
+			available_count += 1
+		else:
+			locked_count += 1
+	var scope := String(active_route).to_upper()
+	if active_route == &"ayt":
+		scope += " · " + _field_label(active_field)
+	elif active_route == &"class":
+		scope = "%d. SINIF" % selected_grade if selected_grade > 0 else "TÜM SINIFLAR"
+	progress.text = "%s  ·  %d tamamlandı  ·  %d oynanabilir  ·  %d kilitli" % [scope, completed_count, available_count, locked_count]
 	if active_mode == &"yks":
 		%Subtitle.text = "YKS KAMPANYASI  ·  %s" % String(active_route).to_upper()
 		%Title.text = "Bilginin Kırılması"
+		route_purpose.text = _route_purpose(active_route)
 	else:
 		%Subtitle.text = "KONTROL MERKEZİ  ·  %s" % ("LGS" if active_mode == &"lgs" else "SINIF KEŞFİ")
 		%Title.text = "Yanlış Dünya"
+		route_purpose.text = "Görevleri seç, düzeneği çalıştır ve her onarımla gözlemevini geri kazan."
 
 
 func _mission_fields(mission: MissionDefinition) -> PackedStringArray:
@@ -305,8 +317,10 @@ func _select_mission(index: int) -> void:
 	var available := _mission_available(selected_mission)
 	start_mission.disabled = not available
 	var subject := "Fen Bilimleri" if active_route == &"lgs" and selected_mission.subject == "Kimya" else selected_mission.subject
-	var state := "ONARILDI  ✓" if Campaign.is_completed(selected_mission.id) else "OYNA  ◉" if available else "KİLİTLİ  ▣" if selected_mission.id == &"three_suns" else "HAZIRLANIYOR  ·"
+	var state := "ONARILDI" if Campaign.is_completed(selected_mission.id) else "AÇIK" if available else "KİLİTLİ"
 	mission_status.text = "%s  ·  %s" % [subject.to_upper(), state]
+	if not available:
+		mission_status.text += "\n" + _locked_reason(selected_mission)
 	start_mission.text = "Yeniden ölç" if Campaign.is_completed(selected_mission.id) else "Düzeneği başlat"
 	mission_curriculum.text = "%s\n%s" % [selected_mission.description, selected_mission.curriculum]
 	if selected_mission is YksMissionDefinition:
@@ -485,6 +499,66 @@ func _mission_available(mission: MissionDefinition) -> bool:
 		if not Campaign.has_story_flag(&"three_suns_ready") and not Campaign.is_completed(&"three_suns"):
 			return false
 	return true
+
+
+func _locked_reason(mission: MissionDefinition) -> String:
+	if mission.scene == null:
+		return "Düzenek hazırlanıyor."
+	if mission.id == &"three_suns":
+		if not Campaign.has_story_flag(&"life_repair_verified"):
+			return "Yaşam onarımı tamamlanınca açılır."
+		return "Kampanya kanıtları tamamlanınca açılır."
+	return "Bu görev henüz açılamıyor."
+
+
+func _route_purpose(route: StringName) -> String:
+	match route:
+		&"tyt":
+			return "Türkçe, matematik ve ortak temel derslerle tüm adayların yeterliğini ölç."
+		&"ayt":
+			return "Alan testleriyle seçtiğin bölüm yönündeki yeterliğini ölç. Alan: %s." % _field_label(active_field)
+		&"ydt":
+			return "Yabancı dil yeterliğini ölç; bu rota TYT/AYT’den ayrı ve isteğe bağlıdır."
+	return ""
+
+
+func _field_label(field: StringName) -> String:
+	match field:
+		&"sayisal": return "Sayısal"
+		&"ea": return "Eşit ağırlık"
+		&"sozel": return "Sözel"
+	return "Tüm alanlar"
+
+
+func _active_route_button() -> Button:
+	if active_mode == &"class":
+		return %Class
+	if active_mode == &"lgs":
+		return %LGS
+	match selected_yks_route:
+		&"ayt": return %AYT
+		&"ydt": return %YDT
+	return %TYT
+
+
+func _update_responsive_layout() -> void:
+	var narrow := get_viewport_rect().size.x < 820.0
+	var compact := get_viewport_rect().size.x < 340.0
+	missions_layout.vertical = narrow
+	%Routes.vertical = compact
+	%YksRoutes.vertical = compact
+	%Margin.add_theme_constant_override("margin_left", 16 if compact else 26 if narrow else 46)
+	%Margin.add_theme_constant_override("margin_right", 16 if compact else 26 if narrow else 46)
+	%Margin.add_theme_constant_override("margin_top", 18 if compact else 26 if narrow else 38)
+	%Margin.add_theme_constant_override("margin_bottom", 16 if compact else 24 if narrow else 34)
+	hub.custom_minimum_size.x = maxf(280.0, minf(680.0, get_viewport_rect().size.x - (32.0 if compact else 52.0 if narrow else 92.0)))
+	%Title.add_theme_font_size_override("font_size", 32 if compact else 38 if narrow else 46)
+	mission_list.custom_minimum_size = Vector2(0, 190 if narrow else 280)
+	mission_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mission_list.size_flags_vertical = Control.SIZE_EXPAND_FILL if not narrow else Control.SIZE_SHRINK_BEGIN
+	%DetailDock.custom_minimum_size = Vector2(0, 0) if narrow else Vector2(286, 0)
+	%DetailDock.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	%DetailDock.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if narrow else Control.SIZE_EXPAND_FILL
 
 
 func _set_life_protocol(enabled: bool) -> void:
