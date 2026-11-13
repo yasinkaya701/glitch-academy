@@ -139,13 +139,50 @@ TYT (Matematik 25 başlık, Geometri 21) ve AYT (Matematik 31, Geometri 27). Ü�
 
 Felsefe (8 başlık), Tarih (21), Coğrafya (17), Din (7), Türkçe (17): fikirleri diyalogla yeniden inandırma (felsefe), bozulan olay zincirini kaynakla düzeltme (tarih). Bilim deneyleri bittikten sonra planlanır, [PLAN.md](PLAN.md) bunu zaten son öncelik olarak yazıyor.
 
-## LGS (teyit bekliyor)
+## LGS
 
-Matematik ve Fen Bilimleri 8. sınıf üniteleri MEB programından okunmadı. Elde olan kısım: Mevsimler ve İklim (var), Basınç, Asit–Baz, Pisagor ve Köprü, Prizma hacmi. Eksik olanlar okunup bu dosyaya "LGS" bölümü olarak yazılacak (DNA ve genetik kod, basit makineler, enerji dönüşümleri, elektrik yükleri, üslü ve kareköklü ifadeler, olasılık, doğrusal denklem, eşlik ve benzerlik, dönüşüm geometrisi).
+**İki program var.** Oyun her görevin hangi programa ait olduğunu `program_surumu` alanında tutar.
 
-## Sınıf kataloğu 5–12 (teyit bekliyor)
+- **Eski program (2018):** 2026–2027'de 8. sınıfta okutulan program. 2027 LGS buna dayanır. Bu listeyi ikincil kaynaklar ([Milliyet](https://www.milliyet.com.tr/egitim/8-sinif-fen-bilimleri-konulari-1-donem-ve-2-donem-8-sinif-fen-bilimleri-mufredati-2025-2026-6613626), [Bilgenç](https://www.bilgenc.com/8-sinif-fen-bilimleri-konulari/)) veriyor, MEB'in resmi PDF'iyle kazanım kodları teyit edilecek.
+- **Maarif programı:** [MEB TYMM 8. sınıf Fen](https://tymm.meb.gov.tr/ogretim-programlari/fen-bilimleri-dersi/9) ve [8. sınıf Matematik](https://tymm.meb.gov.tr/ogretim-programlari/ortaokul-matematik-dersi/9). Maarif geçişi kademeli ilerliyor (2026–2027'de 7. ve 11. sınıf yeni programda, bu repodaki 11. sınıf notuyla tutarlı). 8. sınıfın yeni programa geçiş yılını ve LGS'ye etkisini MEB duyurusundan teyit etmem gerekiyor, şu an tahmin olarak 2027–2028 görünüyor.
 
-Kademe ayrımı: ortaokul 5–8, lise 9–12. Her görev için sınıf, program sürümü, kazanım kodu ve kaynak ayrı alan olarak tutulur ([PLAN.md](PLAN.md)). Sınıf kataloğu bu havuzdan, sınıfa uygun olanları süzerek kurulur.
+İkincil kaynaklar soru dağılımlarında birbirini tutmuyor, bu yüzden hangi ünitenin kaç soru getirdiğini resmî veri olarak kullanmıyorum. DNA ve Genetik Kod, Basınç ve Enerji Dönüşümleri birden çok kaynakta sürekli en çok soru çıkan üniteler.
+
+### LGS Fen · eski program (7 ünite)
+
+| Ünite | Alt konular | Oyun fikri | Şablon | Öncelik |
+|---|---|---|---|---|
+| 1 Mevsimler ve İklim | Mevsimlerin oluşumu, iklim ve hava hareketleri | Mevsim Gözlemevi (var), basınç farkı ve rüzgâr | K | A |
+| 2 DNA ve Genetik Kod | DNA, kalıtım, mutasyon ve modifikasyon, adaptasyon, biyoteknoloji | DNA sarmalını kur, çaprazlama, mutasyonun etkisi | P | A |
+| 3 Basınç | Katı, sıvı, gaz basıncı | Basınç İstasyonu | H | A |
+| 4 Madde ve Endüstri | Periyodik sistem, fiziksel ve kimyasal değişim, tepkime, asit–baz, ısı etkileşimi, kimya endüstrisi | Gösterge Laboratuvarı, denklem denkleştirme, erime ve kaynama grafiği | S | A |
+| 5 Basit Makineler | Kaldıraç, makara, eğik düzlem | Yük kaldır | H | B |
+| 6 Enerji Dönüşümleri ve Çevre | Enerji dönüşümü, çevre | Santral zinciri | Y | B |
+| 7 Elektrik Yükleri ve Enerjisi | Elektriklenme, devre | Yük aktar, devre kur | P | B |
+
+### LGS Matematik · eski program
+
+| Konu | Oyun fikri | Şablon | Öncelik |
+|---|---|---|---|
+| Çarpanlar ve katlar | Dişli ve zamanlama | H | C |
+| Üslü ifadeler, kareköklü ifadeler | Büyüklük ölçeği, alan ve kenar | K | A |
+| Veri analizi, olasılık | Şans düzeneği, grafik yorumu | T | B |
+| Cebirsel ifadeler, özdeşlikler | Alanla özdeşlik: (a+b)² bölünmüş kare | K | A |
+| Doğrusal denklemler, eşitsizlikler | Eğim ve rota, güvenli aralık | K | A |
+| Üçgenler (açı–kenar, Pisagor) | Köprü Atölyesi | H | A |
+| Eşlik ve benzerlik | Gölgeden kule boyu | H | A |
+| Dönüşüm geometrisi | Harita yansıma ve öteleme | P | B |
+| Geometrik cisimler | Prizma Deposu, silindir ve koni | H | A |
+
+### Maarif 8. sınıf
+
+- **Fen (7 ünite, resmi):** Mevsimler ve İklim, Yaşamı Kolaylaştıran Kuvvet, Yaşamın Gizemi, Sesin Dünyası, Periyodik Tablo ve Maddenin Etkileşimi, Elektriğin Yolculuğu, Sürdürülebilir Yaşam ve Madde Döngüleri. "Sesin Dünyası" gibi bazı üniteler eski listede yok. Alt konuları ve kazanım kodları üniteler tek tek okunarak eklenecek.
+- **Matematik (7 tema, resmi):** Sayılar ve Nicelikler, İşlemlerle Cebirsel Düşünme ve Değişimler, Geometrik Şekiller, Geometrik Nicelikler, Dönüşüm, İstatistiksel Araştırma Süreci, Veriden Olasılığa. Kazanımlar [2024 öğretim programı PDF'inde](https://tymm.meb.gov.tr/upload/program/2024programmat5678Onayli.pdf) MAT.8.x kodlarıyla duruyor.
+- Ortak konular (mevsimler, basınç, periyodik tablo, elektrik) iki programda da var, deneyler aynen kullanılabilir. Eşleşmeyen konular ayrı görev olur.
+
+## Sınıf kataloğu 5–12
+
+Kademe: ortaokul 5–8, lise 9–12. Her görev `grade`, `routes`, program sürümü, kazanım kodu ve kaynak taşır. Sınıf rotası bu havuzdan sınıfa uygun görevleri süzer. 9–12. sınıf Maarif ve eski program ayrımı için de MEB'in sınıf sayfaları satır satır okunacak. Bu henüz yapılmadı.
 
 ## Öncelik özeti
 
