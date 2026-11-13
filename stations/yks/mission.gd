@@ -73,8 +73,12 @@ func _build_interface_after_layout() -> void:
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color("#080e16"), true)
 	var layout := _panel_layout()
-	draw_style_box(_visual_frame, layout["left"])
-	draw_style_box(_control_frame, layout["right"])
+	var left_panel: Rect2 = layout["left"]
+	var right_panel: Rect2 = layout["right"]
+	if left_panel.size.x > 0.0 and left_panel.size.y > 0.0:
+		draw_style_box(_visual_frame, left_panel)
+	if right_panel.size.x > 0.0 and right_panel.size.y > 0.0:
+		draw_style_box(_control_frame, right_panel)
 
 
 func _panel_frame(path: String, left: float, right: float, top: float, bottom: float) -> StyleBoxTexture:
@@ -92,17 +96,23 @@ func _panel_layout() -> Dictionary:
 	var available_width := maxf(160.0, size.x - 36.0)
 	if size.x < 900.0:
 		var stack_gap := 10.0
-		var available_height := maxf(300.0, size.y - panel_top - 18.0 - stack_gap)
+		var available_height := maxf(0.0, size.y - panel_top - 18.0)
 		var visual_height := clampf(available_height * 0.28, 120.0, 170.0) if size.y < 600.0 else clampf(available_height * 0.42, 190.0, 286.0)
 		var work_height := available_height - visual_height - stack_gap
+		# Preserve a 78px answer viewport for one compact control row. On short
+		# screens, the instrument illustration yields its space to the task.
+		if work_height < 274.0:
+			visual_height = 0.0
+			work_height = available_height
 		var stacked_visual := Rect2(Vector2(18, panel_top), Vector2(available_width, visual_height))
-		var stacked_work := Rect2(Vector2(18, panel_top + visual_height + stack_gap), Vector2(available_width, work_height))
+		var work_top := panel_top + (visual_height + stack_gap if visual_height > 0.0 else 0.0)
+		var stacked_work := Rect2(Vector2(18, work_top), Vector2(available_width, work_height))
 		return {"left": stacked_visual, "right": stacked_work}
 	var gap := 14.0
 	var split_width := maxf(160.0, available_width - gap)
 	var left_width := split_width * 0.5
 	var right_width := split_width - left_width
-	var panel_height := maxf(180.0, size.y - panel_top - 18.0)
+	var panel_height := maxf(0.0, size.y - panel_top - 18.0)
 	var left := Rect2(Vector2(18, panel_top), Vector2(left_width, panel_height))
 	var right := Rect2(Vector2(18.0 + left_width + gap, panel_top), Vector2(right_width, panel_height))
 	return {"left": left, "right": right}
@@ -206,9 +216,14 @@ func _layout_interface() -> void:
 	var layout := _panel_layout()
 	var left_panel: Rect2 = layout["left"]
 	var right_panel: Rect2 = layout["right"]
-	var visual_inset := 24.0 if size.y < 640.0 else 30.0
-	_visual.position = left_panel.position + Vector2.ONE * visual_inset
-	_visual.size = left_panel.size - Vector2.ONE * visual_inset * 2.0
+	if left_panel.size.y <= 0.0:
+		_visual.hide()
+		_visual.size = Vector2.ZERO
+	else:
+		_visual.show()
+		var visual_inset := 24.0 if size.y < 640.0 else 30.0
+		_visual.position = left_panel.position + Vector2.ONE * visual_inset
+		_visual.size = left_panel.size - Vector2.ONE * visual_inset * 2.0
 	_evidence_label.position = right_panel.position + Vector2(18, 84)
 	_evidence_label.size = Vector2(right_panel.size.x - 36.0, 18)
 	var text_width := right_panel.size.x - 36.0

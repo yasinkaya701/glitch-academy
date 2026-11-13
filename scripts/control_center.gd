@@ -267,7 +267,8 @@ func _refresh_list() -> void:
 		var state_text := "Onarıldı" if completed else "Kilitli" if not available else "Sıradaki" if mission.id == recommended_id else "Açık"
 		var marker := "✓" if completed else "▣" if not available else "▶" if mission.id == recommended_id else "◉"
 		var subject := _mission_display_subject(mission)
-		var item_index := mission_list.add_item("%s  %s  ·  %s" % [marker, _mission_display_title(mission), state_text], _mission_icon(mission))
+		var row_text := _mission_row_text(mission, state_text, marker)
+		var item_index := mission_list.add_item(row_text, _mission_icon(mission))
 		var marker_color := Color("#a0dfbc") if completed else Color("#efb468") if mission.id == recommended_id else Color("#8fa6b3") if not available else Color("#e8f1f2")
 		mission_list.set_item_custom_fg_color(item_index, marker_color)
 		mission_list.set_item_metadata(item_index, mission.id)
@@ -294,6 +295,7 @@ func _refresh_list() -> void:
 		_select_mission(selected_items[0])
 	if not mission_list.get_selected_items().is_empty():
 		mission_list.ensure_current_is_visible()
+	_refresh_mission_row_labels()
 	_advance_after_completion = false
 	var completed_count := 0
 	var progress_total := 0
@@ -685,6 +687,34 @@ func _update_responsive_layout() -> void:
 	%DetailDock.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if narrow else Control.SIZE_EXPAND_FILL
 	if _story_overlay != null:
 		call_deferred("_position_transmission", _story_overlay)
+	_refresh_mission_row_labels()
+
+
+func _mission_row_text(mission: MissionDefinition, state_text: String, marker: String) -> String:
+	var is_compact := get_viewport_rect().size.x < 360.0
+	var title := _mission_display_title(mission)
+	if is_compact:
+		return "%s  ·  %s" % [title, state_text]
+	return "%s  %s  ·  %s" % [marker, title, state_text]
+
+
+func _refresh_mission_row_labels() -> void:
+	if mission_list == null or visible_missions.is_empty():
+		return
+	var is_compact := get_viewport_rect().size.x < 360.0
+	mission_list.add_theme_font_size_override("font_size", 14 if is_compact else 15)
+	var recommended_id: StringName = &""
+	for mission in visible_missions:
+		if _mission_available(mission) and not _mission_completed(mission, active_route):
+			recommended_id = mission.id
+			break
+	for index in visible_missions.size():
+		var mission := visible_missions[index]
+		var completed := _mission_completed(mission, active_route)
+		var available := _mission_available(mission)
+		var state_text := "Onarıldı" if completed else "Kilitli" if not available else "Sıradaki" if mission.id == recommended_id else "Açık"
+		var marker := "✓" if completed else "▣" if not available else "▶" if mission.id == recommended_id else "◉"
+		mission_list.set_item_text(index, _mission_row_text(mission, state_text, marker))
 
 
 func _wrap_hub_in_scroll_container() -> void:
