@@ -8,7 +8,6 @@ const INK := Color("#e8f1f2")
 const MUTED := Color("#9db1bb")
 const ACCENT := Color("#72dfc4")
 const DANGER := Color("#ff9d79")
-const PANEL := Color("#101c27")
 
 @export var mission_definition: Definition
 @export var mission_data_path := ""
@@ -39,9 +38,13 @@ var _info_button: Button
 var _info_dialog: AcceptDialog
 var _last_layout_size := Vector2.ZERO
 var _interface_built := false
+var _visual_frame: StyleBoxTexture
+var _control_frame: StyleBoxTexture
 
 
 func _ready() -> void:
+	_visual_frame = _panel_frame("res://assets/ui/panel_glass.png", 24.0, 24.0, 24.0, 24.0)
+	_control_frame = _panel_frame("res://assets/ui/panel_info.png", 24.0, 24.0, 76.0, 24.0)
 	if mission_definition == null and not mission_data_path.is_empty():
 		mission_definition = load(mission_data_path) as Definition
 	if mission_definition == null:
@@ -67,12 +70,19 @@ func _build_interface_after_layout() -> void:
 
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color("#080e16"), true)
-	draw_rect(Rect2(Vector2(18, 18), size - Vector2(36, 36)), Color("#0c1520"), true)
 	var layout := _panel_layout()
-	draw_line(Vector2(24, 54), Vector2(size.x - 24, 54), Color("#334651"), 1.0)
-	for panel in [layout["left"], layout["right"]]:
-		draw_rect(panel, PANEL, true)
-		draw_rect(panel, Color("#344b58"), false, 1.0)
+	draw_style_box(_visual_frame, layout["left"])
+	draw_style_box(_control_frame, layout["right"])
+
+
+func _panel_frame(path: String, left: float, right: float, top: float, bottom: float) -> StyleBoxTexture:
+	var frame := StyleBoxTexture.new()
+	frame.texture = load(path)
+	frame.texture_margin_left = left
+	frame.texture_margin_right = right
+	frame.texture_margin_top = top
+	frame.texture_margin_bottom = bottom
+	return frame
 
 
 func _panel_layout() -> Dictionary:
@@ -196,7 +206,7 @@ func _layout_interface() -> void:
 	var prompt_height := _estimated_text_height(mission_definition.prompt, text_width, 17, 42.0)
 	_prompt_label.position = right_panel.position + Vector2(18, 36)
 	_prompt_label.size = Vector2(text_width, prompt_height)
-	var instruction_top := 36.0 + prompt_height + 10.0
+	var instruction_top := maxf(91.0, 36.0 + prompt_height + 10.0)
 	var instruction_height := _estimated_text_height(mission_definition.instruction, text_width, 16, 38.0)
 	_instruction_label.position = right_panel.position + Vector2(18, instruction_top)
 	_instruction_label.size = Vector2(text_width, instruction_height)
