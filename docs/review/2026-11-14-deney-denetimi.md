@@ -2,6 +2,24 @@
 
 Mevcut istasyonların [DESIGN.md](../DESIGN.md) kurallarına göre denetimi. Bulgular kod okunarak çıkarıldı, sayılar elle doğrulandı. Bir madde düzeldikçe satırı silinir.
 
+## Yasin'in oyun testi notları (2026-11-14, el yazısı)
+
+| Bölüm | Not | Karşılığı |
+|---|---|---|
+| TYT Fizik | Görsel kötü, nesneler değişebilir, mantık kötü, renkler kötü. Bitince kontrol merkezine elle dönülüyor. | DESIGN.md · Mühür ekranı (SIRADAKİ DÜZENEK), GAME_DESIGN.md · Sahne |
+| AYT Fizik · Vektör Limanı | Üstteki görsel ve renkler kötü. Sayı doğrusunda yazılar üst üste. Oyun bitince nereye gidileceği belli değil. | DESIGN.md · Layout (çakışma testi), Mühür ekranı |
+| AYT Matematik (Depo Atölyesi) | Görsel kötü, oyun anlaşılmadı. | GAME_DESIGN.md · İlk 10 saniye ilkesi |
+| AYT Fizik · Düşüş Odası | "Cihaz beklentisi" anlaşılmıyor. Görsel kötü. Anlaması ve yapması çok zor. Sonuç daha anlaşılır olmalı. | DESIGN.md · Tahmin ve ölçülen, Language; GAME_DESIGN.md · Örnek kart |
+| AYT Fizik · Dalga Girişimi | Çok zor, göz yoruyor. Görsel ve arayüz çok kötü. | DESIGN.md · Göz rahatlığı |
+| AYT Biyoloji (Kalp Odası) | Görseller kötü, yazılar bozuluyor, mantık kötü. | DESIGN.md · Layout ve Typography; denetim aşağıda |
+| LGS Fen (Mevsim) | Görsel kötü, mantık kötü. | GAME_DESIGN.md · Sahne ve deney yolu |
+| Genel | Geçişlere animasyon gelmeli, arayüzler düzenlenmeli. | DESIGN.md · Transitions |
+| LGS İnkılap | Çok kötü görünüyor. | GAME_DESIGN.md · Tarih Meydanı |
+| LGS Fen | Arka plan oyuncuyu içine çekmeli. Soru gibi değil, oyun gibi olmalı. | GAME_DESIGN.md · Sütun 4 ve Sahne |
+| Türkçe | Mantık çok basit, görsel çok kötü. | GAME_DESIGN.md · Kaynak kafası (Türkçe) |
+
+Not fotoğraftan okunmuştur; birkaç kelime belirsizdir.
+
 ## Ortak sorunlar
 
 Fizik istasyonları `scripts/physics/experiment_mission.gd` şablonunu paylaştığı için aynı sorunları taşır.
