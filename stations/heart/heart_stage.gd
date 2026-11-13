@@ -326,10 +326,10 @@ func _wet_tissue(model: Node) -> void:
 			var source := mesh_instance.mesh.surface_get_material(0)
 			if source is StandardMaterial3D:
 				var material := (source as StandardMaterial3D).duplicate() as StandardMaterial3D
-				material.roughness = 0.52
+				material.roughness = 0.6
 				material.clearcoat_enabled = true
-				material.clearcoat = 0.7
-				material.clearcoat_roughness = 0.18
+				material.clearcoat = 0.3
+				material.clearcoat_roughness = 0.3
 				material.rim_enabled = true
 				material.rim = 0.35
 				material.rim_tint = 0.4
@@ -423,7 +423,7 @@ func _build_slots() -> void:
 
 func _build_flow_particles() -> void:
 	for key in FLOWS:
-		_flow_meshes[key] = Util.make_particles(heart_root, 0.0009, 22)
+		_flow_meshes[key] = Util.make_particles(heart_root, 0.00055, 24)
 
 
 # --- Her kare -----------------------------------------------------------
