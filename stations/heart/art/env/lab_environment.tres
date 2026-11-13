@@ -1,0 +1,19 @@
+[gd_resource type="Environment" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://stations/heart/art/env/lab_hdri.hdr" id="1"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_lab"]
+panorama = ExtResource("1")
+energy_multiplier = 0.72
+
+[sub_resource type="Sky" id="Sky_lab"]
+sky_material = SubResource("PanoramaSkyMaterial_lab")
+
+[resource]
+background_mode = 2
+background_color = Color(0.01, 0.015, 0.026, 1)
+sky = SubResource("Sky_lab")
+ambient_light_source = 3
+ambient_light_color = Color(0.18, 0.2, 0.25, 1)
+ambient_light_energy = 0.34
+reflected_light_source = 2

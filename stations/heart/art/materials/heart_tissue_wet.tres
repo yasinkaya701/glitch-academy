@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" load_steps=5 format=3]
+
+[ext_resource type="Shader" path="res://stations/heart/art/wet_tissue.gdshader" id="1"]
+[ext_resource type="Texture2D" path="res://stations/heart/art/textures/tex_tissue_albedo.png" id="2"]
+[ext_resource type="Texture2D" path="res://stations/heart/art/textures/tex_tissue_normal.png" id="3"]
+[ext_resource type="Texture2D" path="res://stations/heart/art/textures/tex_tissue_roughness.png" id="4"]
+
+[resource]
+shader = ExtResource("1")
+shader_parameter/albedo_map = ExtResource("2")
+shader_parameter/normal_map = ExtResource("3")
+shader_parameter/roughness_map = ExtResource("4")
+shader_parameter/tissue_tint = Color(0.96, 0.91, 0.89, 1)
+shader_parameter/wetness = 0.22
+shader_parameter/normal_strength = 0.28
