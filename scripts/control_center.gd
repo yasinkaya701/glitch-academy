@@ -108,7 +108,9 @@ func _refresh_list() -> void:
 				subject = "Fen Bilimleri"
 			elif mission.subject == "Tarih":
 				subject = "İnkılap Tarihi"
-		var index := mission_list.add_item("%s  ·  %s" % [mission.title, subject])
+		var icon_path := "res://assets/ui/icons/%s.png" % mission.id
+		var icon: Texture2D = load(icon_path) if ResourceLoader.exists(icon_path) else null
+		var index := mission_list.add_item("%s  ·  %s" % [mission.title, subject], icon)
 		mission_list.set_item_metadata(index, mission.id)
 		visible_missions.append(mission)
 		if mission.id == selected_id:

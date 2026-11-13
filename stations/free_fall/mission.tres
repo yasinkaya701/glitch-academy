@@ -1,6 +1,7 @@
-[gd_resource type="Resource" load_steps=2 format=3]
+[gd_resource type="Resource" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/free_fall/mission.tscn" id="2"]
 
 [resource]
 script = ExtResource("1")
@@ -9,6 +10,7 @@ title = "Düşüş Odası"
 subject = "Fizik"
 grade = 11
 routes = PackedStringArray("class", "ayt")
-description = "Vakum odasında düşüş sürelerini ölç ve yükün varış zamanını ayarla."
+description = "Vakum odasında düşüş sürelerini ölç ve kütleden bağımsızlığı doğrula."
 curriculum = "11.1.4.3 (2026 YKS)"
 source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/beceri_temelli/11/fizik/files/basic-html/page45.html"
+scene = ExtResource("2")

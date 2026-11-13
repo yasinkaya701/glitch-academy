@@ -47,9 +47,28 @@ static func build() -> Theme:
 
 	# Düğmeler
 	_button(theme, "Button", PANEL_RAISED, EDGE, INK)
+	var btn_normal := _texture_box("res://assets/ui/btn_normal.png", 12.0, 14.0, 8.0)
+	var btn_hover := _texture_box("res://assets/ui/btn_hover.png", 12.0, 14.0, 8.0)
+	var btn_pressed := _texture_box("res://assets/ui/btn_pressed.png", 12.0, 14.0, 8.0)
+	var btn_disabled := _texture_box("res://assets/ui/btn_disabled.png", 12.0, 14.0, 8.0)
+	if btn_normal != null:
+		theme.set_stylebox("normal", "Button", btn_normal)
+		theme.set_stylebox("hover", "Button", btn_hover)
+		theme.set_stylebox("pressed", "Button", btn_pressed)
+		theme.set_stylebox("disabled", "Button", btn_disabled)
+
 	theme.set_font("font", "Button", semibold)
 	theme.set_type_variation("PrimaryButton", "Button")
 	_button(theme, "PrimaryButton", Color("#c98638"), Color("#f2a65a"), Color("#1a1006"))
+	var p_normal := _texture_box("res://assets/ui/btn_primary_normal.png", 14.0, 18.0, 10.0)
+	var p_hover := _texture_box("res://assets/ui/btn_primary_hover.png", 14.0, 18.0, 10.0)
+	var p_pressed := _texture_box("res://assets/ui/btn_primary_pressed.png", 14.0, 18.0, 10.0)
+	var p_disabled := _texture_box("res://assets/ui/btn_primary_disabled.png", 14.0, 18.0, 10.0)
+	if p_normal != null:
+		theme.set_stylebox("normal", "PrimaryButton", p_normal)
+		theme.set_stylebox("hover", "PrimaryButton", p_hover)
+		theme.set_stylebox("pressed", "PrimaryButton", p_pressed)
+		theme.set_stylebox("disabled", "PrimaryButton", p_disabled)
 	theme.set_font("font", "PrimaryButton", semibold)
 	theme.set_type_variation("DangerButton", "Button")
 	_button(theme, "DangerButton", Color("#5a2420"), DANGER, INK)
@@ -85,17 +104,32 @@ static func build() -> Theme:
 	theme.set_color("selection_color", "LineEdit", Color(ACCENT, 0.35))
 
 	# Paneller
-	theme.set_stylebox("panel", "PanelContainer", _flat(PANEL, EDGE, 1, 10, 18))
-	theme.set_type_variation("GlassPanel", "PanelContainer")
-	theme.set_stylebox("panel", "GlassPanel", _flat(Color(PANEL, 0.82), EDGE, 1, 12, 18))
-	theme.set_type_variation("ConsolePanel", "PanelContainer")
-	theme.set_stylebox("panel", "ConsolePanel", _flat(PANEL, EDGE_STRONG, 1, 12, 20))
+	var glass_box := _texture_box("res://assets/ui/panel_glass.png", 24.0, 16.0, 16.0)
+	var info_box := _texture_box("res://assets/ui/panel_info.png", 20.0, 16.0, 16.0)
+	if glass_box != null:
+		theme.set_stylebox("panel", "PanelContainer", glass_box)
+		theme.set_type_variation("GlassPanel", "PanelContainer")
+		theme.set_stylebox("panel", "GlassPanel", glass_box)
+		theme.set_type_variation("ConsolePanel", "PanelContainer")
+		theme.set_stylebox("panel", "ConsolePanel", info_box if info_box != null else glass_box)
+	else:
+		theme.set_stylebox("panel", "PanelContainer", _flat(PANEL, EDGE, 1, 10, 18))
+		theme.set_type_variation("GlassPanel", "PanelContainer")
+		theme.set_stylebox("panel", "GlassPanel", _flat(Color(PANEL, 0.82), EDGE, 1, 12, 18))
+		theme.set_type_variation("ConsolePanel", "PanelContainer")
+		theme.set_stylebox("panel", "ConsolePanel", _flat(PANEL, EDGE_STRONG, 1, 12, 20))
 
 	# Liste
 	theme.set_stylebox("panel", "ItemList", _flat(Color(PANEL, 0.7), EDGE, 1, 8, 6))
 	theme.set_stylebox("focus", "ItemList", _flat(Color(0, 0, 0, 0), ACCENT, 1, 8, 0))
-	theme.set_stylebox("selected", "ItemList", _flat(Color(ACCENT, 0.14), ACCENT, 1, 6, 6))
-	theme.set_stylebox("selected_focus", "ItemList", _flat(Color(ACCENT, 0.20), ACCENT, 1, 6, 6))
+	var row_selected := _texture_box("res://assets/ui/list_row_selected.png", 8.0, 12.0, 6.0)
+	var row_idle := _texture_box("res://assets/ui/list_row_idle.png", 8.0, 12.0, 6.0)
+	if row_selected != null:
+		theme.set_stylebox("selected", "ItemList", row_selected)
+		theme.set_stylebox("selected_focus", "ItemList", row_selected)
+	else:
+		theme.set_stylebox("selected", "ItemList", _flat(Color(ACCENT, 0.14), ACCENT, 1, 6, 6))
+		theme.set_stylebox("selected_focus", "ItemList", _flat(Color(ACCENT, 0.20), ACCENT, 1, 6, 6))
 	theme.set_color("font_color", "ItemList", MUTED)
 	theme.set_color("font_selected_color", "ItemList", INK)
 	theme.set_color("font_hovered_color", "ItemList", INK)
@@ -166,3 +200,22 @@ static func _dot(color: Color, radius: int) -> ImageTexture:
 			var c := color.lerp(Color("#0a121d"), 1.0 - ring) if d <= radius else color
 			image.set_pixel(x, y, Color(c, edge))
 	return ImageTexture.create_from_image(image)
+
+
+static func _texture_box(path: String, margin: float, content_h: float, content_v: float) -> StyleBoxTexture:
+	if not ResourceLoader.exists(path):
+		return null
+	var tex := load(path) as Texture2D
+	if tex == null:
+		return null
+	var style := StyleBoxTexture.new()
+	style.texture = tex
+	style.texture_margin_left = margin
+	style.texture_margin_right = margin
+	style.texture_margin_top = margin
+	style.texture_margin_bottom = margin
+	style.content_margin_left = content_h
+	style.content_margin_right = content_h
+	style.content_margin_top = content_v
+	style.content_margin_bottom = content_v
+	return style
