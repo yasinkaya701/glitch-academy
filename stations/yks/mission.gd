@@ -230,8 +230,8 @@ func _layout_interface() -> void:
 	var text_width := right_panel.size.x - 36.0
 	_compact_content_flow = right_panel.size.y < 440.0
 	_evidence_label.text = "KAYIT  ·  YANITLAR ↓" if _compact_content_flow else "KAYIT"
-	_prompt_label.add_theme_font_size_override("font_size", 15 if _compact_content_flow else 17)
-	_instruction_label.add_theme_font_size_override("font_size", 14 if _compact_content_flow else 16)
+	_prompt_label.add_theme_font_size_override("font_size", 15 if _compact_content_flow else 16)
+	_instruction_label.add_theme_font_size_override("font_size", 14 if _compact_content_flow else 18)
 	if _compact_content_flow:
 		if _prompt_label.get_parent() != _answer_area:
 			_prompt_label.reparent(_answer_area)
@@ -254,11 +254,11 @@ func _layout_interface() -> void:
 		if _instruction_label.get_parent() != self:
 			_instruction_label.reparent(self)
 		_instruction_label.text = mission_definition.instruction
-		var prompt_height := _estimated_text_height(mission_definition.prompt, text_width, 17, 42.0)
+		var prompt_height := _estimated_text_height(mission_definition.prompt, text_width, 16, 42.0)
 		_prompt_label.position = right_panel.position + Vector2(18, 102)
 		_prompt_label.size = Vector2(text_width, prompt_height)
 		var instruction_top := maxf(156.0, 102.0 + prompt_height + 10.0)
-		var instruction_height := _estimated_text_height(mission_definition.instruction, text_width, 16, 38.0)
+		var instruction_height := _estimated_text_height(mission_definition.instruction, text_width, 18, 38.0)
 		_instruction_label.position = right_panel.position + Vector2(18, instruction_top)
 		_instruction_label.size = Vector2(text_width, instruction_height)
 		var answers_top := instruction_top + instruction_height + 10.0
