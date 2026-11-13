@@ -14,6 +14,8 @@ const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/indicator/mission.tres"),
 	preload("res://stations/heart/mission.tres"),
 	preload("res://stations/pressure/mission.tres"),
+	preload("res://stations/philosophy/mission.tres"),
+	preload("res://stations/history/mission.tres"),
 ]
 
 @onready var hub: Control = %Hub
@@ -100,7 +102,12 @@ func _refresh_list() -> void:
 			continue
 		if active_route == &"class" and selected_grade > 0 and mission.grade != selected_grade:
 			continue
-		var subject := "Fen Bilimleri" if active_route == &"lgs" and mission.subject == "Kimya" else mission.subject
+		var subject := mission.subject
+		if active_route == &"lgs":
+			if mission.subject == "Kimya":
+				subject = "Fen Bilimleri"
+			elif mission.subject == "Tarih":
+				subject = "İnkılap Tarihi"
 		var index := mission_list.add_item("%s  ·  %s" % [mission.title, subject])
 		mission_list.set_item_metadata(index, mission.id)
 		visible_missions.append(mission)
