@@ -277,6 +277,7 @@ func _on_audio_finished() -> void:
 
 func _on_live_tts_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
+		push_warning("ElevenLabs TTS hatası: result=%d, code=%d, yanit=%s" % [result, response_code, body.get_string_from_utf8()])
 		return
 	var parsed: Variant = JSON.parse_string(body.get_string_from_utf8())
 	if not (parsed is Dictionary):
@@ -368,6 +369,8 @@ func _resolve_api_key() -> String:
 	var env_key: String = OS.get_environment("ELEVEN_API_KEY")
 	if env_key == "":
 		env_key = OS.get_environment("ELEVENLABS_API_KEY")
+	if env_key == "":
+		env_key = OS.get_environment("XI_API_KEY")
 	if env_key != "":
 		return env_key.strip_edges()
 	if FileAccess.file_exists(KEY_FILE):

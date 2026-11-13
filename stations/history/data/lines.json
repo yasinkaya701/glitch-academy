@@ -7,19 +7,19 @@
       "edge_rate": "-6%"
     },
     "alparslan": {
-      "elevenlabs_voice_id": "ErXwobaYiN019PkySvjV",
+      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-10Hz",
       "edge_rate": "-5%"
     },
     "fatih": {
-      "elevenlabs_voice_id": "VR6AewLTigWG4xSOukaG",
+      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-6Hz",
       "edge_rate": "-3%"
     },
     "kanuni": {
-      "elevenlabs_voice_id": "TxGEqnHWrfWFTfGW9XjX",
+      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-11Hz",
       "edge_rate": "-7%"
@@ -31,7 +31,7 @@
       "edge_rate": "-9%"
     },
     "ataturk": {
-      "elevenlabs_voice_id": "VR6AewLTigWG4xSOukaG",
+      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
       "edge_voice": "tr-TR-AhmetNeural",
       "edge_pitch": "-5Hz",
       "edge_rate": "-4%"
