@@ -30,6 +30,10 @@ const MUTED := Color("#8fa6b3")
 const ACCENT := Color("#6fe3c1")
 const WARM := Color("#f2a65a")
 const DANGER := Color("#e5645a")
+const Experiment3D = preload("res://scenes/experiment_3d.tscn")
+const ChamberModel = preload("res://stations/free_fall/assets/chamber.glb")
+const LightMassModel = preload("res://stations/free_fall/assets/mass_light.glb")
+const HeavyMassModel = preload("res://stations/free_fall/assets/mass_heavy.glb")
 
 var release_height := 20.0
 var pressure := Fall.ATMOSPHERE
@@ -56,6 +60,12 @@ var _flash := 0.0
 var _clock := 0.0
 var _release_countdown := -1.0
 var _pending: Array = []
+var _viewport_3d: SubViewportContainer
+var _world_3d: Node3D
+var _chamber_3d: Node3D
+var _bodies_3d: Dictionary = {}
+var _capsule_3d: MeshInstance3D
+var _caption_3d: Label
 
 
 func _ready() -> void:
@@ -63,6 +73,72 @@ func _ready() -> void:
 	clip_contents = true
 	for id in Fall.BODIES:
 		_bodies[id] = {"state": Fall.State.new(), "active": false, "landed": false, "result": {}}
+	_build_3d_stage()
+
+
+func _build_3d_stage() -> void:
+	_viewport_3d = Experiment3D.instantiate() as SubViewportContainer
+	_viewport_3d.name = "FreeFall3DInset"
+	_viewport_3d.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_viewport_3d.stretch = true
+	add_child(_viewport_3d)
+	_world_3d = _viewport_3d.get_node("Viewport/World")
+	var camera := _world_3d.get_node("Camera3D") as Camera3D
+	camera.position = Vector3(5.2, 3.4, 7.8)
+	camera.look_at(Vector3(0, 2.3, 0), Vector3.UP)
+	camera.size = 6.7
+	_chamber_3d = ChamberModel.instantiate()
+	_chamber_3d.name = "ChamberModel"
+	_world_3d.get_node("Model").add_child(_chamber_3d)
+	for id in [&"steel", &"foam"]:
+		var model: Node3D = HeavyMassModel.instantiate() if id == &"steel" else LightMassModel.instantiate()
+		model.name = "HeavyMass" if id == &"steel" else "LightMass"
+		model.scale = Vector3(0.13, 0.13, 0.13)
+		_world_3d.get_node("Model").add_child(model)
+		_bodies_3d[id] = model
+	_capsule_3d = MeshInstance3D.new()
+	_capsule_3d.name = "DataCapsule"
+	var capsule_mesh := CapsuleMesh.new()
+	capsule_mesh.radius = 0.19
+	capsule_mesh.height = 0.72
+	_capsule_3d.mesh = capsule_mesh
+	var capsule_material := StandardMaterial3D.new()
+	capsule_material.albedo_color = Color("#d17a38")
+	capsule_material.metallic = 0.38
+	capsule_material.roughness = 0.4
+	capsule_material.emission_enabled = true
+	capsule_material.emission = Color("#8e4f22")
+	_capsule_3d.material_override = capsule_material
+	_world_3d.get_node("Model").add_child(_capsule_3d)
+	_caption_3d = Label.new()
+	_caption_3d.text = "3D DÜŞÜŞ MODELİ"
+	_caption_3d.add_theme_font_size_override("font_size", 13)
+	_caption_3d.add_theme_color_override("font_color", ACCENT)
+	_caption_3d.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_caption_3d)
+	_sync_3d_stage()
+
+
+func _sync_3d_stage() -> void:
+	if _viewport_3d == null or size.x < 10.0:
+		return
+	var top_left := _p(690.0, 208.0)
+	var bottom_right := _p(1065.0, 844.0)
+	_viewport_3d.position = top_left
+	_viewport_3d.size = bottom_right - top_left
+	_caption_3d.position = top_left + Vector2(12.0, 10.0)
+	for id in [&"steel", &"foam", &"capsule"]:
+		var data: Dictionary = _bodies[id]
+		var depth := (data["state"] as Fall.State).depth if data["active"] else 0.0
+		var height := 4.55 - 4.15 * minf(depth, release_height) / maxf(release_height, 1.0)
+		var lane := -0.31 if id == &"steel" else (0.31 if id == &"foam" else 0.0)
+		if id == &"capsule":
+			_capsule_3d.position = Vector3(lane, height, 0.0)
+			_capsule_3d.visible = visible_ids.has(id)
+		else:
+			var model := _bodies_3d[id] as Node3D
+			model.position = Vector3(lane, height, 0.0)
+			model.visible = visible_ids.has(id)
 
 
 # --- Dışarıya açık ---------------------------------------------------------------
@@ -146,6 +222,7 @@ func _process(delta: float) -> void:
 			_start_fall()
 	if falling:
 		_step_fall(delta * time_scale)
+	_sync_3d_stage()
 	queue_redraw()
 
 

@@ -1,6 +1,8 @@
 extends "res://scripts/mission.gd"
 
 const Plot = preload("res://stations/vectors/route_plot.gd")
+const Experiment3D = preload("res://scenes/experiment_3d.tscn")
+const VectorModel = preload("res://stations/vectors/vector_model_3d.gd")
 const INTRO := 0
 const EXPLORE := 1
 const APPLY := 2
@@ -13,6 +15,9 @@ const WARNING := Color("#ffc082")
 
 var _stage := INTRO
 var _plot: Plot
+var _world_view: SubViewportContainer
+var _vector_model: Node3D
+var _view_toggle: Button
 var _plot_caption: Label
 var _heading: Label
 var _stage_title: Label
@@ -75,11 +80,34 @@ func _build_interface() -> void:
 	left.add_theme_constant_override("separation", 7)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_child(left)
+	var display := VBoxContainer.new()
+	display.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	display.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	left.add_child(display)
+	var display_bar := HBoxContainer.new()
+	display_bar.add_theme_constant_override("separation", 6)
+	display.add_child(display_bar)
+	_view_toggle = _button(display_bar, "3B deney")
+	_view_toggle.toggle_mode = true
+	_view_toggle.button_pressed = true
+	_view_toggle.pressed.connect(_toggle_view)
+	var graph_toggle := _button(display_bar, "2B grafik")
+	graph_toggle.toggle_mode = true
+	graph_toggle.pressed.connect(func() -> void:
+		_view_toggle.set_pressed_no_signal(false)
+		_toggle_view())
+	_world_view = Experiment3D.instantiate() as SubViewportContainer
+	_world_view.custom_minimum_size = Vector2(410, 270)
+	_world_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	display.add_child(_world_view)
+	_vector_model = VectorModel.new()
+	_world_view.get_node("Viewport/World/Model").add_child(_vector_model)
 	_plot = Plot.new()
 	_plot.custom_minimum_size = Vector2(410, 295)
 	_plot.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	left.add_child(_plot)
-	_plot_caption = _label(left, "", 13, MUTED)
+	display.add_child(_plot)
+	_plot.visible = false
+	_plot_caption = _label(display, "", 13, MUTED)
 	_plot_caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 	var side := PanelContainer.new()
@@ -140,6 +168,7 @@ func _show_stage(stage: int) -> void:
 	_plot.route_draw = 0.0
 	_plot.attempted = false
 	_plot.queue_redraw()
+	_sync_3d()
 	_explore.visible = stage == EXPLORE
 	_apply.visible = stage == APPLY
 	_skip.visible = stage == INTRO
@@ -173,6 +202,7 @@ func _set_method(method: int) -> void:
 	_plot.method = method
 	_methods[method].set_pressed_no_signal(true)
 	_plot.queue_redraw()
+	_sync_3d()
 	if _plot.revealed:
 		_update_result_feedback()
 
@@ -222,6 +252,7 @@ func _launch_capsule() -> void:
 func _landing_result(correct: bool, submitted: Vector2) -> void:
 	_plot.docked = correct
 	_plot.queue_redraw()
+	_sync_3d()
 	if correct:
 		_feedback.text = "Yanaşma tamamlandı.\n(5, −12) · 13 birim"
 		_feedback.modulate = ACCENT
@@ -242,11 +273,26 @@ func _landing_result(correct: bool, submitted: Vector2) -> void:
 func _set_capsule(value: Vector2) -> void:
 	_plot.capsule = value
 	_plot.queue_redraw()
+	_sync_3d()
 
 
 func _set_route_draw(value: float) -> void:
 	_plot.route_draw = value
 	_plot.queue_redraw()
+	_sync_3d()
+
+
+func _toggle_view() -> void:
+	var show_3d := _view_toggle.button_pressed
+	_world_view.visible = show_3d
+	_plot.visible = not show_3d
+	_sync_3d()
+
+
+func _sync_3d() -> void:
+	if _vector_model == null:
+		return
+	_vector_model.set_state(_stage, _plot.method, _plot.revealed, _plot.route_draw, _plot.attempted, _plot.attempt, _plot.capsule, _plot.docked)
 
 
 func _stop_animation() -> void:
