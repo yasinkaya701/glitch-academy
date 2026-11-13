@@ -15,14 +15,10 @@ var incident_time := 0.0
 
 
 func _draw() -> void:
-	var scale_factor := minf(size.x / 720.0, size.y / 510.0)
-	var offset := (size - Vector2(720.0, 510.0) * scale_factor) * 0.5
+	var scale_factor := minf(size.x / 720.0, size.y / 190.0)
+	var offset := (size - Vector2(720.0, 190.0) * scale_factor) * 0.5
 	draw_set_transform(offset, 0.0, Vector2.ONE * scale_factor)
-	if greenhouse:
-		_draw_greenhouse()
-	else:
-		_draw_orbit()
-		_draw_readings()
+	_draw_readings()
 
 
 func _draw_orbit() -> void:
@@ -94,34 +90,25 @@ func _draw_land(center: Vector2, shape: PackedVector2Array, sun_direction: float
 
 
 func _draw_readings() -> void:
-	draw_line(Vector2(20, 301), Vector2(700, 301), LINE, 1.0, true)
-	_center_label("ÖĞLE GÜNEŞİ  ·  EKVATORA EŞİT UZAKLIK", Vector2(360, 327), 14, PAPER)
-	_draw_latitude(Vector2(36, 352), 40.0, "40° KUZEY", AQUA)
-	_draw_latitude(Vector2(382, 352), -40.0, "40° GÜNEY", GOLD)
-	draw_line(Vector2(360, 353), Vector2(360, 489), LINE, 1.0, true)
+	draw_line(Vector2(20, 16), Vector2(700, 16), LINE, 1.0, true)
+	_label("ÖĞLE GÜNEŞİ  ·  EKVATORA EŞİT UZAKLIK", Vector2(20, 40), 14, PAPER)
+	_draw_latitude(Vector2(26, 52), 40.0, "40° KUZEY", AQUA)
+	_draw_latitude(Vector2(374, 52), -40.0, "40° GÜNEY", GOLD)
+	draw_line(Vector2(360, 56), Vector2(360, 176), LINE, 1.0, true)
 
 
 func _draw_latitude(origin: Vector2, latitude: float, title: String, color: Color) -> void:
 	var sample := Model.sample(latitude, december, tilt)
-	var angle := deg_to_rad(sample.x)
-	var direction := Vector2(cos(angle), sin(angle))
-	var normal := Vector2(-direction.y, direction.x)
-	var foot := origin + Vector2(101, 95)
-	var span := minf(90.0, 34.0 / maxf(sample.z, 0.1))
-	draw_line(foot - Vector2(79, 0), foot + Vector2(79, 0), LINE, 2.0, true)
-	draw_line(foot - Vector2(span * 0.5, 0), foot + Vector2(span * 0.5, 0), color, 3.0, true)
-	for index in range(-1, 2):
-		var target := foot + Vector2(-float(index) * span * 0.5, 0)
-		_arrow(target - direction * 64.0, target, Color(color, 0.8))
-	draw_arc(foot, 22.0, PI, PI + angle, 18, color, 1.5, true)
-	draw_line(foot - direction * 55.0 - normal * 14.0, foot - direction * 55.0 + normal * 14.0, color, 1.0, true)
-	var short_daylight := _decimal(sample.y)
-	_label(title, origin + Vector2(197, 15), 13, color)
-	_label("%s° ışın açısı" % _decimal(sample.x), origin + Vector2(197, 41), 16, PAPER)
-	_label("%s saat gündüz" % short_daylight, origin + Vector2(197, 66), 16, PAPER)
-	_label("%s yüzey izi" % ("Dar" if sample.z > 0.75 else "Geniş"), origin + Vector2(197, 91), 14, MUTED)
-	draw_rect(Rect2(origin + Vector2(197, 105), Vector2(112, 3)), LINE)
-	draw_rect(Rect2(origin + Vector2(197, 105), Vector2(112.0 * sample.y / 24.0, 3)), color)
+	var panel := Rect2(origin, Vector2(318, 112))
+	draw_rect(panel, Color("142334"))
+	draw_rect(panel, LINE, false, 1.0)
+	_label(title, origin + Vector2(12, 22), 13, color)
+	_label("%s° ışın açısı" % _decimal(sample.x), origin + Vector2(12, 47), 16, PAPER)
+	_label("%s saat gündüz" % _decimal(sample.y), origin + Vector2(12, 70), 16, PAPER)
+	var bar := Rect2(origin + Vector2(12, 86), Vector2(285, 9))
+	draw_rect(bar, LINE)
+	draw_rect(Rect2(bar.position, Vector2(bar.size.x * sample.z, bar.size.y)), color)
+	_label("Birim alana enerji", origin + Vector2(12, 108), 12, MUTED)
 
 
 func _draw_greenhouse() -> void:

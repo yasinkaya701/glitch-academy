@@ -2,6 +2,8 @@ extends "res://scripts/mission.gd"
 
 const Diagram = preload("res://stations/seasons/observatory_diagram.gd")
 const Model = preload("res://stations/seasons/seasons_model.gd")
+const Experiment = preload("res://scenes/experiment_3d.tscn")
+const ModelScene = preload("res://stations/seasons/seasons_3d.tscn")
 const PAPER := Color("e6f1ef")
 const MUTED := Color("a3b9bf")
 const AQUA := Color("77d2bd")
@@ -18,6 +20,7 @@ var seen_december := false
 var north_setting := Season.UNSET
 var south_setting := Season.UNSET
 var diagram: Diagram
+var model_3d: Node3D
 var controls: VBoxContainer
 var date_buttons: Array[Button] = []
 var tilt_toggle: CheckButton
@@ -35,11 +38,25 @@ func _ready() -> void:
 	add_child(row)
 	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
+	var workbench := VBoxContainer.new()
+	workbench.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	workbench.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	workbench.add_theme_constant_override("separation", 8)
+	row.add_child(workbench)
+	var viewport: SubViewportContainer = Experiment.instantiate()
+	viewport.custom_minimum_size = Vector2(460, 365)
+	viewport.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	viewport.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	workbench.add_child(viewport)
+	var camera: Camera3D = viewport.get_node("Viewport/World/Camera3D")
+	camera.size = 8.0
+	model_3d = ModelScene.instantiate()
+	viewport.get_node("Viewport/World/Model").add_child(model_3d)
 	diagram = Diagram.new()
+	diagram.custom_minimum_size = Vector2(420, 142)
 	diagram.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	diagram.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	diagram.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(diagram)
+	workbench.add_child(diagram)
 
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size.x = 352
@@ -49,13 +66,14 @@ func _ready() -> void:
 	controls.add_theme_constant_override("separation", 13)
 	panel.add_child(controls)
 	_show_incident()
+	_sync_model()
 
 
 func _process(delta: float) -> void:
 	if phase == Phase.INCIDENT or phase == Phase.REPAIRED:
 		elapsed += delta
 		diagram.incident_time = elapsed
-		diagram.queue_redraw()
+		_sync_model()
 	if phase == Phase.INCIDENT and elapsed >= 7.0:
 		_show_experiment()
 
@@ -70,6 +88,7 @@ func _show_incident() -> void:
 func _show_experiment() -> void:
 	phase = Phase.EXPERIMENT
 	diagram.greenhouse = false
+	_sync_model()
 	_reset_controls()
 	_heading("Mevsimler", "İki tarihte Dünya’nın eksenine bak. Sonra ekvatora eşit uzaklıktaki iki konumun ölçümlerini karşılaştır.", "2 / 4   DENEY")
 	var dates := HBoxContainer.new()
@@ -100,6 +119,7 @@ func _show_experiment() -> void:
 	if advance.disabled:
 		_text("Onarıma geçmek için iki tarihi de seç.", 14, MUTED)
 	diagram.queue_redraw()
+	_sync_model()
 	date_buttons[int(december)].grab_focus()
 
 
@@ -115,6 +135,7 @@ func _observe(next_december: bool) -> void:
 
 func _change_tilt(disabled_tilt: bool) -> void:
 	diagram.tilt = 0.0 if disabled_tilt else Model.AXIAL_TILT
+	_sync_model()
 	_show_experiment()
 	tilt_toggle.grab_focus()
 
@@ -124,6 +145,7 @@ func _show_application(feedback := "") -> void:
 	diagram.december = true
 	diagram.tilt = Model.AXIAL_TILT
 	diagram.queue_redraw()
+	_sync_model()
 	_reset_controls()
 	_heading("Sera uyarısını onar", "Tarih 21 Aralık. Ölçümlere bakıp iki istasyona doğru mevsim ayarını gönder.", "3 / 4   UYGULAMA")
 	var first_menu := _select_season("Kuzey istasyonu", north_setting, true)
@@ -169,6 +191,7 @@ func _apply_settings() -> void:
 	elapsed = 0.0
 	diagram.greenhouse = true
 	diagram.repaired = true
+	_sync_model()
 	_reset_controls()
 	_heading("Sera yeniden çalışıyor", "Aralık ayında güney yarımküre yazı, kuzey yarımküre kışı yaşar. Güney serasına yaz uyarısı ulaştı ve havalandırma açıldı.", "4 / 4   ONARIM")
 	_text("Dünya yörüngede ilerlerken eksenin yönü sabit kalır. Güneş’e doğru eğilen yarımküre daha dik ışık alır ve orada gündüz daha uzun sürer.", 16, AQUA)
@@ -222,3 +245,10 @@ func _reset_controls() -> void:
 	for child in controls.get_children():
 		controls.remove_child(child)
 		child.queue_free()
+
+
+func _sync_model() -> void:
+	if model_3d == null:
+		return
+	var show_greenhouse := phase == Phase.INCIDENT or phase == Phase.REPAIRED
+	model_3d.set_state(december, diagram.tilt, show_greenhouse, diagram.repaired, elapsed)

@@ -1,7 +1,9 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://stations/measurement/mission.gd" id="1"]
 [ext_resource type="Script" path="res://stations/measurement/bench.gd" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/experiment_3d.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://stations/measurement/measurement_3d.tscn" id="4"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_workspace"]
 bg_color = Color(0.047, 0.082, 0.133, 1)
@@ -71,6 +73,16 @@ custom_minimum_size = Vector2(310, 240)
 layout_mode = 2
 mouse_filter = 2
 script = ExtResource("2")
+
+[node name="Experiment3D" parent="Layout/Workspace/Bench" instance=ExtResource("3")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MeasurementModel" parent="Layout/Workspace/Bench/Experiment3D/Viewport/World/Model" instance=ExtResource("4")]
 
 [node name="Console" type="PanelContainer" parent="Layout"]
 custom_minimum_size = Vector2(330, 0)
