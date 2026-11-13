@@ -4,6 +4,9 @@ extends Control
 ## Koordinatlar kalp karesine (0–1) göre. Kare dışı değerler (akciğer, vücut) de kullanılabilir.
 
 signal spot_pressed(id: StringName)
+signal valve_dropped(slot: int, valve: int)
+signal ports_connected(from_port: StringName, to_port: StringName)
+signal port_cleared(from_port: StringName)
 
 const Model = preload("res://stations/heart/heart_model.gd")
 const HEART_VIEW = preload("res://stations/heart/heart_view.tscn")
@@ -52,17 +55,42 @@ const VALVE_WIDTH := {
 	Model.Valve.AORTIC: 0.055,
 	Model.Valve.PULMONARY: 0.055,
 }
-## Akış hatları. Sağ yarı ve vücut dönüşü oksijensiz (mavi), sol yarı ve aort çıkışı oksijenli (kırmızı).
+## Akış hatları (kalbin içi). Dış damarlar `connections` ile çizilir.
+## Sağ yarı oksijensiz (mavi), sol yarı oksijenli (kırmızı).
 const FLOWS := {
-	&"ven_in": [Vector2(0.0, 0.46), Vector2(0.0, 0.15), Vector2(0.372, 0.15), Vector2(0.372, 0.33), Vector2(0.368, 0.45)],
+	&"ven_in": [Vector2(0.372, 0.17), Vector2(0.372, 0.33), Vector2(0.368, 0.45)],
 	&"r_av": [Vector2(0.368, 0.45), Vector2(0.375, 0.556), Vector2(0.41, 0.66)],
-	&"r_out": [Vector2(0.46, 0.62), Vector2(0.511, 0.4375), Vector2(0.611, 0.3), Vector2(0.74, 0.292), Vector2(0.80, 0.30)],
-	&"l_in": [Vector2(0.80, 0.364), Vector2(0.74, 0.364), Vector2(0.66, 0.40), Vector2(0.625, 0.45)],
+	&"r_out": [Vector2(0.46, 0.62), Vector2(0.511, 0.4375), Vector2(0.611, 0.3), Vector2(0.74, 0.292)],
+	&"l_in": [Vector2(0.77, 0.364), Vector2(0.66, 0.40), Vector2(0.625, 0.45)],
 	&"l_av": [Vector2(0.625, 0.45), Vector2(0.614, 0.542), Vector2(0.625, 0.65)],
-	&"l_out": [Vector2(0.6, 0.62), Vector2(0.53, 0.5), Vector2(0.449, 0.354), Vector2(0.5, 0.25), Vector2(0.514, 0.12)],
-	&"art_out": [Vector2(0.514, 0.12), Vector2(0.514, 0.06), Vector2(-0.04, 0.06), Vector2(-0.04, 0.42)],
+	&"l_out": [Vector2(0.6, 0.62), Vector2(0.53, 0.5), Vector2(0.449, 0.354), Vector2(0.5, 0.25), Vector2(0.514, 0.10)],
 }
-const FLOW_RICH := [&"l_in", &"l_av", &"l_out", &"art_out"]
+## Dış damar uçları. Çıkışlar (kan bırakır) ve girişler (kan alır). Doğru bağlantılar CORRECT_LINKS.
+const OUT_PORTS := {
+	&"body_out": Vector2(0.0, 0.47),
+	&"pa_out": Vector2(0.74, 0.292),
+	&"lungs_out": Vector2(0.965, 0.50),
+	&"aorta_out": Vector2(0.514, 0.10),
+}
+const IN_PORTS := {
+	&"svc_in": Vector2(0.372, 0.17),
+	&"lungs_in": Vector2(0.965, 0.115),
+	&"pv_in": Vector2(0.77, 0.364),
+	&"body_in": Vector2(-0.05, 0.40),
+}
+const PORT_NAMES := {
+	&"body_out": "Vücuttan dönen kan", &"pa_out": "Akciğer atardamarı ucu",
+	&"lungs_out": "Akciğerden çıkan kan", &"aorta_out": "Aort ucu",
+	&"svc_in": "Üst ana toplardamar", &"lungs_in": "Akciğere giriş",
+	&"pv_in": "Akciğer toplardamarı", &"body_in": "Vücuda giriş",
+}
+const PORT_LABEL_OFFSET := {
+	&"body_out": Vector2(62, 14), &"pa_out": Vector2(-8, -26), &"lungs_out": Vector2(0, 26), &"aorta_out": Vector2(0, -24),
+	&"svc_in": Vector2(-70, -4), &"lungs_in": Vector2(0, -24), &"pv_in": Vector2(-8, 24), &"body_in": Vector2(-8, -24),
+}
+const PORT_RICH := {&"body_out": false, &"pa_out": false, &"lungs_out": true, &"aorta_out": true}
+const CORRECT_LINKS := {&"body_out": &"svc_in", &"pa_out": &"lungs_in", &"lungs_out": &"pv_in", &"aorta_out": &"body_in"}
+const FLOW_RICH := [&"l_in", &"l_av", &"l_out"]
 const HIT_RADIUS := 0.05
 
 var heart_viewport: SubViewport
@@ -83,6 +111,15 @@ var spots_active: Dictionary = {}
 var highlight: StringName = &""
 var show_flow := true
 var beat := 0.0
+## Akış hızı çarpanı (kalp hızına bağlı).
+var flow_speed := 1.0
+## Dış damar bağlantıları (çıkış → giriş). Varsayılan doğru bağlantı.
+var connections: Dictionary = CORRECT_LINKS.duplicate()
+var connection_flow := true
+var ports_active := false
+var port_warning: Dictionary = {}
+var _drag_from: StringName = &""
+var _drag_pos := Vector2.ZERO
 ## Doku oksijeni 0–1. Vücut modelinin rengini ve göstergesini belirler.
 var body_oxygen := 1.0
 var _time := 0.0
@@ -190,8 +227,9 @@ func _process(delta: float) -> void:
 
 
 func _layout() -> void:
-	var side := minf(size.x * 0.84, size.y * 0.98)
-	heart_rect = Rect2(Vector2((size.x - side) * 0.5, (size.y - side) * 0.5), Vector2(side, side))
+	## Kompozisyon (vücut, kalp, akciğer) u = -0.30 … 1.13 aralığını kaplar, tamamı sahneye sığar.
+	var side := minf(size.x / 1.50, size.y * 0.98)
+	heart_rect = Rect2(Vector2(size.x * 0.5 - 0.415 * side, (size.y - side) * 0.5), Vector2(side, side))
 
 
 func to_px(normalized: Vector2) -> Vector2:
@@ -206,13 +244,17 @@ func _draw() -> void:
 	draw_texture_rect(heart_viewport.get_texture(), heart_rect, false)
 	if show_flow:
 		_draw_flows()
+		if connection_flow:
+			_draw_connection_flows()
+	if ports_active:
+		_draw_ports()
 	for valve in VALVE_POS:
 		if valve_present.get(valve, false):
 			_draw_valve(valve)
 		else:
 			_draw_socket(valve)
 	for id in spots_active:
-		if spots_active[id]:
+		if spots_active[id] and SPOTS.has(id):
 			_draw_spot(id)
 	for id in labels:
 		_draw_label(id, labels[id])
@@ -251,15 +293,69 @@ func _draw_vignette() -> void:
 		PackedColorArray([dark, dark, edge, edge]))
 
 
+func _link_points(from_port: StringName, to_port: StringName) -> PackedVector2Array:
+	var p0 := to_px(OUT_PORTS[from_port])
+	var p1 := to_px(IN_PORTS[to_port])
+	var lift := heart_rect.size.x * 0.16
+	var c0 := p0 + Vector2(0, -lift)
+	var c1 := p1 + Vector2(0, -lift)
+	var points := PackedVector2Array()
+	for i in 41:
+		var t := float(i) / 40.0
+		var q := p0 * pow(1 - t, 3) + c0 * 3 * pow(1 - t, 2) * t + c1 * 3 * (1 - t) * t * t + p1 * pow(t, 3)
+		points.append(q)
+	return points
+
+
 func _draw_pipes() -> void:
-	for key in [&"ven_in", &"r_out", &"l_in", &"art_out"]:
-		var points := PackedVector2Array()
-		for p in FLOWS[key]:
-			points.append(to_px(p))
-		var color: Color = BLOOD_RICH if key in FLOW_RICH else BLOOD_POOR
-		draw_polyline(points, Color(color, 0.10), heart_rect.size.x * 0.030, true)
-		draw_polyline(points, Color(color, 0.22), heart_rect.size.x * 0.016, true)
-		draw_polyline(points, Color(INK, 0.10), 1.2, true)
+	for from_port in connections:
+		var to_port: StringName = connections[from_port]
+		var points := _link_points(from_port, to_port)
+		var rich: bool = PORT_RICH[from_port]
+		var warn: bool = port_warning.get(from_port, false)
+		var color: Color = (BLOOD_RICH if rich else BLOOD_POOR)
+		if warn:
+			color = GOLD
+		draw_polyline(points, Color(color, 0.10), heart_rect.size.x * 0.032, true)
+		draw_polyline(points, Color(color, 0.24), heart_rect.size.x * 0.017, true)
+		draw_polyline(points, Color(INK, 0.12), 1.2, true)
+	if _drag_from != &"":
+		var p0 := to_px(OUT_PORTS[_drag_from])
+		draw_line(p0, _drag_pos, Color(GOLD, 0.35), 8.0, true)
+		draw_line(p0, _drag_pos, GOLD, 2.4, true)
+
+
+func _draw_ports() -> void:
+	var pulse := 0.5 + 0.5 * sin(_time * 4.0)
+	for id in OUT_PORTS:
+		var rich: bool = PORT_RICH[id]
+		var c := BLOOD_RICH if rich else BLOOD_POOR
+		var center := to_px(OUT_PORTS[id])
+		draw_circle(center, 13.0 + 2.0 * pulse, Color(c, 0.18), true, -1.0, true)
+		draw_arc(center, 10.0, 0.0, TAU, 24, c, 2.4, true)
+		draw_circle(center, 4.0, c, true, -1.0, true)
+	for id in IN_PORTS:
+		var center := to_px(IN_PORTS[id])
+		var taken := connections.values().has(id)
+		draw_arc(center, 10.0, 0.0, TAU, 24, Color(JADE, 0.9 if not taken else 0.4), 2.4, true)
+		draw_circle(center, 3.5, Color(JADE, 0.9 if not taken else 0.4), true, -1.0, true)
+	for id in OUT_PORTS:
+		_port_pill(to_px(OUT_PORTS[id]) + PORT_LABEL_OFFSET[id], PORT_NAMES[id], INK)
+	for id in IN_PORTS:
+		_port_pill(to_px(IN_PORTS[id]) + PORT_LABEL_OFFSET[id], PORT_NAMES[id], JADE)
+
+
+func _port_pill(center: Vector2, value: String, color: Color) -> void:
+	var font := ThemeDB.fallback_font
+	var text_size := font.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 12)
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color(BACK, 0.9)
+	box.border_color = Color(color, 0.5)
+	box.set_border_width_all(1)
+	box.set_corner_radius_all(9)
+	var rect := Rect2(center - Vector2(text_size.x * 0.5 + 7.0, 9.0), Vector2(text_size.x + 14.0, 18.0))
+	draw_style_box(box, rect)
+	draw_string(font, Vector2(rect.position.x + 7.0, rect.position.y + 13.0), value, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 12, color)
 
 
 func _draw_model_panels() -> void:
@@ -292,12 +388,30 @@ func _draw_flows() -> void:
 		var length := _polyline_length(points)
 		var count := int(length / (unit * 0.05)) + 2
 		for i in count:
-			var t := fposmod(float(i) / count + _time * 0.5 * direction, 1.0)
+			var t := fposmod(float(i) / count + _time * 0.5 * direction * flow_speed, 1.0)
 			var point := _point_along(points, t * length)
 			var fade := sin(t * PI)
 			draw_circle(point, unit * 0.022, Color(color, 0.20 * fade), true, -1.0, true)
 			draw_circle(point, unit * 0.011, Color(color, 0.95 * fade), true, -1.0, true)
 			draw_circle(point, unit * 0.0045, Color(1, 1, 1, 0.9 * fade), true, -1.0, true)
+
+
+func _draw_connection_flows() -> void:
+	var unit := heart_rect.size.x
+	for from_port in connections:
+		var to_port: StringName = connections[from_port]
+		var points := _link_points(from_port, to_port)
+		var rich: bool = PORT_RICH[from_port]
+		var color := GOLD if port_warning.get(from_port, false) else (BLOOD_RICH if rich else BLOOD_POOR)
+		var length := _polyline_length(points)
+		var count := int(length / (unit * 0.05)) + 2
+		for i in count:
+			var t := fposmod(float(i) / count + _time * 0.45 * flow_speed, 1.0)
+			var point := _point_along(points, t * length)
+			var fade := sin(t * PI)
+			draw_circle(point, unit * 0.020, Color(color, 0.20 * fade), true, -1.0, true)
+			draw_circle(point, unit * 0.010, Color(color, 0.95 * fade), true, -1.0, true)
+			draw_circle(point, unit * 0.004, Color(1, 1, 1, 0.9 * fade), true, -1.0, true)
 
 
 func _polyline_length(points: PackedVector2Array) -> float:
@@ -390,6 +504,9 @@ func _draw_label(id: Variant, text: String) -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
+	if ports_active:
+		_ports_input(event)
+		return
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		return
 	var position: Vector2 = (event as InputEventMouseButton).position
@@ -412,6 +529,56 @@ func _gui_input(event: InputEvent) -> void:
 			best = key
 	if best != &"":
 		spot_pressed.emit(best)
+
+
+func _ports_input(event: InputEvent) -> void:
+	var reach := 22.0
+	if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		var position: Vector2 = (event as InputEventMouseButton).position
+		if event.pressed:
+			for id in OUT_PORTS:
+				if to_px(OUT_PORTS[id]).distance_to(position) <= reach:
+					if connections.has(id):
+						connections.erase(id)
+						port_cleared.emit(id)
+					_drag_from = id
+					_drag_pos = position
+					return
+		elif _drag_from != &"":
+			var target: StringName = &""
+			var best := reach * 1.6
+			for id in IN_PORTS:
+				var d := to_px(IN_PORTS[id]).distance_to(position)
+				if d < best:
+					best = d
+					target = id
+			var source := _drag_from
+			_drag_from = &""
+			if target != &"":
+				ports_connected.emit(source, target)
+	elif event is InputEventMouseMotion and _drag_from != &"":
+		_drag_pos = (event as InputEventMouseMotion).position
+
+
+func _slot_at(position: Vector2) -> int:
+	var best := -1
+	var best_distance := heart_rect.size.x * 0.09
+	for valve in VALVE_POS:
+		var d := to_px(VALVE_POS[valve]).distance_to(position)
+		if d < best_distance:
+			best_distance = d
+			best = valve
+	return best
+
+
+func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
+	return data is Dictionary and data.has("valve") and _slot_at(at_position) >= 0
+
+
+func _drop_data(at_position: Vector2, data: Variant) -> void:
+	var slot := _slot_at(at_position)
+	if slot >= 0:
+		valve_dropped.emit(slot, data["valve"])
 
 
 func set_valves_for_phase(phase: int) -> void:

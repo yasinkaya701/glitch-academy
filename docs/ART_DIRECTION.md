@@ -20,6 +20,12 @@ Gece gözlemevi: koyu lacivert uzay zemini, tek sıcak ışık kaynağı (amber)
 
 Durum asla yalnızca renkle verilmez, yanına simge veya yazı gelir.
 
+## Arayüz ve deney ayrımı
+
+- **Arayüz sabit:** düğme, panel, yazı tipi, kaydırıcı, giriş kutusu hepsi `scripts/ui_theme.gd` temasından gelir. İstasyonlar kendi düğme veya panel stilini çizmez.
+- **Deney dünyası serbest:** her deney kendi gerçek ortamına sahip olur (atölye, vakum odası, limanda iskele, anatomi laboratuvarı). Ortam ve düzenek gerçek bir deney gibi hissettirir: fiziksel nesneler, ışık, malzeme, oyuncunun ellerle yaptığı iş. Düz diyagram ve etiket yığını "slop" sayılır.
+- Matematik 3Blue1Brown çizgisinde ayrı stil kullanabilir, ama grafik yine bir deney düzeneğinin (3B nesne) parçası olarak gelir.
+
 ## Sahne dili
 
 - **Biyoloji, fizik:** gerçekçi. Fiziksel malzeme (PBR), tek ana ışık + soğuk dolgu, hafif derinlik bulanıklığı. Bilimsel olarak doğru anatomi ve cihaz oranları.

@@ -59,7 +59,29 @@ const LOOP_OXYGEN := {
 	&"aorta": true, &"body": false,
 }
 
-enum Step { INTRO, RECOGNIZE, PUMP, REPAIR, DIAGNOSE, LOOP, DONE }
+const STROKE_VOLUME := 70.0
+const REST_RATE := 72.0
+const DEMAND_ML := 10500.0
+const LINK_HINTS := {
+	&"body_out": "Vücuttan dönen oksijensiz kan kalbe ana toplardamarlardan girer.",
+	&"pa_out": "Akciğer atardamarı oksijensiz kanı akciğere götürür.",
+	&"lungs_out": "Akciğerde oksijenlenen kan akciğer toplardamarlarıyla kalbe döner.",
+	&"aorta_out": "Aort oksijenli kanı vücuda dağıtır.",
+}
+
+enum Step { INTRO, RECOGNIZE, PUMP, REPAIR, DIAGNOSE, CONNECT, RATE, DONE }
+
+class TrayPiece extends Button:
+	var valve := -1
+
+	func _get_drag_data(_at_position: Vector2) -> Variant:
+		if disabled:
+			return null
+		var preview := Label.new()
+		preview.text = "  " + text + "  "
+		preview.add_theme_color_override("font_color", Color("#8ff0d4"))
+		set_drag_preview(preview)
+		return {"valve": valve}
 
 var step := Step.INTRO
 var stage: Stage
@@ -83,7 +105,10 @@ var held: int = -1
 var slots: Dictionary = {}
 var defects: Dictionary = {}
 var recognized := 0
-var loop_index := 0
+var tempo := 1.0
+var heart_rate := 72.0
+var slider: HSlider
+var rate_label: Label
 var wrong_count := 0
 var pump_checked := false
 var intro_time := 0.0
@@ -106,18 +131,23 @@ func _build_ui() -> void:
 	stage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stage.spot_pressed.connect(_on_spot)
+	stage.valve_dropped.connect(_place_piece)
+	stage.ports_connected.connect(_on_link)
+	stage.port_cleared.connect(_on_unlink)
 	root.add_child(stage)
 
 	var console := PanelContainer.new()
 	console.custom_minimum_size = Vector2(350, 0)
-	console.add_theme_stylebox_override("panel", _panel_style())
+	console.theme_type_variation = "ConsolePanel"
 	root.add_child(console)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 10)
 	console.add_child(column)
 
-	section = _label(13, Color("#8ff0d4"))
-	headline = _label(21, INK)
+	section = Label.new()
+	section.theme_type_variation = "SectionLabel"
+	headline = Label.new()
+	headline.theme_type_variation = "HeadlineLabel"
 	headline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body = _label(15, INK)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -148,6 +178,7 @@ func _build_ui() -> void:
 	pause.pressed.connect(_toggle_run)
 	column.add_child(pause)
 	action = Button.new()
+	action.theme_type_variation = "PrimaryButton"
 	action.custom_minimum_size = Vector2(0, 44)
 	action.pressed.connect(_on_action)
 	column.add_child(action)
@@ -214,7 +245,7 @@ func _process(delta: float) -> void:
 	if not running:
 		return
 	phase_time += delta
-	var duration: float = DURATION[phase]
+	var duration: float = DURATION[phase] * tempo
 	if phase_time >= duration:
 		phase_time = 0.0
 		phase = (phase + 1) % 4
@@ -286,7 +317,6 @@ func _apply_phase() -> void:
 		stage.flow_color_override.erase(key)
 	stage.flow_dir[&"ven_in"] = 1.0
 	stage.flow_dir[&"l_in"] = 1.0
-	stage.flow_dir[&"art_out"] = 1.0
 	var flow_for := {
 		Model.Valve.TRICUSPID: &"r_av", Model.Valve.MITRAL: &"l_av",
 		Model.Valve.PULMONARY: &"r_out", Model.Valve.AORTIC: &"l_out",
@@ -457,16 +487,18 @@ func _enter_repair() -> void:
 		stage.valve_marked.erase(valve)
 	stage.labels.clear()
 	_set_ui("3 · ONAR", "Kapakçıkları yerleştir",
-		"Dört kapak sökülmüş. Bir kapak seç, kalpteki doğru yuvaya tıkla. Yerleştirdiğin kapağa tekrar tıklarsan geri alırsın. Hepsini koyunca pompayı çalıştır.", "Pompayı çalıştır")
+		"Dört kapak sökülmüş. Kapakları listeden sürükleyip kalpteki doğru yuvaya bırak (ya da kapağı seçip yuvaya tıkla). Yerleştirdiğin kapağa tıklarsan geri alırsın. Hepsini koyunca pompayı çalıştır.", "Pompayı çalıştır")
 	action.disabled = true
 	tray.show()
 	var group := ButtonGroup.new()
 	group.allow_unpress = true
 	for valve in Model.VALVE_NAMES:
-		var button := Button.new()
+		var button := TrayPiece.new()
+		button.valve = valve
 		button.toggle_mode = true
 		button.button_group = group
 		button.text = Model.VALVE_NAMES[valve]
+		button.tooltip_text = "Sürükleyip yuvaya bırak ya da seç ve yuvaya tıkla."
 		button.toggled.connect(_on_tray.bind(valve))
 		tray.add_child(button)
 	for valve in Model.VALVE_NAMES:
@@ -487,16 +519,26 @@ func _slot_click(slot: int) -> void:
 			var piece: int = slots[slot]
 			slots[slot] = -1
 			_say("%s geri alındı." % Model.VALVE_NAMES[piece])
+			_refresh_repair()
 		elif held >= 0:
-			if slots[slot] >= 0:
-				_say("Bu yuva dolu. Önce içindeki kapağı geri al.", BAD)
-			else:
-				slots[slot] = held
-				_say("%s yerleştirildi." % Model.VALVE_NAMES[held])
-				_release_tray()
-		_refresh_repair()
+			_place_piece(slot, held)
 	elif step == Step.DIAGNOSE:
 		_diagnose_click(slot)
+
+
+func _place_piece(slot: int, piece: int) -> void:
+	if step != Step.REPAIR:
+		return
+	if slots[slot] >= 0:
+		_say("Bu yuva dolu. Önce içindeki kapağı geri al.", BAD)
+		return
+	if slots.values().has(piece):
+		_say("Bu kapak zaten yerleştirildi.", BAD)
+		return
+	slots[slot] = piece
+	_say("%s yerleştirildi." % Model.VALVE_NAMES[piece])
+	_release_tray()
+	_refresh_repair()
 
 
 func _release_tray() -> void:
@@ -634,66 +676,146 @@ func _finish_diagnose() -> void:
 		return
 	_stop_pump()
 	_set_ui("4 · TEŞHİS", "Geri akış durdu",
-		"Aort kapağı gevşeme sırasında kapandı. Kan yalnız ileri akıyor. Şimdi iki dolaşımı baştan sona kuracaksın.", "Dolaşımı kur")
+		"Aort kapağı gevşeme sırasında kapandı. Kan yalnız ileri akıyor. Şimdi kalbin dışındaki damarlar kopmuş, onları kendin bağlayacaksın.", "Damarları bağla")
 
 
-# --- 5 · Dolaşım turu ---------------------------------------------------
+# --- 5 · Damarları bağla -----------------------------------------------
 
-func _enter_loop() -> void:
-	step = Step.LOOP
+func _enter_connect() -> void:
+	step = Step.CONNECT
 	_stop_pump()
-	loop_index = 0
-	wrong_count = 0
 	slots = _full_slots()
 	defects = {}
 	stage.labels.clear()
+	stage.highlight = &""
 	for valve in Model.VALVE_NAMES:
 		stage.valve_marked.erase(valve)
 		stage.spots_active[StringName("valve_%d" % valve)] = false
 	for id in Stage.SPOTS:
-		stage.spots_active[id] = true
-	_set_ui("5 · DOLAŞIM", "Kanın yolunu kur",
-		"Kan vücuttan çıkıp kalbe girer, akciğerlere gider, kalbe döner ve vücuda dağılır. Bu yolu, kanın izlediği sırayla işaretle. Başlangıç: vücuttan kalbe dönen damar.")
-	_next_loop()
-
-
-func _next_loop() -> void:
-	if loop_index >= LOOP.size():
-		_finish_loop()
-		return
-	stage.highlight = LOOP[loop_index]
-	status.text = "%d / %d" % [loop_index + 1, LOOP.size()]
-
-
-func _loop_click(id: StringName) -> void:
-	var target: StringName = LOOP[loop_index]
-	if id == target:
-		var rich: bool = LOOP_OXYGEN[id]
-		stage.labels[id] = "%s · %s" % [SPOT_NAMES[id], "oksijence zengin" if rich else "oksijence fakir"]
-		_say(LOOP_HINT[id], GOOD)
-		loop_index += 1
-		wrong_count = 0
-		_next_loop()
-	else:
-		wrong_count += 1
-		var text := "Kan şimdi burada değil. Son işaretlediğin: %s." % (SPOT_NAMES[LOOP[loop_index - 1]] if loop_index > 0 else "henüz yok")
-		if wrong_count >= 2:
-			text += " " + LOOP_HINT[target]
-		_say(text, BAD)
-
-
-func _finish_loop() -> void:
-	step = Step.DONE
-	for id in Stage.SPOTS:
 		stage.spots_active[id] = false
-	stage.highlight = &""
-	_start_pump()
-	_tween_oxygen(1.0, 3.0)
-	_set_ui("ONARILDI", "Dolaşım çalışıyor",
-		"Kan tek yönlü ve sürekli bir halkada akıyor. Sağ kalp oksijence fakir kanı akciğere, sol kalp oksijence zengin kanı vücuda pompalıyor. Dokular oksijene yeniden kavuştu.")
+	stage.connections = {}
+	stage.port_warning = {}
+	stage.ports_active = true
+	stage.connection_flow = false
+	_set_ui("5 · DAMARLAR", "Damarları kalbe bağla",
+		"Dış damarlar kopmuş. Renkli bir çıkış noktasından başlayıp çizgiyi doğru girişe sürükle. Kan oksijen düzeyine göre mavi (oksijence fakir) ya da kırmızı (zengin). Dört damarın dördünü de doğru bağla.")
+	status.text = "Bağlanan: 0 / 4"
+	_tween_oxygen(0.35)
+
+
+func _on_link(from_port: StringName, to_port: StringName) -> void:
+	if step != Step.CONNECT:
+		return
+	stage.connections[from_port] = to_port
+	var correct: bool = to_port == Stage.CORRECT_LINKS[from_port]
+	stage.port_warning[from_port] = not correct
+	if correct:
+		_say(LINK_HINTS[from_port], GOOD)
+	else:
+		_say(_wrong_link_message(from_port, to_port), BAD)
+	_refresh_links()
+
+
+func _on_unlink(from_port: StringName) -> void:
+	if step != Step.CONNECT:
+		return
+	stage.port_warning.erase(from_port)
+	_refresh_links()
+
+
+func _wrong_link_message(from_port: StringName, to_port: StringName) -> String:
+	var rich: bool = Stage.PORT_RICH[from_port]
+	match to_port:
+		&"body_in":
+			return "Oksijence fakir kan doğrudan vücuda gidiyor. Dokular oksijen alamaz." if not rich else "Doğru yön, ama bu çıkışın girişi başka."
+		&"pv_in":
+			return "Oksijence fakir kan sol kalbe karışıyor. Sol karıncık kanı oksijensiz pompalar." if not rich else "Akciğerden çıkan kan zaten buraya gelmeli, bu çıkış başka bir yere ait."
+		&"lungs_in":
+			return "Oksijenli kan yeniden akciğere gönderiliyor, vücut oksijensiz kalıyor." if rich else "Akciğere giriş, akciğer atardamarına ait."
+		&"svc_in":
+			return "Oksijenli kan sağ kalbe dönüyor. Gereksiz yere akciğere pompalanır, vücut yine oksijensiz kalır." if rich else "Vücuttan dönen kana ait giriş bu. Bu çıkış başka bir yere gitmeli."
+	return "Bu bağlantı yanlış."
+
+
+func _refresh_links() -> void:
+	var good := 0
+	var bad := 0
+	for from_port in stage.connections:
+		if stage.connections[from_port] == Stage.CORRECT_LINKS[from_port]:
+			good += 1
+		else:
+			bad += 1
+	status.text = "Doğru bağlanan: %d / 4%s" % [good, ("   ·   hatalı: %d" % bad) if bad > 0 else ""]
+	stage.connection_flow = stage.connections.size() > 0
+	stage.show_flow = true
+	if stage.connection_flow and not running:
+		running = true
+		pause.hide()
+		_apply_phase_connect()
+	var oxygen := 0.35 + 0.1 * good - 0.05 * bad
+	_tween_oxygen(clampf(oxygen, 0.1, 0.85), 0.8)
+	if good == 4:
+		stage.ports_active = false
+		stage.port_warning = {}
+		_start_pump()
+		_tween_oxygen(0.85, 1.2)
+		_set_ui("5 · DAMARLAR", "İki dolaşım kapandı",
+			"Küçük dolaşım: sağ karıncık → akciğer atardamarı → akciğer → akciğer toplardamarları → sol kulakçık. Büyük dolaşım: sol karıncık → aort → vücut → ana toplardamarlar → sağ kulakçık. Kan tek yönlü ve kapalı bir halkada.", "Akışı ayarla")
+
+
+func _apply_phase_connect() -> void:
+	for key in Stage.FLOWS:
+		stage.flow_dir[key] = 0.0
+
+
+# --- 6 · Akışı ayarla ---------------------------------------------------
+
+func _enter_rate() -> void:
+	step = Step.RATE
+	if _oxygen_tween != null:
+		_oxygen_tween.kill()
+	heart_rate = REST_RATE
+	_set_ui("6 · AKIŞ", "Kan akışını ayarla",
+		"Dakikada pompalanan kan (kalp debisi) = kalp hızı × atım hacmi. Dinlenirken 72 atım/dk × 70 mL = 5040 mL ≈ 5 L/dk. Vücut şimdi koşuyor, dokular dakikada 10,5 L kan istiyor. Atım hacmi sabit 70 mL, kalp hızını sen ayarla.", "Ayarı onayla")
 	pause.hide()
-	_say("Onarıldı.", GOOD)
-	completed.emit()
+	slider = HSlider.new()
+	slider.min_value = 40
+	slider.max_value = 200
+	slider.step = 1
+	slider.value = REST_RATE
+	slider.value_changed.connect(_on_rate_changed)
+	question.add_child(slider)
+	rate_label = Label.new()
+	rate_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	question.add_child(rate_label)
+	_start_pump()
+	_on_rate_changed(REST_RATE)
+
+
+func _on_rate_changed(value: float) -> void:
+	heart_rate = value
+	tempo = REST_RATE / value
+	stage.flow_speed = clampf(value / REST_RATE, 0.5, 3.0)
+	var output := value * STROKE_VOLUME
+	var ratio := output / DEMAND_ML
+	rate_label.text = "Kalp hızı: %d atım/dk\nDebi: %d × %d = %d mL/dk\nDokuların ihtiyacı: %d mL/dk (%%%d)" % [
+		int(value), int(value), int(STROKE_VOLUME), int(output), int(DEMAND_ML), roundi(ratio * 100.0)]
+	stage.body_oxygen = clampf(ratio, 0.0, 1.0)
+
+
+func _check_rate() -> void:
+	var ratio := heart_rate * STROKE_VOLUME / DEMAND_ML
+	if ratio >= 0.95 and ratio <= 1.06:
+		step = Step.DONE
+		stage.body_oxygen = 1.0
+		_set_ui("ONARILDI", "Dolaşım dengede",
+			"Kalp hızı %d atım/dk, debi %d mL/dk: dokuların istediği kadar kan taşınıyor. Kan tek yönlü, iki dolaşım kapalı, oksijen yerine ulaşıyor." % [int(heart_rate), int(heart_rate * STROKE_VOLUME)])
+		_say("Onarıldı.", GOOD)
+		completed.emit()
+	elif ratio < 0.95:
+		_say("Debi dokuların ihtiyacının altında. Gereken hızı hesapla: 10500 mL ÷ 70 mL.", BAD)
+	else:
+		_say("Debi gereğinden fazla. Kalp boşuna yoruluyor. İhtiyaca eşit hızı bul.", BAD)
 
 
 # --- Etkileşim yönlendirme ----------------------------------------------
@@ -706,8 +828,6 @@ func _on_spot(id: StringName) -> void:
 	match step:
 		Step.RECOGNIZE:
 			_recognize_click(id)
-		Step.LOOP:
-			_loop_click(id)
 
 
 func _on_action() -> void:
@@ -725,5 +845,10 @@ func _on_action() -> void:
 		Step.DIAGNOSE:
 			if action.text == "Aort kapağını değiştir":
 				_repair_aortic()
-			elif action.text == "Dolaşımı kur":
-				_enter_loop()
+			elif action.text == "Damarları bağla":
+				_enter_connect()
+		Step.CONNECT:
+			if action.text == "Akışı ayarla":
+				_enter_rate()
+		Step.RATE:
+			_check_rate()
