@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/philosophy/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"philosophy"
+title = "Fikir Meydanı"
+subject = "Felsefe"
+grade = 11
+routes = PackedStringArray("class", "tyt", "ayt")
+description = "Hafızası bozulan filozoflara ana fikirlerini hatırlatarak düşünce zincirini onar."
+curriculum = "11.1 (MEB Felsefe · MÖ 6. yy – MS 15. yy Felsefesi)"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/felsefe/11/unite1/index.html"
+scene = ExtResource("2")

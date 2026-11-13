@@ -1,0 +1,172 @@
+{
+  "aristotle": {
+    "body_size": [
+      410,
+      1165
+    ],
+    "expressions": [],
+    "face_rect": [
+      0,
+      0,
+      410,
+      307
+    ],
+    "mouth_y": 153,
+    "neck": [
+      205.0,
+      202.6
+    ],
+    "poses": {},
+    "upper": []
+  },
+  "epicurus": {
+    "body_size": [
+      423,
+      1193
+    ],
+    "expressions": [],
+    "face_rect": [
+      0,
+      0,
+      423,
+      320
+    ],
+    "mouth_y": 160,
+    "neck": [
+      211.5,
+      211.2
+    ],
+    "poses": {},
+    "upper": []
+  },
+  "farabi": {
+    "body_size": [
+      413,
+      1156
+    ],
+    "expressions": [],
+    "face_rect": [
+      0,
+      0,
+      413,
+      304
+    ],
+    "mouth_y": 152,
+    "neck": [
+      206.5,
+      200.6
+    ],
+    "poses": {},
+    "upper": []
+  },
+  "ibn_rushd": {
+    "body_size": [
+      487,
+      1205
+    ],
+    "expressions": [],
+    "face_rect": [
+      0,
+      0,
+      487,
+      335
+    ],
+    "mouth_y": 167,
+    "neck": [
+      243.5,
+      221.1
+    ],
+    "poses": {},
+    "upper": []
+  },
+  "ibn_sina": {
+    "body_size": [
+      462,
+      1168
+    ],
+    "expressions": [],
+    "face_rect": [
+      0,
+      0,
+      462,
+      314
+    ],
+    "mouth_y": 157,
+    "neck": [
+      231.0,
+      207.2
+    ],
+    "poses": {},
+    "upper": []
+  },
+  "kindi": {
+    "body_size": [
+      445,
+      1186
+    ],
+    "expressions": [],
+    "face_rect": [
+      0,
+      0,
+      445,
+      314
+    ],
+    "mouth_y": 157,
+    "neck": [
+      222.5,
+      207.2
+    ],
+    "poses": {},
+    "upper": []
+  },
+  "plato": {
+    "body_size": [
+      448,
+      1170
+    ],
+    "expressions": [
+      "mouth_open"
+    ],
+    "face_rect": [
+      38,
+      2,
+      362,
+      320
+    ],
+    "mouth_y": 148,
+    "neck": [
+      181.0,
+      211.2
+    ],
+    "poses": {},
+    "upper": []
+  },
+  "socrates": {
+    "body_size": [
+      494,
+      1177
+    ],
+    "expressions": [
+      "angry",
+      "eyes_closed",
+      "mouth_mid",
+      "mouth_open"
+    ],
+    "face_rect": [
+      43,
+      0,
+      384,
+      322
+    ],
+    "mouth_y": 135,
+    "neck": [
+      192.0,
+      212.5
+    ],
+    "poses": {},
+    "upper": [
+      "angry",
+      "eyes_closed"
+    ]
+  }
+}

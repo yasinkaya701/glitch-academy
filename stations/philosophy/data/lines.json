@@ -1,0 +1,106 @@
+{
+  "voices": {
+    "socrates": {
+      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "edge_voice": "tr-TR-AhmetNeural",
+      "edge_pitch": "-12Hz",
+      "edge_rate": "-8%"
+    },
+    "plato": {
+      "elevenlabs_voice_id": "ErXwobaYiN019PkySvjV",
+      "edge_voice": "tr-TR-AhmetNeural",
+      "edge_pitch": "-8Hz",
+      "edge_rate": "-5%"
+    },
+    "aristotle": {
+      "elevenlabs_voice_id": "VR6AewLTigWG4xSOukaG",
+      "edge_voice": "tr-TR-AhmetNeural",
+      "edge_pitch": "-5Hz",
+      "edge_rate": "-4%"
+    },
+    "epicurus": {
+      "elevenlabs_voice_id": "TxGEqnHWrfWFTfGW9XjX",
+      "edge_voice": "tr-TR-AhmetNeural",
+      "edge_pitch": "-6Hz",
+      "edge_rate": "-6%"
+    },
+    "kindi": {
+      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "edge_voice": "tr-TR-AhmetNeural",
+      "edge_pitch": "-9Hz",
+      "edge_rate": "-6%"
+    },
+    "farabi": {
+      "elevenlabs_voice_id": "ErXwobaYiN019PkySvjV",
+      "edge_voice": "tr-TR-AhmetNeural",
+      "edge_pitch": "-14Hz",
+      "edge_rate": "-10%"
+    },
+    "ibn_sina": {
+      "elevenlabs_voice_id": "VR6AewLTigWG4xSOukaG",
+      "edge_voice": "tr-TR-AhmetNeural",
+      "edge_pitch": "-4Hz",
+      "edge_rate": "-4%"
+    },
+    "ibn_rushd": {
+      "elevenlabs_voice_id": "TxGEqnHWrfWFTfGW9XjX",
+      "edge_voice": "tr-TR-AhmetNeural",
+      "edge_pitch": "-11Hz",
+      "edge_rate": "-7%"
+    }
+  },
+  "philosophers": {
+    "socrates": {
+      "name": "Sokrates",
+      "note": "Sokrates (MÖ 469–399, Atina). Bilgisizliğin farkındalığı, diyalogla doğurtma (maiotik) ve 'erdem bilgidir' ilkesiyle tanınır.",
+      "lines": {
+        "stage_0": "Zihnim sis içinde… Atina taşlarını tanıyorum ama ben kimim?",
+        "stage_1": "Aa… dur! Kafamın içinde bir şey kımıldadı; sanki bu soruyu ben sorardım.",
+        "stage_2": "Evet… bir annenin ebelik yapması gibi, doğruyu sorularla doğurturdum!",
+        "stage_3": "Dur, söyleme, hatırlıyorum! Erdem bilgidir; kimse bilerek kötülük yapmaz.",
+        "stage_4": "Şimdi tamamen hatırladım: Bildiğim tek şey, hiçbir şey bilmediğimdir.",
+        "wrong_sofist": "Hayır! Ben para karşılığı ikna sanatı satan bir sofist değilim!",
+        "wrong_empedokles": "Dört element mi? Hayır, ben doğa taşlarını değil, insanın ruhunu ve ahlakı sorgularım!",
+        "angry_leave": "Beni kendi fikirlerimden uzaklaştırdın; seninle tartışmayı bırakıyorum!"
+      },
+      "choices": [
+        {
+          "id": "know_nothing",
+          "label": "Hiçbir şey bilmediğini bilmek",
+          "correct": true,
+          "reply": "stage_1"
+        },
+        {
+          "id": "maieutics",
+          "label": "Soruyla doğurtma (Maiotik)",
+          "correct": true,
+          "reply": "stage_2"
+        },
+        {
+          "id": "virtue_knowledge",
+          "label": "Erdem bilgidir",
+          "correct": true,
+          "reply": "stage_3"
+        },
+        {
+          "id": "final_recall",
+          "label": "Sorgulanmamış hayat",
+          "correct": true,
+          "reply": "stage_4"
+        },
+        {
+          "id": "wrong_sophist",
+          "label": "Para ile hitabet (Sofist)",
+          "correct": false,
+          "reply": "wrong_sofist"
+        },
+        {
+          "id": "wrong_empedocles",
+          "label": "Dört element (Empedokles)",
+          "correct": false,
+          "reply": "wrong_empedokles"
+        }
+      ]
+    }
+  }
+}
