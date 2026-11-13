@@ -59,6 +59,11 @@ func _ready() -> void:
 		get_tree().root.theme = shared_theme
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 
+	var args := OS.get_cmdline_user_args()
+	for a in args:
+		if a == "--lgs" or a == "lgs" or a == "--route=lgs":
+			route = &"lgs"
+
 	_is_lgs = (route == &"lgs")
 
 	stage = HistoryStageScript.new()
