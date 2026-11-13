@@ -71,16 +71,21 @@ const PERSONAS := {
 	},
 	&"ataturk": {
 		"name": "Mustafa Kemal Atatürk",
-		"role": "Türkiye Cumhuriyeti'nin kurucusu, Kurtuluş Savaşı Başkomutanı. 19 Mayıs 1919 Samsun, Amasya Genelgesi, Erzurum ve Sivas Kongreleri, TBMM ve Cumhuriyet devrimleri.",
+		"role": "Türkiye Cumhuriyeti'nin kurucusu, Kurtuluş Savaşı Başkomutanı. MEB 8. Sınıf İnkılap Tarihi (LGS · İTA.8.2.2). 19 Mayıs 1919 Samsun, Amasya Genelgesi, Erzurum ve Sivas Kongreleri, I. TBMM'nin açılışı ve Lozan Barış Antlaşması.",
 		"all_keywords": [
-			"ataturk", "mustafa kemal", "kemal pasa", "19 mayis", "samsun", "amasya", "azim ve karari",
-			"erzurum", "sivas", "kongre", "manda", "ya istiklal", "23 nisan", "tbmm", "egemenlik",
-			"milletindir", "cumhuriyet", "29 ekim", "sakarya", "buyuk taarruz", "dumlupinar", "akdeniz",
-			"inkilap", "laiklik", "yurtta sulh", "canakkale"
+			"ataturk", "mustafa kemal", "kemal pasa", "pasa", "19 mayis", "samsun", "amasya", "genelge", "tamim",
+			"azim ve karari", "gerekce", "yontem", "vatanin butunlugu", "bagimsizlik tehlikede",
+			"erzurum", "sivas", "kongre", "milli sinirlar", "vatan bir butundur", "parcalanamaz",
+			"anadolu ve rumeli", "mudafaa-i hukuk", "armhc", "temsil heyeti", "irade-i milliye",
+			"manda ret", "ya istiklal ya olum", "23 nisan", "1920", "tbmm", "meclis", "egemenlik",
+			"milletindir", "hakimiyet bila kaydu sart", "milli irade", "kurucu meclis",
+			"sakarya", "buyuk taarruz", "baskomutan", "dumlupinar", "akdeniz",
+			"lozan", "baris antlasmasi", "kapitulasyon", "kapitulasyonlar", "tam bagimsizlik",
+			"cumhuriyet", "29 ekim", "misak-i milli", "canakkale"
 		],
-		"confirm_1": "Evet! 19 Mayıs'ta Samsun'a çıktık; Amasya'da milletin istiklalini yine milletin azim ve kararı kurtaracaktır dedik!",
+		"confirm_1": "Evet! Amasya Genelgesi ile milletin istiklalini yine milletin azim ve kararı kurtaracaktır dedik!",
 		"confirm_2": "Egemenlik kayıtsız şartsız milletindir; Türkiye Cumhuriyeti ilelebet payidar kalacaktır!",
-		"chat_reply": "Gözümüzü budaktan sakınmadık; milletin iradesini ve milli egemenliği her şeyin üstünde tuttuk.",
+		"chat_reply": "Milletin bağımsızlığı ve kayıtsız şartsız egemenliği her şeyin üstündedir; parolamız ya istiklal ya ölümdür.",
 	},
 }
 
@@ -180,16 +185,14 @@ func _evaluate_locally(
 				"reply_text": String(lines.get("angry_leave" if will_leave2 else rid_w, "Hayır! Beni başka bir düşünürle karıştırıyorsun!")),
 			}
 
-	# 2. Filozofa ait herhangi bir söz, kavram, yöntem, eser veya isim geçti mi?
+	# 2. Lidere ait herhangi bir söz, kavram, belge veya ilke geçti mi?
 	if hit_count > 0:
 		var matched_id: String = _best_choice_id(norm, choices)
-		var pts: int = 4 if (hit_count >= 3 or norm.length() >= 48) else 2
+		var pts: int = 1
 		var target_lvl: int = clampi(stage_level + pts, 1, 4)
 		var trig: String = STAGE_TRIGGERS[target_lvl]
-		var reply_txt: String = String(persona.get("confirm_2" if target_lvl >= 4 else "confirm_1", ""))
-		var rid_stage: String = "stage_4" if target_lvl >= 4 else ("stage_%d" % clampi(target_lvl, 1, 3))
-		if lines.has(rid_stage):
-			reply_txt = String(lines.get(rid_stage, reply_txt))
+		var rid_stage: String = "stage_%d" % clampi(target_lvl, 1, 4)
+		var reply_txt: String = String(lines.get(rid_stage, persona.get("confirm_2" if target_lvl >= 4 else "confirm_1", "")))
 		return {
 			"trigger": trig,
 			"points": pts,
@@ -331,11 +334,11 @@ func _send_llm_request(cfg: Dictionary, ctx: Dictionary) -> void:
 		+ "Oyuncu seninle konuşuyor.\n"
 		+ "KESİN KURALLAR:\n"
 		+ "1. Oyuncu sana ait HERHANGİ BİR söz, zafer, kanun, antlaşma, ilke veya kimlik bilgisi verdiyse KESİNLİKLE trigger='correct' döndür!\n"
-		+ "2. Oyuncu senin meşhur bir sözünü veya zaferini doğru söylediyse points=4 (tek kavram söylediyse points=2) ver ki doğrudan sonuca ulaşılsın.\n"
-		+ "3. Oyuncu senin tarihî vizyonuna tamamen zıt bir iddia söylediyse (ör. teslimiyet, mandacılık) trigger='wrong' ve points=0 döndür.\n"
+		+ "2. Oyuncu o aşamaya uygun tarihsel bir kararını, fermanını, zaferini veya ilkeni doğru söylediyse trigger='correct' ve points=1 döndür.\n"
+		+ "3. Oyuncu senin tarihî vizyonuna tamamen zıt bir iddia söylediyse (ör. teslimiyet, mandacılık, Sevr) trigger='wrong' ve points=0 döndür.\n"
 		+ "4. ASLA 'bana kendimi hatırlat' DEME! Doğrudan o dönemin lideri olarak sözü onayla.\n"
 		+ "5. reply_text Türkçe, vakur/lider üslupta, birinci tekil şahıs ve EN FAZLA 90 karakter olsun.\n"
-		+ "Yalnızca geçerli JSON döndür: {\"trigger\":\"correct|wrong|chat\",\"points\":2,\"mood\":\"smile|thinking|angry\",\"reply_text\":\"...\"}"
+		+ "Yalnızca geçerli JSON döndür: {\"trigger\":\"correct|wrong|chat\",\"points\":1,\"mood\":\"smile|thinking|angry\",\"reply_text\":\"...\"}"
 	) % [
 		persona.get("name", "Lider"),
 		persona.get("role", ""),
@@ -423,18 +426,14 @@ func _on_llm_completed(result: int, response_code: int, _headers: PackedStringAr
 	var idict := inner as Dictionary
 	var llm_trig: String = _safe_str(idict.get("trigger"), "chat")
 	var fb_trig: String = _safe_str(fallback.get("trigger"), "chat")
-	var llm_pts: int = int(idict.get("points", 2 if llm_trig in ["stir", "glimmer", "dawn", "recalled", "correct"] else 0))
-	var fb_pts: int = int(fallback.get("points", 0))
+	var llm_pts: int = clampi(int(idict.get("points", 1)), 0, 1)
+	var fb_pts: int = clampi(int(fallback.get("points", 0)), 0, 1)
 
-	# Yerel analiz filozofa ait doğru söz/kavram yakaladıysa LLM asla bunu "chat"e düşüremez
+	# Yerel analiz lidere ait doğru söz/kavram yakaladıysa LLM asla bunu "chat"e düşüremez
 	var final_trig: String = llm_trig
-	var final_pts: int = maxi(llm_pts, fb_pts)
-	if fb_trig in ["stir", "glimmer", "dawn", "recalled", "correct"]:
+	if fb_trig in ["stir", "glimmer", "dawn", "recalled", "correct"] or llm_trig in ["stir", "glimmer", "dawn", "recalled", "correct"]:
 		final_trig = "correct"
-		final_pts = maxi(final_pts, 2)
-	elif llm_trig in ["stir", "glimmer", "dawn", "recalled", "correct"]:
-		final_trig = "correct"
-		final_pts = maxi(final_pts, 2)
+	var final_pts: int = 1 if (final_trig in ["stir", "glimmer", "dawn", "recalled", "correct"]) else 0
 
 	var mood: String = _safe_str(idict.get("mood"), _safe_str(fallback.get("mood"), "smile"))
 	var reply_text: String = _safe_str(idict.get("reply_text"), _safe_str(fallback.get("reply_text"), "")).strip_edges()
