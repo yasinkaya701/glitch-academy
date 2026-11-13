@@ -226,8 +226,8 @@ func _refresh_list() -> void:
 		var available := _mission_available(mission)
 		var completed := Campaign.is_completed(mission.id, active_route)
 		var marker := "✓" if completed else "▣" if not available else "▶" if mission.id == recommended_id else "◉"
-		var subject := "Fen Bilimleri" if active_route == &"lgs" and mission.subject == "Kimya" else mission.subject
-		var item_index := mission_list.add_item("%s  %s" % [marker, mission.title], _mission_icon(mission))
+		var subject := _mission_display_subject(mission)
+		var item_index := mission_list.add_item("%s  %s" % [marker, _mission_display_title(mission)], _mission_icon(mission))
 		var marker_color := Color("#a0dfbc") if completed else Color("#efb468") if mission.id == recommended_id else Color("#8fa6b3") if not available else Color("#e8f1f2")
 		mission_list.set_item_custom_fg_color(item_index, marker_color)
 		mission_list.set_item_metadata(item_index, mission.id)
@@ -294,6 +294,8 @@ func _mission_fields(mission: MissionDefinition) -> PackedStringArray:
 
 
 func _mission_icon(mission: MissionDefinition) -> Texture2D:
+	if mission.id == &"three_suns":
+		return load("res://assets/ui/icons/yks/archive.svg")
 	var direct_path := "res://assets/ui/icons/%s.png" % String(mission.id)
 	if ResourceLoader.exists(direct_path):
 		return load(direct_path)
@@ -322,22 +324,39 @@ func _select_mission(index: int) -> void:
 		_clear_selection()
 		return
 	selected_mission = visible_missions[index]
-	mission_title.text = selected_mission.title
+	mission_title.text = _mission_display_title(selected_mission)
 	var available := _mission_available(selected_mission)
 	start_mission.disabled = not available
-	var subject := "Fen Bilimleri" if active_route == &"lgs" and selected_mission.subject == "Kimya" else selected_mission.subject
+	var subject := _mission_display_subject(selected_mission)
 	var state := "✓ ONARILDI" if Campaign.is_completed(selected_mission.id, active_route) else "◉ AÇIK" if available else "▣ KİLİTLİ"
 	mission_status.text = "%s  ·  %s" % [subject.to_upper(), state]
 	if not available:
 		mission_status.text += "\n" + _locked_reason(selected_mission)
-	start_mission.text = "Yeniden ölç" if Campaign.is_completed(selected_mission.id, active_route) else "Düzeneği başlat"
-	mission_curriculum.text = "%s\n%s" % [selected_mission.description, selected_mission.curriculum]
-	if selected_mission is YksMissionDefinition:
+	start_mission.text = "Yeniden gör" if Campaign.is_completed(selected_mission.id, active_route) else "Düzeneği başlat"
+	if selected_mission.id == &"three_suns":
+		start_mission.text = "Finali yeniden gör" if Campaign.is_completed(selected_mission.id, active_route) else "Son hesaplaşmayı başlat"
+		mission_curriculum.text = "Üç rota için ortak kampanya finali.\nBaşlangıç koşullarındaki farkı yörünge izlerinden karşılaştır."
+	else:
+		start_mission.text = "Yeniden ölç" if Campaign.is_completed(selected_mission.id, active_route) else "Düzeneği başlat"
+		mission_curriculum.text = "%s\n%s" % [selected_mission.description, selected_mission.curriculum]
+	if selected_mission is YksMissionDefinition and selected_mission.id != &"three_suns":
 		var yks_definition := selected_mission as YksMissionDefinition
 		mission_curriculum.text += "\nHedef · %s\nKaynak · %s" % [yks_definition.learning_target, yks_definition.source_note]
 	mission_curriculum.visible = false
 	%Info.text = "ⓘ Bilgi"
 	%Info.disabled = false
+
+
+func _mission_display_title(mission: MissionDefinition) -> String:
+	return "Son Hesaplaşma" if mission.id == &"three_suns" else mission.title
+
+
+func _mission_display_subject(mission: MissionDefinition) -> String:
+	if mission.id == &"three_suns":
+		return "Kampanya finali"
+	if active_route == &"lgs" and mission.subject == "Kimya":
+		return "Fen Bilimleri"
+	return mission.subject
 
 
 func _toggle_curriculum() -> void:
@@ -369,7 +388,7 @@ func _start_mission() -> void:
 		active_mission.call("configure", selected_mission, active_route)
 	active_mission.exit_requested.connect(_return_to_hub)
 	active_mission.completed.connect(_on_mission_completed.bind(selected_mission.id))
-	play_title.text = selected_mission.title
+	play_title.text = _mission_display_title(selected_mission)
 	play_status.text = ""
 	hub.hide()
 	%HubScrim.hide()
