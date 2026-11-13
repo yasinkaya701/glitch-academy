@@ -1,0 +1,311 @@
+{
+  "figures": {
+    "mete_han": {
+      "body_size": [
+        817,
+        1092
+      ],
+      "face_rect": [
+        148,
+        3,
+        556,
+        386
+      ],
+      "faces": [
+        "angry",
+        "confused",
+        "eyes_closed",
+        "mouth_mid",
+        "mouth_open",
+        "neutral",
+        "smile"
+      ],
+      "uppers": {
+        "smile": {
+          "rect": [
+            148,
+            3,
+            556,
+            386
+          ]
+        },
+        "angry": {
+          "rect": [
+            148,
+            3,
+            556,
+            386
+          ]
+        },
+        "confused": {
+          "rect": [
+            148,
+            3,
+            556,
+            386
+          ]
+        },
+        "thinking": {
+          "rect": [
+            148,
+            3,
+            556,
+            386
+          ]
+        }
+      }
+    },
+    "alparslan": {
+      "body_size": [
+        817,
+        1092
+      ],
+      "face_rect": [
+        148,
+        3,
+        556,
+        386
+      ],
+      "faces": [
+        "angry",
+        "confused",
+        "eyes_closed",
+        "mouth_mid",
+        "mouth_open",
+        "neutral",
+        "smile"
+      ],
+      "uppers": {
+        "smile": {
+          "rect": [
+            148,
+            3,
+            556,
+            386
+          ]
+        },
+        "angry": {
+          "rect": [
+            148,
+            3,
+            556,
+            386
+          ]
+        },
+        "confused": {
+          "rect": [
+            148,
+            3,
+            556,
+            386
+          ]
+        },
+        "thinking": {
+          "rect": [
+            148,
+            3,
+            556,
+            386
+          ]
+        }
+      }
+    },
+    "fatih": {
+      "body_size": [
+        741,
+        1168
+      ],
+      "face_rect": [
+        207,
+        0,
+        310,
+        415
+      ],
+      "faces": [
+        "angry",
+        "confused",
+        "eyes_closed",
+        "mouth_mid",
+        "mouth_open",
+        "neutral",
+        "smile"
+      ],
+      "uppers": {
+        "smile": {
+          "rect": [
+            207,
+            0,
+            310,
+            415
+          ]
+        },
+        "angry": {
+          "rect": [
+            207,
+            0,
+            310,
+            415
+          ]
+        },
+        "confused": {
+          "rect": [
+            207,
+            0,
+            310,
+            415
+          ]
+        },
+        "thinking": {
+          "rect": [
+            207,
+            0,
+            310,
+            415
+          ]
+        }
+      }
+    },
+    "kanuni": {
+      "body_size": [
+        741,
+        1168
+      ],
+      "face_rect": [
+        207,
+        0,
+        310,
+        415
+      ],
+      "faces": [
+        "angry",
+        "confused",
+        "eyes_closed",
+        "mouth_mid",
+        "mouth_open",
+        "neutral",
+        "smile"
+      ],
+      "uppers": {
+        "smile": {
+          "rect": [
+            207,
+            0,
+            310,
+            415
+          ]
+        },
+        "angry": {
+          "rect": [
+            207,
+            0,
+            310,
+            415
+          ]
+        },
+        "confused": {
+          "rect": [
+            207,
+            0,
+            310,
+            415
+          ]
+        },
+        "thinking": {
+          "rect": [
+            207,
+            0,
+            310,
+            415
+          ]
+        }
+      }
+    },
+    "ataturk": {
+      "body_size": [
+        418,
+        1124
+      ],
+      "face_rect": [
+        111,
+        0,
+        199,
+        422
+      ],
+      "faces": [
+        "angry",
+        "confused",
+        "eyes_closed",
+        "mouth_mid",
+        "mouth_open",
+        "neutral",
+        "smile"
+      ],
+      "uppers": {
+        "smile": {
+          "rect": [
+            111,
+            0,
+            199,
+            422
+          ]
+        },
+        "angry": {
+          "rect": [
+            111,
+            0,
+            199,
+            422
+          ]
+        },
+        "confused": {
+          "rect": [
+            111,
+            0,
+            199,
+            422
+          ]
+        },
+        "thinking": {
+          "rect": [
+            111,
+            0,
+            199,
+            422
+          ]
+        }
+      }
+    },
+    "mimar_sinan": {
+      "body_size": [
+        413,
+        1156
+      ],
+      "expressions": [
+        "angry",
+        "confused",
+        "eyes_closed",
+        "mouth_mid",
+        "mouth_open",
+        "smile"
+      ],
+      "face_rect": [
+        58,
+        0,
+        285,
+        323
+      ],
+      "mouth_y": 153,
+      "neck": [
+        142.5,
+        213.2
+      ],
+      "poses": {},
+      "upper": [
+        "angry",
+        "confused",
+        "eyes_closed",
+        "smile"
+      ]
+    }
+  }
+}

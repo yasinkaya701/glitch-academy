@@ -1,0 +1,265 @@
+{
+  "voices": {
+    "mete_han": {
+      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "edge_voice": "tr-TR-AhmetNeural",
+      "edge_pitch": "-14Hz",
+      "edge_rate": "-6%"
+    },
+    "alparslan": {
+      "elevenlabs_voice_id": "ErXwobaYiN019PkySvjV",
+      "edge_voice": "tr-TR-AhmetNeural",
+      "edge_pitch": "-10Hz",
+      "edge_rate": "-5%"
+    },
+    "fatih": {
+      "elevenlabs_voice_id": "VR6AewLTigWG4xSOukaG",
+      "edge_voice": "tr-TR-AhmetNeural",
+      "edge_pitch": "-6Hz",
+      "edge_rate": "-3%"
+    },
+    "kanuni": {
+      "elevenlabs_voice_id": "TxGEqnHWrfWFTfGW9XjX",
+      "edge_voice": "tr-TR-AhmetNeural",
+      "edge_pitch": "-11Hz",
+      "edge_rate": "-7%"
+    },
+    "mimar_sinan": {
+      "elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",
+      "edge_voice": "tr-TR-AhmetNeural",
+      "edge_pitch": "-13Hz",
+      "edge_rate": "-9%"
+    },
+    "ataturk": {
+      "elevenlabs_voice_id": "VR6AewLTigWG4xSOukaG",
+      "edge_voice": "tr-TR-AhmetNeural",
+      "edge_pitch": "-5Hz",
+      "edge_rate": "-4%"
+    }
+  },
+  "figures": {
+    "mete_han": {
+      "name": "Mete Han",
+      "note": "Mete Han (MÖ 209–174, Asya Hun İmparatorluğu) · Onlu askeri teşkilat, 'Toprak milletin köküdür' ilkesi ve Türk boylarının birliği. (Temsili görsel)",
+      "lines": {
+        "stage_0": "Ötüken rüzgârı sert esiyor… Devletin temeli ve ordumun düzeni neydi?",
+        "stage_1": "Evet! Ordumu onbaşı, yüzbaşı, binbaşı ve tümen düzeniyle Onlu Teşkilat üzerine kurdum!",
+        "stage_2": "Doğru! Atımı ve malımı verdim ama çorak da olsa vatan toprağını asla vermedim!",
+        "stage_3": "Hatırlıyorum! Bütün Türk boylarını ilk kez tek bayrak altında toplayıp Kurultay'ı topladım!",
+        "stage_4": "Şimdi tamamdır: Toprak devletin temeli, milletin köküdür; onu kimseye veremem!",
+        "wrong_claim": "Hayır! Vatan toprağı şahsi mal değildir; bağışlanamaz ve satılamaz!",
+        "angry_leave": "Toprağı ve töreyi hiçe sayan sözlerle Kurultay'da duramam!"
+      },
+      "choices": [
+        {
+          "id": "decimal_army",
+          "label": "Onlu askeri teşkilat (MÖ 209)",
+          "correct": true,
+          "reply": "stage_1",
+          "keywords": ["onlu", "teşkilat", "ordu", "tümen", "binbaşı", "yüzbaşı", "kara kuvvetleri", "ıslıklı ok", "209"]
+        },
+        {
+          "id": "homeland_soil",
+          "label": "Toprak milletin köküdür",
+          "correct": true,
+          "reply": "stage_2",
+          "keywords": ["toprak", "vatan", "milletin kökü", "çorak", "devletin temeli", "veremem"]
+        },
+        {
+          "id": "turkic_unity",
+          "label": "Türk boylarını tek bayrakta toplama",
+          "correct": true,
+          "reply": "stage_3",
+          "keywords": ["türk boyları", "birlik", "tek bayrak", "asya hun", "ötüken", "kurultay", "töre", "ipek yolu", "çin"]
+        },
+        {
+          "id": "wrong_give_land",
+          "label": "Barış için toprak verilebilir",
+          "correct": false,
+          "reply": "wrong_claim",
+          "keywords": ["toprak verilir", "toprağı bağışla", "çin'e yerleş", "göçebe dağılsın"]
+        }
+      ]
+    },
+    "alparslan": {
+      "name": "Sultan Alparslan",
+      "note": "Sultan Alparslan (1029–1072, Büyük Selçuklu) · 1071 Malazgirt Zaferi, Anadolu'nun kapılarının açılması ve Nizamiye Medreseleri. (Temsili görsel)",
+      "lines": {
+        "stage_0": "Malazgirt Ovası'nda sabah sisi var… Hangi zaferle bu toprakları yurt kılmıştık?",
+        "stage_1": "Evet! 26 Ağustos 1071'de Malazgirt'te beyaz kefenimi giyip ordumun önüne geçtim!",
+        "stage_2": "Doğru! Turan taktiğiyle Bizans ordusunu kuşatıp Anadolu'nun kapılarını Türklere açtık!",
+        "stage_3": "Hatırlıyorum! Ani Kalesi'ni fethedip Nizamülmülk ile Nizamiye Medreselerini kurduk!",
+        "stage_4": "Şimdi tamamdır: Size öyle bir vatan aldım ki, ebediyen sizin olacaktır!",
+        "wrong_claim": "Hayır! Biz Anadolu'ya geçici akın için değil, kalıcı vatan kurmak için girdik!",
+        "angry_leave": "Adaletsiz ve vizyonsuz sözlerle otağımda vakit kaybedemem!"
+      },
+      "choices": [
+        {
+          "id": "manzikert_1071",
+          "label": "1071 Malazgirt Zaferi",
+          "correct": true,
+          "reply": "stage_1",
+          "keywords": ["1071", "malazgirt", "anadolu", "kapı", "beyaz kefen", "romen diyojen", "turan", "hilal"]
+        },
+        {
+          "id": "ani_nizamiye",
+          "label": "Ani Fethi ve Nizamiye Medreseleri",
+          "correct": true,
+          "reply": "stage_3",
+          "keywords": ["ani", "ebul feth", "nizamülmülk", "nizamiye", "medrese", "selçuklu", "kılıç hakkı", "beylik"]
+        },
+        {
+          "id": "wrong_retreat",
+          "label": "Anadolu'dan geri çekilmek",
+          "correct": false,
+          "reply": "wrong_claim",
+          "keywords": ["geri çekil", "anadolu'yu bırak", "medrese kapat", "vergi zulmü"]
+        }
+      ]
+    },
+    "fatih": {
+      "name": "Fatih Sultan Mehmed",
+      "note": "Fatih Sultan Mehmed (1432–1481) · 1453 İstanbul'un Fethi, Şahi topları, Haliç'e karadan indirilen gemiler ve Sahn-ı Seman. (Temsili görsel)",
+      "lines": {
+        "stage_0": "Surların önünde sabah rüzgârı esiyor… Hangi çağ kapanıp hangi çağ açılmıştı?",
+        "stage_1": "Evet! Şahi toplarıyla surları dövdük ve 72 gemiyi yağlı kızaklarla Haliç'e indirdik!",
+        "stage_2": "Doğru! 29 Mayıs 1453'te İstanbul'u fethederek Orta Çağ'ı kapatıp Yeni Çağ'ı açtık!",
+        "stage_3": "Hatırlıyorum! Sahn-ı Seman Medreselerini ve Kanunnâme-i Âl-i Osman'ı tesis ettim!",
+        "stage_4": "Şimdi berraklaştı: Ya ben İstanbul'u alırım, ya İstanbul beni; imkânsız diye bir şey yoktur!",
+        "wrong_claim": "Hayır! Bilimi, topçuluğu ve adaleti terk eden bir devlet cihan imparatorluğu olamaz!",
+        "angry_leave": "Kuşatmayı ve ilmi küçümseyenlerle divanımda işim olmaz!"
+      },
+      "choices": [
+        {
+          "id": "conquest_1453",
+          "label": "1453 İstanbul'un Fethi ve Haliç",
+          "correct": true,
+          "reply": "stage_1",
+          "keywords": ["1453", "istanbul", "fetih", "şahi", "top", "haliç", "gemileri karadan", "orta çağ", "yeni çağ"]
+        },
+        {
+          "id": "sahn_kanunname",
+          "label": "Sahn-ı Seman ve Kanunnâme",
+          "correct": true,
+          "reply": "stage_3",
+          "keywords": ["sahn", "seman", "medrese", "ali kuşçu", "kanunname", "avni", "kayser", "topkapı", "hoşgörü"]
+        },
+        {
+          "id": "wrong_abandon_siege",
+          "label": "Surlar aşılması imkânsızdır",
+          "correct": false,
+          "reply": "wrong_claim",
+          "keywords": ["kuşatmayı kaldır", "imkansız", "bilim gereksiz", "medreseyi kapat"]
+        }
+      ]
+    },
+    "kanuni": {
+      "name": "Kanuni Sultan Süleyman",
+      "note": "Kanuni Sultan Süleyman (1494–1566) · Kanunnameler ve adalet, Mohaç Meydan Muharebesi, Preveze Deniz Zaferi ve Süleymaniye. (Temsili görsel)",
+      "lines": {
+        "stage_0": "Divan-ı Hümayun'da fermanlar açık… Devlet-i Aliyye'yi hangi ilkeyle yönetmiştim?",
+        "stage_1": "Evet! Bana batıda Muhteşem, ülkemde ise hukuk ve adalet düzenim için Kanûnî dediler!",
+        "stage_2": "Doğru! 1526 Mohaç Ovası'nda zaferi kazandık, Preveze ile Akdeniz'i Türk gölü yaptık!",
+        "stage_3": "Hatırlıyorum! Mimar Sinan'a Süleymaniye'yi inşa ettirdim, Muhibbî mahlasıyla şiirler yazdım!",
+        "stage_4": "Şimdi tamamdır: Halk içinde muteber bir nesne yok devlet gibi, olmaya devlet cihanda bir nefes sıhhat gibi!",
+        "wrong_claim": "Hayır! Kanun ve adaletten ayrılan sultanın kılıcı da mülkü de baki kalmaz!",
+        "angry_leave": "Hukuku ve adaleti çiğneyen sözleri divanımda dinlemem!"
+      },
+      "choices": [
+        {
+          "id": "law_justice",
+          "label": "Kanûnî unvanı ve adalet düzeni",
+          "correct": true,
+          "reply": "stage_1",
+          "keywords": ["kanuni", "kanun", "adalet", "hukuk", "muhibbi", "nefes sıhhat", "46 yıl"]
+        },
+        {
+          "id": "mohacs_preveza",
+          "label": "Mohaç, Preveze ve Süleymaniye",
+          "correct": true,
+          "reply": "stage_2",
+          "keywords": ["mohaç", "preveze", "barbaros", "akdeniz", "rodos", "belgrad", "zigetvar", "süleymaniye"]
+        },
+        {
+          "id": "wrong_lawless",
+          "label": "Kanunsuz keyfî yönetim",
+          "correct": false,
+          "reply": "wrong_claim",
+          "keywords": ["kanun gereksiz", "keyfi", "zulüm", "donanmayı yak"]
+        }
+      ]
+    },
+    "mimar_sinan": {
+      "name": "Mimar Sinan",
+      "note": "Mimar Sinan (1489–1588) · Şehzade (çıraklık), Süleymaniye (kalfalık) ve Selimiye (ustalık) camileri, kubbe statiği ve su kemerleri. (Temsili görsel)",
+      "lines": {
+        "stage_0": "Pergelim ve taş kemerlerim önümde… Çıraklık, kalfalık ve ustalık eserlerim hangileriydi?",
+        "stage_1": "Evet! Şehzade Camii çıraklık eserim, Süleymaniye Camii ise kalfalık eserimdir!",
+        "stage_2": "Doğru! Ustalık eserim Edirne Selimiye Camii'de tek büyük kubbeyle mekân birliğini kurdum!",
+        "stage_3": "Hatırlıyorum! Kubbe eteğine yerleştirdiğim içi boş küplerle sesi bütün mabede yaydım!",
+        "stage_4": "Şimdi her taş yerine oturdu: Pergelin sabit ayağı iman ve ilim, dönen ayağı cihana hizmettir!",
+        "wrong_claim": "Hayır! Temeli ve statiği hesaplanmamış bina ilk sarsıntıda yıkılır!",
+        "angry_leave": "Ölçüsüz ve hesapsız mimari olmaz; atölyeme dönüyorum!"
+      },
+      "choices": [
+        {
+          "id": "three_masterpieces",
+          "label": "Şehzade, Süleymaniye ve Selimiye",
+          "correct": true,
+          "reply": "stage_1",
+          "keywords": ["şehzade", "süleymaniye", "selimiye", "çıraklık", "kalfalık", "ustalık", "edirne"]
+        },
+        {
+          "id": "dome_acoustics",
+          "label": "Kubbe statiği, akustik ve kemerler",
+          "correct": true,
+          "reply": "stage_3",
+          "keywords": ["kubbe", "akustik", "küp", "su kemeri", "kırkçeşme", "büyükçekmece", "köprü", "mimar", "sinan"]
+        },
+        {
+          "id": "wrong_no_math",
+          "label": "Hesapsız ve temelsiz inşaat",
+          "correct": false,
+          "reply": "wrong_claim",
+          "keywords": ["hesapsız", "temelsiz", "yıkılsın", "geometri gereksiz"]
+        }
+      ]
+    },
+    "ataturk": {
+      "name": "Mustafa Kemal Atatürk",
+      "note": "Mustafa Kemal Atatürk (1881–1938) · Milli Mücadele, Amasya Genelgesi, Erzurum ve Sivas Kongreleri, TBMM ve Cumhuriyetin İlanı. (Temsili görsel)",
+      "lines": {
+        "stage_0": "Ankara'da Meclis kürsüsündeyiz… Milli Mücadele'yi hangi temel kararlarla zafere ulaştırdık?",
+        "stage_1": "Evet! 19 Mayıs 1919'da Samsun'a çıktık; Amasya'da 'Milletin istiklalini yine milletin azim ve kararı kurtaracaktır' dedik!",
+        "stage_2": "Doğru! Erzurum ve Sivas Kongrelerinde manda ve himayeyi reddedip milli sınırları çizdik!",
+        "stage_3": "Hatırlıyorum! 23 Nisan 1920'de TBMM'yi açtık; Sakarya ve Büyük Taarruz'la vatanı kurtardık!",
+        "stage_4": "Şimdi tamamdır: Egemenlik kayıtsız şartsız milletindir; Türkiye Cumhuriyeti ilelebet payidar kalacaktır!",
+        "wrong_claim": "Hayır! Manda ve himaye asla kabul edilemez; parolamız ya istiklal ya ölümdür!",
+        "angry_leave": "Milli egemenlikten ve tam bağımsızlıktan taviz verilemez!"
+      },
+      "choices": [
+        {
+          "id": "national_struggle",
+          "label": "Samsun, Amasya, Erzurum ve Sivas",
+          "correct": true,
+          "reply": "stage_1",
+          "keywords": ["19 mayıs", "samsun", "amasya", "azim ve kararı", "erzurum", "sivas", "kongre", "manda", "ya istiklal"]
+        },
+        {
+          "id": "tbmm_republic",
+          "label": "TBMM, Milli Egemenlik ve Cumhuriyet",
+          "correct": true,
+          "reply": "stage_4",
+          "keywords": ["23 nisan", "tbmm", "egemenlik", "milletindir", "cumhuriyet", "29 ekim", "sakarya", "büyük taarruz", "akdeniz", "inkılap", "laiklik", "ilim", "yurtta sulh", "atatürk", "mustafa kemal", "çanakkale"]
+        },
+        {
+          "id": "wrong_mandate",
+          "label": "Manda ve himayeyi kabul etmek",
+          "correct": false,
+          "reply": "wrong_claim",
+          "keywords": ["manda kabul", "himaye kabul", "teslim ol", "saltanat sürsün", "bağımsızlık imkansız"]
+        }
+      ]
+    }
+  }
+}

@@ -6,6 +6,7 @@ extends "res://scripts/mission.gd"
 
 const ConversationStageScript = preload("res://stations/philosophy/visual/conversation_stage.gd")
 const PhilosopherBrainScript = preload("res://stations/philosophy/visual/philosopher_brain.gd")
+const PhilosopherActorScript = preload("res://stations/philosophy/visual/philosopher_actor.gd")
 const Hud = preload("res://scripts/mission_hud.gd")
 const UITheme = preload("res://scripts/ui_theme.gd")
 
@@ -86,8 +87,20 @@ func _ready() -> void:
 
 
 func _build_dialogue_controls() -> void:
-	_player_quote.add_theme_font_size_override("font_size", 17)
-	_player_quote.add_theme_color_override("font_color", Color("#9fb6c3"))
+	var font_cinzel := preload("res://fonts/Cinzel-Regular.ttf")
+	var font_marcellus := preload("res://fonts/Marcellus-Regular.ttf")
+
+	if hud != null:
+		hud.directive.add_theme_font_override("font", font_cinzel)
+		hud.directive.add_theme_font_size_override("font_size", 18)
+		hud.directive.add_theme_color_override("font_color", Color("#ede4d3"))
+		if hud.info_label != null:
+			hud.info_label.add_theme_font_override("font", font_marcellus)
+			hud.info_label.add_theme_color_override("font_color", Color("#c4baa4"))
+
+	_player_quote.add_theme_font_override("font", font_marcellus)
+	_player_quote.add_theme_font_size_override("font_size", 18)
+	_player_quote.add_theme_color_override("font_color", Color("#d5cbba"))
 	_player_quote.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.90))
 	_player_quote.add_theme_constant_override("shadow_offset_x", 0)
 	_player_quote.add_theme_constant_override("shadow_offset_y", 2)
@@ -96,22 +109,26 @@ func _build_dialogue_controls() -> void:
 	stage.choice_slot.add_child(_player_quote)
 
 	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(0, 10)
+	spacer.custom_minimum_size = Vector2(0, 8)
 	stage.choice_slot.add_child(spacer)
 
-	_chat_row.add_theme_constant_override("separation", 8)
-	_chat_row.custom_minimum_size = Vector2(0, 40)
+	_chat_row.add_theme_constant_override("separation", 10)
+	_chat_row.custom_minimum_size = Vector2(0, 42)
 
-	_input_box.placeholder_text = "Filozofla konuş (cümleni yazıp Enter'a bas)…"
+	_input_box.placeholder_text = "Düşünceni veya sözünü yaz…"
 	_input_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_input_box.custom_minimum_size = Vector2(260, 40)
+	_input_box.custom_minimum_size = Vector2(260, 42)
+	_input_box.add_theme_font_override("font", font_marcellus)
+	_input_box.add_theme_font_size_override("font_size", 16)
+	_input_box.add_theme_color_override("font_color", Color("#f5f0e6"))
+	_input_box.add_theme_color_override("font_placeholder_color", Color(0.72, 0.68, 0.60, 0.55))
 	_input_box.text_submitted.connect(_on_text_submitted)
 
 	var normal_sb := StyleBoxFlat.new()
-	normal_sb.bg_color = Color(0.03, 0.05, 0.08, 0.65)
-	normal_sb.border_color = Color(0.95, 0.65, 0.35, 0.55)
-	normal_sb.border_width_bottom = 2
-	normal_sb.set_corner_radius_all(6)
+	normal_sb.bg_color = Color(0.04, 0.05, 0.07, 0.82)
+	normal_sb.border_color = Color(0.75, 0.62, 0.40, 0.45)
+	normal_sb.border_width_bottom = 1
+	normal_sb.set_corner_radius_all(2)
 	normal_sb.content_margin_left = 14
 	normal_sb.content_margin_right = 14
 	normal_sb.content_margin_top = 8
@@ -119,20 +136,45 @@ func _build_dialogue_controls() -> void:
 	_input_box.add_theme_stylebox_override("normal", normal_sb)
 
 	var focus_sb := normal_sb.duplicate() as StyleBoxFlat
-	focus_sb.bg_color = Color(0.05, 0.08, 0.13, 0.85)
-	focus_sb.border_color = Color("#f2a65a")
-	focus_sb.border_width_bottom = 2
+	focus_sb.bg_color = Color(0.06, 0.07, 0.10, 0.94)
+	focus_sb.border_color = Color("#d8b97a")
+	focus_sb.border_width_bottom = 1
 	_input_box.add_theme_stylebox_override("focus", focus_sb)
 	_chat_row.add_child(_input_box)
 
-	_send_btn.text = "Gönder"
-	_send_btn.theme_type_variation = &"PrimaryButton"
-	_send_btn.custom_minimum_size = Vector2(92, 40)
+	var btn_sb := StyleBoxFlat.new()
+	btn_sb.bg_color = Color(0.09, 0.08, 0.07, 0.85)
+	btn_sb.border_color = Color(0.80, 0.68, 0.44, 0.55)
+	btn_sb.set_border_width_all(1)
+	btn_sb.set_corner_radius_all(2)
+	btn_sb.content_margin_left = 16
+	btn_sb.content_margin_right = 16
+	btn_sb.content_margin_top = 8
+	btn_sb.content_margin_bottom = 8
+
+	var btn_hover := btn_sb.duplicate() as StyleBoxFlat
+	btn_hover.bg_color = Color(0.16, 0.13, 0.09, 0.95)
+	btn_hover.border_color = Color("#e5c685")
+
+	_send_btn.text = "Söyle"
+	_send_btn.custom_minimum_size = Vector2(88, 42)
+	_send_btn.add_theme_font_override("font", font_cinzel)
+	_send_btn.add_theme_font_size_override("font_size", 14)
+	_send_btn.add_theme_color_override("font_color", Color("#efe7d6"))
+	_send_btn.add_theme_stylebox_override("normal", btn_sb)
+	_send_btn.add_theme_stylebox_override("hover", btn_hover)
+	_send_btn.add_theme_stylebox_override("pressed", btn_hover)
 	_send_btn.pressed.connect(func() -> void: _on_text_submitted(_input_box.text))
 	_chat_row.add_child(_send_btn)
 
-	_mic_btn.text = "Sesle Söyle (V)"
-	_mic_btn.custom_minimum_size = Vector2(134, 40)
+	_mic_btn.text = "Mikrofon (V)"
+	_mic_btn.custom_minimum_size = Vector2(124, 42)
+	_mic_btn.add_theme_font_override("font", font_cinzel)
+	_mic_btn.add_theme_font_size_override("font_size", 14)
+	_mic_btn.add_theme_color_override("font_color", Color("#d8ceba"))
+	_mic_btn.add_theme_stylebox_override("normal", btn_sb)
+	_mic_btn.add_theme_stylebox_override("hover", btn_hover)
+	_mic_btn.add_theme_stylebox_override("pressed", btn_hover)
 	_mic_btn.pressed.connect(_on_mic_pressed)
 	_chat_row.add_child(_mic_btn)
 
@@ -164,7 +206,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			_anger = clampf(_anger - 0.25, 0.0, 1.0)
 			stage.set_anger(_anger)
 		KEY_R:
-			stage.actor.play_reaction(&"stir")
+			if stage.has_node("PhilosopherActor"):
+				stage.get_node("PhilosopherActor").call("play_reaction", &"stir")
 		KEY_E:
 			apply_llm_trigger({"trigger": "angry_leave", "reply_id": "angry_leave"})
 		KEY_X:
@@ -223,7 +266,7 @@ func _on_mic_pressed() -> void:
 
 
 func _on_speech_recognized(ok: bool, text: String) -> void:
-	_mic_btn.text = "Sesle Söyle (V)"
+	_mic_btn.text = "Mikrofon (V)"
 	_mic_btn.disabled = false
 	if not ok or text == "":
 		hud.say("Ses anlaşılamadı; tekrar konuşun veya cümlenizi yazın.", &"bad")

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/history/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"history"
+title = "Tarih Meydanı"
+subject = "Tarih"
+grade = 10
+routes = PackedStringArray("class", "lgs", "tyt", "ayt")
+description = "Tarihî şahsiyetlerle konuşarak dönüm noktalarını, fermanları ve ilkeleri doğrula; bozulan zaman çizgisini onar."
+curriculum = "MEB Tarih 9–12 ve T.C. İnkılap Tarihi (LGS · TYT · AYT)"
+source_url = "https://cdn.tbmm.gov.tr/TbmmWeb/Yayinlar/Dosya/8968713a-84eb-4c10-88d1-88d1-4c10-84eb-8968713a.pdf"
+scene = ExtResource("2")
