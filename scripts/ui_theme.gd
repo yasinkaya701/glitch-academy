@@ -4,6 +4,7 @@ extends Node
 ## SectionLabel, MutedLabel, GlassPanel, ConsolePanel.
 
 const FONT = preload("res://assets/fonts/Inter.ttf")
+const DISPLAY_FONT = preload("res://assets/fonts/YanlisDunyaMeridian-Display.ttf")
 
 const BG := Color("#070b12")
 const PANEL := Color("#0f1824")
@@ -30,13 +31,15 @@ static func build() -> Theme:
 	var semibold := FontVariation.new()
 	semibold.base_font = FONT
 	semibold.variation_opentype = {"wght": 650}
+	var display := FontVariation.new()
+	display.base_font = DISPLAY_FONT
 	theme.default_font = regular
 	theme.default_font_size = 15
 
 	# Label
 	theme.set_color("font_color", "Label", INK)
 	theme.set_type_variation("HeadlineLabel", "Label")
-	theme.set_font("font", "HeadlineLabel", semibold)
+	theme.set_font("font", "HeadlineLabel", display)
 	theme.set_font_size("font_size", "HeadlineLabel", 24)
 	theme.set_type_variation("SectionLabel", "Label")
 	theme.set_font("font", "SectionLabel", semibold)
