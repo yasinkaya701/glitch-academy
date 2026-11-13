@@ -12,7 +12,7 @@ Yasin görevleri ve sahiplerini belirler. Yasin Codex ve Claude ile, ekip arkada
 
 ## Çalışma alanı
 
-Her görev için güncel `main` üzerinden ayrı bir dal aç. Örnek olarak Fizik istasyonu için `mission/free-fall` kullan. Birden fazla ajan aynı bilgisayarda eşzamanlı çalışacaksa her dalı ayrı klon veya worktree içinde aç. İstasyonun sahne ve mantığının tek yazarı olsun. Varlıklar ayrı dal ve dosyalarda paralel üretilebilir. [Varlık üretimi ve Claude talep şablonu](docs/ASSETS.md)
+Her görev için güncel `main` üzerinden ayrı bir dal aç. Örnek olarak Fizik istasyonu için `mission/free-fall` kullan. Birden fazla ajan aynı bilgisayarda eşzamanlı çalışacaksa her dalı ayrı klon veya worktree içinde aç. İstasyonun sahne ve mantığının tek yazarı olsun. Varlıklar ayrı dal ve dosyalarda paralel üretilebilir. [Varlık kılavuzu: hazır varlık ve kendi üretimimiz](docs/ASSETS.md)
 
 Örneğin bir kişi `mission/free-fall` dalında Düşüş Odası'nı geliştirirken diğeri `mission/heart` dalında Kalp Odası'nı geliştirebilir. İkisi de sahnesini kendi `mission.tres` dosyasına bağlar ve F5 ile kontrol merkezinden dener.
 
@@ -59,7 +59,7 @@ Prizma, tank veya kiriş gibi modelleri Godot mesh'leriyle kurabilirsin. Blender
 
 ## Tasarım
 
-Arayüz için [docs/DESIGN.md](docs/DESIGN.md), oyun ve deney tasarımı için [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) tek kaynaktır. İkisi de iki hat için bağlayıcıdır. Her istasyon koda başlamadan önce kendi klasörüne tasarım kartını (`DESIGN_CARD.md`, GAME_DESIGN.md bölüm 4) yazar ve onay alır. Mevcut istasyonların denetimi ve oyun testi notları [docs/review/2026-11-14-deney-denetimi.md](docs/review/2026-11-14-deney-denetimi.md) içindedir.
+Arayüz için [docs/DESIGN.md](docs/DESIGN.md), oyun ve deney tasarımı için [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) tek kaynaktır. İkisi de iki hat için bağlayıcıdır. Her istasyon koda başlamadan önce kendi klasörüne tasarım kartını (`DESIGN_CARD.md`, GAME_DESIGN.md bölüm 4) yazar ve onay alır. Mevcut istasyonların denetimi ve oyun testi notları [docs/review/2026-11-14-deney-denetimi.md](docs/review/2026-11-14-deney-denetimi.md) içindedir. Varlık bulma ve üretme yolu (internetten hazır varlık ya da GitHub üzerinden kendi üretimimiz) [docs/ASSETS.md](docs/ASSETS.md) içindedir.
 
 ## İş bölümü: LGS ve YKS
 
