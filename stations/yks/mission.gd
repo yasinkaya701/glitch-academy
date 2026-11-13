@@ -149,7 +149,7 @@ func _build_interface() -> void:
 	add_child(overline)
 	_info_button = Button.new()
 	_info_button.text = "ⓘ"
-	_info_button.tooltip_text = "Kazanım ve kaynak"
+	_info_button.tooltip_text = "Bu bölümün kazanımı"
 	_info_button.theme_type_variation = "CompactButton"
 	_info_button.custom_minimum_size = Vector2(44, 40)
 	_info_button.position = Vector2(size.x - 60.0, 8)
@@ -173,11 +173,12 @@ func _build_interface() -> void:
 	_evidence_label.size = Vector2(right_panel.size.x - 36.0, 18)
 	add_child(_evidence_label)
 	_prompt_label = _label(mission_definition.prompt, 17, INK)
+	_prompt_label.add_theme_color_override("font_color", MUTED)
 	_prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_prompt_label.position = right_panel.position + Vector2(18, 102)
 	_prompt_label.size = Vector2(right_panel.size.x - 36.0, 102)
 	add_child(_prompt_label)
-	_instruction_label = _label(mission_definition.instruction, 16, INK)
+	_instruction_label = _label(mission_definition.instruction, 18, INK)
 	_instruction_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_instruction_label.position = right_panel.position + Vector2(18, 156)
 	_instruction_label.size = Vector2(right_panel.size.x - 36.0, 58)
@@ -306,12 +307,12 @@ func _rebuild_interaction() -> void:
 func _show_learning_note() -> void:
 	if _info_dialog == null:
 		_info_dialog = AcceptDialog.new()
-		_info_dialog.title = "Öğrenme notu"
-		_info_dialog.dialog_text = "%s\n%s\n%s" % [mission_definition.learning_target, mission_definition.curriculum, mission_definition.source_note]
+		_info_dialog.title = "Kazanım"
+		_info_dialog.dialog_text = mission_definition.learning_target
 		add_child(_info_dialog)
 	var viewport_size := get_viewport_rect().size
-	var dialog_width := mini(560, maxi(180, roundi(viewport_size.x - 32.0)))
-	var dialog_height := mini(280, maxi(180, roundi(viewport_size.y - 48.0)))
+	var dialog_width := mini(420, maxi(180, roundi(viewport_size.x - 32.0)))
+	var dialog_height := mini(190, maxi(150, roundi(viewport_size.y - 48.0)))
 	_info_dialog.popup_centered(Vector2i(dialog_width, dialog_height))
 
 
