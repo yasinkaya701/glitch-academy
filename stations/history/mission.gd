@@ -89,7 +89,6 @@ func _ready() -> void:
 
 	_build_dialogue_controls()
 
-	var args := OS.get_cmdline_user_args()
 	for a in args:
 		if a.begins_with("--who="):
 			_index = maxi(ORDER.find(StringName(a.substr(6))), 0)
