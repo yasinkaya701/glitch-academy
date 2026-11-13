@@ -122,10 +122,13 @@ def build():
     hum=g.add_mesh("HumerusMesh",[(hum_p,hum_i)],0)
     hum_node=g.node("Humerus",hum,extras={"unit":"m","landmarks":"shoulder to elbow"})
     # Deltoid insertion and two separate, independently scalable muscle bellies.
-    bp,bi=spindle_y(.024,.048,.304,.045,.040,.031)
+    # Keep the flexor on the anterior plane so the posterior extensor does not
+    # appear as a second arm-width spindle in the flexion composition.
+    bp,bi=spindle_y(.016,.057,.304,.045,.038,.030)
     biceps=g.add_mesh("BicepsMesh",[(bp,bi)],2)
     bi_node=g.node("Biceps",biceps,translation=(0,0,0),extras={"pivot":"proximal origin near shoulder","scale_axis":"Y","action":"shortening flexes the elbow"})
-    tp,ti=spindle_y(-.028,-.047,.302,.035,.031,.024)
+    # The triceps long head sits posterior to the shaft and slightly medial.
+    tp,ti=spindle_y(-.004,-.060,.302,.035,.036,.025)
     tri=g.add_mesh("TricepsMesh",[(tp,ti)],3)
     tri_node=g.node("Triceps",tri,extras={"pivot":"proximal origin near shoulder","scale_axis":"Y","action":"shortening extends the elbow"})
     # Tendons follow the front and back contours from the muscle bellies to insertions.
@@ -135,12 +138,14 @@ def build():
     tt=g.add_mesh("TricepsTendonMesh",tt_parts,4);tn2=g.node("Tendon_Triceps",tt,extras={"role":"triceps insertion on olecranon"})
     # Elbow pivot and forearm bones are children, so rotation carries both as a unit.
     radius_parts=merge([
+        ellipsoid((.025,-.012,.006),(.014,.018,.014)),
         tapered_bone((.025,-.012,.006),(.268,-.043,.012),.012,.007,0.82),
         ellipsoid((.272,-.043,.012),(.012,.019,.011)),
     ])
     radius_mesh=g.add_mesh("RadiusMesh",[(radius_parts[0],radius_parts[1])],0)
     radius_node=g.node("Radius",radius_mesh,extras={"unit":"m","pivot":"Elbow"})
     ulna_parts=merge([
+        ellipsoid((-.016,-.012,-.006),(.016,.022,.015)),
         tapered_bone((-.016,-.010,-.006),(.249,-.055,-.009),.012,.007,0.85),
         ellipsoid((.251,-.055,-.009),(.010,.017,.009)),
     ])
