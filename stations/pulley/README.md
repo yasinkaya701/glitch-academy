@@ -1,11 +1,9 @@
 # Palanga Atölyesi
 
-LGS Fen Bilimleri, 8. sınıf basit makineler için etkileşimli görev. MERİDYEN ivme etiketlerini ters gösterir. Oyuncu önce sabit makarayı (`a` ve `a`), ardından tek hareketli makarayı (`a` yük, `2a` serbest ip ucu) düzeltir.
+LGS Fen Bilimleri için sabit ve hareketli makaranın sağladığı kolaylıkları ölçümle karşılaştırır. MERİDYEN, hareketli makarada yükü taşıyan ip kolunu eksik kaydeder; yük durdurucuya çarpar.
 
-Hareketli makarada yük iki ip kolu tarafından taşınır. İdeal, esnemeyen ve kaymayan ip için toplam uzunluk sabittir: yükün yer değiştirmesinin iki katı kadar ip serbest uçtan alınır. Bu nedenle ivmelerin büyüklükleri `a_yük = a_ip / 2` olur. Animasyon bu oranı korur; sabit makarada yük ve serbest uç eşit miktarda, zıt yönde hareket eder.
+Görev altı adımdan oluşur: kriz, iki makara türünde elle ölçüm, ölçüm kaydını plakaya taşıyarak teşhis, ip kolu ayarını düzeltme, yeni 40 N yükü üç hak içinde kurtarma ve doğru hareketi mühürleme. Sabit makarada kuvvetin yönü değişir. Hareketli makarada daha düşük giriş kuvveti, daha uzun ip yolu gerektirir; ekranda formül yerine kuvvet ve yol göstergeleri kullanılır.
 
-Model Godot Mesh düğümlerinden üretilir: metal taşıyıcı, işlenmiş yanaklı kasnaklar, göbekler, bağlantı cıvataları, kılavuz ölçü çizgileri ve halat. Düzenek bir laboratuvar tezgâhına bağlanır; arka duvar, pegboard, çekmeceler ve görev ışığı aynı 3B ortamda modellenir. `mission.tscn` sahnesi doğrudan F6 ile, LGS kampanyası ve sınıf keşfi üzerinden F5 ile açılabilir.
+3B model Godot mesh'lerinden kurulur. Halat ucunu sürüklemek yükü hareket ettirir; boş alanı sürüklemek düzeneği döndürür, tekerlek yakınlaştırır. `mission.tscn` F6 ile ve kontrol merkezi üzerinden açılır.
 
-Halatın serbest ucundaki tutamağı sürükleyerek bağlı yükün hareketini gözlemleyebilirsin. Sabit makarada yük, ipin ucu kadar; hareketli makarada ipin ucu kadar yolun yarısı kadar hareket eder. Düzenekte boş bir alana basılı tutup sürüklemek modeli döndürür; tekerlek yakınlaştırır, çift tıklama görünümü sıfırlar. Halatı elle çekmeye başlayınca animasyon durur; “Başlat” düğmesi hareketi sürdürür.
-
-Müfredat referansı: 2018 Fen Bilimleri öğretim programı, F.8.5.1 Basit Makineler. Görev, ideal ip ve makara varsayımını ekranda açıkça söyler.
+Müfredat kaydı: [MEB 2018 Fen Bilimleri Öğretim Programı, F.8.5.1.1](https://mufredat.meb.gov.tr/Dosyalar/201812312311937-FEN%20B%C4%B0L%C4%B0MLER%C4%B0%20%C3%96%C4%9ERET%C4%B0M%20PROGRAMI2018.pdf). LGS bu çalışma dalında 2018 koduyla işlenir.

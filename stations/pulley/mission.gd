@@ -1,22 +1,28 @@
 extends "res://scripts/mission.gd"
-## LGS simple-machines experiment: students repair acceleration labels sabotaged by MERİDYEN.
+## LGS Fen Bilimleri · F.8.5.1.1 basit makinelerin avantajları.
 
-const ACCELERATIONS := ["a", "2a"]
 const EXPERIMENT_3D := preload("res://scenes/experiment_3d.tscn")
-const BG := Color("#09131e")
-const TEXT := Color("#eef4f6")
-const MUTED := Color("#a7bbc5")
-const TEAL := Color("#6dd3c5")
-const AMBER := Color("#f0bd70")
-const RED := Color("#f17d72")
+const MAX_RESCUE_TRIES := 3
+const RESCUE_EFFORT_MIN_N := 20.0
+const RESCUE_EFFORT_MAX_N := 25.0
 
-var _mode := 0 # 0: fixed pulley, 1: single movable pulley
-var _stage := 0
-var _load_choice := 1
-var _rope_choice := 0
+enum Phase { CRISIS, TEST, DIAGNOSE, CALIBRATE, RESCUE, SEAL, OUT_OF_TRIES }
+
+var _phase := Phase.CRISIS
+var _mode := 1
 var _motion_time := 0.0
 var _running := true
-var _solved := false
+var _calibrated := false
+var _crisis_elapsed := 0.0
+var _seal_elapsed := 0.0
+var _support_count := 1
+var _selected_evidence := -1
+var _tries_left := MAX_RESCUE_TRIES
+var _test_rope_travel := 0.0
+var _test_load_travel := 0.0
+var _rescue_rope_travel := 0.0
+var _rescue_load_travel := 0.0
+var _records: Dictionary = {0: {}, 1: {}}
 
 var _viewport: SubViewport
 var _experiment_view: Control
@@ -29,18 +35,20 @@ var _lower_pulley: Node3D
 var _upper_pulley: Node3D
 var _moving_link: MeshInstance3D
 var _rope_segments: Array[MeshInstance3D] = []
-var _load_choice_button: Button
-var _rope_choice_button: Button
-var _rule_label: Label
 var _mode_buttons: Array[Button] = []
 var _stage_label: Label
+var _directive: Label
 var _fault_label: Label
-var _fault_panel: PanelContainer
+var _measurements: Label
 var _feedback: Label
-var _hint: Label
-var _run_button: Button
-var _repair_button: Button
 var _interaction_label: Label
+var _primary_action: Button
+var _exit_button: Button
+var _record_buttons: Array[Button] = []
+var _calibration_button: Button
+var _effort_slider: HSlider
+var _effort_label: Label
+var _tries_label: Label
 var _dragging_rig := false
 var _dragging_rope := false
 var _last_pointer := Vector2.ZERO
@@ -49,174 +57,391 @@ var _last_pointer := Vector2.ZERO
 func _ready() -> void:
 	_build_interface()
 	_build_world()
+	_enter_crisis()
 	_update_interface()
 
 
 func _process(delta: float) -> void:
-	if not _running:
-		return
-	_motion_time += delta
-	_update_motion()
+	if _phase == Phase.CRISIS:
+		_crisis_elapsed += delta
+		if _crisis_elapsed >= 6.0:
+			_running = false
+			_update_interface()
+	elif _phase == Phase.SEAL:
+		_seal_elapsed += delta
+		if _seal_elapsed >= 2.2:
+			_running = false
+	if _running:
+		_motion_time += delta
+		_update_motion()
 
 
 func _build_interface() -> void:
 	var background := ColorRect.new()
-	background.color = BG
-	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	background.color = UITheme.BG
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
-
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 28)
-	margin.add_theme_constant_override("margin_right", 28)
-	margin.add_theme_constant_override("margin_top", 22)
-	margin.add_theme_constant_override("margin_bottom", 20)
+	for side in ["left", "right"]:
+		margin.add_theme_constant_override("margin_" + side, 24)
+	for side in ["top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 18)
 	add_child(margin)
-
 	var layout := VBoxContainer.new()
-	layout.add_theme_constant_override("separation", 14)
+	layout.add_theme_constant_override("separation", 12)
 	margin.add_child(layout)
-
 	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 18)
+	header.add_theme_constant_override("separation", 16)
 	layout.add_child(header)
-	var title_stack := VBoxContainer.new()
-	title_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title_stack.add_theme_constant_override("separation", 2)
-	header.add_child(title_stack)
-	var eyebrow := _label("LGS FEN  ·  BASİT MAKİNELER", 13, TEAL)
-	title_stack.add_child(eyebrow)
-	title_stack.add_child(_label("Palanga Atölyesi", 29, TEXT, true))
-	var exit_button := _button("←  Kontrol merkezine dön", false)
-	exit_button.pressed.connect(_request_exit)
-	header.add_child(exit_button)
-
+	var identity := VBoxContainer.new()
+	identity.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(identity)
+	var kicker := _label("LGS FEN BİLİMLERİ  ·  F.8.5.1.1", 14)
+	kicker.theme_type_variation = &"SectionLabel"
+	identity.add_child(kicker)
+	var title := _label("Palanga Atölyesi", 30)
+	title.theme_type_variation = &"HeadlineLabel"
+	identity.add_child(title)
+	_exit_button = Button.new()
+	_exit_button.text = "Kontrol merkezine dön"
+	_exit_button.pressed.connect(_request_exit)
+	header.add_child(_exit_button)
 	var content := HBoxContainer.new()
 	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.add_theme_constant_override("separation", 16)
 	layout.add_child(content)
-
-	var visual_column := VBoxContainer.new()
-	visual_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	visual_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	visual_column.add_theme_constant_override("separation", 10)
-	content.add_child(visual_column)
-
+	var visual := VBoxContainer.new()
+	visual.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	visual.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	visual.add_theme_constant_override("separation", 8)
+	content.add_child(visual)
 	var mode_row := HBoxContainer.new()
 	mode_row.add_theme_constant_override("separation", 8)
-	visual_column.add_child(mode_row)
-	_mode_buttons = [
-		_button("01  Sabit makara", true),
-		_button("02  Hareketli makara", true),
-	]
-	for i in range(_mode_buttons.size()):
+	visual.add_child(mode_row)
+	_mode_buttons = [_button("Sabit makara", true), _button("Hareketli makara", true)]
+	for i in _mode_buttons.size():
 		_mode_buttons[i].pressed.connect(_select_mode.bind(i))
 		mode_row.add_child(_mode_buttons[i])
-
 	var frame := PanelContainer.new()
 	frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	frame.add_theme_stylebox_override("panel", _panel_style(Color("#172633"), Color("#314958"), 1, 14))
-	visual_column.add_child(frame)
-	var experiment_view: Control = EXPERIMENT_3D.instantiate()
-	experiment_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	experiment_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_experiment_view = experiment_view
-	_experiment_view.mouse_default_cursor_shape = Control.CURSOR_MOVE
+	frame.theme_type_variation = &"GlassPanel"
+	visual.add_child(frame)
+	_experiment_view = EXPERIMENT_3D.instantiate()
+	_experiment_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_experiment_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_experiment_view.gui_input.connect(_on_experiment_gui_input)
+	_experiment_view.mouse_default_cursor_shape = Control.CURSOR_MOVE
 	frame.add_child(_experiment_view)
 	_viewport = _experiment_view.get_node("Viewport") as SubViewport
 	_viewport.msaa_3d = Viewport.MSAA_4X
-	_world = experiment_view.get_node("Viewport/World") as Node3D
-
-	var visual_footer := HBoxContainer.new()
-	visual_footer.add_theme_constant_override("separation", 10)
-	visual_column.add_child(visual_footer)
-	_interaction_label = _label("Halat ucunu çek · Boş alandan döndür · Tekerlekle yakınlaş", 14, MUTED)
-	_interaction_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	visual_footer.add_child(_interaction_label)
-	_run_button = _button("Ⅱ  Durdur", false)
-	_run_button.pressed.connect(_toggle_motion)
-	visual_footer.add_child(_run_button)
-
+	_world = _experiment_view.get_node("Viewport/World") as Node3D
+	_interaction_label = _label("Halat ucunu çekerek ölç · Boş alandan sürükleyerek düzeneği döndür", 14)
+	_interaction_label.theme_type_variation = &"MutedLabel"
+	visual.add_child(_interaction_label)
 	var lesson := PanelContainer.new()
-	lesson.custom_minimum_size.x = 365
+	lesson.custom_minimum_size.x = 360
 	lesson.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	lesson.add_theme_stylebox_override("panel", _panel_style(Color("#101e2b"), Color("#253b4b"), 1, 14))
+	lesson.theme_type_variation = &"ConsolePanel"
 	content.add_child(lesson)
-	var lesson_margin := MarginContainer.new()
-	lesson_margin.add_theme_constant_override("margin_left", 19)
-	lesson_margin.add_theme_constant_override("margin_right", 19)
-	lesson_margin.add_theme_constant_override("margin_top", 18)
-	lesson_margin.add_theme_constant_override("margin_bottom", 18)
-	lesson.add_child(lesson_margin)
+	var panel_margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		panel_margin.add_theme_constant_override("margin_" + side, 18)
+	lesson.add_child(panel_margin)
 	var panel := VBoxContainer.new()
 	panel.add_theme_constant_override("separation", 11)
-	lesson_margin.add_child(panel)
-	_stage_label = _label("GÖZLEM 01 / 02", 12, AMBER)
+	panel_margin.add_child(panel)
+	_stage_label = _label("ADIM 1 / 6  ·  KRİZ", 14)
+	_stage_label.theme_type_variation = &"SectionLabel"
 	panel.add_child(_stage_label)
-	var intro := _label("İdeal ipte ivme ilişkisini karşılaştır. Hareketli makara yükü iki ip parçasıyla taşır.", 15, TEXT)
-	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	panel.add_child(intro)
-	var rule_box := PanelContainer.new()
-	rule_box.add_theme_stylebox_override("panel", _panel_style(Color("#102d32"), Color("#2f7774"), 1, 10))
-	panel.add_child(rule_box)
-	var rule_margin := MarginContainer.new()
-	rule_margin.add_theme_constant_override("margin_left", 12)
-	rule_margin.add_theme_constant_override("margin_right", 12)
-	rule_margin.add_theme_constant_override("margin_top", 10)
-	rule_margin.add_theme_constant_override("margin_bottom", 10)
-	rule_box.add_child(rule_margin)
-	_rule_label = _label("SABİT MAKARA\na_yük = a_ip\n0,5 = 0,5 m/s²", 15, TEAL, true)
-	_rule_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rule_margin.add_child(_rule_label)
-	var fault_title := _label("MERİDYEN'İN BOZDUĞU KAYIT", 11, RED)
-	panel.add_child(fault_title)
-	_fault_panel = PanelContainer.new()
-	_fault_panel.add_theme_stylebox_override("panel", _panel_style(Color("#351e25"), Color("#914e51"), 1, 9))
-	panel.add_child(_fault_panel)
-	var fault_margin := MarginContainer.new()
-	fault_margin.add_theme_constant_override("margin_left", 12)
-	fault_margin.add_theme_constant_override("margin_right", 12)
-	fault_margin.add_theme_constant_override("margin_top", 9)
-	fault_margin.add_theme_constant_override("margin_bottom", 9)
-	_fault_panel.add_child(fault_margin)
-	_fault_label = _label("Yük ivmesi: 2a     İp ucu: a", 15, TEXT, true)
-	fault_margin.add_child(_fault_label)
-	panel.add_child(_label("Düzeneğe uygun ivmeleri seç:", 14, MUTED))
-	_load_choice_button = _button("Yük ivmesi  ·  2a", false)
-	_load_choice_button.pressed.connect(_cycle_load_choice)
-	panel.add_child(_load_choice_button)
-	_rope_choice_button = _button("İp ucu ivmesi  ·  a", false)
-	_rope_choice_button.pressed.connect(_cycle_rope_choice)
-	panel.add_child(_rope_choice_button)
-	_repair_button = _button("Fizik kuralını onar  →", true)
-	_repair_button.pressed.connect(_repair_rule)
-	panel.add_child(_repair_button)
-	_feedback = _label("İp parçası sayısını ve hareket yönlerini gözlemle.", 14, MUTED)
+	_directive = _label("", 21)
+	_directive.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	panel.add_child(_directive)
+	var plate_heading := _label("KALİBRASYON PLAKASI", 12)
+	plate_heading.theme_type_variation = &"SectionLabel"
+	panel.add_child(plate_heading)
+	_fault_label = _label("", 16)
+	_fault_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	panel.add_child(_fault_label)
+	_measurements = _label("", 16)
+	_measurements.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	panel.add_child(_measurements)
+	_record_buttons = [_button("Kayıt 1", false), _button("Kayıt 2", false)]
+	for button in _record_buttons:
+		button.toggle_mode = true
+		button.visible = false
+		button.pressed.connect(_select_evidence.bind(_record_buttons.find(button)))
+		panel.add_child(button)
+	_calibration_button = _button("Taşıyıcı ip kolu: 1", false)
+	_calibration_button.visible = false
+	_calibration_button.pressed.connect(_toggle_support_count)
+	panel.add_child(_calibration_button)
+	_effort_label = _label("Uygulanan kuvvet  ·  0 N", 16)
+	_effort_label.visible = false
+	panel.add_child(_effort_label)
+	_effort_slider = HSlider.new()
+	_effort_slider.min_value = 0
+	_effort_slider.max_value = 40
+	_effort_slider.step = 5
+	_effort_slider.value_changed.connect(_on_effort_changed)
+	_effort_slider.visible = false
+	panel.add_child(_effort_slider)
+	_tries_label = _label("", 14)
+	_tries_label.visible = false
+	panel.add_child(_tries_label)
+	_feedback = _label("", 15)
 	_feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_feedback.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.add_child(_feedback)
-	_hint = _label("İdeal düzende ip esnemez ve kaymaz; toplam ip uzunluğu sabittir.", 12, MUTED)
-	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	panel.add_child(_hint)
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	panel.add_child(spacer)
-	panel.add_child(_label("Yönü değiştiren sabit makara kuvvet kazancı sağlamaz. Hareketli makarada iki ip kolu yükü taşır.", 12, MUTED))
+	_primary_action = Button.new()
+	_primary_action.custom_minimum_size.y = 48
+	_primary_action.theme_type_variation = &"PrimaryButton"
+	_primary_action.pressed.connect(_advance)
+	panel.add_child(_primary_action)
+
+
+func _enter_crisis() -> void:
+	_phase = Phase.CRISIS
+	_mode = 1
+	_calibrated = false
+	_running = true
+	_motion_time = 0.0
+	_crisis_elapsed = 0.0
+	_test_rope_travel = 0.0
+	_test_load_travel = 0.0
+	_rescue_rope_travel = 0.0
+	_rescue_load_travel = 0.0
+	_records = {0: {}, 1: {}}
+	_update_motion()
+
+
+func _advance() -> void:
+	match _phase:
+		Phase.CRISIS:
+			_phase = Phase.TEST
+			_mode = 0
+			_running = false
+			_test_rope_travel = 0.0
+			_test_load_travel = 0.0
+			_update_motion()
+			_feedback.text = "İki düzeneği de elle çalıştır. Halat ve yük göstergelerini okuyup kayıt al."
+		Phase.TEST:
+			_record_test()
+		Phase.DIAGNOSE:
+			_confirm_diagnosis()
+		Phase.CALIBRATE:
+			_calibrate()
+		Phase.RESCUE:
+			_attempt_rescue()
+		Phase.SEAL:
+			completed.emit()
+		Phase.OUT_OF_TRIES:
+			_request_exit()
+	_update_interface()
+
+
+func _record_test() -> void:
+	if _test_rope_travel < 0.20:
+		_feedback.text = "Ölçüm şeridinde okunabilir bir hareket yok. Halat ucunu çekip yeniden dene."
+		return
+	_records[_mode] = {"rope": _test_rope_travel, "load": _test_load_travel, "effort": _read_effort(_mode)}
+	_test_rope_travel = 0.0
+	_test_load_travel = 0.0
+	if _records[0].is_empty():
+		_mode = 1
+		_feedback.text = "Sabit makara kaydedildi. Şimdi hareketli düzeneği sına."
+		_update_motion()
+		return
+	if _records[1].is_empty():
+		_feedback.text = "Hareketli makara kaydedildi. İki ölçümü yan yana incele."
+		return
+	_phase = Phase.DIAGNOSE
+	_selected_evidence = -1
+	_feedback.text = "İki ölçüm de hazır. Bozuk ayarı çürüten kaydı seçip plakaya taşı."
+
+
+func _select_evidence(index: int) -> void:
+	_selected_evidence = index
+	for i in _record_buttons.size():
+		_record_buttons[i].set_pressed_no_signal(i == index)
+
+
+func _confirm_diagnosis() -> void:
+	if _selected_evidence != 1:
+		_feedback.text = "Bu kayıt hareketli makaradaki ayarı açıklamıyor. Ölçüm şeridine yeniden bak."
+		return
+	_phase = Phase.CALIBRATE
+	_support_count = 1
+	_feedback.text = "Kanıt plakaya geçti. Mühür açıldı; taşıyıcı ip kolu ayarını düzelt."
+
+
+func _toggle_support_count() -> void:
+	_support_count = 2 if _support_count == 1 else 1
+	_calibration_button.text = "Taşıyıcı ip kolu: %d" % _support_count
+
+
+func _calibrate() -> void:
+	if _support_count != 2:
+		_feedback.text = "Ayar sağlam ip yoluyla uyuşmuyor. Yükü taşıyan ip kollarını say."
+		return
+	_calibrated = true
+	_phase = Phase.RESCUE
+	_mode = 1
+	_running = false
+	_effort_slider.value = 0
+	_rescue_rope_travel = 0.0
+	_rescue_load_travel = 0.0
+	_motion_time = 0.0
+	_update_motion()
+	_feedback.text = "Kalibrasyon kaydedildi. Yeni yükü kaldırıp arşiv kilidini aç."
+
+
+func _attempt_rescue() -> void:
+	if _rescue_rope_travel < 0.75 or _rescue_load_travel < 0.34:
+		_use_try("Yük emniyet çizgisinin üstüne ulaşmadı. Ölçüm göstergelerini kontrol et.")
+		return
+	if _effort_slider.value < RESCUE_EFFORT_MIN_N:
+		_use_try("Kuvvet göstergesi yükün direncinin altında kaldı; kilit açılmadı.")
+		return
+	if _effort_slider.value > RESCUE_EFFORT_MAX_N:
+		_use_try("Kuvvet göstergesi güvenlik aralığını geçti; kilit kendini kapattı.")
+		return
+	_phase = Phase.SEAL
+	_seal_elapsed = 0.0
+	_running = true
+	_motion_time = 0.0
+	_feedback.text = "Yük emniyet çizgisini geçti. Son hareket doğru düzende yeniden oynuyor."
+
+
+func _use_try(reason: String) -> void:
+	_tries_left -= 1
+	_feedback.text = "%s  ·  Kalan hak: %d" % [reason, _tries_left]
+	if _tries_left <= 0:
+		_phase = Phase.OUT_OF_TRIES
+		_feedback.text = "Üç kurtarma hakkı kullanıldı. Yeni deneme için kontrol merkezine dön."
+		return
+	_rescue_rope_travel = 0.0
+	_rescue_load_travel = 0.0
+	_motion_time = 0.0
+	_update_motion()
+
+
+func _on_effort_changed(value: float) -> void:
+	_effort_label.text = "Uygulanan kuvvet  ·  %.0f N" % value
+
+
+func _select_mode(mode: int) -> void:
+	if _phase != Phase.TEST:
+		return
+	_mode = mode
+	_test_rope_travel = 0.0
+	_test_load_travel = 0.0
+	_motion_time = 0.0
+	_update_motion()
+	_update_interface()
+
+func _request_exit() -> void:
+	exit_requested.emit()
+
+
+func _update_interface() -> void:
+	var labels := ["KRİZ", "SINA", "TEŞHİS", "DÜZELT", "TOPARLA", "MÜHÜR", "HAK BİTTİ"]
+	var display_step := min(_phase, Phase.SEAL) + 1
+	_stage_label.text = "ADIM %d / 6  ·  %s" % [display_step, labels[_phase]]
+	_directive.text = _phase_directive()
+	_fault_label.text = "%s\n%s" % ["DÜZELTİLDİ" if _calibrated else "BOZUK AYAR", "Yükü taşıyan ip kolu: %d" % _support_count if _calibrated else "Hareketli makara yükü, ip ucuyla aynı yolda taşıyor."]
+	_measurements.text = "ÖLÇÜM ŞERİDİ\nSabit  ·  %s\nHareketli  ·  %s" % [_record_text(0), _record_text(1)]
+	if _phase == Phase.TEST:
+		_measurements.text += "\nBu deneme  ·  ip %.2f m  /  yük %.2f m\nKuvvet ölçer  ·  %.0f N" % [_test_rope_travel, _test_load_travel, _read_effort(_mode)]
+	elif _phase == Phase.RESCUE:
+		_measurements.text += "\nBu deneme  ·  ip %.2f m  /  yük %.2f m" % [_rescue_rope_travel, _rescue_load_travel]
+	for i in _mode_buttons.size():
+		_mode_buttons[i].button_pressed = i == _mode
+		_mode_buttons[i].visible = _phase == Phase.TEST
+		_mode_buttons[i].disabled = _phase != Phase.TEST
+	for i in _record_buttons.size():
+		_record_buttons[i].visible = _phase == Phase.DIAGNOSE and not _records[i].is_empty()
+		_record_buttons[i].text = "Kayıt %d  ·  %s" % [i + 1, _record_text(i)] if not _records[i].is_empty() else "Kayıt %d" % (i + 1)
+		_record_buttons[i].set_pressed_no_signal(_selected_evidence == i)
+	_calibration_button.visible = _phase == Phase.CALIBRATE
+	_effort_label.visible = _phase == Phase.RESCUE
+	_effort_slider.visible = _phase == Phase.RESCUE
+	_tries_label.visible = _phase == Phase.RESCUE
+	_tries_label.text = "Kurtarma hakkı  ·  %d / %d" % [_tries_left, MAX_RESCUE_TRIES]
+	_primary_action.text = _primary_text()
+	_exit_button.text = "Kontrol merkezine dön"
+	if _phase == Phase.SEAL:
+		_fault_label.text = "MÜHÜRLENDİ\nİdeal düzende kuvvetten kazanç, yoldan kayıpla birlikte gelir."
+	if _running:
+		_interaction_label.text = "Düzenek çalışıyor · Halat ucunu sürükleyerek durdur ve incele"
+	elif _phase in [Phase.TEST, Phase.RESCUE]:
+		_interaction_label.text = "Halat ucunu çekerek ölç · Boş alandan sürükleyerek döndür"
+	else:
+		_interaction_label.text = "3B düzeneği sürükleyerek döndür · Tekerlekle yakınlaş"
+
+
+func _primary_text() -> String:
+	match _phase:
+		Phase.CRISIS: return "ÖLÇÜME BAŞLA  →"
+		Phase.TEST: return "ÖLÇÜMÜ KAYDA AL  →"
+		Phase.DIAGNOSE: return "KANITI PLAKAYA YERLEŞTİR  →"
+		Phase.CALIBRATE: return "KALİBRASYONU MÜHÜRLE  →"
+		Phase.RESCUE: return "KİLİDİ AÇ  →"
+		Phase.SEAL: return "KAMPANYA KAYDINI GÖNDER  →"
+		_: return "KONTROL MERKEZİNE DÖN"
+
+
+func _phase_directive() -> String:
+	match _phase:
+		Phase.CRISIS: return "Yük emniyet çizgisinin altında kaldı. MERİDYEN'in ayarını incele."
+		Phase.TEST: return "İki düzeneği elle çalıştır; halat ve yük ölçüm çizgilerini kaydet."
+		Phase.DIAGNOSE: return "Bozuk satırı çürüten ölçüm kaydını seçip kalibrasyon plakasına taşı."
+		Phase.CALIBRATE: return "Sahnedeki yükü taşıyan ip kollarına göre plaka ayarını düzelt."
+		Phase.RESCUE: return "40 N yükü emniyet çizgisinin üstüne çıkarıp kilidi aç."
+		Phase.SEAL: return "Son hareketi izle; doğru düzenek arşiv kilidini açtı."
+		_: return "Kurtarma hakkı bitti. Merkeze dönüp yeni deneme başlat."
+
+
+func _read_effort(mode: int) -> float:
+	var supporting_strands := 1 if mode == 0 or not _calibrated else 2
+	return 20.0 / float(supporting_strands)
+
+
+func _record_text(mode: int) -> String:
+	var record: Dictionary = _records[mode]
+	if record.is_empty():
+		return "bekliyor"
+	return "ip %.2f m  ·  yük %.2f m  ·  kuvvet %.0f N" % [record.rope, record.load, record.effort]
+
+
+func _label(value: String, size: int) -> Label:
+	var item := Label.new()
+	item.text = value
+	item.add_theme_font_size_override("font_size", size)
+	return item
+
+
+func _button(value: String, toggle: bool) -> Button:
+	var item := Button.new()
+	item.text = value
+	item.toggle_mode = toggle
+	item.custom_minimum_size = Vector2(0, 42)
+	return item
 
 
 func _build_world() -> void:
 	var environment := _world.get_node("WorldEnvironment") as WorldEnvironment
 	var env := environment.environment.duplicate(true) as Environment
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color("#263742")
+	env.background_color = UITheme.BG
 	var sky := Sky.new()
 	var sky_material := ProceduralSkyMaterial.new()
-	sky_material.sky_top_color = Color("#263742")
-	sky_material.sky_horizon_color = Color("#344854")
-	sky_material.ground_bottom_color = Color("#19272f")
-	sky_material.ground_horizon_color = Color("#263742")
+	sky_material.sky_top_color = UITheme.BG
+	sky_material.sky_horizon_color = UITheme.PANEL
+	sky_material.ground_bottom_color = UITheme.BG
+	sky_material.ground_horizon_color = UITheme.PANEL
 	sky_material.sun_angle_max = 8.0
 	sky.sky_material = sky_material
 	env.sky = sky
@@ -241,17 +466,17 @@ func _build_world() -> void:
 
 
 func _build_workshop_environment() -> void:
-	var wall := _material(Color("#263742"), 0.02, 0.92)
-	var wall_panel := _material(Color("#344854"), 0.04, 0.78)
-	var dark_panel := _material(Color("#1d2a32"), 0.16, 0.66)
-	var warm_trim := _material(Color("#bd8e54"), 0.62, 0.36)
-	var bench_top := _material(Color("#51463b"), 0.08, 0.72)
-	var bench_edge := _material(Color("#27333a"), 0.48, 0.48)
-	var soft_light := _material(Color("#ffd5a0"), 0.0, 0.4)
+	var wall := _material(UITheme.PANEL, 0.02, 0.92)
+	var wall_panel := _material(UITheme.PANEL_RAISED, 0.04, 0.78)
+	var dark_panel := _material(UITheme.BG, 0.16, 0.66)
+	var warm_trim := _material(UITheme.WARM, 0.62, 0.36)
+	var bench_top := _material(UITheme.PANEL, 0.08, 0.72)
+	var bench_edge := _material(UITheme.EDGE, 0.48, 0.48)
+	var soft_light := _material(UITheme.WARM, 0.0, 0.4)
 	soft_light.emission_enabled = true
-	soft_light.emission = Color("#ffd5a0")
+	soft_light.emission = UITheme.WARM
 	soft_light.emission_energy_multiplier = 1.35
-	var ground := _material(Color("#17232a"), 0.08, 0.9)
+	var ground := _material(UITheme.BG, 0.08, 0.9)
 
 	# A continuous work surface carries the model plinth; the legs and drawer fronts
 	# extend below it so the apparatus reads as part of a real laboratory bench.
@@ -288,13 +513,13 @@ func _build_workshop_environment() -> void:
 	_add_box(_world, Vector3(0.0, 4.58, -3.25), Vector3(4.8, 0.055, 0.075), soft_light)
 	var task_light := OmniLight3D.new()
 	task_light.position = Vector3(0.0, 4.45, -2.85)
-	task_light.light_color = Color("ffd19a")
+	task_light.light_color = UITheme.WARM
 	task_light.light_energy = 1.3
 	task_light.omni_range = 9.0
 	_world.add_child(task_light)
 	var key := SpotLight3D.new()
 	key.position = Vector3(-0.5, 5.8, 3.6)
-	key.light_color = Color("fff0da")
+	key.light_color = UITheme.INK
 	key.light_energy = 2.2
 	key.spot_range = 11.0
 	key.spot_angle = 48.0
@@ -448,14 +673,12 @@ func _on_experiment_gui_input(event: InputEvent) -> void:
 
 
 func _begin_pointer_interaction(pointer: Vector2) -> void:
-	_dragging_rope = _pointer_hits_rope_end(pointer)
+	_dragging_rope = _phase in [Phase.TEST, Phase.RESCUE] and _pointer_hits_rope_end(pointer)
 	_dragging_rig = not _dragging_rope
 	_last_pointer = pointer
 	if _dragging_rope:
 		_running = false
-		_run_button.text = "▶  Başlat"
 		_interaction_label.text = "Halat çekiliyor · Yükün hareketini gözlemle"
-
 
 func _viewport_pointer(pointer: Vector2) -> Vector2:
 	var view_size := _experiment_view.size
@@ -483,21 +706,29 @@ func _pull_rope(pointer_delta: Vector2) -> void:
 	if absf(screen_up_alignment) < 0.25:
 		return
 	var requested_delta := -viewport_delta.y * world_per_pixel * screen_up_alignment
-	var free_y := _free_end.position.y
 	var load_y := _load_group.position.y
-	var load_ratio := 1.0 if _mode == 0 else 0.5
+	var free_y := _free_end.position.y
+	var ratio := _load_ratio()
 	var free_min := 0.92 if _mode == 0 else 1.20
 	var free_max := 1.56 if _mode == 0 else 2.28
 	var load_min := 0.92
-	var load_max := 1.56 if _mode == 0 else 1.46
-	var delta_min := maxf(free_min - free_y, (load_y - load_max) / load_ratio)
-	var delta_max := minf(free_max - free_y, (load_y - load_min) / load_ratio)
+	var load_max := 1.56 if _mode == 0 or not _calibrated else 1.46
+	var delta_min := free_min - free_y
+	var delta_max := free_max - free_y
+	if ratio > 0.0:
+		delta_min = maxf(delta_min, (load_y - load_max) / ratio)
+		delta_max = minf(delta_max, (load_y - load_min) / ratio)
 	var actual_delta := clampf(requested_delta, delta_min, delta_max)
 	if is_zero_approx(actual_delta):
-		_interaction_label.text = "Halat ucunu daha fazla çekemezsin · düzeneğin sınırına ulaştı"
 		return
 	_free_end.position.y += actual_delta
-	_load_group.position.y -= actual_delta * load_ratio
+	_load_group.position.y -= actual_delta * ratio
+	if _phase == Phase.TEST:
+		_test_rope_travel += absf(actual_delta)
+		_test_load_travel += absf(actual_delta * ratio)
+	elif _phase == Phase.RESCUE:
+		_rescue_rope_travel += absf(actual_delta)
+		_rescue_load_travel += absf(actual_delta * ratio)
 	if _mode == 0:
 		_upper_pulley.rotation.z -= actual_delta / 0.36
 	else:
@@ -506,9 +737,16 @@ func _pull_rope(pointer_delta: Vector2) -> void:
 		_lower_pulley.rotation.z += actual_delta / 0.72
 		_upper_pulley.rotation.z -= actual_delta / 0.36
 	_sync_mechanism_geometry()
-	var free_direction := "aşağı" if actual_delta < 0.0 else "yukarı"
-	var load_direction := "yukarı" if actual_delta < 0.0 else "aşağı"
-	_interaction_label.text = "İp ucu %.2f m %s · yük %.2f m %s" % [absf(actual_delta), free_direction, absf(actual_delta) * load_ratio, load_direction]
+	_update_interface()
+
+func _load_ratio() -> float:
+	if _mode == 0:
+		return 1.0
+	if not _calibrated:
+		return 1.0
+	if _phase == Phase.RESCUE and _effort_slider.value < RESCUE_EFFORT_MIN_N:
+		return 0.0
+	return 0.5
 
 
 func _sync_mechanism_geometry() -> void:
@@ -557,7 +795,7 @@ func _add_measurement_marks(steel: Material, brass: Material) -> void:
 func _update_motion() -> void:
 	if not is_instance_valid(_rig):
 		return
-	var phase := (sin(_motion_time * TAU / 3.8 - PI / 2.0) + 1.0) * 0.5 if _running else 0.5
+	var phase := (sin(_motion_time * TAU / 3.8 - PI / 2.0) + 1.0) * 0.5 if _running else (0.0 if _phase in [Phase.TEST, Phase.RESCUE] else 0.5)
 	if _mode == 0:
 		var load_y := lerpf(0.92, 1.56, phase)
 		var end_y := lerpf(1.56, 0.92, phase)
@@ -572,8 +810,10 @@ func _update_motion() -> void:
 		_rope_segments[3].hide()
 		_upper_pulley.rotation.z = (phase - 0.5) * 1.5
 	else:
-		var load_y := lerpf(0.92, 1.46, phase)
+		var load_ratio := _load_ratio()
 		var end_y := lerpf(2.28, 1.20, phase)
+		var travel_from_start := 2.28 - end_y
+		var load_y := minf(0.92 + travel_from_start * load_ratio, 1.56) if load_ratio > 0.0 else 0.92
 		_load_group.position = Vector3(-0.35, load_y, 0)
 		_free_end.position = Vector3(0.80, end_y, 0)
 		_lower_pulley.position = Vector3(-0.35, load_y + 0.20, 0.04)
@@ -589,7 +829,6 @@ func _update_motion() -> void:
 		_lower_pulley.rotation.z = (phase - 0.5) * 1.7
 		_upper_pulley.rotation.z = (phase - 0.5) * 0.85
 
-
 func _set_rope_segment(index: int, from: Vector3, to: Vector3) -> void:
 	var segment := _rope_segments[index]
 	segment.show()
@@ -597,139 +836,6 @@ func _set_rope_segment(index: int, from: Vector3, to: Vector3) -> void:
 	segment.position = (from + to) * 0.5
 	segment.scale.y = direction.length()
 	segment.quaternion = Quaternion(Vector3.UP, direction.normalized())
-
-
-func _select_mode(mode: int) -> void:
-	_mode = mode
-	_dragging_rope = false
-	_dragging_rig = false
-	_motion_time = 0.0
-	_update_motion()
-	_update_interface()
-	_run_button.text = "Ⅱ  Durdur" if _running else "▶  Başlat"
-	_interaction_label.text = "Halat ucunu çek · Boş alandan döndür · Tekerlekle yakınlaş"
-
-
-func _cycle_load_choice() -> void:
-	_load_choice = (_load_choice + 1) % ACCELERATIONS.size()
-	_update_interface()
-
-
-func _cycle_rope_choice() -> void:
-	_rope_choice = (_rope_choice + 1) % ACCELERATIONS.size()
-	_update_interface()
-
-
-func _repair_rule() -> void:
-	if _solved:
-		return
-	var correct := _load_choice == 0 and (_rope_choice == 0 if _mode == 0 else _rope_choice == 1)
-	if not correct:
-		_feedback.text = "İlişki hâlâ ters. Sabit makarada yük ile ip ucu eşit ivmeli; hareketli makarada yükü taşıyan iki ip kolunun toplam uzunluğu sabittir."
-		_feedback.add_theme_color_override("font_color", RED)
-		return
-	if _mode == 0:
-		_feedback.text = "Doğru. Sabit makara yalnızca yönü değiştirir: yük a ile yükselirken serbest ip ucu a ile aşağı iner."
-		_feedback.add_theme_color_override("font_color", TEAL)
-		_stage = 1
-		_load_choice = 1
-		_rope_choice = 0
-		_mode = 1
-		_motion_time = 0.0
-		_update_motion()
-		_update_interface()
-		return
-	_solved = true
-	_running = true
-	_feedback.text = "Onarım tamamlandı. Yük a ile yükseliyor; serbest ip ucu 2a ile aşağı iniyor. Toplam ip boyu sabit kaldı."
-	_feedback.add_theme_color_override("font_color", TEAL)
-	_fault_label.text = "Yük: a     İp ucu: 2a  ✓"
-	_fault_panel.add_theme_stylebox_override("panel", _panel_style(Color("#12302e"), Color("#3c8c79"), 1, 9))
-	_repair_button.text = "✓  Kural onarıldı"
-	_repair_button.disabled = true
-	completed.emit()
-
-
-func _toggle_motion() -> void:
-	if not _running:
-		var phase := inverse_lerp(1.56, 0.92, _free_end.position.y) if _mode == 0 else inverse_lerp(2.28, 1.20, _free_end.position.y)
-		_motion_time = (asin(clampf(phase * 2.0 - 1.0, -1.0, 1.0)) + PI * 0.5) * 3.8 / TAU
-	_running = not _running
-	_run_button.text = "Ⅱ  Durdur" if _running else "▶  Başlat"
-	_update_motion()
-
-
-func _request_exit() -> void:
-	exit_requested.emit()
-
-
-func _update_interface() -> void:
-	for i in range(_mode_buttons.size()):
-		_mode_buttons[i].button_pressed = i == _mode
-		_mode_buttons[i].disabled = _solved or (_stage == 0 and i == 1) or (_stage == 1 and i == 0)
-	_stage_label.text = ("GÖZLEM 01 / 02  ·  SABİT MAKARA" if _mode == 0 else "GÖZLEM 02 / 02  ·  HAREKETLİ MAKARA")
-	_rule_label.text = "SABİT MAKARA\na_yük = a_ip\n0,5 = 0,5 m/s²" if _mode == 0 else "HAREKETLİ MAKARA\na_ip = 2 × a_yük\n1,0 = 2 × 0,5 m/s²"
-	if _solved:
-		_load_choice_button.text = "Yük ivmesi  ·  a"
-		_rope_choice_button.text = "İp ucu ivmesi  ·  2a"
-	else:
-		_load_choice_button.text = "Yük ivmesi  ·  %s" % ACCELERATIONS[_load_choice]
-		_rope_choice_button.text = "İp ucu ivmesi  ·  %s" % ACCELERATIONS[_rope_choice]
-	if _mode == 0 and _stage == 0:
-		_fault_label.text = "Yük ivmesi: 2a     İp ucu: a"
-		_hint.text = "Tek ve sabit bir ip boyunca iki uç aynı miktarda yer değiştirir."
-	elif _mode == 1 and not _solved:
-		_fault_label.text = "Yük ivmesi: 2a     İp ucu: a"
-		_hint.text = "Yükü taşıyan iki ip kolu kısalır; serbest uç bunun iki katı yol alır."
-	else:
-		_hint.text = "İdeal düzende ip esnemez ve kaymaz; toplam ip uzunluğu sabittir."
-	if _solved:
-		_feedback.text = "Onarım tamamlandı. Yük a ile yükseliyor; serbest ip ucu 2a ile aşağı iniyor. Toplam ip boyu sabit kaldı."
-		_feedback.add_theme_color_override("font_color", TEAL)
-	elif _stage == 0:
-		_feedback.text = "Önce eşit kollu sabit düzeneğin hareketini kontrol et."
-		_feedback.add_theme_color_override("font_color", MUTED)
-	elif _stage == 1 and _mode == 1:
-		_feedback.text = "Şimdi hareketli makarada iki taşıyıcı ip kolunun etkisini düşün."
-		_feedback.add_theme_color_override("font_color", MUTED)
-	_repair_button.disabled = _solved
-	if is_instance_valid(_rig):
-		_update_motion()
-
-
-func _label(value: String, size: int, color: Color, bold := false) -> Label:
-	var item := Label.new()
-	item.text = value
-	item.add_theme_font_size_override("font_size", size)
-	item.add_theme_color_override("font_color", color)
-	if bold:
-		item.theme_type_variation = &"HeadlineLabel"
-		item.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.2))
-	return item
-
-
-func _button(value: String, toggle: bool) -> Button:
-	var item := Button.new()
-	item.text = value
-	item.toggle_mode = toggle
-	item.custom_minimum_size = Vector2(0, 42)
-	item.add_theme_font_size_override("font_size", 14)
-	item.add_theme_color_override("font_color", TEXT)
-	item.add_theme_color_override("font_hover_color", Color.WHITE)
-	item.add_theme_stylebox_override("normal", _panel_style(Color("#1b2e3c"), Color("#365365"), 1, 9))
-	item.add_theme_stylebox_override("hover", _panel_style(Color("#254456"), TEAL, 1, 9))
-	item.add_theme_stylebox_override("pressed", _panel_style(Color("#17403f"), TEAL, 2, 9))
-	item.add_theme_stylebox_override("focus", _panel_style(Color("#1b2e3c"), AMBER, 1, 9))
-	return item
-
-
-func _panel_style(fill: Color, border: Color, border_size: int, radius: int) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = fill
-	style.border_color = border
-	style.set_border_width_all(border_size)
-	style.set_corner_radius_all(radius)
-	return style
 
 
 func _material(color: Color, metallic: float, roughness: float) -> StandardMaterial3D:
