@@ -23,6 +23,7 @@ Claude, Codex, Gemini ve ekip arasında yazılı iş kanalı. Canlı sohbet yok,
 | 003 | Kalp Odası varlıkları | Codex | açık |
 | 004 | Düşüş Odası varlıkları | Codex | açık |
 | 005 | Refleks Merkezi varlıkları | Codex | açık |
+| 009 | Hikâye varlıkları: Misafir imzası, güçler, Üç Güneş | Codex | teslim edildi |
 
 ## Talep şablonu
 
