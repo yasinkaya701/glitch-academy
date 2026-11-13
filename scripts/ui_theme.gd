@@ -61,6 +61,9 @@ static func build() -> Theme:
 	# Meridian cihaz düğmeleri (Codex): 9 dilimli, ortası uzar, kesik köşe ve yan ray sabit kalır.
 	_texture_button(theme, "Button", "btn")
 	_texture_button(theme, "PrimaryButton", "btn_primary")
+	_theme_mode_tabs(theme, semibold)
+	_theme_route_tabs(theme, semibold)
+	_theme_compact_button(theme, semibold)
 
 	# Onay ve seçenek
 	for type_name in ["CheckButton", "CheckBox"]:
@@ -98,12 +101,15 @@ static func build() -> Theme:
 	theme.set_stylebox("panel", "GlassPanel", _flat(Color(PANEL, 0.82), EDGE, 1, 12, 18))
 	theme.set_type_variation("ConsolePanel", "PanelContainer")
 	theme.set_stylebox("panel", "ConsolePanel", _flat(PANEL, EDGE_STRONG, 1, 12, 20))
+	theme.set_type_variation("CampaignDock", "PanelContainer")
+	theme.set_stylebox("panel", "CampaignDock", _texture_box("res://assets/ui/panel_info.png", 24, 24, 76, 24, 24, 48, 92, 28))
 
 	# Liste
 	theme.set_stylebox("panel", "ItemList", _flat(Color(PANEL, 0.7), EDGE, 1, 8, 6))
 	theme.set_stylebox("focus", "ItemList", _flat(Color(0, 0, 0, 0), ACCENT, 1, 8, 0))
-	theme.set_stylebox("selected", "ItemList", _flat(Color(ACCENT, 0.14), ACCENT, 1, 6, 6))
-	theme.set_stylebox("selected_focus", "ItemList", _flat(Color(ACCENT, 0.20), ACCENT, 1, 6, 6))
+	theme.set_stylebox("hover", "ItemList", _texture_box("res://assets/ui/list_row_idle.png", 22, 22, 12, 12, 16, 16, 8, 8))
+	theme.set_stylebox("selected", "ItemList", _texture_box("res://assets/ui/list_row_selected.png", 22, 22, 12, 12, 16, 16, 8, 8))
+	theme.set_stylebox("selected_focus", "ItemList", _texture_box("res://assets/ui/list_row_selected.png", 22, 22, 12, 12, 16, 16, 8, 8))
 	theme.set_color("font_color", "ItemList", MUTED)
 	theme.set_color("font_selected_color", "ItemList", INK)
 	theme.set_color("font_hovered_color", "ItemList", INK)
@@ -151,6 +157,79 @@ static func _texture_button(theme: Theme, type_name: String, prefix: String) -> 
 		for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 			theme.set_color(color_name, type_name, Color("#ffe2b8"))
 		theme.set_color("font_disabled_color", type_name, Color("#ffe2b8", 0.4))
+
+
+static func _theme_mode_tabs(theme: Theme, font: Font) -> void:
+	theme.set_type_variation("ModeTab", "Button")
+	var idle := _flat(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 0, 0, 8, 8)
+	idle.border_width_bottom = 2
+	var hover := _flat(Color(PANEL_RAISED, 0.58), EDGE, 1, 4, 8, 8)
+	var active := _flat(Color(PANEL, 0.8), ACCENT, 1, 4, 8, 8)
+	active.border_width_top = 0
+	active.border_width_left = 0
+	active.border_width_right = 0
+	active.border_width_bottom = 2
+	active.border_color = ACCENT
+	theme.set_stylebox("normal", "ModeTab", idle)
+	theme.set_stylebox("disabled", "ModeTab", idle)
+	theme.set_stylebox("hover", "ModeTab", hover)
+	theme.set_stylebox("pressed", "ModeTab", active)
+	theme.set_stylebox("hover_pressed", "ModeTab", active)
+	theme.set_stylebox("focus", "ModeTab", _flat(Color(0, 0, 0, 0), ACCENT, 1, 4, 8, 8))
+	theme.set_font("font", "ModeTab", font)
+	theme.set_color("font_color", "ModeTab", MUTED)
+	theme.set_color("font_hover_color", "ModeTab", INK)
+	theme.set_color("font_pressed_color", "ModeTab", INK)
+	theme.set_color("font_hover_pressed_color", "ModeTab", INK)
+	theme.set_color("font_disabled_color", "ModeTab", Color(MUTED, 0.45))
+
+
+static func _theme_route_tabs(theme: Theme, font: Font) -> void:
+	theme.set_type_variation("RouteTab", "Button")
+	var idle := _texture_box("res://assets/ui/tab_idle.png", 14, 14, 8, 8, 12, 12, 4, 4)
+	var active := _texture_box("res://assets/ui/tab_active.png", 14, 14, 8, 8, 12, 12, 4, 4)
+	var hover: StyleBoxTexture = idle.duplicate() as StyleBoxTexture
+	hover.modulate_color = Color("#cbd9da")
+	theme.set_stylebox("normal", "RouteTab", idle)
+	theme.set_stylebox("disabled", "RouteTab", idle)
+	theme.set_stylebox("hover", "RouteTab", hover)
+	theme.set_stylebox("pressed", "RouteTab", active)
+	theme.set_stylebox("hover_pressed", "RouteTab", active)
+	theme.set_stylebox("focus", "RouteTab", _flat(Color(0, 0, 0, 0), ACCENT, 1, 4, 10, 6))
+	theme.set_font("font", "RouteTab", font)
+	theme.set_color("font_color", "RouteTab", MUTED)
+	theme.set_color("font_hover_color", "RouteTab", INK)
+	theme.set_color("font_pressed_color", "RouteTab", INK)
+	theme.set_color("font_hover_pressed_color", "RouteTab", INK)
+	theme.set_color("font_disabled_color", "RouteTab", Color(MUTED, 0.45))
+
+
+static func _theme_compact_button(theme: Theme, font: Font) -> void:
+	theme.set_type_variation("CompactButton", "Button")
+	theme.set_stylebox("normal", "CompactButton", _flat(PANEL_RAISED, EDGE, 1, 5, 8, 6))
+	theme.set_stylebox("hover", "CompactButton", _flat(Color("#1d3149"), EDGE_STRONG, 1, 5, 8, 6))
+	theme.set_stylebox("pressed", "CompactButton", _flat(Color("#122032"), ACCENT, 1, 5, 8, 6))
+	theme.set_stylebox("disabled", "CompactButton", _flat(Color(PANEL_RAISED, 0.4), Color(EDGE, 0.35), 1, 5, 8, 6))
+	theme.set_stylebox("focus", "CompactButton", _flat(Color(0, 0, 0, 0), ACCENT, 2, 5, 8, 6))
+	theme.set_font("font", "CompactButton", font)
+	theme.set_color("font_color", "CompactButton", INK)
+	theme.set_color("font_hover_color", "CompactButton", INK)
+	theme.set_color("font_pressed_color", "CompactButton", INK)
+	theme.set_color("font_disabled_color", "CompactButton", Color(INK, 0.42))
+
+
+static func _texture_box(path: String, texture_left: float, texture_right: float, texture_top: float, texture_bottom: float, content_left: float, content_right: float, content_top: float, content_bottom: float) -> StyleBoxTexture:
+	var box := StyleBoxTexture.new()
+	box.texture = load(path)
+	box.texture_margin_left = texture_left
+	box.texture_margin_right = texture_right
+	box.texture_margin_top = texture_top
+	box.texture_margin_bottom = texture_bottom
+	box.content_margin_left = content_left
+	box.content_margin_right = content_right
+	box.content_margin_top = content_top
+	box.content_margin_bottom = content_bottom
+	return box
 
 
 static func _button(theme: Theme, type_name: String, fill: Color, edge: Color, text: Color) -> void:

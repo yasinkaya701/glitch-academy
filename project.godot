@@ -18,6 +18,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 UITheme="*res://scripts/ui_theme.gd"
 Sfx="*res://scripts/sfx.gd"
+Campaign="*res://scripts/campaign_state.gd"
 
 [display]
 

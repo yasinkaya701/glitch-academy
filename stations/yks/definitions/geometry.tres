@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="YksMissionDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://stations/yks/yks_mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/yks/play/geometry.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"geometry"
+grade = 9
+routes = PackedStringArray("tyt", "ayt")
+description = "Koordinat farklarını izleyerek yanlış çizilen yörüngeyi düzelt."
+scene = ExtResource("2")
+title = "Yörünge Haritası"
+subject = "Geometri"
+field_tags = PackedStringArray("sayisal", "ea")
+curriculum = "TYT/AYT Geometri · Koordinat düzlemi ve uzaklık"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/fenlisesimatematik/11/unite2/files/basic-html/page4.html"
+source_note = "MEB OGM · Fen Lisesi Matematik 11, analitik düzlem ve noktalar arası uzaklık"
+learning_target = "Koordinat değişiminden yatay ve düşey hareketi ayırarak rotayı düzelt."
+instruction = "Koordinat ipuçlarını doğru yön ve uzaklıkla eşleştir."
+prompt = "A(1,2)'den B(7,2)'ye rota çiziliyor; kayıt kuzeye dönmüş."
+visual_theme = &"geometry"
+mode = "pair"
+pair_left = PackedStringArray("x: 1'den 7'ye değişir.", "y: 2'den 2'ye değişir.", "A(1,2) → B(7,2)")
+pair_right = PackedStringArray("6 birim doğu", "0 birim kuzey-güney", "Doğru yatay rota")
+pair_targets = PackedStringArray("6 birim doğu", "0 birim kuzey-güney", "Doğru yatay rota")
+feedback_wrong = "Δx yatay, Δy düşey hareketi verir; ikisini ayrı bul."
+feedback_success = "Δx=6, Δy=0: rota 6 birim doğuya."

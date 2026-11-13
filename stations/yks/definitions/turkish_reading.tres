@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="YksMissionDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://stations/yks/yks_mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/yks/play/turkish_reading.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"turkish_reading"
+grade = 12
+routes = PackedStringArray("tyt")
+description = "Paragraf kanıtlarından ana düşünceyi çıkar."
+scene = ExtResource("2")
+title = "Yanlış Yorum"
+subject = "Türkçe"
+field_tags = PackedStringArray("sayisal", "ea", "sozel")
+curriculum = "TYT Türkçe · Paragrafta çıkarım ve değişen yargı"
+source_url = "https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/tyt-turkce/tyt-turkce.pdf"
+source_note = "OGM Materyal · TYT Türkçe konu özeti, Paragrafta Ana Düşünce"
+learning_target = "Yeni kanıt geldiğinde paragraftaki ilk yorumu hangi çıkarımın değiştirdiğini belirle."
+instruction = "İkinci cümlenin ilk yorumu nasıl düzelttiğini seç."
+prompt = "Salon öğleden sonra boş kalıyordu. Akşam ölçümü, öğrencilerin çoğunun ders çıkışı geldiğini gösterdi."
+visual_theme = &"reading"
+mode = "choice"
+options = PackedStringArray("Boş salon, öğrencilerin sessizliği istemediğini kanıtlar.", "Yoğunluk ders çıkış saatine bağlı olabilir; sessizlik isteği hakkında kesin kanıt yoktur.", "Akşam ölçümü, salonun gün boyu kapalı olduğunu gösterir.", "Öğrenciler yalnızca kalabalık salonlarda çalışabilir.")
+correct_option = "Yoğunluk ders çıkış saatine bağlı olabilir; sessizlik isteği hakkında kesin kanıt yoktur."
+feedback_wrong = "Akşam ölçümünün eklediği değişkeni bul."
+feedback_success = "Doğru: akşam verisi geliş saatini açıklıyor."

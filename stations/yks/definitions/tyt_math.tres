@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="YksMissionDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://stations/yks/yks_mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/yks/play/tyt_math.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"tyt_math"
+grade = 9
+routes = PackedStringArray("tyt")
+description = "Ardışık yüzde değişimini sırayla hesapla."
+scene = ExtResource("2")
+title = "Yüzde Zinciri"
+subject = "Matematik"
+field_tags = PackedStringArray("sayisal", "ea", "sozel")
+curriculum = "TYT Matematik · Yüzde değişim"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/matematiktemelduzey/12/unite1/files/basic-html/page46.html"
+source_note = "MEB OGM · Temel Düzey Matematik 12, yüzde gösterimi"
+learning_target = "Ardışık yüzde değişimlerinde ikinci yüzdeyi yeni değer üzerinden hesapla."
+instruction = "İlk indirimi ve sonraki artışı sırayla uygula."
+prompt = "800 birimlik değer önce %25 azalıyor, ardından yeni değer %10 artıyor."
+visual_theme = &"math"
+mode = "choice"
+options = PackedStringArray("660", "600", "680", "700")
+correct_option = "660"
+feedback_wrong = "İkinci yüzdeyi 600 üzerinden hesapla."
+feedback_success = "Doğru: 800 × 0,75 = 600; 600 × 1,10 = 660."

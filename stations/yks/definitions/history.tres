@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="YksMissionDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://stations/yks/yks_mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/yks/play/history.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"history"
+grade = 12
+routes = PackedStringArray("ayt")
+description = "Tarihsel kayıtların kanıt gücünü kaynağın niteliğiyle tart."
+scene = ExtResource("2")
+title = "Kayıp Kaynak"
+subject = "Tarih"
+field_tags = PackedStringArray("ea", "sozel")
+curriculum = "AYT Tarih · Millî Mücadele hazırlık dönemi"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/tcinkilaptarihiveataturkculuk/12/unite2/files/basic-html/page12.html"
+source_note = "MEB OGM · İnkılap Tarihi ve Atatürkçülük 12, Millî Mücadele"
+learning_target = "Bir tarihsel iddianın kanıt gücünü kaynağın olaya yakınlığı ve doğrulanabilirliğine göre değerlendir."
+instruction = "Her arşiv kaydını kanıt gücünü açıklayan değerlendirmeyle eşleştir."
+prompt = "Arşivde 22 Haziran 1919 tarihli genelge, yıllar sonra yazılmış anı ve tarihsiz söylenti var."
+visual_theme = &"history"
+mode = "pair"
+pair_left = PackedStringArray("22 Haziran 1919 tarihli genelge metni", "Olaydan yıllar sonra yazılmış anı", "Tarihsiz, yazarı bilinmeyen söylenti")
+pair_right = PackedStringArray("Döneme ait birincil tarihsel kaynak", "Tanıklık içerir; zaman uzaklığıyla karşılaştırılmalı", "Tarihi doğrulamaya tek başına yetmez")
+pair_targets = PackedStringArray("Döneme ait birincil tarihsel kaynak", "Tanıklık içerir; zaman uzaklığıyla karşılaştırılmalı", "Tarihi doğrulamaya tek başına yetmez")
+feedback_wrong = "Olay dönemine yakın ve doğrulanabilir kaynak daha güçlüdür."
+feedback_success = "Tarihli genelge birincil; anı ve söylenti doğrulama ister."

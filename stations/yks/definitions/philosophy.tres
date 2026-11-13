@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="YksMissionDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://stations/yks/yks_mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/yks/play/philosophy.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"philosophy"
+grade = 10
+routes = PackedStringArray("tyt")
+description = "Bir argümanda öncüllerin sonucu zorunlu kılıp kılmadığını değerlendir."
+scene = ExtResource("2")
+title = "Kesinlik İddiası"
+subject = "Felsefe"
+field_tags = PackedStringArray("ea", "sozel")
+curriculum = "TYT Felsefe · Akıl yürütme ve argüman değerlendirme"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/konu-pekistirme/tyt/felsefe/files/basic-html/page39.html"
+source_note = "MEB OGM · TYT Felsefe, argüman ve akıl yürütme"
+learning_target = "Bir argümanda öncüllerin sonucu gerçekten destekleyip desteklemediğini değerlendir."
+instruction = "Her akıl yürütmeyi öncüllerinin desteklediği sonuçla eşleştir."
+prompt = "Panoda bakırın genleşmesi, penguenin uçması ve ıslak zeminle yağmur arasında üç çıkarım var."
+visual_theme = &"philosophy"
+mode = "pair"
+pair_left = PackedStringArray("Bütün metaller genleşir; bakır metaldir; bakır genleşir.", "Bazı kuşlar uçar; penguen kuştur; penguen uçar.", "Zemin ıslak; öyleyse mutlaka yağmur yağdı.")
+pair_right = PackedStringArray("Sonuç öncüllerden zorunlu çıkar", "Bazı kuşların uçması pengueni kapsamaz", "Islak zeminin başka nedenleri olabilir")
+pair_targets = PackedStringArray("Sonuç öncüllerden zorunlu çıkar", "Bazı kuşların uçması pengueni kapsamaz", "Islak zeminin başka nedenleri olabilir")
+feedback_wrong = "Sonuç öncüllerden zorunlu mu? Karşı örnek ara."
+feedback_success = "İlk sonuç zorunlu; kuş ve ıslak zemin örnekleri değil."

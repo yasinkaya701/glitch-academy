@@ -49,6 +49,7 @@ texture = SubResource("GradientTexture_scrim")
 expand_mode = 1
 
 [node name="Margin" type="MarginContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -65,181 +66,164 @@ mouse_filter = 2
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 0
-custom_minimum_size = Vector2(1100, 0)
-theme_override_constants/separation = 16
+custom_minimum_size = Vector2(680, 0)
+theme_override_constants/separation = 10
 
 [node name="Subtitle" type="Label" parent="Margin/Hub"]
+unique_name_in_owner = true
 layout_mode = 2
-theme_type_variation = "SectionLabel"
 theme_override_colors/font_color = Color(0.63, 0.83, 0.78, 1)
-text = "LGS kampanyası  ·  Dünyanın Kırılması"
+theme_override_font_sizes/font_size = 15
+text = "KONTROL MERKEZİ"
 
 [node name="Title" type="Label" parent="Margin/Hub"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = "HeadlineLabel"
 theme_override_colors/font_color = Color(0.9, 0.95, 0.94, 1)
-theme_override_font_sizes/font_size = 52
-text = "Yanlış Dünya"
+theme_override_font_sizes/font_size = 46
+text = "Bilginin Kırılması"
 
-[node name="Routes" type="HBoxContainer" parent="Margin/Hub"]
+[node name="Routes" type="BoxContainer" parent="Margin/Hub"]
+unique_name_in_owner = true
 layout_mode = 2
+vertical = false
 theme_override_constants/separation = 8
 
 [node name="Class" type="Button" parent="Margin/Hub/Routes"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "ModeTab"
 toggle_mode = true
-button_pressed = true
-text = "Sınıfa göre keşfet"
+text = "Sınıflar"
 
 [node name="LGS" type="Button" parent="Margin/Hub/Routes"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "ModeTab"
 toggle_mode = true
 text = "LGS"
 
-[node name="TYT" type="Button" parent="Margin/Hub/Routes"]
+[node name="YKS" type="Button" parent="Margin/Hub/Routes"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "ModeTab"
 toggle_mode = true
-text = "YKS–TYT"
+button_pressed = true
+text = "YKS Kampanyası"
 
-[node name="AYT" type="Button" parent="Margin/Hub/Routes"]
+[node name="YksRoutes" type="BoxContainer" parent="Margin/Hub"]
 unique_name_in_owner = true
 layout_mode = 2
+vertical = false
+theme_override_constants/separation = 8
+
+[node name="TYT" type="Button" parent="Margin/Hub/YksRoutes"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = "RouteTab"
 toggle_mode = true
-text = "YKS–AYT"
+button_pressed = true
+text = "TYT"
 
-[node name="CampaignView" type="PanelContainer" parent="Margin/Hub"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-size_flags_vertical = 3
-theme_type_variation = "GlassPanel"
-
-[node name="CampaignContent" type="VBoxContainer" parent="Margin/Hub/CampaignView"]
-layout_mode = 2
-theme_override_constants/separation = 14
-
-[node name="CampaignHeader" type="HBoxContainer" parent="Margin/Hub/CampaignView/CampaignContent"]
-layout_mode = 2
-theme_override_constants/separation = 24
-
-[node name="CampaignCopy" type="VBoxContainer" parent="Margin/Hub/CampaignView/CampaignContent/CampaignHeader"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 5
-
-[node name="CampaignEyebrow" type="Label" parent="Margin/Hub/CampaignView/CampaignContent/CampaignHeader/CampaignCopy"]
-layout_mode = 2
-theme_type_variation = "SectionLabel"
-text = "Onarım rotası  ·  7 görev"
-
-[node name="CampaignTitle" type="Label" parent="Margin/Hub/CampaignView/CampaignContent/CampaignHeader/CampaignCopy"]
+[node name="AYT" type="Button" parent="Margin/Hub/YksRoutes"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_type_variation = "HeadlineLabel"
-theme_override_font_sizes/font_size = 38
-text = "Dünyanın Kırılması"
+theme_type_variation = "RouteTab"
+toggle_mode = true
+text = "AYT"
 
-[node name="CampaignPrompt" type="Label" parent="Margin/Hub/CampaignView/CampaignContent/CampaignHeader/CampaignCopy"]
+[node name="YDT" type="Button" parent="Margin/Hub/YksRoutes"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "RouteTab"
+toggle_mode = true
+text = "YDT · İsteğe bağlı"
+
+[node name="RoutePurpose" type="Label" parent="Margin/Hub"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.82, 0.84, 1)
+theme_override_font_sizes/font_size = 15
 autowrap_mode = 3
-text = "Mevsim Gözlemevi'ni kontrol et."
-
-[node name="CampaignMeter" type="VBoxContainer" parent="Margin/Hub/CampaignView/CampaignContent/CampaignHeader"]
-layout_mode = 2
-custom_minimum_size = Vector2(220, 0)
-theme_override_constants/separation = 7
-
-[node name="CampaignProgress" type="Label" parent="Margin/Hub/CampaignView/CampaignContent/CampaignHeader/CampaignMeter"]
-unique_name_in_owner = true
-layout_mode = 2
-horizontal_alignment = 2
-text = "0 / 7 görev onarıldı"
-
-[node name="CampaignBar" type="ProgressBar" parent="Margin/Hub/CampaignView/CampaignContent/CampaignHeader/CampaignMeter"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 12)
-layout_mode = 2
-value = 0.0
-show_percentage = false
-
-[node name="CampaignGrid" type="GridContainer" parent="Margin/Hub/CampaignView/CampaignContent"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/h_separation = 12
-theme_override_constants/v_separation = 12
-columns = 3
-
-[node name="CampaignFooter" type="HBoxContainer" parent="Margin/Hub/CampaignView/CampaignContent"]
-layout_mode = 2
-theme_override_constants/separation = 14
-
-[node name="CampaignHint" type="Label" parent="Margin/Hub/CampaignView/CampaignContent/CampaignFooter"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_type_variation = "MutedLabel"
-text = "Bir istasyon seç; gözlemini yap ve bölgeyi onar."
-
-[node name="CampaignStart" type="Button" parent="Margin/Hub/CampaignView/CampaignContent/CampaignFooter"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = "PrimaryButton"
-text = "Deneyi başlat  →"
+text = "Temel yeterliği ve tüm adayların ortak derslerini tamamla."
 
 [node name="GradeFilter" type="OptionButton" parent="Margin/Hub"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 0
 
-[node name="Missions" type="VBoxContainer" parent="Margin/Hub"]
+[node name="FieldFilter" type="OptionButton" parent="Margin/Hub"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 0
+
+[node name="Missions" type="BoxContainer" parent="Margin/Hub"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 18
+vertical = false
+theme_override_constants/separation = 22
 
 [node name="MissionList" type="ItemList" parent="Margin/Hub/Missions"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_minimum_size = Vector2(0, 250)
+custom_minimum_size = Vector2(0, 220)
 theme_override_constants/v_separation = 10
 
-[node name="Details" type="VBoxContainer" parent="Margin/Hub/Missions"]
+[node name="DetailDock" type="PanelContainer" parent="Margin/Hub/Missions"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+custom_minimum_size = Vector2(286, 0)
+theme_type_variation = "CampaignDock"
+
+[node name="Details" type="VBoxContainer" parent="Margin/Hub/Missions/DetailDock"]
+layout_mode = 2
 theme_override_constants/separation = 12
 custom_minimum_size = Vector2(0, 130)
 
-[node name="MissionTitle" type="Label" parent="Margin/Hub/Missions/Details"]
+[node name="MissionTitle" type="Label" parent="Margin/Hub/Missions/DetailDock/Details"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "HeadlineLabel"
 theme_override_font_sizes/font_size = 26
 autowrap_mode = 3
 
-[node name="MissionDescription" type="Label" parent="Margin/Hub/Missions/Details"]
+[node name="MissionStatus" type="Label" parent="Margin/Hub/Missions/DetailDock/Details"]
 unique_name_in_owner = true
 layout_mode = 2
 autowrap_mode = 3
 
-[node name="MissionStatus" type="Label" parent="Margin/Hub/Missions/Details"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="StartMission" type="Button" parent="Margin/Hub/Missions/Details"]
+[node name="Info" type="Button" parent="Margin/Hub/Missions/DetailDock/Details"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 0
-text = "Görevi aç"
+text = "ⓘ Bilgi"
+
+[node name="MissionCurriculum" type="Label" parent="Margin/Hub/Missions/DetailDock/Details"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.56, 0.65, 0.70, 1)
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 3
+
+[node name="StartMission" type="Button" parent="Margin/Hub/Missions/DetailDock/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = "PrimaryButton"
+custom_minimum_size = Vector2(0, 48)
+text = "Düzeneği başlat"
 
 [node name="Progress" type="Label" parent="Margin/Hub"]
 unique_name_in_owner = true
 layout_mode = 2
+autowrap_mode = 3
 
 [node name="PlayScreen" type="VBoxContainer" parent="Margin"]
 unique_name_in_owner = true
@@ -275,75 +259,3 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-
-[node name="StoryBeat" type="PanelContainer" parent="."]
-unique_name_in_owner = true
-visible = false
-z_index = 100
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_type_variation = "ConsolePanel"
-
-[node name="StoryContent" type="VBoxContainer" parent="StoryBeat"]
-layout_mode = 2
-alignment = 1
-theme_override_constants/separation = 20
-
-[node name="StoryEyebrow" type="Label" parent="StoryBeat/StoryContent"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = "SectionLabel"
-text = "SİNYAL GÜNCELLENDİ"
-
-[node name="StoryText" type="Label" parent="StoryBeat/StoryContent"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = "HeadlineLabel"
-theme_override_font_sizes/font_size = 27
-autowrap_mode = 3
-text = ""
-
-[node name="ContinueStory" type="Button" parent="StoryBeat/StoryContent"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = "PrimaryButton"
-text = "Haritaya dön  →"
-
-[node name="Finale" type="PanelContainer" parent="."]
-unique_name_in_owner = true
-visible = false
-z_index = 101
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_type_variation = "ConsolePanel"
-
-[node name="FinalContent" type="VBoxContainer" parent="Finale"]
-layout_mode = 2
-alignment = 1
-theme_override_constants/separation = 20
-
-[node name="FinalEyebrow" type="Label" parent="Finale/FinalContent"]
-layout_mode = 2
-theme_type_variation = "SectionLabel"
-text = "LGS BÖLGESİ  /  TAMAMLANDI"
-
-[node name="FinalText" type="Label" parent="Finale/FinalContent"]
-layout_mode = 2
-theme_type_variation = "HeadlineLabel"
-theme_override_font_sizes/font_size = 30
-autowrap_mode = 3
-text = "DÜNYAYI GERİ AL\n\nYedi doğrulanmış kayıt, Kural Çapalarını MERİDYEN'den ayırdı. Merkez yeniden çalışıyor. Yerleşimin çevresel sistemleri kararlı.\n\nKamera üç yıldızlı gökyüzüne döner. Büyük gizem sürüyor; bu bölgenin hikâyesi tamamlandı."
-
-[node name="CloseFinale" type="Button" parent="Finale/FinalContent"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = "PrimaryButton"
-text = "Kontrol merkezine dön"

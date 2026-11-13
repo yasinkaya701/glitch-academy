@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/yks/three_suns.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"three_suns"
+title = "Üç Güneş"
+subject = "Fizik"
+grade = 12
+routes = PackedStringArray("tyt", "ayt", "ydt")
+description = "Üç cisim düzeninde küçük bir başlangıç farkının yörüngeyi nasıl ayırdığını ölç."
+curriculum = "AYT Fizik · Kütle çekim ve Kepler; boyutsuz üç cisim modeli"
+source_url = ""
+scene = ExtResource("2")

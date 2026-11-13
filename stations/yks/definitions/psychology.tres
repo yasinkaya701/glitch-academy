@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="YksMissionDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://stations/yks/yks_mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/yks/play/psychology.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"psychology"
+grade = 11
+routes = PackedStringArray("ayt")
+description = "Doğrudan gözlem ile algısal yorumu ayır."
+scene = ExtResource("2")
+title = "Algı Hatası"
+subject = "Psikoloji"
+field_tags = PackedStringArray("sozel")
+curriculum = "AYT Felsefe Grubu · Psikoloji, algı ve gözlem"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/psikoloji/sec/unite2/files/basic-html/page26.html"
+source_note = "MEB OGM · Seçmeli Psikoloji, algı ve duyum"
+learning_target = "Doğrudan gözlem verisiyle kişinin algısına dayalı yorumunu ayırt et."
+instruction = "Her kayıt örneğini gözlem ya da algı yorumuyla eşleştir."
+prompt = "İki kişi loş koridordaki aynı gölgeyi görüyor; biri askılık, diğeri izlenme kaydı düşüyor."
+visual_theme = &"psychology"
+mode = "pair"
+pair_left = PackedStringArray("“Koridorda gri bir gölge gördüm.”", "“Gölge bir askılığa benziyor.”", "“Biri beni izliyor.”")
+pair_right = PackedStringArray("Duyusal gözlem", "Algısal yorum", "Kanıtı aşan çıkarım")
+pair_targets = PackedStringArray("Duyusal gözlem", "Algısal yorum", "Kanıtı aşan çıkarım")
+feedback_wrong = "Gölge gözlem; tanıma algı, niyet yükleme çıkarımdır."
+feedback_success = "Gölge gözlem, askılık algı; izlenme ise çıkarımdır."

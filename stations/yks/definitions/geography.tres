@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="YksMissionDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://stations/yks/yks_mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/yks/play/geography.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"geography"
+grade = 9
+routes = PackedStringArray("tyt")
+description = "Koordinat farkından yön çıkararak bozuk harita kaydını düzelt."
+scene = ExtResource("2")
+title = "Kırık Harita"
+subject = "Coğrafya"
+field_tags = PackedStringArray("ea", "sozel")
+curriculum = "TYT Coğrafya · Coğrafi koordinatlar ve yön"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/cografya/9/ankara/unite1/bolum1234/files/basic-html/page32.html"
+source_note = "MEB OGM · Coğrafya 9, paralel-meridyen ve koordinat bilgisi"
+learning_target = "Enlem ve boylam değişiminden yarımküreyi ve doğu-batı yönünü belirle."
+instruction = "Kırık koordinat kaydını doğru konum ilişkisiyle tamamla."
+prompt = "P: 38°K, 27°D; Q: 38°K, 30°D. Kayda göre Q, P'nin batısında."
+visual_theme = &"geography"
+mode = "choice"
+options = PackedStringArray("Q, P'nin doğusundadır; enlemleri aynı olduğu için aynı paraleldedir.", "Q, P'nin batısındadır; boylam büyüdükçe batıya gidilir.", "Q, P'nin güneyindedir; boylamları farklıdır.", "Q, P'nin kuzeyindedir; enlem değerleri aynı yazılmıştır.")
+correct_option = "Q, P'nin doğusundadır; enlemleri aynı olduğu için aynı paraleldedir."
+feedback_wrong = "Enlem paraleli, boylam doğu-batı yönünü belirler."
+feedback_success = "Enlemler eşit; 30°D, 27°D'nin doğusudur."

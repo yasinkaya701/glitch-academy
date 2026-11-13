@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="YksMissionDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://stations/yks/yks_mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/yks/play/tyt_biology.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"tyt_biology"
+grade = 9
+routes = PackedStringArray("tyt")
+description = "Organelleri hücresel görevleriyle eşleştir."
+scene = ExtResource("2")
+title = "Hücre Görev Ağı"
+subject = "Biyoloji"
+field_tags = PackedStringArray("sayisal")
+curriculum = "TYT Biyoloji · Hücrenin yapısı ve kısımları"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/sinav/2021-Mini-Deneme%28TYT%29-1.pdf"
+source_note = "MEB OGM · TYT Biyoloji mini deneme, organel görevleri"
+learning_target = "Ribozom, mitokondri ve Golgi aygıtını temel hücresel görevleriyle ayırt et."
+instruction = "Her organeli yaptığı işle eşleştir."
+prompt = "Hücre bakım kaydında protein üretimi, ATP üretimi ve salgı paketleme görevleri var."
+visual_theme = &"biology"
+mode = "pair"
+pair_left = PackedStringArray("Ribozom", "Mitokondri", "Golgi aygıtı")
+pair_right = PackedStringArray("ATP üretimi", "Salgı maddelerini işleme ve paketleme", "Protein sentezi")
+pair_targets = PackedStringArray("Protein sentezi", "ATP üretimi", "Salgı maddelerini işleme ve paketleme")
+feedback_wrong = "Protein, ATP ve salgı paketleme görevlerini ayır."
+feedback_success = "Doğru: ribozom protein, mitokondri ATP, Golgi salgı işler."
