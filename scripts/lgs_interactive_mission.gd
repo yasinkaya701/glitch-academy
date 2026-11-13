@@ -60,7 +60,7 @@ var feedback: Label
 var action_label: Label
 var action_buttons: VBoxContainer
 var progress_label: Label
-var glow: ColorRect
+var diorama
 
 
 func _ready() -> void:
@@ -125,22 +125,11 @@ func _build_ui() -> void:
 	var visual_row := HBoxContainer.new()
 	visual_row.add_theme_constant_override("separation", 18)
 	content.add_child(visual_row)
-	glow = ColorRect.new()
-	glow.custom_minimum_size = Vector2(112, 112)
-	glow.color = accent.darkened(0.62)
-	visual_row.add_child(glow)
-	var icon_key: String = {"seasons":"seasons", "bridge":"bridge", "turkish":"measurement", "history":"measurement", "english":"measurement", "religion":"measurement"}.get(String(mission_id), "measurement")
-	var icon := TextureRect.new()
-	var icon_texture: Texture2D = load("res://assets/ui/icons/%s.png" % icon_key)
-	icon.texture = icon_texture
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	icon.offset_left = 16
-	icon.offset_top = 16
-	icon.offset_right = -16
-	icon.offset_bottom = -16
-	glow.add_child(icon)
+	diorama = load("res://scenes/lgs_diorama.tscn").instantiate()
+	diorama.mission_id = mission_id
+	diorama.custom_minimum_size = Vector2(300, 176)
+	diorama.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	visual_row.add_child(diorama)
 	var right := VBoxContainer.new()
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	visual_row.add_child(right)
@@ -175,6 +164,7 @@ func _show_stage() -> void:
 	progress_label.text = "KAYIT %02d / %02d" % [stage + 1, steps.size()]
 	action_label.text = steps[stage].label
 	feedback.text = "Bir işlem seç. Sonucu gözlem alanında göreceksin."
+	diorama.set_lesson_state(stage, false)
 	locked = false
 	for child in action_buttons.get_children(): child.queue_free()
 	for i in range(steps[stage].options.size()):
@@ -208,11 +198,12 @@ func _choose(choice: int) -> void:
 	var data: Dictionary = PACK.get(String(mission_id), PACK["seasons"])
 	var step: Dictionary = data.steps[stage]
 	if choice != step.answer:
+		diorama.set_lesson_state(stage, false, true)
 		feedback.text = "Ölçüm uyuşmadı. %s" % _hint(String(mission_id), stage)
 		feedback.add_theme_color_override("font_color", Color("#ff9c8e"))
 		return
 	locked = true
-	glow.color = PALETTE.get(String(mission_id), PALETTE["seasons"]).darkened(0.3)
+	diorama.set_lesson_state(stage, true)
 	feedback.text = "✓   %s" % step.feedback
 	feedback.add_theme_color_override("font_color", PALETTE.get(String(mission_id), PALETTE["seasons"]))
 	for button in action_buttons.get_children():
