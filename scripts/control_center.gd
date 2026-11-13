@@ -75,6 +75,7 @@ var selected_mission: MissionDefinition
 var active_mission: Mission
 var active_mission_definition: MissionDefinition
 var visible_missions: Array[MissionDefinition] = []
+var _hub_scroll: ScrollContainer
 var _advance_after_completion := false
 var _story_overlay: Control
 var _story_shield: Control
@@ -82,6 +83,7 @@ var _story_close_button: Button
 
 
 func _ready() -> void:
+	_wrap_hub_in_scroll_container()
 	grade_filter.add_item("Tüm sınıflar", 0)
 	for grade in range(5, 13):
 		grade_filter.add_item("%d. sınıf" % grade, grade)
@@ -136,7 +138,7 @@ func _play_intro() -> void:
 		return
 	var intro = INTRO.instantiate()
 	intro.configure_route(selected_yks_route)
-	hub.hide()
+	_set_hub_visible(false)
 	%HubScrim.hide()
 	add_child(intro)
 	intro.alarm_changed.connect(_set_world_alarm)
@@ -148,7 +150,7 @@ func _finish_intro(intro: Control) -> void:
 	intro.queue_free()
 	Campaign.set_story_flag(&"intro_seen")
 	%HubScrim.show()
-	hub.show()
+	_set_hub_visible(true)
 	_resume_campaign_story()
 
 
@@ -240,13 +242,13 @@ func _refresh_list() -> void:
 		var mission := candidates[index]
 		var available := _mission_available(mission)
 		var completed := _mission_completed(mission, active_route)
+		var state_text := "Onarıldı" if completed else "Kilitli" if not available else "Sıradaki" if mission.id == recommended_id else "Açık"
 		var marker := "✓" if completed else "▣" if not available else "▶" if mission.id == recommended_id else "◉"
 		var subject := _mission_display_subject(mission)
-		var item_index := mission_list.add_item("%s  %s" % [marker, _mission_display_title(mission)], _mission_icon(mission))
+		var item_index := mission_list.add_item("%s  %s  ·  %s" % [marker, _mission_display_title(mission), state_text], _mission_icon(mission))
 		var marker_color := Color("#a0dfbc") if completed else Color("#efb468") if mission.id == recommended_id else Color("#8fa6b3") if not available else Color("#e8f1f2")
 		mission_list.set_item_custom_fg_color(item_index, marker_color)
 		mission_list.set_item_metadata(item_index, mission.id)
-		var state_text := "Onarıldı" if completed else "Açık" if available else "Kilitli"
 		var route_label := "Ortak final" if mission.id == &"three_suns" else String(active_route).to_upper()
 		mission_list.set_item_tooltip(item_index, "%s  ·  %s  ·  %s" % [subject, route_label, state_text])
 		visible_missions.append(mission)
@@ -418,7 +420,7 @@ func _start_mission() -> void:
 	active_mission.completed.connect(_on_mission_completed.bind(selected_mission.id))
 	play_title.text = _mission_display_title(selected_mission)
 	play_status.text = ""
-	hub.hide()
+	_set_hub_visible(false)
 	%HubScrim.hide()
 	%WorldView.hide()
 	play_screen.show()
@@ -633,6 +635,7 @@ func _update_responsive_layout() -> void:
 	%Margin.add_theme_constant_override("margin_bottom", 16 if compact else 24 if narrow else 34)
 	var horizontal_margin := 32.0 if compact else 52.0 if narrow else 92.0
 	hub.custom_minimum_size.x = maxf(220.0, minf(680.0, get_viewport_rect().size.x - horizontal_margin))
+	hub.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	%Title.add_theme_font_size_override("font_size", 32 if compact else 38 if narrow else 46)
 	mission_list.custom_minimum_size = Vector2(0, 190 if narrow else 280)
 	mission_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -642,6 +645,29 @@ func _update_responsive_layout() -> void:
 	%DetailDock.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if narrow else Control.SIZE_EXPAND_FILL
 	if _story_overlay != null:
 		call_deferred("_position_transmission", _story_overlay)
+
+
+func _wrap_hub_in_scroll_container() -> void:
+	var parent := hub.get_parent() as Container
+	if parent == null:
+		return
+	var insert_index := hub.get_index()
+	parent.remove_child(hub)
+	_hub_scroll = ScrollContainer.new()
+	_hub_scroll.name = "HubScroll"
+	_hub_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_hub_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_hub_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_hub_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	parent.add_child(_hub_scroll)
+	parent.move_child(_hub_scroll, insert_index)
+	_hub_scroll.add_child(hub)
+
+
+func _set_hub_visible(visible: bool) -> void:
+	hub.visible = visible
+	if _hub_scroll != null:
+		_hub_scroll.visible = visible
 
 
 func _set_life_protocol(enabled: bool) -> void:
@@ -746,7 +772,7 @@ func _return_to_hub() -> void:
 	play_screen.hide()
 	%WorldView.show()
 	%HubScrim.show()
-	hub.show()
+	_set_hub_visible(true)
 	_refresh_list()
 	mission_list.grab_focus()
 

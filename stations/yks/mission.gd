@@ -27,6 +27,8 @@ var _pair_selectors: Dictionary = {}
 var _feedback_label: Label
 var _feedback_tween: Tween
 var _answer_content_base_height := 0.0
+var _answer_controls_top := 4.0
+var _compact_content_flow := false
 var _evidence_label: Label
 var _prompt_label: Label
 var _instruction_label: Label
@@ -210,20 +212,48 @@ func _layout_interface() -> void:
 	_evidence_label.position = right_panel.position + Vector2(18, 84)
 	_evidence_label.size = Vector2(right_panel.size.x - 36.0, 18)
 	var text_width := right_panel.size.x - 36.0
-	var prompt_height := _estimated_text_height(mission_definition.prompt, text_width, 17, 42.0)
-	_prompt_label.position = right_panel.position + Vector2(18, 102)
-	_prompt_label.size = Vector2(text_width, prompt_height)
-	var instruction_top := maxf(156.0, 102.0 + prompt_height + 10.0)
-	var instruction_height := _estimated_text_height(mission_definition.instruction, text_width, 16, 38.0)
-	_instruction_label.position = right_panel.position + Vector2(18, instruction_top)
-	_instruction_label.size = Vector2(text_width, instruction_height)
-	var answers_top := instruction_top + instruction_height + 10.0
-	_answer_scroll.position = right_panel.position + Vector2(14, answers_top)
+	_compact_content_flow = right_panel.size.y < 440.0
+	_prompt_label.add_theme_font_size_override("font_size", 15 if _compact_content_flow else 17)
+	_instruction_label.add_theme_font_size_override("font_size", 14 if _compact_content_flow else 16)
+	if _compact_content_flow:
+		if _prompt_label.get_parent() != _answer_area:
+			_prompt_label.reparent(_answer_area)
+		if _instruction_label.get_parent() != _answer_area:
+			_instruction_label.reparent(_answer_area)
+		var compact_width := maxf(80.0, right_panel.size.x - 36.0)
+		var prompt_height := _estimated_text_height(mission_definition.prompt, compact_width, 15, 36.0)
+		_prompt_label.position = Vector2(4, 0)
+		_prompt_label.size = Vector2(compact_width, prompt_height)
+		var instruction_top := prompt_height + 8.0
+		var compact_instruction := mission_definition.instruction + "\n↓  Yanıtları görmek için kaydır"
+		_instruction_label.text = compact_instruction
+		var instruction_height := _estimated_text_height(compact_instruction, compact_width, 14, 34.0)
+		_instruction_label.position = Vector2(4, instruction_top)
+		_instruction_label.size = Vector2(compact_width, instruction_height)
+		_answer_controls_top = instruction_top + instruction_height + 12.0
+		_answer_scroll.position = right_panel.position + Vector2(14, 108)
+	else:
+		if _prompt_label.get_parent() != self:
+			_prompt_label.reparent(self)
+		if _instruction_label.get_parent() != self:
+			_instruction_label.reparent(self)
+		_instruction_label.text = mission_definition.instruction
+		var prompt_height := _estimated_text_height(mission_definition.prompt, text_width, 17, 42.0)
+		_prompt_label.position = right_panel.position + Vector2(18, 102)
+		_prompt_label.size = Vector2(text_width, prompt_height)
+		var instruction_top := maxf(156.0, 102.0 + prompt_height + 10.0)
+		var instruction_height := _estimated_text_height(mission_definition.instruction, text_width, 16, 38.0)
+		_instruction_label.position = right_panel.position + Vector2(18, instruction_top)
+		_instruction_label.size = Vector2(text_width, instruction_height)
+		var answers_top := instruction_top + instruction_height + 10.0
+		_answer_controls_top = 4.0
+		_answer_scroll.position = right_panel.position + Vector2(14, answers_top)
 	var action_height := 48.0
 	var action_top := right_panel.size.y - action_height - 14.0
 	_verify_button.position = right_panel.position + Vector2(14, action_top)
 	_verify_button.size = Vector2(right_panel.size.x - 28.0, action_height)
-	_answer_scroll.size = Vector2(right_panel.size.x - 28.0, maxf(0.0, action_top - answers_top - 8.0))
+	var scroll_top := _answer_scroll.position.y - right_panel.position.y
+	_answer_scroll.size = Vector2(right_panel.size.x - 28.0, maxf(0.0, action_top - scroll_top - 8.0))
 	_info_button.position = Vector2(size.x - 60.0, 8)
 
 
@@ -242,9 +272,10 @@ func _rebuild_interaction() -> void:
 	if focus_was_in_answers:
 		focus_key = String(focused.get_meta("mission_focus_key", ""))
 	for child in _answer_area.get_children():
+		if child == _feedback_label or child == _prompt_label or child == _instruction_label:
+			continue
 		_answer_area.remove_child(child)
-		if child != _feedback_label:
-			child.queue_free()
+		child.queue_free()
 	_selection_buttons.clear()
 	_sequence_labels.clear()
 	_sequence_up_buttons.clear()
@@ -315,7 +346,7 @@ func _build_choice() -> void:
 		shuffled.shuffle()
 		_choice_order = PackedStringArray(shuffled)
 	var spacing := 7.0
-	var button_y := 4.0
+	var button_y := _answer_controls_top + 4.0
 	for index in _choice_order.size():
 		var option := _choice_order[index]
 		var button_width := _answer_scroll.size.x - 10.0
@@ -362,7 +393,7 @@ func _build_sequence() -> void:
 	var item_width := maxf(36.0, row_width - control_width * 2.0 - 12.0)
 	for index in _sequence_order.size():
 		var row := Control.new()
-		row.position = Vector2(2, 2 + index * (row_height + row_gap))
+		row.position = Vector2(2, _answer_controls_top + 2 + index * (row_height + row_gap))
 		row.size = Vector2(row_width, row_height)
 		_answer_area.add_child(row)
 		var item := _label("%02d  ·  %s" % [index + 1, _sequence_order[index]], 15, INK)
@@ -388,7 +419,7 @@ func _build_sequence() -> void:
 		down.disabled = _completed or index == _sequence_order.size() - 1
 		row.add_child(down)
 		_sequence_down_buttons.append(down)
-	_set_answer_content_height(_sequence_order.size() * (row_height + row_gap) + 4.0)
+	_set_answer_content_height(_answer_controls_top + _sequence_order.size() * (row_height + row_gap) + 4.0)
 
 
 func _build_pairs() -> void:
@@ -397,7 +428,7 @@ func _build_pairs() -> void:
 		shuffled.shuffle()
 		_pair_right_order = PackedStringArray(shuffled)
 	var row_width := _answer_scroll.size.x - 8.0
-	var row_y := 4.0
+	var row_y := _answer_controls_top + 4.0
 	for index in mission_definition.pair_left.size():
 		var left_value := mission_definition.pair_left[index]
 		var left := _label(left_value, 15, INK)
@@ -597,6 +628,9 @@ func _button(text_value: String, button_size: Vector2) -> Button:
 
 
 func _focus_first_action() -> void:
+	if _compact_content_flow:
+		_info_button.grab_focus()
+		return
 	if mission_definition.mode == "pair" and not _pair_selectors.is_empty():
 		(_pair_selectors.values()[0] as OptionButton).grab_focus()
 	elif mission_definition.mode == "sequence" and not _sequence_down_buttons.is_empty():
