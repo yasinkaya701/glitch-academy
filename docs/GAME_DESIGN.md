@@ -317,6 +317,8 @@ Kaynak ve argüman kafasının mekânları (arşiv, konsey odası, kabartma masa
 
 ## 9. Varlık yolu
 
+Varlık iki yoldan gelir: internetten bulunan hazır varlık ya da GitHub üzerinden kendi ürettiğimiz varlık. Nereden bulunacağı, nasıl talep edileceği ve nasıl teslim alınacağı [ASSETS.md](ASSETS.md) içindedir. Bu bölüm iki yol için de geçerli olan kuralları verir.
+
 **Kaynak sırası:**
 
 1. **Hazır CC0 kütüphane:** `assets/models/` (Grab3D) ve `assets/polyhaven/`. Kayıt [ASSET_SOURCES.md](ASSET_SOURCES.md) içinde tutulur.
