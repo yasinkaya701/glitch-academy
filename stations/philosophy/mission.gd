@@ -193,12 +193,13 @@ func _pick(i: int) -> void:
 
 func _on_text_submitted(raw_text: String) -> void:
 	var clean: String = raw_text.strip_edges()
-	if clean == "" or _failed or _stage_level >= 4:
+	if clean == "" or _failed:
 		return
 	_input_box.text = ""
 	_input_box.release_focus()
 	_player_quote.text = "Siz: “%s”" % clean
 	_player_quote.visible = true
+	stage.actor.set_mood(&"thinking")
 	var id: StringName = ORDER[_index]
 	brain.ask(
 		id,
@@ -238,41 +239,43 @@ func _on_speech_recognized(ok: bool, text: String) -> void:
 ##   "angry_leave" -> filozof öfkeyle meydanı terk eder, görev başarısız olur
 ##   "chat"        -> filozof kendi üslubuyla yanıt verir ve konuşmayı sürdürür
 func apply_llm_trigger(result: Dictionary) -> void:
-	if _failed or _stage_level >= 4:
+	if _failed:
 		return
 	var trig: String = String(result.get("trigger", result.get("verdict", "chat")))
+	var pts: int = maxi(int(result.get("points", 2)), 2)
 	var cid: String = String(result.get("choice_id", ""))
 	var reply_id: String = String(result.get("reply_id", ""))
 	var reply_text: String = String(result.get("reply_text", ""))
-	var mood_name: StringName = StringName(String(result.get("mood", "thinking")))
+	var mood_name: StringName = StringName(String(result.get("mood", "smile")))
 	var id: StringName = ORDER[_index]
 
 	if trig in ["stir", "glimmer", "dawn", "recalled", "correct"]:
 		if cid != "" and not _used_choices.has(cid):
 			_used_choices.append(cid)
-		_anger = maxf(_anger - 0.20, 0.0)
+		_anger = maxf(_anger - 0.25, 0.0)
 		stage.set_anger(_anger)
-		_stage_level = clampi(_stage_level + 1, 0, 4)
+		var was_completed: bool = (_stage_level >= 4)
+		_stage_level = clampi(_stage_level + pts, 1, 4)
 		stage.set_memory_stage(_stage_level)
 		hud.set_steps(_stage_level, 4, "ONARILDI" if _stage_level >= 4 else NAMES[id].to_upper())
 
-		if reply_id != "" and stage.voice.get_line_text(id, StringName(reply_id)) != "":
-			stage.speak_line(NAMES[id], StringName(reply_id))
-		elif reply_text != "":
+		if reply_text != "":
 			stage.show_line(NAMES[id], reply_text)
 			stage.voice.speak_live(id, reply_text, &"llm_ok")
+		elif reply_id != "" and stage.voice.get_line_text(id, StringName(reply_id)) != "":
+			stage.speak_line(NAMES[id], StringName(reply_id))
 		else:
 			_speak_stage_line(_stage_level)
 
-		if _stage_level == 1:
-			hud.say("Hafızasında bir kıpırtı uyandı.", &"good")
-		elif _stage_level >= 4:
-			_chat_row.visible = false
+		if _stage_level >= 4:
 			hud.set_steps(4, 4, "ONARILDI")
-			hud.set_directive("%s kendi felsefesini tamamen hatırladı." % NAMES[id])
-			hud.say("Fikir halkası tamamlandı.", &"good")
+			hud.set_directive("%s kendi felsefesini tamamen hatırladı! Sohbete devam edebilir veya sonraki filozofa geçebilirsin." % NAMES[id])
+			hud.say("Sonuca ulaşıldı — %s tamamen uyandı!" % NAMES[id], &"good")
 			hud.set_action("Yeniden Dene")
-			completed.emit()
+			if not was_completed:
+				completed.emit()
+		else:
+			hud.say("Doğru söz! Hafızası hızla açılıyor (%d/4)." % _stage_level, &"good")
 	elif trig == "angry_leave":
 		_anger = 1.0
 		stage.set_anger(_anger)
