@@ -1,18 +1,25 @@
 class_name VoicePlayer
 extends Node
-## Filozof ses oynatıcısı ve dudak senkronu sürücüsü (Önceden üretilmiş MP3 + Canlı ElevenLabs API).
+## Filozof ses oynatıcısı, canlı TTS/dudak senkronu ve mikrofon STT (sesle konuşma) sürücüsü.
 ##
 ## 1. Önceden üretilmiş mod: stations/philosophy/audio/<id>/<line_id>.mp3 ve .json (50 Hz dudak eğrisi)
 ##    dosyalarını doğrudan çalar; internet veya API anahtarı gerekmez.
 ## 2. Canlı ElevenLabs API modu: ELEVEN_API_KEY ortam değişkeni veya user://elevenlabs_key.txt varsa,
 ##    önbellekte olmayan metinleri /v1/text-to-speech/{voice_id}/with-timestamps uç noktasından canlı çeker,
 ##    user://voice_cache/ altına kaydeder ve harf zamanlamasıyla filozofun ağzını senkron oynatır.
+## 3. Canlı yerel TTS yedeği: Anahtar yoksa serbest LLM yanıtlarını arka plan iş parçacığında
+##    gen_voices.py (--who, --text, --out) ile MP3 + 50 Hz dudak eğrisine dönüştürüp seslendirir.
+## 4. Mikrofonla konuşma (STT): listen_microphone() arka planda voice_listen.py çalıştırarak
+##    oyuncunun sesini Türkçe metne çevirir.
 
 signal line_started(line_id: StringName, text: String)
 signal line_finished(line_id: StringName)
+signal speech_recognized(ok: bool, text: String)
 
 const AUDIO_DIR := "res://stations/philosophy/audio/"
 const LINES_PATH := "res://stations/philosophy/data/lines.json"
+const GEN_VOICES_SCRIPT := "res://stations/philosophy/tools/gen_voices.py"
+const LISTEN_SCRIPT := "res://stations/philosophy/tools/voice_listen.py"
 const CACHE_DIR := "user://voice_cache/"
 const KEY_FILE := "user://elevenlabs_key.txt"
 
@@ -27,6 +34,9 @@ var _using_fallback: bool = false
 var _db: Dictionary = {}
 var _pending_live_hash: String = ""
 var _pending_live_text: String = ""
+var _tts_thread: Thread
+var _stt_thread: Thread
+var _listening: bool = false
 
 
 func _ready() -> void:
@@ -38,8 +48,19 @@ func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(CACHE_DIR)
 
 
+func _exit_tree() -> void:
+	if _tts_thread != null and _tts_thread.is_started():
+		_tts_thread.wait_to_finish()
+	if _stt_thread != null and _stt_thread.is_started():
+		_stt_thread.wait_to_finish()
+
+
 func bind_actor(actor: PhilosopherActor) -> void:
 	_actor = actor
+
+
+func is_listening() -> bool:
+	return _listening
 
 
 func get_line_text(philosopher_id: StringName, line_id: StringName) -> String:
@@ -47,12 +68,17 @@ func get_line_text(philosopher_id: StringName, line_id: StringName) -> String:
 	return String(p.get("lines", {}).get(String(line_id), ""))
 
 
+func get_lines(philosopher_id: StringName) -> Dictionary:
+	var p: Dictionary = _db.get("philosophers", {}).get(String(philosopher_id), {})
+	return p.get("lines", {})
+
+
 func get_choices(philosopher_id: StringName) -> Array:
 	var p: Dictionary = _db.get("philosophers", {}).get(String(philosopher_id), {})
 	return p.get("choices", [])
 
 
-## Önceden üretilmiş satırı çalar; yoksa canlı ElevenLabs API'yi veya yapay ritmi dener.
+## Önceden üretilmiş satırı çalar; yoksa canlı ElevenLabs API'yi veya yerel TTS'i dener.
 func play_line(philosopher_id: StringName, line_id: StringName) -> String:
 	stop()
 	var text: String = get_line_text(philosopher_id, line_id)
@@ -68,13 +94,12 @@ func play_line(philosopher_id: StringName, line_id: StringName) -> String:
 			_start_stream(stream, text)
 			return text
 
-	# Önceden üretilmiş dosya yoksa canlı ElevenLabs API veya zamanlayıcı yedeği
 	if text != "":
 		speak_live(philosopher_id, text, line_id)
 	return text
 
 
-## Serbest metni canlı ElevenLabs API ile (veya user://voice_cache/ önbelleğinden) okur.
+## Serbest metni canlı ElevenLabs API veya yerel gen_voices.py ile seslendirir.
 func speak_live(philosopher_id: StringName, text: String, tag_id: StringName = &"live") -> void:
 	stop()
 	_active_id = tag_id
@@ -102,12 +127,93 @@ func speak_live(philosopher_id: StringName, text: String, tag_id: StringName = &
 			"voice_settings": {"stability": 0.52, "similarity_boost": 0.78, "style": 0.22, "use_speaker_boost": true}
 		})
 		if _http.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
-			_start_fallback_speaking(text, 12.0)
+			_start_fallback_speaking(text, 10.0)
 			return
 
-	# Anahtar yoksa veya çevrimdışıysa metin uzunluğuna göre yapay ağız ritmi
+	# Yerel Python TTS (gen_voices.py --who --text --out) ile arka planda gerçek ses + 50 Hz zarf üret
+	var py_bin: String = _resolve_python()
+	if py_bin != "" and (_tts_thread == null or not _tts_thread.is_alive()):
+		if _tts_thread != null and _tts_thread.is_started():
+			_tts_thread.wait_to_finish()
+		_tts_thread = Thread.new()
+		var abs_script: String = ProjectSettings.globalize_path(GEN_VOICES_SCRIPT)
+		var abs_mp3: String = ProjectSettings.globalize_path(cache_mp3)
+		var who_str: String = String(philosopher_id)
+		_start_fallback_speaking(text, 8.0)
+		_tts_thread.start(_run_local_tts_job.bind(py_bin, abs_script, who_str, text, abs_mp3, cache_mp3, cache_json))
+		return
+
 	var est_duration: float = clampf(float(text.length()) * 0.065, 1.8, 7.0)
 	_start_fallback_speaking(text, est_duration)
+
+
+## Mikrofondan oyuncunun sesini dinleyip Türkçe metne çevirir ve speech_recognized sinyali yayar.
+func listen_microphone(seconds: float = 4.2) -> bool:
+	if _listening:
+		return false
+	var py_bin: String = _resolve_python()
+	if py_bin == "":
+		speech_recognized.emit(false, "")
+		return false
+	if _stt_thread != null and _stt_thread.is_started():
+		_stt_thread.wait_to_finish()
+	_listening = true
+	_stt_thread = Thread.new()
+	var abs_script: String = ProjectSettings.globalize_path(LISTEN_SCRIPT)
+	_stt_thread.start(_run_stt_job.bind(py_bin, abs_script, seconds))
+	return true
+
+
+func _run_local_tts_job(
+	py_bin: String,
+	abs_script: String,
+	who_str: String,
+	text: String,
+	abs_mp3: String,
+	cache_mp3: String,
+	cache_json: String
+) -> void:
+	var out := []
+	var args := PackedStringArray([
+		abs_script,
+		"--who=" + who_str,
+		"--text=" + text,
+		"--out=" + abs_mp3,
+	])
+	var code: int = OS.execute(py_bin, args, out, true)
+	if code == 0:
+		call_deferred("_on_local_tts_ready", cache_mp3, cache_json, text)
+
+
+func _on_local_tts_ready(cache_mp3: String, cache_json: String, text: String) -> void:
+	if not FileAccess.file_exists(cache_mp3):
+		return
+	var stream := _load_mp3(cache_mp3)
+	if stream == null:
+		return
+	_load_track_json(cache_json)
+	_start_stream(stream, text)
+
+
+func _run_stt_job(py_bin: String, abs_script: String, seconds: float) -> void:
+	var out := []
+	var args := PackedStringArray([abs_script, "--seconds=%.1f" % seconds])
+	OS.execute(py_bin, args, out, true)
+	var raw: String = "\n".join(PackedStringArray(out)).strip_edges()
+	var lines_arr: PackedStringArray = raw.split("\n", false)
+	var last_line: String = lines_arr[lines_arr.size() - 1] if not lines_arr.is_empty() else ""
+	var parsed: Variant = JSON.parse_string(last_line)
+	var ok: bool = false
+	var recognized: String = ""
+	if parsed is Dictionary:
+		ok = bool((parsed as Dictionary).get("ok", false))
+		recognized = String((parsed as Dictionary).get("text", "")).strip_edges()
+	call_deferred("_on_stt_done", ok, recognized)
+
+
+func _on_stt_done(ok: bool, recognized: String) -> void:
+	_listening = false
+	speech_recognized.emit(ok, recognized)
 
 
 func stop() -> void:
@@ -243,6 +349,13 @@ func _load_track_json(path: String) -> void:
 func _get_voice_id(philosopher_id: StringName) -> String:
 	var v: Dictionary = _db.get("voices", {}).get(String(philosopher_id), {})
 	return String(v.get("elevenlabs_voice_id", ""))
+
+
+func _resolve_python() -> String:
+	for candidate in ["/opt/anaconda3/bin/python3", "/opt/homebrew/bin/python3", "/usr/local/bin/python3", "/usr/bin/python3"]:
+		if FileAccess.file_exists(candidate):
+			return candidate
+	return "python3"
 
 
 func _resolve_api_key() -> String:

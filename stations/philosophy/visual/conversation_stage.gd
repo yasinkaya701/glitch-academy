@@ -166,10 +166,10 @@ func _layout() -> void:
 	actor.fit_to_height(h * ACTOR_HEIGHT_RATIO)
 	ring.position = feet + actor.head_offset() + Vector2(0.0, h * 0.19)
 	ring.radius = h * 0.36
-	_line_group.position = Vector2(28.0, h * 0.62)
-	_line_group.size = Vector2(w * 0.42, h * 0.18)
-	choice_slot.position = Vector2(28.0, h * 0.72)
-	choice_slot.size = Vector2(w * 0.42, h * 0.18)
+	_line_group.position = Vector2(28.0, h * 0.52)
+	_line_group.size = Vector2(w * 0.44, h * 0.18)
+	choice_slot.position = Vector2(28.0, h * 0.68)
+	choice_slot.size = Vector2(w * 0.44, h * 0.16)
 	_floor_shadow.queue_redraw()
 
 

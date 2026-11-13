@@ -161,10 +161,40 @@ def build_philosopher(pid: str, force_engine: str | None = None) -> None:
 
 
 if __name__ == "__main__":
-    targets = [a for a in sys.argv[1:] if not a.startswith("--")] or ["socrates"]
+    live_who = None
+    live_text = None
+    live_out = None
     forced = None
+    targets = []
     for a in sys.argv[1:]:
         if a.startswith("--engine="):
             forced = a.split("=", 1)[1]
+        elif a.startswith("--who="):
+            live_who = a.split("=", 1)[1]
+        elif a.startswith("--text="):
+            live_text = a.split("=", 1)[1]
+        elif a.startswith("--out="):
+            live_out = a.split("=", 1)[1]
+        elif not a.startswith("--"):
+            targets.append(a)
+
+    if live_who and live_text and live_out:
+        db = json.loads(LINES_PATH.read_text())
+        vcfg = db.get("voices", {}).get(live_who, {})
+        api_key = os.environ.get("ELEVEN_API_KEY") or os.environ.get("ELEVENLABS_API_KEY") or ""
+        mp3_out = Path(live_out)
+        mp3_out.parent.mkdir(parents=True, exist_ok=True)
+        meta_out = mp3_out.with_suffix(".json")
+        if api_key and forced != "edge_tts":
+            track = generate_elevenlabs(live_text, vcfg.get("elevenlabs_voice_id", "pNInz6obpgDQGcFmaJgB"), api_key, mp3_out)
+        else:
+            track = asyncio.run(generate_edge(live_text, vcfg, mp3_out))
+        track["text"] = live_text
+        meta_out.write_text(json.dumps(track, ensure_ascii=False))
+        raise SystemExit(0)
+
+    if not targets or targets == ["all"]:
+        db = json.loads(LINES_PATH.read_text())
+        targets = list(db.get("philosophers", {}).keys())
     for t in targets:
         build_philosopher(t, forced)

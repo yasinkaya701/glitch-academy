@@ -61,44 +61,408 @@
         "stage_4": "Şimdi tamamen hatırladım: Bildiğim tek şey, hiçbir şey bilmediğimdir.",
         "wrong_sofist": "Hayır! Ben para karşılığı ikna sanatı satan bir sofist değilim!",
         "wrong_empedokles": "Dört element mi? Hayır, ben doğa taşlarını değil, insanın ruhunu ve ahlakı sorgularım!",
-        "angry_leave": "Beni kendi fikirlerimden uzaklaştırdın; seninle tartışmayı bırakıyorum!"
+        "angry_leave": "Beni kendi fikirlerimden uzaklaştırdın; seninle tartışmayı bırakıyorum!",
+        "chat_hint": "Bana bilgelik iddiamı, soru sorma yöntemimi ya da erdemin ne olduğunu hatırlat."
       },
       "choices": [
         {
           "id": "know_nothing",
           "label": "Hiçbir şey bilmediğini bilmek",
           "correct": true,
-          "reply": "stage_1"
+          "reply": "stage_1",
+          "keywords": ["bilmediğ", "bilmiyorum", "hiçbir şey", "cahil", "bilgisiz", "tek bildiğim"]
         },
         {
           "id": "maieutics",
           "label": "Soruyla doğurtma (Maiotik)",
           "correct": true,
-          "reply": "stage_2"
+          "reply": "stage_2",
+          "keywords": ["doğurt", "maiotik", "mayotik", "ebe", "soru", "diyalog", "ironi", "çürütme"]
         },
         {
           "id": "virtue_knowledge",
           "label": "Erdem bilgidir",
           "correct": true,
-          "reply": "stage_3"
+          "reply": "stage_3",
+          "keywords": ["erdem", "bilgidir", "kötülük", "ahlak", "bilerek", "iyi"]
         },
         {
           "id": "final_recall",
           "label": "Sorgulanmamış hayat",
           "correct": true,
-          "reply": "stage_4"
+          "reply": "stage_4",
+          "keywords": ["sorgulan", "hayat", "yaşam", "değmez", "savunma", "atina", "at sineği"]
         },
         {
           "id": "wrong_sophist",
           "label": "Para ile hitabet (Sofist)",
           "correct": false,
-          "reply": "wrong_sofist"
+          "reply": "wrong_sofist",
+          "keywords": ["para", "sofist", "hitabet", "retorik", "ücret", "gorgias", "protagoras", "göreceli"]
         },
         {
           "id": "wrong_empedocles",
           "label": "Dört element (Empedokles)",
           "correct": false,
-          "reply": "wrong_empedokles"
+          "reply": "wrong_empedokles",
+          "keywords": ["dört element", "ateş", "toprak", "hava", "empedokles", "atom", "haz"]
+        }
+      ]
+    },
+    "plato": {
+      "name": "Platon",
+      "note": "Platon (MÖ 427–347, Atina). İdealar kuramı, mağara alegorisi, ruhun ölümsüzlüğü ve filozof kral düşüncesiyle tanınır.",
+      "lines": {
+        "stage_0": "Gölgeler gerçekmiş gibi geliyor… Hakikatin aslı neredeydi?",
+        "stage_1": "Aa… dur! Kafamın içinde bir şey kımıldadı; mağara duvarındaki gölgeleri hatırlıyorum!",
+        "stage_2": "Evet… duyular dünyası yalnızca bir kopya; asıl gerçek değişmeyen İdealar dünyasıdır!",
+        "stage_3": "Hatırlıyorum! Ruh, bedene girmeden önce İdeaları görmüştü; öğrenmek hatırlamaktır.",
+        "stage_4": "Şimdi her şey berrak: Adil siteyi bilgelik sevgisiyle yöneten filozof krallar kurar.",
+        "wrong_sofist": "Hayır! Duyuların gelip geçici gölgesini mutlak hakikat sayamam!",
+        "angry_leave": "Beni mağaranın karanlığına geri çekiyorsun; tartışmayı bırakıyorum!",
+        "chat_hint": "Bana mağaradaki gölgeleri, değişmeyen İdeaları ve adil devleti hatırlat."
+      },
+      "choices": [
+        {
+          "id": "cave",
+          "label": "Mağara alegorisi",
+          "correct": true,
+          "reply": "stage_1",
+          "keywords": ["mağara", "gölge", "zincir", "güneş", "alegori"]
+        },
+        {
+          "id": "ideas",
+          "label": "İdealar dünyası",
+          "correct": true,
+          "reply": "stage_2",
+          "keywords": ["idea", "idealar", "formlar", "duyular", "asıl gerçek", "evren"]
+        },
+        {
+          "id": "anamnesis",
+          "label": "Bilmek hatırlamaktır",
+          "correct": true,
+          "reply": "stage_3",
+          "keywords": ["hatırlamak", "anamnesis", "ruh", "ölümsüz", "doğuştan"]
+        },
+        {
+          "id": "philosopher_king",
+          "label": "Filozof kral ve Devlet",
+          "correct": true,
+          "reply": "stage_4",
+          "keywords": ["devlet", "filozof kral", "akademia", "adalet", "bilge yönetici"]
+        },
+        {
+          "id": "wrong_sense",
+          "label": "Gerçek yalnız duyulardır",
+          "correct": false,
+          "reply": "wrong_sofist",
+          "keywords": ["yalnız duyu", "madde tek", "haz", "sofist", "göreceli"]
+        }
+      ]
+    },
+    "aristotle": {
+      "name": "Aristoteles",
+      "note": "Aristoteles (MÖ 384–322). Mantığın kurucusu, madde-form öğretisi, dört neden ve altın orta ahlakıyla tanınır.",
+      "lines": {
+        "stage_0": "Nesnelerin doğasını inceliyordum ama ilkelerim birbirine karıştı…",
+        "stage_1": "Aa… dur! Kafamın içinde bir şey kımıldadı; formlar ayrı bir dünyada değil, nesnenin içindedir!",
+        "stage_2": "Evet… bir şeyi anlamak için maddi, formel, fail ve ereksel dört nedeni bilmeliyiz!",
+        "stage_3": "Hatırlıyorum! Doğru düşünmenin aracı kıyas ve mantıktır; Organon'u bunun için kurdum.",
+        "stage_4": "Şimdi tamamlandı: Erdem iki aşırı uç arasındaki altın ortadır; mutluluk eudaimonia'dır.",
+        "wrong_sofist": "Hayır! Formları nesnelerden koparıp bulutların üstüne yerleştiremem!",
+        "angry_leave": "Kanıtsız ve ölçüsüz iddialarla vakit kaybedemem; Lykeion'a dönüyorum!",
+        "chat_hint": "Bana madde-form birliğini, dört nedeni, mantığı ve altın ortayı hatırlat."
+      },
+      "choices": [
+        {
+          "id": "hylomorphism",
+          "label": "Madde ve form birliği",
+          "correct": true,
+          "reply": "stage_1",
+          "keywords": ["madde", "form", "içinde", "töz", "potansiyel", "edimsel"]
+        },
+        {
+          "id": "four_causes",
+          "label": "Dört neden kuramı",
+          "correct": true,
+          "reply": "stage_2",
+          "keywords": ["dört neden", "maddi", "formel", "fail", "ereksel", "amaç"]
+        },
+        {
+          "id": "logic",
+          "label": "Mantık ve kıyas (Organon)",
+          "correct": true,
+          "reply": "stage_3",
+          "keywords": ["mantık", "kıyas", "organon", "kategori", "öncül", "sonuç"]
+        },
+        {
+          "id": "golden_mean",
+          "label": "Altın orta (Ölçülülük)",
+          "correct": true,
+          "reply": "stage_4",
+          "keywords": ["altın orta", "ölçü", "eudaimonia", "mutluluk", "aşırı uç"]
+        },
+        {
+          "id": "wrong_separate_forms",
+          "label": "Formlar ayrı bir dünyadadır",
+          "correct": false,
+          "reply": "wrong_sofist",
+          "keywords": ["ayrı dünya", "mağara", "kuşkucu", "hiçbir şey bilinemez"]
+        }
+      ]
+    },
+    "epicurus": {
+      "name": "Epiküros",
+      "note": "Epiküros (MÖ 341–270). Ruh dinginliği (ataraksia), acıdan kaçınma, ölçülü haz ve atomculukla tanınır.",
+      "lines": {
+        "stage_0": "Bahçenin huzuru dağıldı… İnsan korkularından nasıl arınırdı?",
+        "stage_1": "Aa… dur! Kafamın içinde bir şey kımıldadı; evren boşlukta hareket eden atomlardan oluşur.",
+        "stage_2": "Evet… ölüm varken biz yokuz, biz varken ölüm yok; ölümden korkmak yersizdir!",
+        "stage_3": "Hatırlıyorum! Gerçek haz taşkınlık değil, bedende acısızlık ve ruhta sarsılmaz dinginliktir.",
+        "stage_4": "Şimdi tamamen hatırladım: Ataraksia, bilgelik ve dostluk bahçesinde filizlenir.",
+        "wrong_sofist": "Hayır! Ben dizginsiz ve ölçüsüz bedensel eğlenceyi savunmadım!",
+        "angry_leave": "Ruh dinginliğimi bozuyorsun; bahçeme çekiliyorum!",
+        "chat_hint": "Bana atomları, ölüm korkusunun yersizliğini ve ataraksia dinginliğini hatırlat."
+      },
+      "choices": [
+        {
+          "id": "atoms",
+          "label": "Atomlar ve boşluk",
+          "correct": true,
+          "reply": "stage_1",
+          "keywords": ["atom", "boşluk", "doğa", "sapma", "evren"]
+        },
+        {
+          "id": "no_fear_death",
+          "label": "Ölüm korkusunun yersizliği",
+          "correct": true,
+          "reply": "stage_2",
+          "keywords": ["ölüm", "korku", "biz varken", "tanrı korkusu"]
+        },
+        {
+          "id": "measured_pleasure",
+          "label": "Acısızlık ve ölçülü haz",
+          "correct": true,
+          "reply": "stage_3",
+          "keywords": ["acısız", "ölçülü haz", "sade", "ekmek", "su", "arzular"]
+        },
+        {
+          "id": "ataraxia",
+          "label": "Ataraksia (Ruh dinginliği)",
+          "correct": true,
+          "reply": "stage_4",
+          "keywords": ["ataraksia", "dingin", "huzur", "bahçe", "dostluk"]
+        },
+        {
+          "id": "wrong_hedonism",
+          "label": "Sınırsız eğlence ve lüks",
+          "correct": false,
+          "reply": "wrong_sofist",
+          "keywords": ["lüks", "sınırsız", "taşkın", "kaderci", "korku"]
+        }
+      ]
+    },
+    "kindi": {
+      "name": "el-Kindî",
+      "note": "el-Kindî (801–873, Bağdat). İslam felsefesinin kurucusu (Filozofü'l-Arab), akıl-vahiy uyumu ve üzüntüden kurtulma risalesiyle tanınır.",
+      "lines": {
+        "stage_0": "Beytü'l-Hikme'nin kandilleri titriyor… Hakikati nasıl tanımlardım?",
+        "stage_1": "Aa… dur! Kafamın içinde bir şey kımıldadı; hakikat nereden gelirse gelsin benimsenmelidir!",
+        "stage_2": "Evet… felsefe ile nebevi bilgi çatışmaz; ikisi de aynı hakikati aydınlatır.",
+        "stage_3": "Hatırlıyorum! Evren öncesiz değildir; zaman ve hareket sonludur, yoktan yaratılmıştır.",
+        "stage_4": "Şimdi berraklaştı: İlk Felsefe varlığın ilk nedenini bilmektir; üzüntünün ilacı akıldır.",
+        "wrong_sofist": "Hayır! Hakikati aramayı küçümseyen dar görüşü kabul edemem!",
+        "angry_leave": "Akla ve delile sırt çeviriyorsun; seninle tartışmayı bırakıyorum!",
+        "chat_hint": "Bana hakikatin evrenselliğini, akıl-vahiy uyumunu ve İlk Felsefeyi hatırlat."
+      },
+      "choices": [
+        {
+          "id": "universal_truth",
+          "label": "Hakikat nereden gelirse al",
+          "correct": true,
+          "reply": "stage_1",
+          "keywords": ["nereden gelirse", "hakikat", "miras", "insanlık", "tercüme"]
+        },
+        {
+          "id": "reason_revelation",
+          "label": "Akıl ve vahiy uyumu",
+          "correct": true,
+          "reply": "stage_2",
+          "keywords": ["akıl", "vahiy", "uyum", "uzlaş", "din", "felsefe"]
+        },
+        {
+          "id": "huduth",
+          "label": "Evrenin sonluluğu (Hudûs)",
+          "correct": true,
+          "reply": "stage_3",
+          "keywords": ["hudus", "hudûs", "sonlu", "zaman", "yaratıl", "sonsuz olamaz"]
+        },
+        {
+          "id": "first_philosophy",
+          "label": "İlk Felsefe ve üzüntü risalesi",
+          "correct": true,
+          "reply": "stage_4",
+          "keywords": ["ilk felsefe", "üzüntü", "kindi", "ilk neden"]
+        },
+        {
+          "id": "wrong_reject_philosophy",
+          "label": "Felsefe gereksizdir",
+          "correct": false,
+          "reply": "wrong_sofist",
+          "keywords": ["gereksiz", "yasak", "akla karşı", "çelişir"]
+        }
+      ]
+    },
+    "farabi": {
+      "name": "el-Fârâbî",
+      "note": "el-Fârâbî (872–950). Muallim-i Sânî (İkinci Öğretmen), İlimlerin Sayımı, Erdemli Şehir ve müzik-mantık çalışmalarıyla tanınır.",
+      "lines": {
+        "stage_0": "Kanunun telleri suskun… İnsanlar neden bir arada yaşardı?",
+        "stage_1": "Aa… dur! Kafamın içinde bir şey kımıldadı; mantık düşüncenin terazisidir, bana Muallim-i Sânî derlerdi!",
+        "stage_2": "Evet… ilimleri dil, mantık, matematik, fizik ve ilahiyat diye sınıflandırmıştım (İhsâü'l-Ulûm)!",
+        "stage_3": "Hatırlıyorum! Varlık, Zorunlu Varlık'tan sudûr düzeniyle taşar ve Etkin Akıl'la kavranır.",
+        "stage_4": "Şimdi tamamlandı: İnsanlar yardımlaşmak ve gerçek mutluluğa ulaşmak için Erdemli Şehir'i kurar!",
+        "wrong_sofist": "Hayır! Zorbalık ve cehalet üzerine kurulan şehir erdemli olamaz!",
+        "angry_leave": "Uyum ve mantık olmadan hakikate varılmaz; meclisten ayrılıyorum!",
+        "chat_hint": "Bana Muallim-i Sânî unvanımı, İlimlerin Sayımı'nı ve Erdemli Şehir'i hatırlat."
+      },
+      "choices": [
+        {
+          "id": "second_teacher",
+          "label": "Muallim-i Sânî ve mantık",
+          "correct": true,
+          "reply": "stage_1",
+          "keywords": ["muallim", "ikinci öğretmen", "mantık", "aristoteles"]
+        },
+        {
+          "id": "ihsa_ulum",
+          "label": "İlimlerin sınıflandırılması",
+          "correct": true,
+          "reply": "stage_2",
+          "keywords": ["ihsa", "ilimlerin sayımı", "sınıflandır", "bilimler"]
+        },
+        {
+          "id": "emanation",
+          "label": "Sudûr ve Etkin Akıl",
+          "correct": true,
+          "reply": "stage_3",
+          "keywords": ["sudur", "sudûr", "etkin akıl", "faal akıl", "taşma"]
+        },
+        {
+          "id": "virtuous_city",
+          "label": "el-Medînetü'l-Fâzıla (Erdemli Şehir)",
+          "correct": true,
+          "reply": "stage_4",
+          "keywords": ["erdemli şehir", "medinet", "fazıla", "yardımlaşma", "mutluluk"]
+        },
+        {
+          "id": "wrong_ignorant_city",
+          "label": "Güçlünün egemenliği (Cahil Şehir)",
+          "correct": false,
+          "reply": "wrong_sofist",
+          "keywords": ["cahil şehir", "zorba", "güçlü haklı", "yalnız yaşa"]
+        }
+      ]
+    },
+    "ibn_sina": {
+      "name": "İbn Sînâ",
+      "note": "İbn Sînâ (980–1037). Zorunlu-mümkün varlık ayrımı, Uçan Adam düşünce deneyi, Kitâbü'ş-Şifâ ve el-Kânûn fi't-Tıbb ile tanınır.",
+      "lines": {
+        "stage_0": "Boşlukta asılı gibiyim… Varlığı nasıl temellendirmiştim?",
+        "stage_1": "Aa… dur! Kafamın içinde bir şey kımıldadı; boşlukta uçan bir insan bile kendi benliğinin farkındadır!",
+        "stage_2": "Evet… mahiyet ile varlık ayrıdır; mümkün varlıklar var olmak için Zorunlu Varlık'a muhtaçtır!",
+        "stage_3": "Hatırlıyorum! Kitâbü'ş-Şifâ'da mantık, doğa ve metafiziği; el-Kânûn'da hekimliği birleştirdim.",
+        "stage_4": "Şimdi her şey yerli yerinde: Ben Şeyhü'r-Reîs İbn Sînâ'yım; ruh ve varlık delille kavranır.",
+        "wrong_sofist": "Hayır! Mümkün varlığın kendi kendine zorunlu olduğunu iddia etmek çelişkidir!",
+        "angry_leave": "Kanıt ve burhan olmadan felsefe yapılamaz; dersimi sonlandırıyorum!",
+        "chat_hint": "Bana Uçan Adam deneyini, Zorunlu-Mümkün varlık ayrımını ve Şifâ ile Kânûn'u hatırlat."
+      },
+      "choices": [
+        {
+          "id": "flying_man",
+          "label": "Uçan Adam düşünce deneyi",
+          "correct": true,
+          "reply": "stage_1",
+          "keywords": ["uçan adam", "boşlukta", "özbilinç", "ruh", "benlik"]
+        },
+        {
+          "id": "necessary_existent",
+          "label": "Zorunlu ve mümkün varlık",
+          "correct": true,
+          "reply": "stage_2",
+          "keywords": ["zorunlu", "mümkün", "vacib", "mümkin", "mahiyet", "varlık"]
+        },
+        {
+          "id": "shifa_canon",
+          "label": "Kitâbü'ş-Şifâ ve el-Kânûn",
+          "correct": true,
+          "reply": "stage_3",
+          "keywords": ["şifa", "kanun", "tıp", "hekim", "ansiklopedi"]
+        },
+        {
+          "id": "shaykh_rais",
+          "label": "Şeyhü'r-Reîs ve nefs kuramı",
+          "correct": true,
+          "reply": "stage_4",
+          "keywords": ["şeyh", "reis", "nefs", "akıl", "ibn sina"]
+        },
+        {
+          "id": "wrong_material_soul",
+          "label": "Bilinç yalnız duyulardan ibarettir",
+          "correct": false,
+          "reply": "wrong_sofist",
+          "keywords": ["yalnız madde", "ruh yok", "rastlantı", "nedensiz"]
+        }
+      ]
+    },
+    "ibn_rushd": {
+      "name": "İbn Rüşd",
+      "note": "İbn Rüşd (1126–1198, Kurtuba). Aristoteles şârihi (Commentator), Faslü'l-Makâl, Tehâfütü't-Tehâfüt ve hakikatin birliği ilkesiyle tanınır.",
+      "lines": {
+        "stage_0": "Kurtuba kemerleri altında şerhlerim dağılmış… Hakikat hakikatle çelişir miydi?",
+        "stage_1": "Aa… dur! Kafamın içinde bir şey kımıldadı; hakikat hakikate ters düşmez, bilakis onu doğrular!",
+        "stage_2": "Evet… Faslü'l-Makâl'de varlığı akılla incelemenin dinen de zorunlu olduğunu göstermiştim!",
+        "stage_3": "Hatırlıyorum! Aristoteles'in büyük şerhlerini yazdım ve Tehâfütü't-Tehâfüt'te nedenselliği savundum.",
+        "stage_4": "Şimdi tamamen hatırladım: Sebepleri inkâr eden aklı inkâr eder; burhan hakikatin en sağlam yoludur.",
+        "wrong_sofist": "Hayır! Doğadaki nedenselliği ve aklın burhanını reddedemem!",
+        "angry_leave": "Burhan ve nedenselliği yok sayanlarla tartışamam; kürsüden ayrılıyorum!",
+        "chat_hint": "Bana 'hakikat hakikate ters düşmez' ilkesini, Faslü'l-Makâl'i ve nedenselliği hatırlat."
+      },
+      "choices": [
+        {
+          "id": "unity_of_truth",
+          "label": "Hakikat hakikate ters düşmez",
+          "correct": true,
+          "reply": "stage_1",
+          "keywords": ["hakikat hakikate", "ters düşmez", "çelişmez", "iki hakikat", "süt kardeş"]
+        },
+        {
+          "id": "fasl_al_maqal",
+          "label": "Faslü'l-Makâl ve burhan",
+          "correct": true,
+          "reply": "stage_2",
+          "keywords": ["fasl", "makal", "burhan", "tevil", "inceleme"]
+        },
+        {
+          "id": "commentator",
+          "label": "Aristoteles şerhleri ve nedensellik",
+          "correct": true,
+          "reply": "stage_3",
+          "keywords": ["şerh", "şarih", "tehafüt", "nedensellik", "sebep", "aristoteles"]
+        },
+        {
+          "id": "cordoba_qadi",
+          "label": "Akıl ve tabiat düzeni",
+          "correct": true,
+          "reply": "stage_4",
+          "keywords": ["kurtuba", "akıl", "tabiat", "düzen", "ibn rüşd"]
+        },
+        {
+          "id": "wrong_no_causality",
+          "label": "Doğada nedensellik yoktur",
+          "correct": false,
+          "reply": "wrong_sofist",
+          "keywords": ["nedensellik yok", "sebep yok", "akıl yetersiz", "felsefe haram"]
         }
       ]
     }
