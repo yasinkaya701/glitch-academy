@@ -4,11 +4,11 @@ extends Control
 ## makes the geometry and the greenhouse failure legible in 3D.
 
 const Model = preload("res://stations/seasons/seasons_model.gd")
-const INK := Color("e6f1ef")
-const MUTED := Color("a3b9bf")
-const AQUA := Color("77d2bd")
-const GOLD := Color("f0aa70")
-const ORBIT := Color("557386")
+const INK := UITheme.INK
+const MUTED := UITheme.MUTED
+const AQUA := UITheme.ACCENT
+const GOLD := UITheme.WARM
+const ORBIT := UITheme.EDGE_STRONG
 const EARTH_ALBEDO := preload("res://stations/seasons/assets/earth_albedo_4k.jpg")
 const GREENHOUSE_INTERIOR := preload("res://stations/seasons/assets/grab3d/greenhouse-interior.glb")
 
@@ -16,6 +16,7 @@ var december := false
 var tilt := Model.AXIAL_TILT
 var greenhouse := true
 var repaired := false
+var guides_visible := false
 var incident_time := 0.0
 
 var viewport: SubViewport
@@ -458,26 +459,26 @@ func _draw_topline() -> void:
 func _draw_orbit_labels() -> void:
 	_center_label("21 HAZİRAN", Vector2(132, 87), 13, AQUA if not december else MUTED)
 	_center_label("21 ARALIK", Vector2(588, 87), 13, AQUA if december else MUTED)
-	_center_label("Eksenin yönü yörünge boyunca sabit", Vector2(360, 106), 13, MUTED)
-	var badge := "EKEN EĞİKLİĞİ  %s°" % _decimal(tilt)
-	_draw_pill(badge, Vector2(248, 121), AQUA)
+	_center_label("Eksen yönü yörünge boyunca sabit", Vector2(360, 106), 13, MUTED)
+	_center_label("İki konum Güneş'e eşit uzaklıkta", Vector2(360, 126), 13, MUTED)
+	var badge := "EKSEN EĞİMİ  %s°" % _decimal(tilt)
+	_draw_pill(badge, Vector2(248, 148), AQUA)
 
 
 func _draw_greenhouse_labels() -> void:
 	_draw_pill("GÜNEY SERASI", Vector2(26, 82), AQUA if repaired else GOLD)
 	var warning := "Havalandırma açık" if repaired else "Havalandırma kapalı  ·  ısı birikiyor"
-	_label(warning, Vector2(26, 109), 16, AQUA if repaired else Color("ff9b7e"))
+	_label(warning, Vector2(26, 109), 16, AQUA if repaired else UITheme.DANGER)
 	var gauge := Rect2(220, 455, 278, 7)
-	draw_rect(gauge, Color("59707b", 0.78))
+	draw_rect(gauge, Color(UITheme.EDGE_STRONG, 0.78))
 	var recovery := smoothstep(0.0, 3.0, incident_time) if repaired else 0.0
-	var heat := (1.0 - exp(-maxf(incident_time, 0.0) * 0.55)) * (1.0 - recovery)
-	draw_rect(Rect2(gauge.position, Vector2(gauge.size.x * lerpf(0.92, 0.24, recovery), gauge.size.y)), Color("ff906d") if not repaired else AQUA)
+	draw_rect(Rect2(gauge.position, Vector2(gauge.size.x * lerpf(0.92, 0.24, recovery), gauge.size.y)), UITheme.DANGER if not repaired else AQUA)
 	_center_label("SERA SICAKLIĞI YÜKSEK" if not repaired else "SICAKLIK NORMAL ARALIĞA DÖNÜYOR", Vector2(359, 484), 14, INK)
 
 
 func _draw_readings() -> void:
-	draw_rect(Rect2(18, 332, 684, 156), Color("091522", 0.82))
-	draw_rect(Rect2(18, 332, 684, 156), Color("7192a0", 0.38), false, 1.0, true)
+	draw_rect(Rect2(18, 332, 684, 156), Color(UITheme.BG, 0.82))
+	draw_rect(Rect2(18, 332, 684, 156), Color(UITheme.EDGE, 0.38), false, 1.0, true)
 	_center_label("ÖĞLE GÜNEŞİ  ·  EKVATORA EŞİT UZAKLIK", Vector2(360, 356), 13, MUTED)
 	_draw_reading(Vector2(36, 370), 40.0, "40° KUZEY", AQUA)
 	_draw_reading(Vector2(382, 370), -40.0, "40° GÜNEY", GOLD)
@@ -489,20 +490,25 @@ func _draw_reading(origin: Vector2, latitude: float, title: String, color: Color
 	var daylight_fraction := sample.y / 24.0
 	draw_circle(origin + Vector2(32, 52), 23.0, Color(color, 0.11), true, -1.0, true)
 	draw_arc(origin + Vector2(32, 52), 23.0, PI, PI + TAU * daylight_fraction, 42, color, 3.0, true)
-	draw_line(origin + Vector2(9, 52), origin + Vector2(55, 52), Color("7e9aa7"), 1.0, true)
-	draw_line(origin + Vector2(32, 29), origin + Vector2(32, 75), Color("7e9aa7"), 1.0, true)
+	draw_line(origin + Vector2(9, 52), origin + Vector2(55, 52), UITheme.MUTED, 1.0, true)
+	draw_line(origin + Vector2(32, 29), origin + Vector2(32, 75), UITheme.MUTED, 1.0, true)
 	var ray_end := origin + Vector2(32, 52) + Vector2(-cos(angle), -sin(angle)) * 25.0
 	draw_line(origin + Vector2(32, 52), ray_end, color, 2.4, true)
+	if guides_visible:
+		draw_line(ray_end, ray_end + Vector2(7.0, 3.0), color, 1.8, true)
+		draw_line(ray_end, ray_end + Vector2(3.0, 7.0), color, 1.8, true)
 	_label(title, origin + Vector2(68, 14), 13, color)
 	_label("%s° ışın açısı" % _decimal(sample.x), origin + Vector2(68, 39), 15, INK)
 	_label("%s saat gündüz" % _decimal(sample.y), origin + Vector2(68, 62), 15, INK)
 	_label("%s yüzey izi" % ("dar" if sample.z > 0.75 else "geniş"), origin + Vector2(224, 62), 13, MUTED)
-	draw_rect(Rect2(origin + Vector2(68, 80), Vector2(230, 3)), Color("405767"))
+	if guides_visible:
+		_label("R  ·  ışın açısı", origin + Vector2(224, 14), 12, AQUA)
+	draw_rect(Rect2(origin + Vector2(68, 80), Vector2(230, 3)), UITheme.EDGE)
 	draw_rect(Rect2(origin + Vector2(68, 80), Vector2(230.0 * sample.y / 24.0, 3)), color)
 
 
 func _draw_pill(value: String, point: Vector2, color: Color) -> void:
-	var width := ThemeDB.fallback_font.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x + 24.0
+	var width := _draw_font().get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x + 24.0
 	draw_rect(Rect2(point, Vector2(width, 25)), Color(color, 0.13))
 	draw_rect(Rect2(point, Vector2(width, 25)), Color(color, 0.46), false, 1.0, true)
 	_label(value, point + Vector2(12, 17), 12, color)
@@ -565,12 +571,19 @@ func _emissive_material(color: Color, strength: float) -> StandardMaterial3D:
 
 
 func _label(value: String, point: Vector2, font_size: int, color: Color) -> void:
-	draw_string(ThemeDB.fallback_font, point, value, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+	draw_string(_draw_font(), point, value, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
 
 func _center_label(value: String, point: Vector2, font_size: int, color: Color) -> void:
-	var width := ThemeDB.fallback_font.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var width := _draw_font().get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 	_label(value, point - Vector2(width / 2.0, 0), font_size, color)
+
+
+func _draw_font() -> Font:
+	var project_theme := get_tree().root.theme
+	if project_theme != null and project_theme.default_font != null:
+		return project_theme.default_font
+	return UITheme.build().default_font
 
 
 func _decimal(value: float) -> String:
