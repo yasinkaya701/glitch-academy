@@ -1,8 +1,8 @@
 extends "res://scripts/mission.gd"
 ## Fikir Meydanı (Felsefe) görevi.
-## Mount & Blade II: Bannerlord diyalog düzeni + res://scripts/mission_hud.gd (docs/UX.md uyumlu).
-## Sağda tarihsel avluda ayakta duran ve 60 FPS dudak/baş/el jestleriyle konuşan filozof;
-## solda kutusuz klasik RPG diyalog satırları + tek satırlık serbest mesaj ve sesle konuşma girişi.
+## Kullanıcıya çoktan seçmeli şık verilmez: oyuncu doğrudan cümlesini yazar veya mikrofona konuşur;
+## arka plandaki LLM / PhilosopherBrain yanıtı analiz ederek sahnedeki tetiklemeleri
+## (stir, glimmer, dawn, recalled, wrong, angry_leave, chat) çalıştırır.
 
 const ConversationStageScript = preload("res://stations/philosophy/visual/conversation_stage.gd")
 const PhilosopherBrainScript = preload("res://stations/philosophy/visual/philosopher_brain.gd")
@@ -35,8 +35,10 @@ const FALLBACK_LINES := [
 var stage: ConversationStage
 var brain: PhilosopherBrain
 var hud: Hud
+var _player_quote := Label.new()
 var _chat_row := HBoxContainer.new()
 var _input_box := LineEdit.new()
+var _send_btn := Button.new()
 var _mic_btn := Button.new()
 
 var _index: int = 0
@@ -59,7 +61,7 @@ func _ready() -> void:
 
 	brain = PhilosopherBrainScript.new()
 	add_child(brain)
-	brain.response_ready.connect(_on_brain_response)
+	brain.response_ready.connect(apply_llm_trigger)
 
 	stage.voice.speech_recognized.connect(_on_speech_recognized)
 
@@ -70,7 +72,7 @@ func _ready() -> void:
 	hud.skip.text = "Sonraki filozof"
 	hud.skip.show()
 
-	_build_inline_input()
+	_build_dialogue_controls()
 
 	var args := OS.get_cmdline_user_args()
 	for a in args:
@@ -83,37 +85,58 @@ func _ready() -> void:
 			_run_demo()
 
 
-func _build_inline_input() -> void:
-	_chat_row.add_theme_constant_override("separation", 8)
-	_chat_row.custom_minimum_size = Vector2(0, 38)
+func _build_dialogue_controls() -> void:
+	_player_quote.add_theme_font_size_override("font_size", 17)
+	_player_quote.add_theme_color_override("font_color", Color("#9fb6c3"))
+	_player_quote.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.90))
+	_player_quote.add_theme_constant_override("shadow_offset_x", 0)
+	_player_quote.add_theme_constant_override("shadow_offset_y", 2)
+	_player_quote.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_player_quote.visible = false
+	stage.choice_slot.add_child(_player_quote)
 
-	_input_box.placeholder_text = "Kendi cümleni yaz (Enter ile gönder)…"
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 10)
+	stage.choice_slot.add_child(spacer)
+
+	_chat_row.add_theme_constant_override("separation", 8)
+	_chat_row.custom_minimum_size = Vector2(0, 40)
+
+	_input_box.placeholder_text = "Filozofla konuş (cümleni yazıp Enter'a bas)…"
 	_input_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_input_box.custom_minimum_size = Vector2(240, 36)
+	_input_box.custom_minimum_size = Vector2(260, 40)
 	_input_box.text_submitted.connect(_on_text_submitted)
 
 	var normal_sb := StyleBoxFlat.new()
-	normal_sb.bg_color = Color(0.03, 0.05, 0.08, 0.58)
-	normal_sb.border_color = Color(0.95, 0.65, 0.35, 0.42)
-	normal_sb.border_width_bottom = 1
+	normal_sb.bg_color = Color(0.03, 0.05, 0.08, 0.65)
+	normal_sb.border_color = Color(0.95, 0.65, 0.35, 0.55)
+	normal_sb.border_width_bottom = 2
 	normal_sb.set_corner_radius_all(6)
-	normal_sb.content_margin_left = 12
-	normal_sb.content_margin_right = 12
-	normal_sb.content_margin_top = 6
-	normal_sb.content_margin_bottom = 6
+	normal_sb.content_margin_left = 14
+	normal_sb.content_margin_right = 14
+	normal_sb.content_margin_top = 8
+	normal_sb.content_margin_bottom = 8
 	_input_box.add_theme_stylebox_override("normal", normal_sb)
 
 	var focus_sb := normal_sb.duplicate() as StyleBoxFlat
-	focus_sb.bg_color = Color(0.05, 0.08, 0.13, 0.78)
+	focus_sb.bg_color = Color(0.05, 0.08, 0.13, 0.85)
 	focus_sb.border_color = Color("#f2a65a")
 	focus_sb.border_width_bottom = 2
 	_input_box.add_theme_stylebox_override("focus", focus_sb)
 	_chat_row.add_child(_input_box)
 
+	_send_btn.text = "Gönder"
+	_send_btn.theme_type_variation = &"PrimaryButton"
+	_send_btn.custom_minimum_size = Vector2(92, 40)
+	_send_btn.pressed.connect(func() -> void: _on_text_submitted(_input_box.text))
+	_chat_row.add_child(_send_btn)
+
 	_mic_btn.text = "Sesle Söyle (V)"
-	_mic_btn.custom_minimum_size = Vector2(130, 36)
+	_mic_btn.custom_minimum_size = Vector2(134, 40)
 	_mic_btn.pressed.connect(_on_mic_pressed)
 	_chat_row.add_child(_mic_btn)
+
+	stage.choice_slot.add_child(_chat_row)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -136,14 +159,14 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_N:
 			_set_level(_stage_level - 1)
 		KEY_A:
-			_apply_wrong_choice("wrong_sofist")
+			apply_llm_trigger({"trigger": "wrong", "reply_id": "wrong_sofist"})
 		KEY_S:
 			_anger = clampf(_anger - 0.25, 0.0, 1.0)
 			stage.set_anger(_anger)
 		KEY_R:
 			stage.actor.play_reaction(&"stir")
 		KEY_E:
-			stage.actor.exit_angry()
+			apply_llm_trigger({"trigger": "angry_leave", "reply_id": "angry_leave"})
 		KEY_X:
 			_pick(_index)
 
@@ -156,13 +179,15 @@ func _pick(i: int) -> void:
 	_failed = false
 	_used_choices.clear()
 	_input_box.text = ""
+	_player_quote.visible = false
+	_chat_row.visible = true
+	hud.clear_tools()
 
 	stage.show_philosopher(id, 4)
 	hud.set_steps(0, 4, NAMES[id].to_upper())
 	hud.set_directive("%s ile konuşarak unuttuğu 4 temel fikri hatırlat." % NAMES[id])
 	hud.set_note(NOTES.get(id, ""))
 	hud.set_action("")
-	_rebuild_dialogue_options()
 	_speak_stage_line(0)
 
 
@@ -172,12 +197,14 @@ func _on_text_submitted(raw_text: String) -> void:
 		return
 	_input_box.text = ""
 	_input_box.release_focus()
-	hud.say("Siz: “%s”" % clean, &"neutral")
+	_player_quote.text = "Siz: “%s”" % clean
+	_player_quote.visible = true
 	var id: StringName = ORDER[_index]
 	brain.ask(
 		id,
 		clean,
 		_stage_level,
+		_anger,
 		_used_choices,
 		stage.voice.get_choices(id),
 		stage.voice.get_lines(id)
@@ -204,16 +231,23 @@ func _on_speech_recognized(ok: bool, text: String) -> void:
 	_on_text_submitted(text)
 
 
-func _on_brain_response(result: Dictionary) -> void:
+## Arka plandaki LLM veya dış servis tarafından döndürülen tetikleyiciyi sahneye uygular.
+## Desteklenen trigger değerleri:
+##   "stir" | "glimmer" | "dawn" | "recalled" | "correct" -> hafıza aşamasını ilerletir ve ilgili tepkiyi oynatır
+##   "wrong"       -> öfkeyi artırır ve itiraz tepkisini oynatır
+##   "angry_leave" -> filozof öfkeyle meydanı terk eder, görev başarısız olur
+##   "chat"        -> filozof kendi üslubuyla yanıt verir ve konuşmayı sürdürür
+func apply_llm_trigger(result: Dictionary) -> void:
 	if _failed or _stage_level >= 4:
 		return
-	var verdict: String = String(result.get("verdict", "chat"))
+	var trig: String = String(result.get("trigger", result.get("verdict", "chat")))
 	var cid: String = String(result.get("choice_id", ""))
 	var reply_id: String = String(result.get("reply_id", ""))
 	var reply_text: String = String(result.get("reply_text", ""))
+	var mood_name: StringName = StringName(String(result.get("mood", "thinking")))
 	var id: StringName = ORDER[_index]
 
-	if verdict == "correct":
+	if trig in ["stir", "glimmer", "dawn", "recalled", "correct"]:
 		if cid != "" and not _used_choices.has(cid):
 			_used_choices.append(cid)
 		_anger = maxf(_anger - 0.20, 0.0)
@@ -221,7 +255,7 @@ func _on_brain_response(result: Dictionary) -> void:
 		_stage_level = clampi(_stage_level + 1, 0, 4)
 		stage.set_memory_stage(_stage_level)
 		hud.set_steps(_stage_level, 4, "ONARILDI" if _stage_level >= 4 else NAMES[id].to_upper())
-		_rebuild_dialogue_options()
+
 		if reply_id != "" and stage.voice.get_line_text(id, StringName(reply_id)) != "":
 			stage.speak_line(NAMES[id], StringName(reply_id))
 		elif reply_text != "":
@@ -233,142 +267,51 @@ func _on_brain_response(result: Dictionary) -> void:
 		if _stage_level == 1:
 			hud.say("Hafızasında bir kıpırtı uyandı.", &"good")
 		elif _stage_level >= 4:
+			_chat_row.visible = false
 			hud.set_steps(4, 4, "ONARILDI")
 			hud.set_directive("%s kendi felsefesini tamamen hatırladı." % NAMES[id])
 			hud.say("Fikir halkası tamamlandı.", &"good")
 			hud.set_action("Yeniden Dene")
 			completed.emit()
-	elif verdict == "wrong":
-		_apply_wrong_choice(reply_id, reply_text)
-	else:
-		stage.actor.play_reaction(&"glimmer")
-		if reply_id != "" and stage.voice.get_line_text(id, StringName(reply_id)) != "":
-			stage.speak_line(NAMES[id], StringName(reply_id))
-		elif reply_text != "":
-			stage.show_line(NAMES[id], reply_text)
-			stage.voice.speak_live(id, reply_text, &"llm_chat")
-
-
-func _rebuild_dialogue_options() -> void:
-	hud.clear_tools()
-	if _chat_row.get_parent() != null:
-		_chat_row.get_parent().remove_child(_chat_row)
-	for child in stage.choice_slot.get_children():
-		child.queue_free()
-	if _failed or _stage_level >= 4:
-		return
-
-	var id: StringName = ORDER[_index]
-	var choices: Array = stage.voice.get_choices(id)
-	var line_no: int = 1
-	for item: Variant in choices:
-		if not (item is Dictionary):
-			continue
-		var d := item as Dictionary
-		var cid: String = String(d.get("id", ""))
-		if _used_choices.has(cid):
-			continue
-		var row_btn := _make_dialogue_line_button(line_no, String(d.get("label", "")))
-		row_btn.pressed.connect(func() -> void: _on_choice_selected(d))
-		stage.choice_slot.add_child(row_btn)
-		line_no += 1
-
-	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(0, 6)
-	stage.choice_slot.add_child(spacer)
-	stage.choice_slot.add_child(_chat_row)
-
-
-func _make_dialogue_line_button(num: int, text: String) -> Button:
-	var b := Button.new()
-	b.text = "%d.   %s" % [num, text]
-	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.custom_minimum_size = Vector2(0, 32)
-	b.add_theme_font_size_override("font_size", 18)
-	b.add_theme_color_override("font_color", Color("#eef2f5"))
-	b.add_theme_color_override("font_hover_color", Color("#f2a65a"))
-	b.add_theme_color_override("font_pressed_color", Color("#6fe3c1"))
-	b.add_theme_color_override("font_focus_color", Color("#f2a65a"))
-	b.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.92))
-	b.add_theme_constant_override("shadow_offset_x", 0)
-	b.add_theme_constant_override("shadow_offset_y", 2)
-
-	var empty_sb := StyleBoxFlat.new()
-	empty_sb.bg_color = Color(0.0, 0.0, 0.0, 0.0)
-	empty_sb.border_color = Color(0.95, 0.65, 0.35, 0.0)
-	empty_sb.border_width_left = 2
-	empty_sb.set_corner_radius_all(4)
-	empty_sb.content_margin_left = 6
-	empty_sb.content_margin_right = 12
-	empty_sb.content_margin_top = 4
-	empty_sb.content_margin_bottom = 4
-
-	var hover_sb := empty_sb.duplicate() as StyleBoxFlat
-	hover_sb.bg_color = Color(0.05, 0.08, 0.12, 0.48)
-	hover_sb.border_color = Color("#f2a65a")
-	hover_sb.border_width_left = 3
-	hover_sb.content_margin_left = 14
-
-	b.add_theme_stylebox_override("normal", empty_sb)
-	b.add_theme_stylebox_override("hover", hover_sb)
-	b.add_theme_stylebox_override("pressed", hover_sb)
-	b.add_theme_stylebox_override("focus", hover_sb)
-	return b
-
-
-func _on_choice_selected(choice_data: Dictionary) -> void:
-	if _failed or _stage_level >= 4:
-		return
-	var cid: String = String(choice_data.get("id", ""))
-	var is_correct: bool = bool(choice_data.get("correct", false))
-	var reply_id: String = String(choice_data.get("reply", ""))
-	var id: StringName = ORDER[_index]
-
-	if is_correct:
-		if cid != "step_up" and not _used_choices.has(cid):
-			_used_choices.append(cid)
-		_anger = maxf(_anger - 0.20, 0.0)
+	elif trig == "angry_leave":
+		_anger = 1.0
 		stage.set_anger(_anger)
-		_set_level(_stage_level + 1, StringName(reply_id))
-		_rebuild_dialogue_options()
-		if _stage_level == 1:
-			hud.say("Hafızasında bir kıpırtı uyandı.", &"good")
-		elif _stage_level >= 4:
-			hud.set_steps(4, 4, "ONARILDI")
-			hud.set_directive("%s kendi felsefesini tamamen hatırladı." % NAMES[id])
-			hud.say("Fikir halkası tamamlandı.", &"good")
-			hud.set_action("Yeniden Dene")
-			completed.emit()
-	else:
-		_apply_wrong_choice(reply_id)
-
-
-func _apply_wrong_choice(reply_id: String, custom_text: String = "") -> void:
-	_anger = clampf(_anger + 0.50, 0.0, 1.0)
-	stage.set_anger(_anger)
-	var id: StringName = ORDER[_index]
-	if _anger >= 1.0:
 		_failed = true
-		_rebuild_dialogue_options()
+		_chat_row.visible = false
 		stage.actor.play_reaction(&"refuse")
 		if stage.voice.get_line_text(id, &"angry_leave") != "":
 			stage.speak_line(NAMES[id], &"angry_leave")
+		elif reply_text != "":
+			stage.show_line(NAMES[id], reply_text)
+			stage.voice.speak_live(id, reply_text, &"llm_leave")
 		else:
 			stage.show_line(NAMES[id], "Beni kendi fikirlerimden uzaklaştırdın; tartışmayı bırakıyorum!")
 		stage.actor.exit_angry(1.4)
 		hud.set_directive("%s öfkeyle meydandan ayrıldı." % NAMES[id])
 		hud.say("Sabrı tükendi — görev başarısız.", &"bad")
 		hud.set_action("Yeniden Dene")
-	else:
+	elif trig == "wrong":
+		_anger = clampf(_anger + 0.50, 0.0, 1.0)
+		stage.set_anger(_anger)
+		if _anger >= 1.0:
+			apply_llm_trigger({"trigger": "angry_leave", "reply_id": "angry_leave", "reply_text": reply_text})
+			return
 		stage.actor.play_reaction(&"refuse")
 		hud.say("Bu fikir ona ait değil — öfkelendi.", &"bad")
 		if reply_id != "" and stage.voice.get_line_text(id, StringName(reply_id)) != "":
 			stage.speak_line(NAMES[id], StringName(reply_id))
-		elif custom_text != "":
-			stage.show_line(NAMES[id], custom_text)
-			stage.voice.speak_live(id, custom_text, &"llm_wrong")
+		elif reply_text != "":
+			stage.show_line(NAMES[id], reply_text)
+			stage.voice.speak_live(id, reply_text, &"llm_wrong")
 		else:
 			stage.show_line(NAMES[id], "Hayır! Bu fikir bana ait değil; beni dinlemiyorsun!")
+	else:
+		stage.actor.set_mood(mood_name)
+		if reply_id != "" and stage.voice.get_line_text(id, StringName(reply_id)) != "":
+			stage.speak_line(NAMES[id], StringName(reply_id))
+		elif reply_text != "":
+			stage.show_line(NAMES[id], reply_text)
+			stage.voice.speak_live(id, reply_text, &"llm_chat")
 
 
 func _on_action_pressed() -> void:
@@ -381,7 +324,7 @@ func _set_level(level: int, custom_line_id: StringName = &"") -> void:
 	stage.set_memory_stage(_stage_level)
 	hud.set_steps(_stage_level, 4, "ONARILDI" if _stage_level >= 4 else NAMES[id].to_upper())
 	if _stage_level >= 4:
-		_rebuild_dialogue_options()
+		_chat_row.visible = false
 	_speak_stage_line(_stage_level, custom_line_id)
 
 
@@ -400,20 +343,18 @@ func _type_and_send(msg: String) -> void:
 	_input_box.text = ""
 	for i in msg.length():
 		_input_box.text = msg.substr(0, i + 1)
-		await get_tree().create_timer(0.035).timeout
-	await get_tree().create_timer(0.35).timeout
+		await get_tree().create_timer(0.032).timeout
+	await get_tree().create_timer(0.30).timeout
 	_on_text_submitted(msg)
 
 
 func _run_demo() -> void:
-	_pick(ORDER.find(&"aristotle"))
-	await get_tree().create_timer(5.5).timeout
-	await _type_and_send("Formlar ayrı dünyada değil, madde ve form nesnenin içindedir")
-	await get_tree().create_timer(9.5).timeout
-	await _type_and_send("Maddi, formel, fail ve ereksel dört neden kuramı")
-	await get_tree().create_timer(7.5).timeout
-	await _type_and_send("Organon ile mantık ve kıyas yöntemini kurdun")
-	await get_tree().create_timer(8.0).timeout
-	await _type_and_send("Erdem iki aşırı uç arasındaki altın ortadır")
-	await get_tree().create_timer(7.2).timeout
 	_pick(ORDER.find(&"socrates"))
+	await get_tree().create_timer(6.2).timeout
+	await _type_and_send("Bildiğin tek şey hiçbir şey bilmediğindir")
+	await get_tree().create_timer(8.4).timeout
+	await _type_and_send("Sorularla doğruyu doğurtma, yani maiotik yöntemi")
+	await get_tree().create_timer(6.5).timeout
+	await _type_and_send("Erdem bilgidir, kimse bilerek kötülük yapmaz")
+	await get_tree().create_timer(8.0).timeout
+	await _type_and_send("Sorgulanmamış hayat yaşanmaya değmez")

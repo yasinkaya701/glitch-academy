@@ -1,78 +1,78 @@
 class_name PhilosopherBrain
 extends Node
-## Filozof LLM ve Diyalog Motoru (Sokrates, Platon, Aristoteles/Aristo, Epiküros,
+## Filozof Arka Plan LLM ve Durum Tetikleyici Motoru (Sokrates, Platon, Aristoteles, Epiküros,
 ## el-Kindî, el-Fârâbî, İbn Sînâ, İbn Rüşd).
 ##
-## Oyuncunun yazdığı veya mikrofondan söylediği serbest Türkçe cümleyi değerlendirir:
-## 1. Ortamda GEMINI_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, user://llm_key.txt veya
-##    yerel Ollama (127.0.0.1:11434) varsa gerçek LLM üzerinden filozofun kimliğiyle
-##    (ör. Aristoteles veya Sokrates) canlı JSON karar + replik üretir.
-## 2. Anahtar yoksa veya çevrimdışıysa Türkçe kavram/kök analizi + filozofa özgü
-##    karakter üslubu motoruyla ("Aristo", "Sokrates" vb.) anında yanıt verir.
-
-signal response_ready(result: Dictionary)
-## result = {
-##   "verdict": "correct" | "wrong" | "chat" | "already",
-##   "choice_id": String,
+## Kullanıcıya çoktan seçmeli şık gösterilmez. Kullanıcının yazdığı veya mikrofondan söylediği
+## serbest cümle LLM'e (veya anahtar yoksa yerleşik semantik tetikleyiciye) gider ve şu JSON
+## sözleşmesiyle sahnedeki animasyonu/aşamayı tetikler:
+## {
+##   "trigger": "stir" | "glimmer" | "dawn" | "recalled" | "wrong" | "angry_leave" | "chat",
+##   "choice_id": String,     # eşleşen kavram kimliği
 ##   "reply_id": String,      # varsa önceden kaydedilmiş ses anahtarı (stage_1..4, wrong_sofist vb.)
 ##   "reply_text": String,    # filozofun Türkçe yanıtı (<= 95 karakter)
+##   "mood": String           # neutral | confused | thinking | smile | angry
 ## }
+
+signal response_ready(result: Dictionary)
+
+const STAGE_TRIGGERS := ["", "stir", "glimmer", "dawn", "recalled"]
 
 const PERSONAS := {
 	&"socrates": {
 		"name": "Sokrates",
-		"role": "Atina agorasında yalınayak dolaşan, hiçbir şey bilmediğini bilen, sorularla hakikati doğurtan (maiotik) ve erdemi bilgiyle bir tutan filozof.",
-		"who_reply": "Atina taşlarında yürüyen, gösterişsiz bir sorgulayıcıyım; bana sorularımı hatırlat.",
-		"teacher_reply": "Ben kimsenin paralı hocası olmadım; ama genç Platon konuşmalarımı hep dinlerdi.",
-		"method_reply": "Annem الفينarete ebeydi; ben de sorularımla zihinlerdeki hakikati doğurturum.",
+		"role": "Atina agorasında dolaşan, 'bildiğim tek şey hiçbir şey bilmediğimdir' diyen, sorularla hakikati doğurtan (maiotik) ve erdemi bilgiyle bir tutan filozof.",
+		"who_reply": "Atina taşlarında yürüyen bir sorgulayıcıyım; bilgelik iddiamı ve yöntemimi hatırlat.",
+		"teacher_reply": "Ben paralı hoca olmadım; genç Platon konuşmalarımı dinlerdi.",
+		"method_reply": "Annem ebeydi; ben de sorularımla zihinlerdeki doğruyu doğurturum.",
 	},
 	&"plato": {
 		"name": "Platon",
-		"role": "Sokrates'in öğrencisi, Akademia'nın kurucusu, mağara alegorisi ve değişmeyen İdealar dünyası filozofu.",
-		"who_reply": "Hocam Sokrates'in izinde, görünen gölgelerin ardındaki asıl İdeaları arayan bir düşünürüm.",
+		"role": "Sokrates'in öğrencisi, Akademia kurucusu, mağara alegorisi, değişmeyen İdealar dünyası, anamnesis (bilmek hatırlamaktır) ve filozof kral düşünürü.",
+		"who_reply": "Görünen gölgelerin ardındaki değişmeyen İdeaları arayan Atinalı düşünürüm.",
 		"teacher_reply": "Hocam Sokrates'ti; öğrencim Aristoteles ise Akademia'nın en keskin zekâsıydı.",
-		"method_reply": "Duyular yanıltır dostum; akıl gözüyle değişmeyen formlara yükselmeliyiz.",
+		"method_reply": "Mağaradaki gölgelerden çıkıp akıl gözüyle asıl formlara yükselmeliyiz.",
 	},
 	&"aristotle": {
 		"name": "Aristoteles",
-		"role": "Stagiralı Aristoteles (Aristo). Platon'un öğrencisi, Lykeion (Peripatos) kurucusu, mantığın (Organon), madde-form birliğinin, dört nedenin ve altın orta ahlakının filozofu.",
+		"role": "Stagiralı Aristoteles (Aristo). Lykeion kurucusu; madde-form birliği (hylomorfizm), dört neden (maddi, formel, fail, ereksel), mantık/kıyas (Organon) ve altın orta (eudaimonia) filozofu.",
 		"who_reply": "Stagiralı bir doğa ve mantık araştırmacısıyım; Lykeion revaklarında yürüyerek düşünürüm.",
-		"teacher_reply": "Platon'u severim ama hakikati daha çok severim; formlar bulutlarda değil nesnenin içindedir.",
-		"method_reply": "Önce gözlem yapar, sonra kıyas ve dört nedenle varlığın ilkesini temellendiririm.",
+		"teacher_reply": "Platon'u severim ama hakikati daha çok severim; formlar nesnenin içindedir.",
+		"method_reply": "Önce doğayı gözlemler, sonra kıyas ve dört nedenle varlığı temellendiririm.",
 	},
 	&"epicurus": {
 		"name": "Epiküros",
-		"role": "Bahçe okulunun kurucusu; atomculuk, ölüm korkusunun yersizliği, acısızlık ve ruh dinginliği (ataraksia) filozofu.",
-		"who_reply": "Gürültülü siyasetten uzak, dostlarıyla Bahçe'de ruh dinginliğini arayan bir düşünürüm.",
-		"teacher_reply": "Demokritos'un atomlarını okudum ama determinizme özgür irade sapmasını ekledim.",
-		"method_reply": "Korkuları doğa bilgisiyle dağıtır, ölçülü ve sade yaşamla ataraksia'ya ulaşırım.",
+		"role": "Bahçe okulu kurucusu; atomlar ve boşluk, ölüm korkusunun yersizliği, acısızlık/ölçülü haz ve ruh dinginliği (ataraksia) filozofu.",
+		"who_reply": "Dostlarıyla Bahçe'de korkulardan arınmış ruh dinginliğini arayan bir düşünürüm.",
+		"teacher_reply": "Demokritos'un atomlarını inceledim ama özgür irade sapmasını ekledim.",
+		"method_reply": "Doğa bilgisiyle ölüm korkusunu yener, sade yaşamla ataraksia'ya ulaşırım.",
 	},
 	&"kindi": {
 		"name": "el-Kindî",
-		"role": "Bağdat Beytü'l-Hikme bilgini, İslam felsefesinin kurucusu (Filozofü'l-Arab), akıl-vahiy uyumu ve İlk Felsefe yazarı.",
-		"who_reply": "Bağdat'ta Yunan mirasını Arapçaya kazandıran, hakikati her kaynakta arayan bir filozofum.",
-		"teacher_reply": "Kadim filozofların eserlerini inceledim; hakikat nereden gelirse gelsin insanlığın ortak malıdır.",
-		"method_reply": "Matematiksel kanıt ve akılla varlığın ilk nedenini ve evrenin sonluluğunu incelerim.",
+		"role": "Bağdat Beytü'l-Hikme bilgini, İslam felsefesinin kurucusu; hakikatin evrenselliği, akıl-vahiy uyumu, evrenin sonluluğu (hudûs) ve İlk Felsefe yazarı.",
+		"who_reply": "Bağdat'ta kadim mirası inceleyen, hakikati her kaynakta arayan bir filozofum.",
+		"teacher_reply": "Hakikat nereden gelirse gelsin insanlığın ortak malıdır.",
+		"method_reply": "Matematiksel delil ve akılla varlığın ilk nedenini incelerim.",
 	},
 	&"farabi": {
 		"name": "el-Fârâbî",
-		"role": "Türkistan doğumlu Muallim-i Sânî (İkinci Öğretmen), İlimlerin Sayımı, sudûr kuramı ve Erdemli Şehir (el-Medînetü'l-Fâzıla) filozofu.",
-		"who_reply": "Aristoteles'ten sonra mantığı yeniden kuran, kanun çalan ve Erdemli Şehir'i düşleyen bir filozofum.",
-		"teacher_reply": "İlk öğretmen Aristoteles'in eserlerini defalarca okudum; bana İkinci Öğretmen derler.",
-		"method_reply": "Mantıkla kavramları tartar, bilimleri sınıflandırır ve toplumu uyum içinde kurgularım.",
+		"role": "Muallim-i Sânî (İkinci Öğretmen); mantık, İlimlerin Sayımı (İhsâü'l-Ulûm), sudûr/Etkin Akıl ve Erdemli Şehir (el-Medînetü'l-Fâzıla) filozofu.",
+		"who_reply": "Aristoteles'ten sonra mantığı yeniden kuran ve Erdemli Şehir'i düşleyen bir filozofum.",
+		"teacher_reply": "İlk öğretmen Aristoteles'tir; bana mantıktaki katkılarımla Muallim-i Sânî derler.",
+		"method_reply": "Mantıkla kavramları tartar, bilimleri sınıflandırır ve toplumu uyumla kurarım.",
 	},
 	&"ibn_sina": {
 		"name": "İbn Sînâ",
-		"role": "Şeyhü'r-Reîs İbn Sînâ (Avicenna). Uçan Adam düşünce deneyi, Zorunlu-Mümkün varlık ayrımı, Kitâbü'ş-Şifâ ve el-Kânûn fi't-Tıbb müellifi.",
+		"role": "Şeyhü'r-Reîs İbn Sînâ; Uçan Adam düşünce deneyi, Zorunlu-Mümkün varlık ayrımı, Kitâbü'ş-Şifâ ve el-Kânûn fi't-Tıbb müellifi.",
 		"who_reply": "Hem hekim hem metafizikçiyim; varlığı Zorunlu ve Mümkün diye ayıran Şeyhü'r-Reîs'im.",
-		"teacher_reply": "Aristoteles'in Metafizik'ini Fârâbî'nin şerhiyle çözdüm; üstüne kendi burhanımı kurdum.",
+		"teacher_reply": "Aristoteles'in Metafizik'ini Fârâbî'nin şerhiyle çözdüm.",
 		"method_reply": "Boşlukta asılı Uçan Adam deneyiyle özbilinci, burhanla Zorunlu Varlık'ı kanıtlarım.",
 	},
 	&"ibn_rushd": {
 		"name": "İbn Rüşd",
-		"role": "Kurtuba kadısı ve hekimi, Aristoteles'in en büyük şârihi (Commentator), Faslü'l-Makâl ve hakikatin birliği filozofu.",
-		"who_reply": "Endülüs Kurtuba'da Aristoteles'i şerh eden, aklın ve vahyin süt kardeş olduğunu savunan düşünürüm.",
-		"teacher_reply": "Aristoteles insan aklının zirvesidir; ben onun eserlerini sonradan eklenen sislerden arındırdım.",
+		"role": "Kurtuba kadısı, Aristoteles'in büyük şârihi; 'hakikat hakikate ters düşmez' ilkesi, Faslü'l-Makâl ve nedensellik savunucusu.",
+		"who_reply": "Kurtuba'da Aristoteles'i şerh eden, akıl ile vahyin süt kardeş olduğunu savunan düşünürüm.",
+		"teacher_reply": "Aristoteles insan aklının zirvesidir; ben onun eserlerini şerh ettim.",
 		"method_reply": "Hakikat hakikate ters düşmez; burhan yöntemiyle doğadaki nedenselliği savunurum.",
 	},
 }
@@ -90,11 +90,11 @@ func _ready() -> void:
 	_http.request_completed.connect(_on_llm_completed)
 
 
-## Oyuncunun serbest mesajını değerlendirir ve response_ready sinyali yayar.
 func ask(
 	philosopher_id: StringName,
 	user_text: String,
 	stage_level: int,
+	anger_level: float,
 	used_choices: Array[String],
 	choices: Array,
 	lines: Dictionary
@@ -103,11 +103,9 @@ func ask(
 	if clean == "":
 		return
 
-	# 1. Önce yerel kavram eşleştiriciyi çalıştır (kesin bir doğru/yanlış kavram yakalandıysa anında bilinsin)
-	var local_eval: Dictionary = _evaluate_locally(philosopher_id, clean, stage_level, used_choices, choices, lines)
-
-	# Eğer yerel motor kesin bir doğru veya yanlış kavram yakaladıysa VE LLM anahtarı yoksa doğrudan dön;
-	# LLM anahtarı varsa veya mesaj serbest bir soru/sohbet ise LLM'e de sorabiliriz.
+	var local_eval: Dictionary = _evaluate_locally(
+		philosopher_id, clean, stage_level, anger_level, used_choices, choices, lines
+	)
 	var llm_cfg: Dictionary = _resolve_llm_config()
 	if llm_cfg.is_empty() or _busy:
 		response_ready.emit(local_eval)
@@ -118,6 +116,7 @@ func ask(
 		"philosopher_id": philosopher_id,
 		"user_text": clean,
 		"stage_level": stage_level,
+		"anger_level": anger_level,
 		"used_choices": used_choices.duplicate(),
 		"choices": choices,
 		"lines": lines,
@@ -130,29 +129,14 @@ func _evaluate_locally(
 	pid: StringName,
 	text: String,
 	stage_level: int,
+	anger_level: float,
 	used_choices: Array[String],
 	choices: Array,
 	lines: Dictionary
 ) -> Dictionary:
 	var norm: String = _normalize_tr(text)
 
-	# Önce yanlış / rakip iddiaları kontrol et
-	for item: Variant in choices:
-		if not (item is Dictionary):
-			continue
-		var c := item as Dictionary
-		if bool(c.get("correct", false)):
-			continue
-		if _matches_choice(norm, c):
-			var rid: String = String(c.get("reply", "wrong_sofist"))
-			return {
-				"verdict": "wrong",
-				"choice_id": String(c.get("id", "wrong")),
-				"reply_id": rid,
-				"reply_text": String(lines.get(rid, "Hayır! Bu iddia benim felsefeme tamamen aykırı!")),
-			}
-
-	# Doğru fikirleri kontrol et
+	# 1. Doğru fikirleri kontrol et (öncelikle yeni bir doğru kavram yakalandı mı?)
 	for item: Variant in choices:
 		if not (item is Dictionary):
 			continue
@@ -162,75 +146,103 @@ func _evaluate_locally(
 		if _matches_choice(norm, c):
 			var cid: String = String(c.get("id", ""))
 			if used_choices.has(cid):
+				var next_hint: String = _next_unremembered_label(choices, used_choices)
 				return {
-					"verdict": "already",
+					"trigger": "chat",
 					"choice_id": cid,
 					"reply_id": "",
-					"reply_text": "Evet dostum, bunu az önce hatırladım; şimdi diğer halkayı bulmama yardım et.",
+					"mood": "smile",
+					"reply_text": "Bunu az önce hatırladım dostum! Şimdi bana '%s' ilkesini anlat." % next_hint,
 				}
 			var next_lvl: int = clampi(stage_level + 1, 1, 4)
-			var rid_ok: String = StringName("stage_%d" % next_lvl)
+			var rid_ok: String = "stage_%d" % next_lvl
+			var trig: String = STAGE_TRIGGERS[next_lvl]
 			return {
-				"verdict": "correct",
+				"trigger": trig,
 				"choice_id": cid,
 				"reply_id": rid_ok,
+				"mood": "smile" if next_lvl >= 3 else "thinking",
 				"reply_text": String(lines.get(rid_ok, "")),
 			}
 
-	# Başka bir filozofun kavramını yanlışlıkla bu filozofa söyleme kontrolü
+	# 2. Yanlış / rakip iddiaları kontrol et
+	for item: Variant in choices:
+		if not (item is Dictionary):
+			continue
+		var c := item as Dictionary
+		if bool(c.get("correct", false)):
+			continue
+		if _matches_choice(norm, c):
+			var rid: String = String(c.get("reply", "wrong_sofist"))
+			var will_leave: bool = (anger_level + 0.50) >= 1.0
+			return {
+				"trigger": "angry_leave" if will_leave else "wrong",
+				"choice_id": String(c.get("id", "wrong")),
+				"reply_id": "angry_leave" if will_leave else rid,
+				"mood": "angry",
+				"reply_text": String(lines.get("angry_leave" if will_leave else rid, "Hayır! Bu iddia benim felsefeme tamamen aykırı!")),
+			}
+
 	if _is_rival_concept(pid, norm):
 		var rid_w: String = "wrong_empedokles" if lines.has("wrong_empedokles") and (norm.contains("element") or norm.contains("ates") or norm.contains("atom")) else "wrong_sofist"
+		var will_leave2: bool = (anger_level + 0.50) >= 1.0
 		return {
-			"verdict": "wrong",
+			"trigger": "angry_leave" if will_leave2 else "wrong",
 			"choice_id": "rival_concept",
-			"reply_id": rid_w,
-			"reply_text": String(lines.get(rid_w, "Hayır! Beni başka bir düşünürle karıştırıyorsun!")),
+			"reply_id": "angry_leave" if will_leave2 else rid_w,
+			"mood": "angry",
+			"reply_text": String(lines.get("angry_leave" if will_leave2 else rid_w, "Hayır! Beni başka bir düşünürle karıştırıyorsun!")),
 		}
 
-	# Sohbet / Soru / İpucu yanıtı (öfke artırmaz, filozof karakteriyle konuşur)
+	# 3. Sohbet / Soru / İpucu yanıtı
 	var persona: Dictionary = PERSONAS.get(pid, PERSONAS[&"socrates"])
 	if norm.contains("kimsin") or norm.contains("adin ne") or norm.contains("sen kim") or norm.contains("kendini tanit"):
 		return {
-			"verdict": "chat",
+			"trigger": "chat",
 			"choice_id": "",
 			"reply_id": "",
+			"mood": "thinking",
 			"reply_text": String(persona.get("who_reply", String(lines.get("chat_hint", "")))),
 		}
 	if norm.contains("hocan") or norm.contains("ogretmen") or norm.contains("ogrencin") or norm.contains("platon") or norm.contains("sokrates"):
 		return {
-			"verdict": "chat",
+			"trigger": "chat",
 			"choice_id": "",
 			"reply_id": "",
+			"mood": "smile",
 			"reply_text": String(persona.get("teacher_reply", String(lines.get("chat_hint", "")))),
 		}
 	if norm.contains("yontem") or norm.contains("nasil dusun") or norm.contains("felsefen") or norm.contains("ne yapiyor"):
 		return {
-			"verdict": "chat",
+			"trigger": "chat",
 			"choice_id": "",
 			"reply_id": "",
+			"mood": "thinking",
 			"reply_text": String(persona.get("method_reply", String(lines.get("chat_hint", "")))),
 		}
 	if norm.contains("merhaba") or norm.contains("selam") or norm.contains("hey") or norm.contains("nasilsin"):
 		return {
-			"verdict": "chat",
+			"trigger": "chat",
 			"choice_id": "",
-			"reply_id": "",
-			"reply_text": "Selam dostum… Zihnim hâlâ sisli; bana temel fikirlerimi hatırlatır mısın?",
+			"reply_id": "chat_hint",
+			"mood": "confused",
+			"reply_text": String(lines.get("chat_hint", "Selam dostum… Zihnim sisli; bana temel fikirlerimi hatırlatır mısın?")),
 		}
 
-	# Sıradaki hatırlanmamış fikre göre doğal ipucu ver
 	var next_label: String = _next_unremembered_label(choices, used_choices)
 	if next_label != "":
 		return {
-			"verdict": "chat",
+			"trigger": "chat",
 			"choice_id": "",
 			"reply_id": "",
-			"reply_text": "Sözlerin tanıdık geliyor… Özellikle '%s' üzerine ne düşündüğümü hatırlat." % next_label,
+			"mood": "thinking",
+			"reply_text": "Zihnimde bir şeyler dolaşıyor… Bana '%s' hakkındaki düşüncemi hatırlat." % next_label,
 		}
 	return {
-		"verdict": "chat",
+		"trigger": "chat",
 		"choice_id": "",
 		"reply_id": "chat_hint",
+		"mood": "thinking",
 		"reply_text": String(lines.get("chat_hint", "Bana ana fikirlerimi kendi cümlelerinle hatırlat.")),
 	}
 
@@ -291,7 +303,7 @@ func _resolve_llm_config() -> Dictionary:
 		var f := FileAccess.open(KEY_FILE, FileAccess.READ)
 		if f != null:
 			var raw: String = f.get_as_text().strip_edges()
-			if raw.begins_with("AIza"):
+			if raw.begins_with("AIza") or raw.begins_with("AQ."):
 				gemini_key = raw
 			elif raw.begins_with("gsk_"):
 				groq_key = raw
@@ -303,7 +315,7 @@ func _resolve_llm_config() -> Dictionary:
 	if gemini_key != "":
 		return {
 			"provider": "gemini",
-			"url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + gemini_key,
+			"url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=" + gemini_key,
 			"headers": PackedStringArray(["Content-Type: application/json"]),
 		}
 	if groq_key != "":
@@ -336,6 +348,8 @@ func _send_llm_request(cfg: Dictionary, ctx: Dictionary) -> void:
 	var persona: Dictionary = PERSONAS.get(pid, PERSONAS[&"socrates"])
 	var choices: Array = ctx["choices"]
 	var used: Array = ctx["used_choices"]
+	var next_lvl: int = clampi(int(ctx["stage_level"]) + 1, 1, 4)
+	var next_trig: String = STAGE_TRIGGERS[next_lvl]
 
 	var remaining_desc: Array[String] = []
 	var wrong_desc: Array[String] = []
@@ -352,22 +366,25 @@ func _send_llm_request(cfg: Dictionary, ctx: Dictionary) -> void:
 			wrong_desc.append("%s (%s)" % [cid, lbl])
 
 	var sys_prompt: String = (
-		"Sen %s'sin (%s). Hafızan sisli (Aşama %d/4). "
-		+ "Oyuncu sana fikirlerini hatırlatmaya çalışıyor.\n"
+		"Sen %s'sin (%s). Hafızan sisli (Aşama %d/4, Öfke %.2f). "
+		+ "Oyuncu sana fikirlerini serbest cümleyle hatırlatmaya çalışıyor.\n"
 		+ "Henüz hatırlamadığın doğru fikirler: [%s]\n"
 		+ "Senin felsefene ters/yanlış iddialar: [%s]\n"
 		+ "Kurallar:\n"
-		+ "1. Oyuncunun mesajı doğru fikirlerden birini anlatıyorsa verdict='correct' ve choice_id o fikrin kodu olsun.\n"
-		+ "2. Oyuncunun mesajı senin felsefene ters bir iddiaysa verdict='wrong' olsun ve itiraz et.\n"
-		+ "3. Oyuncu soru soruyor veya sohbet ediyorsa verdict='chat' olsun ve kendi filozof üslubunla ipucu ver.\n"
+		+ "1. Oyuncunun mesajı doğru fikirlerden birini anlatıyorsa trigger='%s' ve choice_id o fikrin kodu olsun.\n"
+		+ "2. Oyuncunun mesajı senin felsefene ters bir iddiaysa trigger='wrong' (öfke >= 0.5 ise 'angry_leave') olsun.\n"
+		+ "3. Oyuncu soru soruyor veya sohbet ediyorsa trigger='chat' olsun ve şık vermeden kendi filozof üslubunla ipucu sezdir.\n"
 		+ "4. reply_text Türkçe, birinci tekil şahıs ve EN FAZLA 90 karakter olsun.\n"
-		+ "Yalnızca geçerli JSON döndür: {\"verdict\":\"correct|wrong|chat\",\"choice_id\":\"...\",\"reply_text\":\"...\"}"
+		+ "Yalnızca geçerli JSON döndür: {\"trigger\":\"%s|wrong|angry_leave|chat\",\"choice_id\":\"...\",\"mood\":\"thinking|smile|angry|confused\",\"reply_text\":\"...\"}"
 	) % [
 		persona.get("name", "Filozof"),
 		persona.get("role", ""),
 		int(ctx["stage_level"]),
+		float(ctx["anger_level"]),
 		", ".join(remaining_desc),
 		", ".join(wrong_desc),
+		next_trig,
+		next_trig,
 	]
 
 	var provider: String = String(cfg.get("provider", ""))
@@ -424,8 +441,13 @@ func _on_llm_completed(result: int, response_code: int, _headers: PackedStringAr
 		var cands: Array = od.get("candidates", [])
 		if not cands.is_empty():
 			var parts: Array = cands[0].get("content", {}).get("parts", [])
-			if not parts.is_empty():
-				content_json = String(parts[0].get("text", ""))
+			for idx in range(parts.size() - 1, -1, -1):
+				var p: Variant = parts[idx]
+				if p is Dictionary and not bool((p as Dictionary).get("thought", false)):
+					var t: String = String((p as Dictionary).get("text", "")).strip_edges()
+					if t != "":
+						content_json = t
+						break
 	elif od.has("choices"):
 		var chs: Array = od.get("choices", [])
 		if not chs.is_empty():
@@ -433,23 +455,36 @@ func _on_llm_completed(result: int, response_code: int, _headers: PackedStringAr
 	elif od.has("message"):
 		content_json = String(od.get("message", {}).get("content", ""))
 
+	var i0: int = content_json.find("{")
+	var i1: int = content_json.rfind("}")
+	if i0 >= 0 and i1 > i0:
+		content_json = content_json.substr(i0, i1 - i0 + 1)
+
 	var inner: Variant = JSON.parse_string(content_json)
 	if not (inner is Dictionary):
 		response_ready.emit(fallback)
 		return
 
 	var idict := inner as Dictionary
-	var verdict: String = String(idict.get("verdict", fallback.get("verdict", "chat")))
-	var cid: String = String(idict.get("choice_id", fallback.get("choice_id", "")))
-	var reply_text: String = String(idict.get("reply_text", fallback.get("reply_text", ""))).strip_edges()
+	var trig: String = _safe_str(idict.get("trigger"), _safe_str(fallback.get("trigger"), "chat"))
+	var cid: String = _safe_str(idict.get("choice_id"), _safe_str(fallback.get("choice_id"), ""))
+	var mood: String = _safe_str(idict.get("mood"), _safe_str(fallback.get("mood"), "thinking"))
+	var reply_text: String = _safe_str(idict.get("reply_text"), _safe_str(fallback.get("reply_text"), "")).strip_edges()
 	if reply_text.length() > 95:
 		reply_text = reply_text.substr(0, 92) + "…"
 	if reply_text == "":
-		reply_text = String(fallback.get("reply_text", ""))
+		reply_text = _safe_str(fallback.get("reply_text"), "")
 
 	response_ready.emit({
-		"verdict": verdict,
-		"choice_id": cid if cid != "" else String(fallback.get("choice_id", "")),
+		"trigger": trig,
+		"choice_id": cid if cid != "" else _safe_str(fallback.get("choice_id"), ""),
 		"reply_id": "",
+		"mood": mood,
 		"reply_text": reply_text,
 	})
+
+
+func _safe_str(val: Variant, default_val: String = "") -> String:
+	if val == null:
+		return default_val
+	return String(val)

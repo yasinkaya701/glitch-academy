@@ -3,20 +3,17 @@ extends Control
 ## Ayakta duran, konuşan filozof. Yalnızca görünüm ve animasyon: diyalog, puan ve ses mantığı dışarıdan sürülür.
 ##
 ## Düğümün konumu karakterin AYAK ORTASIDIR. Gövde yukarı doğru çizilir.
-## Canlı animasyon katmanları:
-##   1. Gövde shader'ı (body_live.gdshader): nefes alıp verme, omuz hareketi, ağırlık aktarımı ve konuşurken el/önkol jestleri
-##   2. Sürekli 60 FPS dudak karıştırıcısı: ses zarfına (_mouth_smooth) göre face_mouth_mid ve face_mouth_open yamalarını
-##      her karede kesintisiz harmanlar; konuşma durduğunda dinlenme ifadesine (smile, confused, angry) geçer
-##   3. Üst yüz yaması (up_<ifade>.png) ve göz kırpma katmanı (up_eyes_closed.png): konuşurken bile kaş ve göz kırpmayı korur
-##   4. Baş/yüz mikro-deformasyon shader'ı (face_live.gdshader): baş eğimi, konuşma onayı (nod), çene esnemesi, kaş/göz hareketi
+## Yüz yamaları (face_*, up_*) gövde (body.png) ile birebir piksel kilitlidir (UV deformasyonu yapılmaz);
+## böylece Sokrates ve diğer tüm filozoflarda çift burun/göz veya sakal bozulması asla oluşmaz.
 
 signal reaction_finished(kind: StringName)
 
 const CHARACTERS_DIR := "res://stations/philosophy/assets/characters/"
 const DATA_PATH := "res://stations/philosophy/data/characters.json"
-const FACE_SHADER := preload("res://stations/philosophy/visual/face_live.gdshader")
-const BODY_SHADER := preload("res://stations/philosophy/visual/body_live.gdshader")
 
+const MOUTH_MID_AT := 0.14
+const MOUTH_OPEN_AT := 0.44
+const FRAME_HOLD := 0.055
 const COLD_TONE := Color(0.88, 0.91, 0.96)
 const WARM_TONE := Color(1.0, 0.99, 0.96)
 const ANGER_FULL := 0.60
@@ -44,19 +41,22 @@ var _up_under := TextureRect.new()
 var _up_over := TextureRect.new()
 var _flush := TextureRect.new()
 var _blink_layer := TextureRect.new()
-var _face_mat := ShaderMaterial.new()
-var _body_mat := ShaderMaterial.new()
 
 var _fit: float = 1.0
 var _body_size := Vector2.ZERO
+var _shown: StringName = &"neutral"
+var _shown_up: StringName = &"neutral"
 var _shown_pose: StringName = &"neutral"
+var _fade: Tween
+var _up_fade: Tween
 var _pose_fade: Tween
 var _tone: float = 0.0       # 0 soluk, 1 canlı
 var _posture: float = 1.0    # 1 çökük, 0 dik
 var _clock: float = 0.0
-var _blink_in: float = 1.8
+var _blink_in: float = 2.0
 var _blink_left: float = 0.0
 var _pending_double_blink: bool = false
+var _frame_age: float = 0.0
 var _seq_id: int = 0
 var _wobble: float = 0.0
 var _jolt_y: float = 0.0
@@ -64,18 +64,8 @@ var _exit_offset: Vector2 = Vector2.ZERO
 var _exit_alpha: float = 1.0
 
 var _mouth_smooth: float = 0.0
-var _gesture_smooth: float = 0.0
-var _gesture_boost: float = 0.0
-var _brow_cur: float = 0.0
-var _squint_cur: float = 0.0
-var _head_tilt: float = 0.0
-var _head_dy: float = 0.0
-var _head_dx: float = 0.0
-var _nod_phase: float = 0.0
+var _nod_offset_y: float = 0.0
 var _weight_shift: float = 0.0
-var _gaze_timer: float = 1.2
-var _gaze_target := Vector2.ZERO
-var _gaze_cur := Vector2.ZERO
 
 
 func _init() -> void:
@@ -83,16 +73,11 @@ func _init() -> void:
 
 
 func _ready() -> void:
-	_face_mat.shader = FACE_SHADER
-	_body_mat.shader = BODY_SHADER
 	for layer: TextureRect in [_body, _pose_under, _pose_over, _head, _under, _over, _up_under, _up_over, _flush, _blink_layer]:
 		layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		layer.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		layer.stretch_mode = TextureRect.STRETCH_SCALE
 		layer.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	_body.material = _body_mat
-	for face_layer: TextureRect in [_head, _under, _over, _up_under, _up_over, _flush, _blink_layer]:
-		face_layer.material = _face_mat
 	add_child(_body)
 	_body.add_child(_pose_under)
 	_body.add_child(_pose_over)
@@ -145,12 +130,6 @@ func load_philosopher(id: StringName) -> bool:
 	_head.texture = load(dir + "head.png") as Texture2D
 	_head.position = Vector2(fr[0], fr[1])
 	_head.size = fsize
-	_head.set_meta(&"home", Vector2(fr[0], fr[1]))
-	var neck: Array = meta.get("neck", [fr[2] * 0.5, fr[3] * 0.66])
-	_head.pivot_offset = Vector2(neck[0], neck[1])
-
-	var mouth_y_px: float = float(meta.get("mouth_y", fr[3] * 0.46))
-	_face_mat.set_shader_parameter("mouth_y_uv", clampf(mouth_y_px / maxf(fsize.y, 1.0), 0.32, 0.68))
 
 	for layer: TextureRect in [_under, _over, _up_under, _up_over, _flush, _blink_layer]:
 		layer.position = Vector2.ZERO
@@ -165,6 +144,8 @@ func load_philosopher(id: StringName) -> bool:
 		pl.texture = null
 		pl.modulate.a = 0.0
 
+	_shown = &"neutral"
+	_shown_up = &"neutral"
 	_shown_pose = &"neutral"
 	reset_state()
 	return true
@@ -204,14 +185,9 @@ func reset_state() -> void:
 	_exit_offset = Vector2.ZERO
 	_exit_alpha = 1.0
 	_mouth_smooth = 0.0
-	_gesture_smooth = 0.0
-	_gesture_boost = 0.0
-	_brow_cur = 0.0
-	_squint_cur = 0.0
-	_under.texture = null
-	_over.texture = null
-	_up_under.texture = null
-	_up_over.texture = null
+	_nod_offset_y = 0.0
+	_set_frame(&"neutral", 0.0)
+	_set_upper(&"neutral", 0.0)
 	set_pose(&"neutral", 0.0)
 	_apply_tone()
 	_layout_body()
@@ -302,34 +278,33 @@ func set_anger(value: float, animate: bool = true) -> void:
 
 
 func play_reaction(kind: StringName) -> void:
-	_pulse_gesture(1.0, 1.4)
 	match kind:
 		&"stir":
-			_jolt_body(-12.0, 0.55)
-			_wobble_body(0.018)
+			_jolt_body(-10.0, 0.50)
+			_wobble_body(0.012)
 			_trigger_blink(true)
 			set_pose(&"pose_hand_chin")
 			_mood_sequence(kind, [[&"confused", 0.9], [&"thinking", 1.0]])
 		&"glimmer":
-			_jolt_body(-8.0, 0.45)
+			_jolt_body(-6.0, 0.42)
 			_trigger_blink(true)
 			set_pose(&"pose_hand_chin")
 			_mood_sequence(kind, [[&"confused", 0.7], [&"smile", 0.9]])
 		&"dawn":
-			_jolt_body(-10.0, 0.45)
-			_wobble_body(0.014)
+			_jolt_body(-8.0, 0.45)
+			_wobble_body(0.010)
 			set_pose(&"pose_point_up")
 			_mood_sequence(kind, [[&"confused", 0.5], [&"smile", 1.1]])
 		&"recalled":
-			_jolt_body(-9.0, 0.50)
+			_jolt_body(-7.0, 0.48)
 			set_pose(&"pose_arms_open")
 			_mood_sequence(kind, [[&"smile", 2.0]])
 		&"wrong":
-			_wobble_body(0.020)
+			_wobble_body(0.014)
 			_mood_sequence(kind, [[&"confused", 1.0]])
 		&"refuse":
-			_jolt_body(6.0, 0.40)
-			_wobble_body(0.026)
+			_jolt_body(5.0, 0.38)
+			_wobble_body(0.018)
 			set_pose(&"pose_dismiss")
 			_mood_sequence(kind, [[&"angry", 1.4]])
 		_:
@@ -362,131 +337,75 @@ func _process(delta: float) -> void:
 	if _body.texture == null:
 		return
 	_clock += delta
-	_update_gaze(delta)
-	_update_continuous_face(delta)
-	_update_shader_and_overlays(delta)
+	_frame_age += delta
+	_update_frame(delta)
+	_update_overlays(delta)
 	_layout_body()
-
-
-func _update_gaze(delta: float) -> void:
-	_gaze_timer -= delta
-	if _gaze_timer <= 0.0:
-		_gaze_timer = randf_range(0.9, 2.2)
-		var spread: float = 2.4 if (speaking or mood == &"thinking" or mood == &"confused") else 1.2
-		_gaze_target = Vector2(randf_range(-spread, spread), randf_range(-spread * 0.7, spread * 0.7))
-	_gaze_cur = _gaze_cur.lerp(_gaze_target, 1.0 - exp(-delta * 7.5))
 
 
 func _trigger_blink(double_blink: bool = false) -> void:
 	_blink_left = 0.13
 	_pending_double_blink = double_blink
-	_blink_in = 0.16 if double_blink else randf_range(2.0, 4.2)
+	_blink_in = 0.16 if double_blink else randf_range(2.2, 4.4)
 
 
-func _update_continuous_face(delta: float) -> void:
+func _update_frame(delta: float) -> void:
 	var raw_level: float = _mouth_level()
-	var follow: float = 32.0 if raw_level > _mouth_smooth else 18.0
+	var follow: float = 28.0 if raw_level > _mouth_smooth else 16.0
 	_mouth_smooth = lerpf(_mouth_smooth, raw_level, 1.0 - exp(-delta * follow))
+	var level: float = _mouth_smooth
 
-	# Doğal göz kırpma
+	var base_mood: StringName = _resting_mood()
+	var wanted_main: StringName = &"neutral"
+	var wanted_up: StringName = &"neutral"
+
+	if speaking and level > MOUTH_MID_AT:
+		if level > MOUTH_OPEN_AT:
+			wanted_main = _closest_mouth(&"mouth_open")
+		else:
+			wanted_main = _closest_mouth(&"mouth_mid")
+		if _uppers.has(base_mood):
+			wanted_up = base_mood
+	else:
+		if has_expression(base_mood):
+			wanted_main = base_mood
+		elif _uppers.has(base_mood):
+			wanted_up = base_mood
+
 	_blink_in -= delta
 	if _blink_left > 0.0:
 		_blink_left -= delta
 	elif _blink_in <= 0.0:
 		if _pending_double_blink:
 			_pending_double_blink = false
+			_blink_left = 0.11
+			_blink_in = randf_range(2.4, 4.8)
+		else:
 			_blink_left = 0.12
-			_blink_in = randf_range(2.2, 4.5)
-		else:
-			_blink_left = 0.13
-			_pending_double_blink = randf() < 0.28
-			_blink_in = 0.15 if _pending_double_blink else randf_range(2.0, 4.2)
+			_pending_double_blink = randf() < 0.25
+			_blink_in = 0.14 if _pending_double_blink else randf_range(2.2, 4.6)
 
-	var base_mood: StringName = _resting_mood()
-	var mid_tex: Texture2D = _expressions.get(&"mouth_mid") as Texture2D
-	var open_tex: Texture2D = _expressions.get(&"mouth_open") as Texture2D
+	var is_mouth_now: bool = String(_shown).begins_with("mouth")
+	var is_mouth_want: bool = String(wanted_main).begins_with("mouth")
+	if wanted_main != _shown and (not is_mouth_now or _frame_age >= FRAME_HOLD or not is_mouth_want):
+		var ftime: float = 0.045 if (is_mouth_want or is_mouth_now) else 0.18
+		_set_frame(wanted_main, ftime)
 
-	if speaking or _mouth_smooth > 0.04:
-		# Konuşurken 60 FPS kesintisiz ağız açıklığı harmanlaması
-		_under.texture = mid_tex if mid_tex != null else open_tex
-		_under.modulate.a = clampf(_mouth_smooth * 2.4, 0.0, 1.0)
-		_over.texture = open_tex
-		_over.modulate.a = clampf((_mouth_smooth - 0.26) * 1.65, 0.0, 1.0)
-
-		# Üst yüz ifadesi konuşurken ayrı katmanda korunur
-		var up_tex: Texture2D = _uppers.get(base_mood) as Texture2D
-		_up_over.texture = up_tex
-		_up_over.modulate.a = move_toward(_up_over.modulate.a, 1.0 if up_tex != null else 0.0, delta * 6.0)
-	else:
-		# Dinlenirken tam yüz ifadesi (smile, confused, angry)
-		_under.modulate.a = move_toward(_under.modulate.a, 0.0, delta * 10.0)
-		if _under.modulate.a <= 0.01:
-			_under.texture = null
-		var mood_tex: Texture2D = _expressions.get(base_mood) as Texture2D
-		if mood_tex != null:
-			_over.texture = mood_tex
-			_over.modulate.a = move_toward(_over.modulate.a, 1.0, delta * 5.0)
-		else:
-			_over.modulate.a = move_toward(_over.modulate.a, 0.0, delta * 6.0)
-			if _over.modulate.a <= 0.01:
-				_over.texture = null
-		_up_over.modulate.a = move_toward(_up_over.modulate.a, 0.0, delta * 6.0)
-		if _up_over.modulate.a <= 0.01:
-			_up_over.texture = null
+	if wanted_up != _shown_up:
+		_set_upper(wanted_up, 0.18)
 
 
-func _update_shader_and_overlays(delta: float) -> void:
-	# 1. Göz kırpma katmanı
+func _update_overlays(delta: float) -> void:
 	var blink_active: bool = _blink_left > 0.0 and mood != &"angry"
 	var has_blink_tex: bool = _blink_layer.texture != null
 	var blink_target: float = 1.0 if (blink_active and has_blink_tex) else 0.0
 	_blink_layer.modulate.a = move_toward(_blink_layer.modulate.a, blink_target, delta * 22.0)
 
-	# 2. Kızgınlık / kızarma üst yüz yaması
-	var flush_target: float = clampf(anger / ANGER_FULL, 0.0, 1.0)
+	var use_up_angry: bool = _uppers.has(&"angry")
+	var open_mouth: bool = String(_shown).begins_with("mouth")
+	var flush_ok: bool = use_up_angry or not open_mouth
+	var flush_target: float = clampf(anger / ANGER_FULL, 0.0, 1.0) if (flush_ok and _shown != &"angry" and _shown_up != &"angry") else 0.0
 	_flush.modulate.a = move_toward(_flush.modulate.a, flush_target, delta * 6.0)
-
-	# 3. Canlı mikro-deformasyon shader parametreleri
-	var brow_t: float = 0.0
-	var squint_t: float = 0.0
-	match _resting_mood():
-		&"confused":
-			brow_t = 0.85
-			squint_t = 0.15
-		&"thinking":
-			brow_t = -0.48
-			squint_t = 0.48
-		&"angry":
-			brow_t = -0.95
-			squint_t = 0.60
-		&"smile":
-			brow_t = 0.35
-			squint_t = 0.35
-		_:
-			brow_t = -0.15 * _posture
-			squint_t = 0.10 * _posture
-
-	brow_t += maxf(_mouth_smooth - 0.20, 0.0) * 0.55
-	brow_t -= anger * 0.70
-	if blink_active and not has_blink_tex:
-		squint_t = 1.0
-
-	_brow_cur = lerpf(_brow_cur, clampf(brow_t, -1.0, 1.0), 1.0 - exp(-delta * 12.0))
-	_squint_cur = lerpf(_squint_cur, clampf(squint_t, 0.0, 1.0), 1.0 - exp(-delta * 15.0))
-
-	_face_mat.set_shader_parameter("jaw_open", clampf(_mouth_smooth * 0.85, 0.0, 1.0))
-	_face_mat.set_shader_parameter("brow_lift", _brow_cur)
-	_face_mat.set_shader_parameter("eye_squint", _squint_cur)
-	_face_mat.set_shader_parameter("cheek_blush", clampf(anger, 0.0, 1.0))
-
-	# 4. Gövde nefes ve el/kol jestleri (body_live.gdshader)
-	var want_gesture: float = clampf((0.65 if speaking else 0.0) + _mouth_smooth * 0.55 + _gesture_boost, 0.0, 1.0)
-	_gesture_smooth = lerpf(_gesture_smooth, want_gesture, 1.0 - exp(-delta * 6.5))
-	_body_mat.set_shader_parameter("breath", sin(_clock * 1.85))
-	_body_mat.set_shader_parameter("speak_gesture", _gesture_smooth)
-	_body_mat.set_shader_parameter("gesture_phase", fmod(_clock * 3.4, TAU))
-	_body_mat.set_shader_parameter("lean_x", sin(_clock * 0.55) * 0.35 + (_gaze_cur.x * 0.18))
-	_body_mat.set_shader_parameter("slump", _posture * 0.65)
 
 	for layer: TextureRect in [_head, _under, _over, _up_under, _up_over, _flush, _blink_layer, _pose_under, _pose_over]:
 		layer.visible = layer.texture != null and layer.modulate.a > 0.002
@@ -500,16 +419,72 @@ func _resting_mood() -> StringName:
 	return mood
 
 
+func _closest_mouth(wanted: StringName) -> StringName:
+	if has_expression(wanted):
+		return wanted
+	var alt: StringName = &"mouth_mid" if wanted == &"mouth_open" else &"mouth_open"
+	if has_expression(alt):
+		return alt
+	return &"neutral"
+
+
 func _mouth_level() -> float:
 	if not speaking:
 		return 0.0
 	if external_mouth_level >= 0.0:
-		# Gerçek ses zarfına canlı hece kontrastı ekle (ağzın açılıp kapanması net görünsün)
 		return clampf(pow(external_mouth_level, 0.72) * 1.25, 0.0, 1.0)
-	var syllable: float = pow(absf(sin(_clock * 7.5)), 0.75)
-	var stress: float = 0.50 + 0.50 * absf(sin(_clock * 2.1 + 0.6))
-	var pause: float = 0.0 if sin(_clock * 0.65 + 0.4) > 0.85 else 1.0
+	var syllable: float = pow(absf(sin(_clock * 7.4)), 0.78)
+	var stress: float = 0.48 + 0.52 * absf(sin(_clock * 2.0 + 0.6))
+	var pause: float = 0.0 if sin(_clock * 0.62 + 0.4) > 0.86 else 1.0
 	return syllable * stress * pause
+
+
+func _set_frame(frame: StringName, fade_time: float) -> void:
+	_frame_age = 0.0
+	var tex: Texture2D = null if frame == &"neutral" else (_expressions.get(frame) as Texture2D)
+	var previous: Texture2D = null if _shown == &"neutral" else (_expressions.get(_shown) as Texture2D)
+	_shown = frame
+	if _fade != null and _fade.is_valid():
+		_fade.kill()
+	if fade_time <= 0.0:
+		_under.texture = null
+		_over.texture = tex
+		_over.modulate.a = 1.0
+		return
+	# Önceki kare tam opak (_under = 1.0) kalırken yeni kare (_over) üstüne biner; böylece alttaki yüz hayalet yapmaz
+	_under.texture = previous
+	_under.modulate.a = 1.0
+	_over.texture = tex
+	_over.modulate.a = 0.0
+	_fade = create_tween().set_parallel(true)
+	if tex != null:
+		_fade.tween_property(_over, "modulate:a", 1.0, fade_time)
+	else:
+		_fade.tween_property(_under, "modulate:a", 0.0, fade_time)
+	_fade.finished.connect(func() -> void: _under.texture = null)
+
+
+func _set_upper(frame: StringName, fade_time: float) -> void:
+	var tex: Texture2D = null if frame == &"neutral" else (_uppers.get(frame) as Texture2D)
+	var previous: Texture2D = null if _shown_up == &"neutral" else (_uppers.get(_shown_up) as Texture2D)
+	_shown_up = frame
+	if _up_fade != null and _up_fade.is_valid():
+		_up_fade.kill()
+	if fade_time <= 0.0:
+		_up_under.texture = null
+		_up_over.texture = tex
+		_up_over.modulate.a = 1.0
+		return
+	_up_under.texture = previous
+	_up_under.modulate.a = 1.0
+	_up_over.texture = tex
+	_up_over.modulate.a = 0.0
+	_up_fade = create_tween().set_parallel(true)
+	if tex != null:
+		_up_fade.tween_property(_up_over, "modulate:a", 1.0, fade_time)
+	else:
+		_up_fade.tween_property(_up_under, "modulate:a", 0.0, fade_time)
+	_up_fade.finished.connect(func() -> void: _up_under.texture = null)
 
 
 func _mood_sequence(kind: StringName, steps: Array) -> void:
@@ -525,11 +500,6 @@ func _mood_sequence(kind: StringName, steps: Array) -> void:
 	mood = &"smile" if memory_stage >= 4 else &"neutral"
 	set_pose(&"neutral")
 	reaction_finished.emit(kind)
-
-
-func _pulse_gesture(strength: float, duration: float) -> void:
-	create_tween().tween_method(func(v: float) -> void: _gesture_boost = v, strength, 0.0, duration)\
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
 func _wobble_body(strength: float) -> void:
@@ -571,55 +541,24 @@ func _layout_body() -> void:
 	if _body.texture == null:
 		return
 	var delta: float = get_process_delta_time()
-	var breath: float = sin(_clock * 1.85) * 0.009
-	var slump_drop: float = _posture * 0.015 * _body_size.y * _fit
-	_weight_shift = sin(_clock * 0.42) * 4.5 + sin(_clock * 0.19 + 1.0) * 2.8
+	var breath: float = sin(_clock * 1.75) * 0.0065
+	var slump_drop: float = _posture * 0.012 * _body_size.y * _fit
+	_weight_shift = sin(_clock * 0.38) * 3.2 + sin(_clock * 0.17 + 1.0) * 2.0
 	var shake: float = 0.0
 	if anger > 0.65:
-		shake = sin(_clock * 54.0) * (anger - 0.65) * 7.0
-	var s: float = _fit * (1.0 - _posture * 0.012)
+		shake = sin(_clock * 54.0) * (anger - 0.65) * 6.0
+
+	# Konuşurken hece vurgusuyla tüm üst gövde hafifçe onaylama (nod) hareketi yapar
+	var target_nod: float = maxf(_mouth_smooth - 0.18, 0.0) * sin(_clock * 5.4) * 3.2
+	_nod_offset_y = lerpf(_nod_offset_y, target_nod, 1.0 - exp(-delta * 10.0))
+
+	var s: float = _fit * (1.0 - _posture * 0.010)
 	_body.scale = Vector2(s, s * (1.0 + breath))
-	_body.rotation = sin(_clock * 0.55) * 0.0055 + _posture * 0.010 + _wobble * sin(_clock * 32.0)
-	_body.position = Vector2(-_body_size.x * 0.5, -_body_size.y) + _exit_offset + Vector2(shake + _weight_shift * _fit, slump_drop)
-
-	# Baş: ruh haline göre duruş + sakkadik odak + konuşurken belirgin onaylama (nod) ve eğilme
-	var tilt_t: float = _gaze_cur.x * 0.014
-	var dy_t: float = _gaze_cur.y * 2.8 + _jolt_y
-	var dx_t: float = _gaze_cur.x * 3.2
-	match _resting_mood():
-		&"confused":
-			tilt_t += 0.052
-			dy_t += -3.5
-			dx_t += 4.0
-		&"thinking":
-			tilt_t += -0.032
-			dy_t += 5.0
-			dx_t += -3.5
-		&"angry":
-			tilt_t += -0.024
-			dy_t += 4.5
-		&"smile":
-			tilt_t += 0.018
-			dy_t += -3.0
-	tilt_t += _posture * 0.028
-	dy_t += _posture * 4.8
-
-	var emphasis: float = maxf(_mouth_smooth - 0.15, 0.0)
-	_nod_phase = lerpf(_nod_phase, emphasis, 1.0 - exp(-delta * 11.0))
-	dy_t += _nod_phase * 8.5 * sin(_clock * 5.2) - sin(_clock * 1.85 - 0.35) * 2.2
-	dx_t += _nod_phase * 3.5 * cos(_clock * 2.7)
-	tilt_t += _nod_phase * sin(_clock * 3.4) * 0.022
-
-	var k: float = 1.0 - exp(-delta * 7.0)
-	_head_tilt = lerpf(_head_tilt, tilt_t, k)
-	_head_dy = lerpf(_head_dy, dy_t, k)
-	_head_dx = lerpf(_head_dx, dx_t, k)
-	_head.rotation = 0.0
-	var fr_pos: Vector2 = _head.get_meta(&"home", _head.position)
-	_head.position = fr_pos
-	var fsize: Vector2 = _head.size.max(Vector2.ONE)
-	_face_mat.set_shader_parameter("head_tilt", _head_tilt)
-	_face_mat.set_shader_parameter("head_shift", Vector2(_head_dx / fsize.x, _head_dy / fsize.y))
+	_body.rotation = sin(_clock * 0.48) * 0.004 + _posture * 0.008 + _wobble * sin(_clock * 32.0)
+	_body.position = Vector2(-_body_size.x * 0.5, -_body_size.y) + _exit_offset + Vector2(
+		shake + _weight_shift * _fit,
+		slump_drop + (_jolt_y + _nod_offset_y) * _fit
+	)
 	_apply_alpha_only()
 
 

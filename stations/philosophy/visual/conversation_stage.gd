@@ -188,10 +188,10 @@ func _layout() -> void:
 	actor.position = feet
 	actor.fit_to_height(h * ACTOR_HEIGHT_RATIO * _cam_zoom)
 
-	_line_group.position = Vector2(40.0, h * 0.20)
-	_line_group.size = Vector2(w * 0.44, h * 0.20)
-	choice_slot.position = Vector2(40.0, h * 0.42)
-	choice_slot.size = Vector2(w * 0.45, h * 0.46)
+	_line_group.position = Vector2(40.0, h * 0.49)
+	_line_group.size = Vector2(w * 0.44, h * 0.16)
+	choice_slot.position = Vector2(40.0, h * 0.66)
+	choice_slot.size = Vector2(w * 0.45, h * 0.18)
 	_floor_shadow.queue_redraw()
 
 
