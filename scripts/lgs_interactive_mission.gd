@@ -1,8 +1,29 @@
 extends "res://scripts/mission.gd"
 ## Data-led interaction shell for the LGS campaign's six short, tactile missions.
 
-const DISPLAY_FONT = preload("res://assets/fonts/SpaceGrotesk.ttf")
-const BODY_FONT = preload("res://assets/fonts/IBMPlexSans.ttf")
+const UITheme = preload("res://scripts/ui_theme.gd")
+
+const PHASES: Array[String] = ["KRİZ", "SINA", "TEŞHİS", "DÜZELT", "TOPARLA", "MÜHÜR"]
+
+class EvidenceSource extends Button:
+	var evidence_id := -1
+
+	func _get_drag_data(_at_position: Vector2) -> Variant:
+		var preview := Label.new()
+		preview.text = text
+		preview.theme_type_variation = "StrongLabel"
+		set_drag_preview(preview)
+		return {"evidence_id": evidence_id}
+
+
+class EvidenceDropZone extends PanelContainer:
+	signal evidence_dropped(evidence_id: int)
+
+	func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
+		return data is Dictionary and data.has("evidence_id")
+
+	func _drop_data(_at_position: Vector2, data: Variant) -> void:
+		evidence_dropped.emit(int(data.evidence_id))
 
 @export var mission_id: StringName = &"seasons"
 
@@ -29,19 +50,16 @@ const PACK := {
 			"Toplam: a²+ab+ab+b²",
 			"(a+b)² = a²+b²"],
 		"faulty_line":4,
-		"correction_options":[
-			"(a+b)² = a² + 2ab + b²",
-			"(a+b)² = a² + b²",
-			"(a+b)² = 2a² + 2b²"],
-		"correction_answer":0,
+		"rescue":{"label":"Yeni ölçü: a=3, b=2. Eksik iki dikdörtgenin toplam alanı kaçtır?", "expected":"12", "feedback":"Yeni ölçülerde iki ab parçası da hesaba katıldı; köprü açıklığı kapandı."},
 		"feedback":"İspat düzeltildi. İki dikdörtgenin alanı ab+ab=2ab; özdeşlik artık alan modeliyle örtüşüyor."},
 	"turkish": {
 		"title":"BOZUK TALİMAT", "subject":"TÜRKÇE  ·  CÜMLEDE ANLAM",
 		"brief":"Güvenlik komutunda bir olumsuzluk eki ve bağlam kaymış. Anlamı koruyan, uygulanabilir talimatı kur.",
 		"steps":[
-			{"label":"ANLAMI ONAR  /  “Kapıyı açık bırakmayın.”", "options":["Kapıyı kapalı tutun.", "Kapıyı açık tutun.", "Kapıyı açmadan bırakın."], "answer":0, "feedback":"“Bırakmayın” olumsuzluğu, kapının açık kalmaması gerektiğini bildirir."},
-			{"label":"BAĞLAMI OKU  /  Alarm çalarsa çıkış yolunu koru", "options":["Çıkış yolunu kapatın.", "Çıkış yolunu açık tutun.", "Alarmı duymazdan gelin."], "answer":1, "feedback":"Bağlam, güvenli tahliye için çıkışın açık tutulmasını gerektiriyor."},
-			{"label":"KOMUTU DOĞRULA  /  güvenlik kaydı", "options":["Yetkisiz girişte kapıyı kilitleyin.", "Yetkisiz girişte kapıyı kilitlemeyin.", "Kapı yetkisiz girişi kilitlesin."], "answer":0, "feedback":"Açık ve bağlama uygun komut doğrulandı. Metindeki koordinatlar çözüldü."}]},
+			{"label":"ANLAMI OKU  /  olumsuzluk kaydı", "record":"OLAY KAYDI  ·  Güvenlik fişinde: “Kapıyı açık bırakmayın.”", "options":["Kapıyı kapalı tutun.", "Kapıyı açık tutun.", "Kapıyı açmadan bırakın."], "answer":0, "feedback":"“Bırakmayın” olumsuzluğu, kapının açık kalmaması gerektiğini bildirir."},
+			{"label":"BAĞLAMI OKU  /  alarm kaydı", "record":"SAHA NOTU  ·  Alarm çalarsa ekip güvenli çıkış yoluna ulaşmalı.", "options":["Çıkış yolunu kapatın.", "Çıkış yolunu açık tutun.", "Alarmı duymazdan gelin."], "answer":1, "feedback":"Bağlam, güvenli tahliye için çıkışın açık tutulmasını gerektiriyor."},
+			{"label":"KOMUTU ONAR  /  güvenlik kaydı", "options":["Yetkisiz girişte kapıyı kilitleyin.", "Yetkisiz girişte kapıyı kilitlemeyin.", "Kapı yetkisiz girişi kilitlesin."], "answer":0, "feedback":"Açık ve bağlama uygun komut doğrulandı. Metindeki koordinatlar çözüldü."}],
+		"rescue":{"label":"Yeni kayıt: “Duman koridora yayıldı; kuzey çıkışı açık.” Ekibe hangi talimat gönderilmeli?", "options":["Kuzey çıkışını kullanın.", "Koridora dönün.", "Çıkışı kapalı tutun."], "answer":0, "feedback":"Yeni bağlamda güvenli çıkış korundu."}},
 	"history": {
 		"title":"KAYIP KRONOLOJİ", "subject":"T.C. İNKILAP TARİHİ  ·  MİLLÎ MÜCADELE",
 		"brief":"Arşiv kayıtları karışmış. Tarihli belgeleri sırala ve kararların birbirine nasıl bağlandığını göster.",
@@ -53,16 +71,18 @@ const PACK := {
 		"title":"SON MESAJ", "subject":"İNGİLİZCE  ·  COMMUNICATION",
 		"brief":"Yardım istasyonundan üç kısa mesaj geldi. İsteği anla, uygun yanıtı seç ve iletişim dizisini tamamla.",
 		"steps":[
-			{"label":"MESSAGE 01  /  “We need clean water.”", "options":["They need clean water.", "They need a new map.", "They are closing the station."], "answer":0, "feedback":"“We need” bir ihtiyacı bildirir; ekip temiz su istiyor."},
-			{"label":"MESSAGE 02  /  “The bridge is not safe.”", "options":["Köprü güvenli.", "Köprü güvenli değil.", "Köprü yeniden açıldı."], "answer":1, "feedback":"“Not safe” olumsuzluk bildirir: köprü güvenli değil."},
-			{"label":"REPLY  /  Give a clear instruction", "options":["Please wait at the station.", "The station is a blue color.", "I am not a bridge."], "answer":0, "feedback":"Kısa ve anlaşılır yönerge gönderildi. Yardım hattı bağlandı."}]},
+			{"label":"MESSAGE 01  /  need ve iletişim amacı", "record":"TRANSCRIPT 01  ·  “We need clean water.”  /  yardım istasyonundan kısa mesaj", "options":["They need clean water.", "They need a new map.", "They are closing the station."], "answer":0, "feedback":"“We need” bir ihtiyacı bildirir; ekip temiz su istiyor."},
+			{"label":"MESSAGE 02  /  not ve durum bilgisi", "record":"CONTEXT 02  ·  Nehir yolu kapalı; ekip köprü kontrol noktasında bekliyor.", "options":["Köprü güvenli.", "Köprü güvenli değil.", "Köprü yeniden açıldı."], "answer":1, "feedback":"“Not safe” olumsuzluk bildirir: köprü güvenli değil."},
+			{"label":"TELSİZİ ONAR  /  Give a clear instruction", "options":["Please wait at the station.", "The station is a blue color.", "I am not a bridge."], "answer":0, "feedback":"Kısa ve anlaşılır yönerge gönderildi. Yardım hattı bağlandı."}],
+		"rescue":{"label":"NEW MESSAGE: “Could you send a map? The river route is blocked.” What should the team send?", "options":["A map.", "Clean water.", "A bridge."], "answer":0, "feedback":"Mesajın amacı ve bağlamı birlikte okundu; doğru malzeme ekibe ulaştı."}},
 	"religion": {
 		"title":"DAYANIŞMA ARŞİVİ", "subject":"DİN KÜLTÜRÜ  ·  YARDIMLAŞMA",
 		"brief":"Toplumsal yardım kayıtlarını güvenilir kavram ve örneklerle eşleştir. Her seçimde kaynağı ve etkisini incele.",
 		"steps":[
-			{"label":"KAVRAMI EŞLEŞTİR  /  ihtiyaç sahibine karşılıksız destek", "options":["Yardımlaşma", "İsraf", "Gösteriş"], "answer":0, "feedback":"Yardımlaşma, ihtiyaçların karşılanmasında dayanışmayı ve sorumluluğu destekler."},
-			{"label":"ÖRNEĞİ SEÇ  /  ortak iyilik için sürekli katkı", "options":["Bir çeşmenin bakımını birlikte üstlenmek", "Kullanılabilir gıdayı çöpe atmak", "Yardımı yalnızca duyurmak"], "answer":0, "feedback":"Kalıcı yarar sağlayan ortak katkı, dayanışmanın somut bir örneğidir."},
-			{"label":"KAYDI DOĞRULA  /  yardımın niteliği", "options":["İhtiyacı gözeten, incitmeden yapılan destek", "Karşılık bekleyerek yapılan yardım", "Başkalarını küçümseyerek verilen destek"], "answer":0, "feedback":"Kayıtlar; samimiyet, ihtiyaç ve insan onurunu gözeten örneklerle onarıldı."}]}
+			{"label":"KAVRAM FİŞİNİ OKU  /  ihtiyaç ve destek", "record":"KAYNAK NOTU  ·  Zekât ve sadaka, paylaşma ve yardımlaşma kavramlarıyla ele alınır.", "options":["Yardımlaşma", "İsraf", "Gösteriş"], "answer":0, "feedback":"Yardımlaşma, ihtiyaçların karşılanmasında dayanışmayı ve sorumluluğu destekler."},
+			{"label":"ÖRNEK OLAYI OKU  /  ortak iyilik", "record":"İHTİYAÇ NOTU  ·  Mahalle çeşmesi düzenli bakım olmadan kullanılamıyor.", "options":["Bir çeşmenin bakımını birlikte üstlenmek", "Kullanılabilir gıdayı çöpe atmak", "Yardımı yalnızca duyurmak"], "answer":0, "feedback":"Kalıcı yarar sağlayan ortak katkı, dayanışmanın somut bir örneğidir."},
+			{"label":"FİLTREYİ ONAR  /  yardımın niteliği", "options":["İhtiyacı gözeten, incitmeden yapılan destek", "Karşılık bekleyerek yapılan yardım", "Başkalarını küçümseyerek verilen destek"], "answer":0, "feedback":"Kayıtlar; samimiyet, ihtiyaç ve insan onurunu gözeten örneklerle onarıldı."}],
+		"rescue":{"label":"Yeni kayıt: Bir aile sıcak yemek istiyor; başka bir komşunun kullanılabilir eşyası var. Hangi kayıt önce eşleşmeli?", "options":["Sıcak yemek ihtiyacı", "Eşyaların piyasa değeri", "Yardımın duyurulma sayısı"], "answer":0, "feedback":"Yeni durumda destek, miktardan önce açık ihtiyaca göre yönlendirildi."}}
 }
 
 var stage := 0
@@ -73,12 +93,16 @@ var action_label: Label
 var action_buttons: VBoxContainer
 var progress_label: Label
 var diorama
-var proof_phase := 0
+var phase := 0
+var attempts := 0
+var fault_visible := false
+var phase_segments: HBoxContainer
 
 
 func _ready() -> void:
 	if mission_id == &"":
 		mission_id = &"seasons"
+	fault_visible = true
 	if mission_id == &"bridge":
 		DisplayServer.window_set_title("İspat Laboratuvarı · LGS Matematik")
 	_build_ui()
@@ -89,7 +113,7 @@ func _build_ui() -> void:
 	var data: Dictionary = PACK.get(String(mission_id), PACK["seasons"])
 	var accent: Color = PALETTE.get(String(mission_id), PALETTE["seasons"])
 	var bg := ColorRect.new()
-	bg.color = Color("#081321")
+	bg.color = UITheme.BG
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
@@ -104,34 +128,42 @@ func _build_ui() -> void:
 	var header := HBoxContainer.new()
 	shell.add_child(header)
 	var eyebrow := Label.new()
+	eyebrow.theme_type_variation = "KickerLabel"
 	eyebrow.text = data.subject
 	eyebrow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	eyebrow.add_theme_color_override("font_color", accent)
 	eyebrow.add_theme_font_size_override("font_size", 15)
 	header.add_child(eyebrow)
 	progress_label = Label.new()
+	progress_label.theme_type_variation = "KickerLabel"
 	header.add_child(progress_label)
+	phase_segments = HBoxContainer.new()
+	phase_segments.add_theme_constant_override("separation", 5)
+	for i in PHASES.size():
+		var segment := ColorRect.new()
+		segment.name = "PhaseSegment%d" % i
+		segment.custom_minimum_size = Vector2(0, 3)
+		segment.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		segment.color = UITheme.EDGE
+		phase_segments.add_child(segment)
+	shell.add_child(phase_segments)
 	var title := Label.new()
 	title.text = data.title
-	title.add_theme_font_size_override("font_size", 32)
-	if mission_id == &"bridge":
-		title.add_theme_font_override("font", DISPLAY_FONT)
+	title.theme_type_variation = "HeadlineLabel"
 	shell.add_child(title)
 	var brief := Label.new()
 	brief.text = data.brief
 	brief.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	brief.custom_minimum_size.y = 48
-	if mission_id == &"bridge":
-		brief.add_theme_font_override("font", BODY_FONT)
-	brief.add_theme_color_override("font_color", Color("#bdcddd"))
+	brief.add_theme_color_override("font_color", UITheme.MUTED)
 	shell.add_child(brief)
 	var stage_card := PanelContainer.new()
 	stage_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = Color("#101f31")
+	panel_style.bg_color = UITheme.PANEL
 	panel_style.border_color = accent.darkened(0.35)
 	panel_style.set_border_width_all(1)
-	panel_style.set_corner_radius_all(18)
+	panel_style.set_corner_radius_all(10)
 	var card_padding := 14 if mission_id == &"bridge" else 24
 	panel_style.content_margin_left = card_padding
 	panel_style.content_margin_top = card_padding
@@ -158,17 +190,13 @@ func _build_ui() -> void:
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	visual_row.add_child(right)
 	var step_name := Label.new()
-	step_name.text = "AKTİF DENEY"
+	step_name.text = "AKTİF İŞLEM"
+	step_name.theme_type_variation = "KickerLabel"
 	step_name.add_theme_color_override("font_color", accent)
-	step_name.add_theme_font_size_override("font_size", 12)
-	if mission_id == &"bridge":
-		step_name.add_theme_font_override("font", BODY_FONT)
 	right.add_child(step_name)
 	action_label = Label.new()
 	action_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	action_label.add_theme_font_size_override("font_size", 21)
-	if mission_id == &"bridge":
-		action_label.add_theme_font_override("font", DISPLAY_FONT)
+	action_label.theme_type_variation = "SectionLabel"
 	right.add_child(action_label)
 	action_buttons = VBoxContainer.new()
 	action_buttons.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -187,192 +215,348 @@ func _build_ui() -> void:
 		content.add_child(feedback)
 	var note := Label.new()
 	note.text = "Meridyen ispatı yazarken izle; tamamlanınca hatalı satırı seç." if mission_id == &"bridge" else "Kayıtlar, yürürlükteki müfredat kavramlarıyla karşılaştırılır. Kurmaca arıza yalnızca oyundaki verileri etkiler."
-	note.add_theme_font_size_override("font_size", 11)
-	note.add_theme_color_override("font_color", Color("#7d92a8"))
-	if mission_id == &"bridge":
-		note.add_theme_font_override("font", BODY_FONT)
+	note.theme_type_variation = "MutedLabel"
+	note.add_theme_color_override("font_color", UITheme.FAINT)
 	shell.add_child(note)
 
 
 func _show_stage() -> void:
 	var data: Dictionary = PACK.get(String(mission_id), PACK["seasons"])
-	if mission_id == &"bridge":
-		_show_proof(data)
-		return
-	var steps: Array = data.steps
-	progress_label.text = "KAYIT %02d / %02d" % [stage + 1, steps.size()]
-	action_label.text = steps[stage].label
-	feedback.text = "Bir işlem seç. Sonucu gözlem alanında göreceksin."
-	diorama.set_lesson_state(stage, false)
+	phase = clampi(phase, 0, PHASES.size() - 1)
+	_set_phase_indicator()
 	locked = false
-	for child in action_buttons.get_children(): child.queue_free()
-	for i in range(steps[stage].options.size()):
-		var button := Button.new()
-		button.text = "%s     ›" % steps[stage].options[i]
-		button.custom_minimum_size.y = 46
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		var normal := StyleBoxFlat.new()
-		normal.bg_color = Color("#17293d")
-		normal.border_color = Color("#30465d")
-		normal.set_border_width_all(1)
-		normal.set_corner_radius_all(9)
-		normal.content_margin_left = 16
-		normal.content_margin_right = 16
-		var hover := normal.duplicate() as StyleBoxFlat
-		hover.bg_color = Color("#203b52")
-		hover.border_color = PALETTE.get(String(mission_id), PALETTE["seasons"])
-		button.add_theme_stylebox_override("normal", normal)
-		button.add_theme_stylebox_override("hover", hover)
-		button.add_theme_stylebox_override("focus", hover)
-		button.add_theme_color_override("font_color", Color("#edf5fc"))
-		button.add_theme_color_override("font_hover_color", Color("#ffffff"))
-		button.pressed.connect(_choose.bind(i))
-		action_buttons.add_child(button)
+	_clear_actions()
+	var solved := phase >= 4 and not fault_visible
+	diorama.set_lesson_state(phase, solved, fault_visible, data.get("faulty_line", -1) if phase >= 2 and mission_id == &"bridge" else -1, phase >= 4 and mission_id == &"bridge")
+	match phase:
+		0:
+			action_label.text = _crisis_line(String(mission_id))
+			feedback.text = "Bozuk ayarı ve sahnedeki kaybı incele."
+			_add_action_button("SAHNEDEKİ KAYBI İNCELE", _begin_test)
+		1:
+			action_label.text = _test_line(String(mission_id))
+			feedback.text = "Ölçüm kaydını çalıştır; sonuç sahnede ve kayıtta görünsün."
+			var run_button := _add_action_button("ÖLÇÜM KAYDINI AL", _advance_phase)
+			if mission_id == &"bridge":
+				run_button.disabled = not diorama.proof_animation_done
+				if not diorama.proof_animation_done:
+					feedback.text = "Alan parçaları masaya yerleşiyor; kaydı açmak için yazımın bitmesini bekle."
+		2:
+			if mission_id == &"bridge":
+				_show_proof_diagnosis(data)
+			else:
+				_show_evidence_check(data, stage, "KANIT FİŞİNİ BOZUK AYAR SATIRINA BIRAK" if stage == 0 else "İKİNCİ KAYDI AYNI BAĞLAMDA KARŞILAŞTIR")
+		3:
+			if mission_id == &"bridge":
+				_show_proof_repair(data)
+			else:
+				_show_repair(data)
+		4:
+			if mission_id == &"bridge":
+				_show_bridge_rescue(data)
+			else:
+				_show_rescue(data)
+		5:
+			if mission_id == &"bridge":
+				action_label.text = "Alan modeli ve köprü açıklığı birlikte doğrulandı."
+			else:
+				action_label.text = "Onarılan ayarla yeni durumda düzenek yeniden çalışıyor."
+			feedback.text = "Doğru davranış sahnede kalıcı; kaydı merkeze mühürle."
+			_add_action_button("MÜHÜRÜ KAPAT", _finish)
+	_update_status_colors()
 
 
-func _show_proof(data: Dictionary) -> void:
-	progress_label.text = "İSPAT  ·  %s" % ("HATA TESPİTİ" if proof_phase == 0 else "ONARIM")
-	var is_writing: bool = proof_phase == 0 and not diorama.proof_animation_done
-	if is_writing:
-		action_label.text = "Meridyen ispatı tahtaya yazıyor…"
-		feedback.text = "Satırlar tebeşirle tek tek yazılıyor; yazım bitince seçimler açılacak."
-	elif proof_phase == 0:
-		action_label.text = "İspattaki hatalı satırı seç."
-		feedback.text = "Tahtadaki adımları ve 3D alan parçalarını karşılaştır."
-	else:
-		action_label.text = "Satır 05'i doğru özdeşlikle değiştir."
-		feedback.text = "Büyük karenin alanında eksik bırakılan parçaların toplamını düşün."
-	feedback.add_theme_color_override("font_color", PALETTE["bridge"])
-	diorama.set_lesson_state(0, false, false, data.faulty_line if proof_phase == 1 else -1, false)
-	locked = is_writing
+func _set_phase_indicator() -> void:
+	progress_label.text = "%02d / 06  ·  %s" % [phase + 1, PHASES[phase]]
+	for index in phase_segments.get_child_count():
+		var segment := phase_segments.get_child(index) as ColorRect
+		segment.color = UITheme.ACCENT_DIM if index < phase else UITheme.ACCENT if index == phase else UITheme.EDGE
+
+
+func _clear_actions() -> void:
 	for child in action_buttons.get_children():
 		child.queue_free()
-	var choices: Array = []
-	if proof_phase == 0:
-		var lines: Array = data.proof_lines
-		for i in lines.size():
-			choices.append("SATIR %02d   ·   %s" % [i + 1, lines[i]])
-	else:
-		choices = data.correction_options
-	for i in choices.size():
-		var button := Button.new()
-		button.text = "%s     ›" % choices[i]
-		button.custom_minimum_size.y = 46
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		button.add_theme_font_override("font", BODY_FONT)
-		var normal := StyleBoxFlat.new()
-		normal.bg_color = Color("#17293d")
-		normal.border_color = Color("#30465d")
-		normal.set_border_width_all(1)
-		normal.set_corner_radius_all(9)
-		normal.content_margin_left = 16
-		normal.content_margin_right = 16
-		var hover := normal.duplicate() as StyleBoxFlat
-		hover.bg_color = Color("#203b52")
-		hover.border_color = PALETTE["bridge"]
-		button.add_theme_stylebox_override("normal", normal)
-		button.add_theme_stylebox_override("hover", hover)
-		button.add_theme_stylebox_override("focus", hover)
-		button.add_theme_color_override("font_color", Color("#edf5fc"))
-		button.disabled = is_writing
-		button.pressed.connect(_choose_proof.bind(i))
-		action_buttons.add_child(button)
 
 
-func _on_proof_animation_finished() -> void:
-	if mission_id != &"bridge" or proof_phase != 0:
-		return
-	locked = false
-	action_label.text = "İspattaki hatalı satırı seç."
-	feedback.text = "Tahtadaki adımları ve 3D alan parçalarını karşılaştır."
-	for button in action_buttons.get_children():
-		button.disabled = false
+func _add_action_button(label: String, callback: Callable) -> Button:
+	var button := Button.new()
+	button.text = label
+	button.custom_minimum_size.y = 46
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.theme_type_variation = "PrimaryButton" if label == "MÜHÜRÜ KAPAT" else "Button"
+	button.pressed.connect(callback)
+	action_buttons.add_child(button)
+	return button
 
 
-func _choose(choice: int) -> void:
-	if locked:
-		return
-	var data: Dictionary = PACK.get(String(mission_id), PACK["seasons"])
-	if mission_id == &"bridge":
-		_choose_proof(choice)
-		return
-	var step: Dictionary = data.steps[stage]
-	if choice != step.answer:
-		diorama.set_lesson_state(stage, false, true)
-		feedback.text = "Ölçüm uyuşmadı. %s" % _hint(String(mission_id), stage)
-		feedback.add_theme_color_override("font_color", Color("#ff9c8e"))
-		return
-	locked = true
-	diorama.set_lesson_state(stage, true)
-	feedback.text = "✓   %s" % step.feedback
-	feedback.add_theme_color_override("font_color", PALETTE.get(String(mission_id), PALETTE["seasons"]))
-	for button in action_buttons.get_children():
-		button.disabled = true
-	if stage == data.steps.size() - 1:
-		var finish := Button.new()
-		finish.text = "ONARIMI UYGULA  →"
-		finish.custom_minimum_size.y = 48
-		finish.pressed.connect(_finish)
-		action_buttons.add_child(finish)
-	else:
-		var next := Button.new()
-		next.text = "SONRAKİ ÖLÇÜM  →"
-		next.custom_minimum_size.y = 48
-		next.pressed.connect(_next_stage)
-		action_buttons.add_child(next)
+func _add_choice_buttons(options: Array, callback: Callable) -> void:
+	for index in options.size():
+		_add_action_button(String(options[index]), callback.bind(index))
 
 
-func _next_stage() -> void:
-	stage += 1
+func _add_evidence_drop(options: Array, callback: Callable) -> void:
+	for index in options.size():
+		var card := EvidenceSource.new()
+		card.evidence_id = index
+		card.text = "KAYIT FİŞİ  ·  %s" % String(options[index])
+		card.custom_minimum_size.y = 50
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		card.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		card.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		card.add_theme_constant_override("line_spacing", 2)
+		card.add_theme_color_override("font_color", UITheme.INK)
+		action_buttons.add_child(card)
+	var zone := EvidenceDropZone.new()
+	zone.custom_minimum_size.y = 58
+	zone.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var zone_style := StyleBoxFlat.new()
+	zone_style.bg_color = UITheme.PANEL_SUNKEN
+	zone_style.border_color = UITheme.EDGE_STRONG
+	zone_style.set_border_width_all(1)
+	zone_style.set_corner_radius_all(2)
+	zone_style.content_margin_left = 12
+	zone_style.content_margin_top = 8
+	zone_style.content_margin_right = 12
+	zone_style.content_margin_bottom = 8
+	zone.add_theme_stylebox_override("panel", zone_style)
+	var zone_label := Label.new()
+	zone_label.text = "BOZUK AYAR PLAKASI  ·  KANITI BURAYA BIRAK"
+	zone_label.theme_type_variation = "KickerLabel"
+	zone_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	zone.add_child(zone_label)
+	zone.evidence_dropped.connect(callback)
+	action_buttons.add_child(zone)
+
+
+func _update_status_colors() -> void:
+	var accent: Color = PALETTE.get(String(mission_id), UITheme.ACCENT)
+	feedback.add_theme_color_override("font_color", UITheme.DANGER if fault_visible else accent)
+
+
+func _crisis_line(key: String) -> String:
+	return {
+		"bridge":"Köprü orta kirişi çöktü; alan kaydında iki dikdörtgen görünmesine rağmen toplam eksik.",
+		"turkish":"MERİDYEN komutu ters okudu; tahliye kapısı kapandı ve ekip dışarıda kaldı.",
+		"english":"Telsiz anahtar kelimeye göre yanlış malzeme gönderdi; ekip köprüde bekliyor.",
+		"religion":"Destek tablosu en büyük paketi yanlış haneye bıraktı; acil ihtiyaç karşılanmadı."
+	}.get(key, "Düzeneğin ölçümü beklenen sonuçtan saptı; kayıp sahnede görünür.")
+
+
+func _test_line(key: String) -> String:
+	return {
+		"bridge":"a² ve b² kareleriyle iki ab dikdörtgenini alan karesinde izle.",
+		"turkish":"Olay fişindeki olumsuzluk ve çıkış durumu aynı kayda işlensin.",
+		"english":"Telsiz kaydını ve yardım noktasının bağlam notunu birlikte oku.",
+		"religion":"İhtiyaç kaydıyla destek fişinin kaynağını yan yana incele."
+	}.get(key, "Ölçümü çalıştır ve kayıttaki farkı gözlemle.")
+
+
+func _begin_test() -> void:
+	phase = 1
 	_show_stage()
 
 
-func _choose_proof(choice: int) -> void:
+func _advance_phase() -> void:
+	if phase == 1:
+		stage = 0
+	phase = mini(phase + 1, 5)
+	_show_stage()
+
+
+func _show_evidence_check(data: Dictionary, index: int, prompt: String) -> void:
+	var step: Dictionary = data.steps[index]
+	action_label.text = String(step.label)
+	feedback.text = prompt
+	if step.has("record"):
+		var record := Label.new()
+		record.text = String(step.record)
+		record.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		record.theme_type_variation = "StrongLabel"
+		record.custom_minimum_size.y = 42
+		action_buttons.add_child(record)
+	_add_evidence_drop(step.options, _choose_evidence.bind(index))
+
+
+func _choose_evidence(choice: int, index: int) -> void:
+	var data: Dictionary = PACK[String(mission_id)]
+	var step: Dictionary = data.steps[index]
+	if choice != int(step.answer):
+		fault_visible = true
+		diorama.set_lesson_state(phase, false, true)
+		feedback.text = "Kanıt kaydı bu ilişkiyi desteklemiyor; %s" % _hint(String(mission_id), index)
+		_update_status_colors()
+		return
+	fault_visible = false
+	feedback.text = "Kayıt uyuştu. %s" % String(step.feedback)
+	if index == 0:
+		stage = 1
+		_show_stage()
+	else:
+		stage = 0
+		phase = 3
+		_show_stage()
+
+
+func _on_proof_animation_finished() -> void:
+	if mission_id != &"bridge" or phase != 1:
+		return
+	for button in action_buttons.get_children():
+		button.disabled = false
+	feedback.text = "Dört alan parçası ölçüm kaydına geçti; şimdi kaydı aç."
+
+
+func _show_proof_diagnosis(data: Dictionary) -> void:
+	action_label.text = "Alan modelinin hangi satırı köprü açıklığını bırakıyor?"
+	feedback.text = "İspat tahtasındaki son satırı, masadaki dört alan parçasıyla karşılaştır."
+	_add_evidence_drop(data.proof_lines, _choose_proof_line)
+
+
+func _choose_proof_line(index: int) -> void:
+	var data: Dictionary = PACK["bridge"]
+	if index != int(data.faulty_line):
+		fault_visible = true
+		diorama.set_lesson_state(phase, false, true, index, false)
+		feedback.text = "Bu satır parça alanlarıyla tutarlı; diğer satırları ve açık kalan yeri karşılaştır."
+		_update_status_colors()
+		return
+	fault_visible = false
+	feedback.text = "İki ab parçası tabloda var, fakat son satırın toplamına girmemiş."
+	phase = 3
+	_show_stage()
+
+
+func _show_proof_repair(data: Dictionary) -> void:
+	action_label.text = "Eksik iki alanı son satıra ekle."
+	feedback.text = "İki ayrı ab dikdörtgenini alan toplamına kat."
+	var entry := LineEdit.new()
+	entry.placeholder_text = "Özdeşliği yaz"
+	entry.custom_minimum_size.y = 48
+	entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	entry.add_theme_font_override("font", UITheme.FONT_CONDENSED)
+	entry.add_theme_font_size_override("font_size", 18)
+	action_buttons.add_child(entry)
+	var apply := _add_action_button("DÜZELTMEYİ DENE", func() -> void: _submit_formula(entry, data))
+	entry.text_submitted.connect(func(_text: String) -> void: _submit_formula(entry, data))
+	apply.theme_type_variation = "PrimaryButton"
+
+
+func _show_repair(data: Dictionary) -> void:
+	var step: Dictionary = data.steps[2]
+	action_label.text = String(step.label)
+	feedback.text = "Bozuk ayarı kanıttaki ilişkiye göre güncelle."
+	_add_choice_buttons(step.options, _choose_repair)
+
+
+func _choose_repair(choice: int) -> void:
+	var data: Dictionary = PACK[String(mission_id)]
+	var correct := int(data.steps[2].answer)
+	if choice != correct:
+		fault_visible = true
+		diorama.set_lesson_state(phase, false, true)
+		feedback.text = "Düzenek bu ayarla hâlâ kayıyor; %s" % _hint(String(mission_id), 2)
+		_update_status_colors()
+		return
+	fault_visible = false
+	diorama.set_lesson_state(phase, true)
+	feedback.text = "Ayar değişti; ölçüm sahnede doğru davranışı gösteriyor."
+	phase = 4
+	_show_stage()
+
+
+func _submit_formula(entry: LineEdit, data: Dictionary) -> void:
 	if locked:
 		return
-	var data: Dictionary = PACK["bridge"]
-	if proof_phase == 0:
-		if choice != data.faulty_line:
-			diorama.set_lesson_state(0, false, true, choice, false)
-			feedback.text = "Bu satır alan modeliyle tutarlı. İki ab parçasının ispatın devamında nasıl kullanıldığını incele."
-			feedback.add_theme_color_override("font_color", Color("#ff9c8e"))
-			return
-		proof_phase = 1
-		diorama.set_lesson_state(0, false, false, choice, false)
-		_show_proof(data)
+	var submitted := _normalize_formula(entry.text)
+	if submitted != "(a+b)^2=a^2+2ab+b^2" and submitted != "a^2+2ab+b^2=(a+b)^2":
+		fault_visible = true
+		diorama.set_lesson_state(phase, false, true, data.faulty_line, false)
+		feedback.text = "Alan toplamı hâlâ modeli karşılamıyor; iki eş dikdörtgeni ayrı ayrı hesaba kat."
+		_update_status_colors()
 		return
-	if choice != data.correction_answer:
-		diorama.set_lesson_state(0, false, true, data.faulty_line, false)
-		feedback.text = "Bu ifade alan modelini karşılamıyor. İki ab dikdörtgeninin toplam alanı ne olur?"
-		feedback.add_theme_color_override("font_color", Color("#ff9c8e"))
+	fault_visible = false
+	diorama.set_lesson_state(phase, true, false, data.faulty_line, true)
+	feedback.text = "Girilen özdeşlik alan modeliyle eşleşti; köprü taşıyıcılarını düzelt."
+	phase = 4
+	_show_stage()
+
+
+func _normalize_formula(formula: String) -> String:
+	return formula.to_lower().replace("²", "^2").replace(" ", "").replace("·", "")
+
+
+func _numeric_matches(value: String, expected: String) -> bool:
+	var normalized := value.strip_edges().replace(",", ".")
+	if not normalized.is_valid_float() or not expected.is_valid_float():
+		return false
+	return is_equal_approx(normalized.to_float(), expected.to_float())
+
+
+func _show_bridge_rescue(data: Dictionary) -> void:
+	var rescue: Dictionary = data.rescue
+	action_label.text = String(rescue.label)
+	feedback.text = "Yeni kenar ölçülerinde açık alanı hesapla. Kalan hak: %d / 3" % (3 - attempts)
+	var entry := LineEdit.new()
+	entry.placeholder_text = "Alanı yaz"
+	entry.custom_minimum_size.y = 48
+	entry.add_theme_font_override("font", UITheme.FONT_CONDENSED)
+	entry.add_theme_font_size_override("font_size", 18)
+	action_buttons.add_child(entry)
+	var apply := _add_action_button("KİRİŞİ YÜKLE", func() -> void: _choose_rescue(entry.text))
+	entry.text_submitted.connect(func(value: String) -> void: _choose_rescue(value))
+	apply.theme_type_variation = "PrimaryButton"
+
+
+func _show_rescue(data: Dictionary) -> void:
+	var rescue: Dictionary = data.rescue
+	action_label.text = String(rescue.label)
+	feedback.text = "Yeni durumda doğru eylemi uygula. Kalan hak: %d / 3" % (3 - attempts)
+	_add_choice_buttons(rescue.options, _choose_rescue)
+
+
+func _choose_rescue(choice: Variant) -> void:
+	if locked:
+		return
+	var data: Dictionary = PACK[String(mission_id)]
+	var rescue: Dictionary = data.rescue
+	var correct := _numeric_matches(String(choice), String(rescue.expected)) if mission_id == &"bridge" else int(choice) == int(rescue.answer)
+	if not correct:
+		attempts += 1
+		fault_visible = true
+		diorama.set_lesson_state(phase, false, true, data.get("faulty_line", -1), false)
+		if mission_id == &"bridge":
+			feedback.text = "Girilen alanla kiriş dengelenmedi; açıklıkta fark kaldı. %d hak kaldı." % (3 - attempts)
+		elif mission_id == &"turkish":
+			feedback.text = "Yanlış kapı açıldı; ekip bu çıkışı kullanamıyor. %d hak kaldı." % (3 - attempts)
+		elif mission_id == &"english":
+			feedback.text = "Yanlış malzeme yola çıktı; telsiz ekibi bekletiyor. %d hak kaldı." % (3 - attempts)
+		else:
+			feedback.text = "Destek yanlış haneye gitti; ihtiyaç karşılanmadı. %d hak kaldı." % (3 - attempts)
+		_update_status_colors()
+		if attempts >= 3:
+			attempts = 0
+			phase = 0
+			locked = true
+			feedback.text = "Haklar bitti; SAR ile kriz başlangıcına döndün."
+			_add_action_button("KRİZE SAR", _show_stage)
 		return
 	locked = true
-	diorama.set_lesson_state(0, true, false, data.faulty_line, true)
-	feedback.text = "✓   %s" % data.feedback
-	feedback.add_theme_color_override("font_color", PALETTE["bridge"])
-	for button in action_buttons.get_children():
-		button.disabled = true
-	var finish := Button.new()
-	finish.text = "ONARIMI UYGULA  →"
-	finish.custom_minimum_size.y = 48
-	finish.pressed.connect(_finish)
-	action_buttons.add_child(finish)
+	fault_visible = false
+	diorama.set_lesson_state(phase, true, false, data.get("faulty_line", -1), mission_id == &"bridge")
+	feedback.text = String(rescue.feedback)
+	phase = 5
+	_show_stage()
 
 
 func _finish() -> void:
-	feedback.text = "İSPAT DOĞRULANDI  ·  DÜZELTME KAYDI MERKEZE GÖNDERİLDİ"
+	feedback.text = "MÜHÜRLENDİ · DÜZELTME KAYDI MERKEZE GÖNDERİLDİ"
 	completed.emit()
 
 
 func _hint(key: String, step_index: int) -> String:
 	var hints: Dictionary = {
-		"seasons":["Dünya'nın eksen eğikliği yaklaşık 23,5°.", "Dik ışın alan yarımkürede yaz yaşanır.", "21 Haziran'da Kuzey Yarımküre'de gündüz en uzundur."],
-		"bridge":["Büyük karenin alanı, içindeki tüm parçaların alanları toplamıdır.", "İki eş dikdörtgen de ab alanına sahiptir.", "İki ab parçasını birlikte hesaba kat."],
-		"turkish":["Olumsuzluk, kapının açık bırakılmamasını söylüyor.", "Güvenlik bağlamında tahliye yolu kapanmamalı.", "Komut, yetkisiz girişi engelleyecek biçimde açık olmalı."],
-		"history":["Amasya Genelgesi, kongrelerden önce yayımlandı.", "Cemiyetler Sivas Kongresi'nde birleştirildi.", "TBMM 1920'de açıldı."],
-		"english":["“We need” = “İhtiyacımız var”.", "“Not safe” = “Güvenli değil”.", "Uygun yanıt nazik ve açık bir yönerge vermeli."],
-		"religion":["İhtiyaç sahibine destek dayanışmadır.", "Ortak ve kalıcı faydayı gözet.", "Yardım, insan onurunu koruyarak yapılır."]}
+		"bridge":["Alan modelindeki bütün parçaları ve toplam satırını karşılaştır."],
+		"turkish":["Olumsuzluk ve olay bağlamını birlikte kullan.", "Talimatı olay kaydındaki durumla karşılaştır.", "Komutun anlamı ile güvenlik hedefi aynı yönde olmalı."],
+		"english":["Mesajın eylemini ve nedenini birlikte oku.", "Olumsuzluk sözcüğünün anlamı nasıl değiştirdiğini incele.", "Yanıt hem isteğe hem durum notuna uymalı."],
+		"religion":["Kaynağın tanımını senaryodaki ihtiyaçla karşılaştır.", "Örneğin yararının kime ve ne zaman ulaştığını incele.", "Kararı ihtiyaç ve insan onuru kaydıyla denetle."]}
 	return hints.get(key, ["Kaydı yeniden incele."])[step_index]

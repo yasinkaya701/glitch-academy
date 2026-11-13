@@ -278,11 +278,12 @@ func _chalk_label(id: String, text: String, position: Vector3, color: Color, fon
 
 
 func _make_safety_door(active: Color, colors: Array) -> void:
+	var door_open := _solved and not _fault_visible
 	_box("DoorFrame", Vector3(0, 0.9, 0), Vector3(1.6, 1.8, 0.18), Color("#8199a8"), _set)
-	_box("DoorLeaf", Vector3(0.0 if _solved or _stage > 0 else -0.35, 0.88, 0.12), Vector3(0.9, 1.68, 0.12), colors[0], _set, Vector3(0, 0, deg_to_rad(-7 if _solved or _stage > 0 else 0)))
+	_box("DoorLeaf", Vector3(0.36 if door_open else 0.0, 0.88, 0.12), Vector3(0.9, 1.68, 0.12), colors[0] if door_open else colors[1] if _fault_visible else colors[0], _set, Vector3(0, 0, deg_to_rad(-72 if door_open else 0)))
 	_sphere("Handle", Vector3(0.31, 0.9, 0.22), Vector3(0.075, 0.075, 0.04), Color("#d5e6ea"), _set)
 	_box("ExitSign", Vector3(0, 1.98, -0.08), Vector3(0.85, 0.22, 0.08), active, _set, Vector3.ZERO, true)
-	_label("ExitText", "ÇIKIŞ", Vector3(0, 1.98, 0.16), Color("#eff9f8"), 20)
+	_label("ExitText", "ÇIKIŞ AÇIK" if door_open else "ÇIKIŞ KAPALI", Vector3(0, 1.98, 0.16), Color("#eff9f8"), 20)
 	for side in [-1, 1]:
 		_box("WallPanel%d" % side, Vector3(side * 1.35, 0.95, -0.05), Vector3(0.65, 1.9, 0.16), Color("#27465a"), _set)
 		for i in 3:
@@ -326,10 +327,14 @@ func _make_supply_station(active: Color, colors: Array) -> void:
 	_torus("Signal", Vector3(1.22, 1.6, -0.1), 0.32, 0.39, 0.025, active, _set)
 	for i in 3:
 		var z := -0.55 + i * 0.6
-		_box("SupplyCrate%d" % i, Vector3(0.65, 0.16, z), Vector3(0.55, 0.32, 0.48), colors[1], _set)
-		_box("CrateStripe%d" % i, Vector3(0.65, 0.16, z + 0.25), Vector3(0.08, 0.28, 0.025), Color("#f6e1a2"), _set)
+		var misrouted := _fault_visible and i == 0
+		var crate_pos := Vector3(1.35, 0.16, 1.05) if misrouted else Vector3(0.65, 0.16, z)
+		_box("SupplyCrate%d" % i, crate_pos, Vector3(0.55, 0.32, 0.48), Color("#e5645a") if misrouted else colors[1], _set)
+		_box("CrateStripe%d" % i, crate_pos + Vector3(0.0, 0.0, 0.25), Vector3(0.08, 0.28, 0.025), Color("#f6e1a2"), _set)
 	_label("NeedWater", "NEED: CLEAN WATER", Vector3(-0.8, 1.72, 0.1), active, 20)
-	_label("Reply", "SUPPLY LINE  ·  READY", Vector3(0.65, 1.25, 0.1), colors[1], 17)
+	_label("Reply", "SUPPLY LINE  ·  WAITING" if _fault_visible else "SUPPLY LINE  ·  READY", Vector3(0.65, 1.25, 0.1), active, 17)
+	if _fault_visible:
+		_label("MisroutedCrate", "MISROUTED", Vector3(1.35, 0.45, 1.05), Color("#ff9589"), 14)
 
 
 func _make_community_archive(active: Color, colors: Array) -> void:
@@ -346,8 +351,12 @@ func _make_community_archive(active: Color, colors: Array) -> void:
 		_sphere("NeighborHead%d" % i, pos + Vector3(0, 0.9, 0), Vector3(0.24, 0.25, 0.24), Color("#d5ad86"), _set, false)
 		_rod("Offer%d" % i, pos + Vector3(0.12, 0.58, 0.06), Vector3(cos(angle) * 0.3, 0.55, sin(angle) * 0.3), 0.035, active, _set)
 	for i in 3:
-		_box("SharedSupply%d" % i, Vector3(-0.62 + i * 0.62, 0.62, 0), Vector3(0.42, 0.24, 0.42), colors[1], _set)
-		_box("SupplyRibbon%d" % i, Vector3(-0.62 + i * 0.62, 0.75, 0.22), Vector3(0.07, 0.03, 0.03), Color("#f5e6ba"), _set)
+		var misplaced := _fault_visible and i == 0
+		var supply_pos := Vector3(1.0, 0.62, 0.78) if misplaced else Vector3(-0.62 + i * 0.62, 0.62, 0)
+		_box("SharedSupply%d" % i, supply_pos, Vector3(0.42, 0.24, 0.42), Color("#e5645a") if misplaced else colors[1], _set)
+		_box("SupplyRibbon%d" % i, supply_pos + Vector3(0, 0.13, 0.22), Vector3(0.07, 0.03, 0.03), Color("#f5e6ba"), _set)
+	if _fault_visible:
+		_label("MisroutedSupply", "YANLIŞ HANE", Vector3(1.0, 1.1, 0.78), Color("#ff9589"), 15)
 	_torus("SolidarityRing", Vector3(0, 0.04, 0), 1.85, 1.9, 0.025, active, _set)
 	_label("Share", "ORTAK YARAR", Vector3(0, 1.72, 0), active, 22)
 	_label("Need", "İHTİYAÇ  →  DESTEK", Vector3(0, 1.35, 0.03), Color("#d7e3e9"), 17)
