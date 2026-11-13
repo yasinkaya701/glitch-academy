@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/english/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"english"
+title = "Son Mesaj"
+subject = "İngilizce"
+grade = 8
+routes = PackedStringArray("lgs")
+description = "Düzeye uygun mesajları anlayıp yardım istasyonuyla iletişim dizisini yeniden kur."
+curriculum = "E8 · Friendship, On the Phone, Adventures"
+source_url = "https://mufredat.meb.gov.tr/ProgramDetay.aspx?PID=326"
+scene = ExtResource("2")

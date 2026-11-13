@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/religion/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"religion"
+title = "Dayanışma Arşivi"
+subject = "Din Kültürü ve Ahlak Bilgisi"
+grade = 8
+routes = PackedStringArray("lgs")
+description = "Yardımlaşma kavramlarını kaynak ve günlük yaşam örnekleriyle eşleştir; toplumsal kayıtları onar."
+curriculum = "DKAB.8.2.1 · İslam'ın paylaşma ve yardımlaşmaya verdiği önem"
+source_url = "https://odsgm.meb.gov.tr/destekmateryal/pdf/8kt/dkab/2.pdf"
+scene = ExtResource("2")

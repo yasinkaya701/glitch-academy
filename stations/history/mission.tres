@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/history/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"history"
+title = "Kayıp Kronoloji"
+subject = "T.C. İnkılap Tarihi ve Atatürkçülük"
+grade = 8
+routes = PackedStringArray("lgs")
+description = "Tarihli olayları ve belgeleri karşılaştır; arşiv kayıtlarının tahrif edildiğini kanıtla."
+curriculum = "İTA.8.2 · Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/tcinkilaptarihiveataturkculuk/12/unite2/files/basic-html/page12.html"
+scene = ExtResource("2")
