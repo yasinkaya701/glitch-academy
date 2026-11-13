@@ -1,12 +1,73 @@
 extends "res://scripts/mission.gd"
 ## Tarih Meydanı ve LGS T.C. İnkılap Tarihi İstasyonu.
-## MEB 8. Sınıf İnkılap Tarihi (LGS · İTA.8.2.2) ve Genel Tarih kazanımları.
+## LGS İnkılap Tarihi source-evidence case and shared general-history character archive.
 ## Oyuncu doğrudan cümlesini yazabilir, mikrofona konuşabilir veya ekrandaki tarihî karar kartlarını seçebilir.
 
 const HistoryStageScript = preload("res://stations/history/visual/history_stage.gd")
 const HistoryBrainScript = preload("res://stations/history/visual/history_brain.gd")
 const Hud = preload("res://scripts/mission_hud.gd")
 const UITheme = preload("res://scripts/ui_theme.gd")
+
+const LGS_EVENTS := {
+	"havza": {
+		"title": "Havza Genelgesi",
+		"date": "28 Mayıs 1919",
+		"clue": "İşgallere karşı halkın tepkisini örgütlemeye çağırdı.",
+		"source": "Atatürk Ansiklopedisi · Havza Genelgesi",
+		"url": "https://ataturkansiklopedisi.gov.tr/detay/768/Havza-Genelgesi",
+	},
+	"amasya": {
+		"title": "Amasya Genelgesi",
+		"date": "22 Haziran 1919",
+		"clue": "Millî Mücadele'nin gerekçesi ve yöntemi duyuruldu.",
+		"source": "Atatürk Ansiklopedisi · Amasya Genelgesi",
+		"url": "https://ataturkansiklopedisi.gov.tr/detay/4899",
+	},
+	"erzurum": {
+		"title": "Erzurum Kongresi",
+		"date": "23 Temmuz–7 Ağustos 1919",
+		"clue": "Bölgesel temsilciler vatanın bütünlüğü için karar aldı.",
+		"source": "Atatürk Araştırma Merkezi · Türkiye Cumhuriyeti Tarihi II",
+		"url": "https://atam.gov.tr/wp-content/uploads/2023/10/TURKIYE-CUMHURIYETI-TARIHI-2a-1.pdf",
+	},
+	"sivas": {
+		"title": "Sivas Kongresi",
+		"date": "4–11 Eylül 1919",
+		"clue": "Millî cemiyetler Anadolu ve Rumeli Müdafaa-i Hukuk Cemiyeti çatısında birleştirildi.",
+		"source": "Atatürk Araştırma Merkezi · Sivas Kongresi",
+		"url": "https://atam.gov.tr/sivas-kongresinin-101inci-yil-donumu/",
+	},
+	"amasya_meetings": {
+		"title": "Amasya Görüşmeleri",
+		"date": "20–22 Ekim 1919",
+		"clue": "İstanbul Hükûmeti temsilcisi, Temsil Heyeti ile görüştü.",
+		"source": "Atatürk Ansiklopedisi · Heyet-i Temsiliye",
+		"url": "https://ataturkansiklopedisi.gov.tr/detay/770/Heyet-i-Temsiliye",
+	},
+}
+
+const LGS_STEP_NAMES := ["KRİZ", "SINA", "TEŞHİS", "DÜZELT", "TOPARLA", "MÜHÜR"]
+
+class EvidenceCard extends PanelContainer:
+	var evidence_id: String = ""
+	var callback_owner: Node
+
+	func _get_drag_data(_at_position: Vector2) -> Variant:
+		var preview := Label.new()
+		preview.text = String(callback_owner.call("_lgs_event_title", evidence_id))
+		set_drag_preview(preview)
+		return {"evidence_id": evidence_id}
+
+
+class TimelineSlot extends PanelContainer:
+	var slot_index := -1
+	var callback_owner: Node
+
+	func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
+		return data is Dictionary and data.has("evidence_id")
+
+	func _drop_data(_at_position: Vector2, data: Variant) -> void:
+		callback_owner.call("_lgs_evidence_dropped", slot_index, String(data.get("evidence_id", "")))
 
 const ORDER: Array[StringName] = [&"mete_han", &"alparslan", &"fatih", &"kanuni", &"mimar_sinan", &"ataturk"]
 const NAMES := {
@@ -23,7 +84,7 @@ const NOTES := {
 	&"fatih": "Fatih Sultan Mehmed (1432–1481) · 1453 İstanbul'un fethi, Şahi topları ve Sahn-ı Seman.",
 	&"kanuni": "Kanuni Sultan Süleyman (1494–1566) · Adalet ve kanun düzeni, Mohaç ve Preveze.",
 	&"mimar_sinan": "Mimar Sinan (1489–1588) · Şehzade, Süleymaniye, Selimiye ve kubbe statiği.",
-	&"ataturk": "Mustafa Kemal Atatürk (1881–1938) · MEB 8. Sınıf İnkılap Tarihi (LGS · İTA.8.2.2). Amasya, Erzurum, Sivas, TBMM ve Lozan.",
+	&"ataturk": "Mustafa Kemal Atatürk (1881–1938) · Amasya, Erzurum, Sivas, TBMM ve Lozan.",
 }
 const FALLBACK_LINES := [
 	"Zaman sis içinde… Biz kimiz?",
@@ -50,6 +111,22 @@ var _anger: float = 0.0
 var _used_choices: Array[String] = []
 var _failed: bool = false
 var _is_lgs: bool = false
+var _lgs_step := 0
+var _lgs_crisis_elapsed := 0.0
+var _lgs_crisis_running := false
+var _lgs_source_ids: Array[String] = []
+var _lgs_slots: Array[String] = []
+var _lgs_inspected: Dictionary = {}
+var _lgs_attempts := 3
+var _lgs_setting_choice := -1
+var _lgs_feedback := ""
+var _lgs_show_source_type := false
+var _lgs_completion_sent := false
+var _lgs_header: Label
+var _lgs_explanation: Label
+var _lgs_board: HBoxContainer
+var _lgs_source_rack: VBoxContainer
+var _lgs_timeline: VBoxContainer
 
 
 func _ready() -> void:
@@ -70,37 +147,53 @@ func _ready() -> void:
 	stage.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(stage)
 
-	brain = HistoryBrainScript.new()
-	add_child(brain)
-	brain.response_ready.connect(apply_llm_trigger)
-
-	stage.voice.speech_recognized.connect(_on_speech_recognized)
+	if not _is_lgs:
+		brain = HistoryBrainScript.new()
+		add_child(brain)
+		brain.response_ready.connect(apply_llm_trigger)
 
 	hud = Hud.new()
 	add_child(hud)
 	hud.action_pressed.connect(_on_action_pressed)
+	hud.back_pressed.connect(func() -> void: exit_requested.emit())
 
 	if _is_lgs:
-		hud.skip.hide()
+		hud.skip.text = "Geç"
+		hud.skip_pressed.connect(_skip_lgs_crisis)
 	else:
+		stage.voice.speech_recognized.connect(_on_speech_recognized)
 		hud.skip_pressed.connect(func() -> void: _pick((_index + 1) % ORDER.size()))
 		hud.skip.text = "Sonraki lider"
 		hud.skip.show()
 
-	_build_dialogue_controls()
+	if _is_lgs:
+		_index = ORDER.find(&"ataturk")
+		stage.show_philosopher(&"ataturk", 6)
+		stage.actor.set_mood(&"neutral")
+		stage.set_memory_stage(0, false)
+		stage.hide_line()
+		_build_lgs_archive()
+		_lgs_begin_step(0)
+	else:
+		_build_dialogue_controls()
 
 	for a in args:
 		if a.begins_with("--who="):
 			_index = maxi(ORDER.find(StringName(a.substr(6))), 0)
 
-	if _is_lgs:
-		_index = ORDER.find(&"ataturk")
-
-	_pick(_index)
+	if not _is_lgs:
+		_pick(_index)
 
 	for a in args:
-		if a.begins_with("--demo"):
+		if a.begins_with("--demo") and not _is_lgs:
 			_run_demo()
+
+
+func _process(delta: float) -> void:
+	if _is_lgs and _lgs_crisis_running:
+		_lgs_crisis_elapsed += delta
+		if _lgs_crisis_elapsed >= 6.0:
+			_lgs_begin_step(1)
 
 
 func _build_dialogue_controls() -> void:
@@ -206,6 +299,16 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	var e := event as InputEventKey
 	if e == null or not e.pressed or e.echo:
 		return
+	if _is_lgs:
+		match e.keycode:
+			KEY_Q:
+				_lgs_rewind_current_step()
+				get_viewport().set_input_as_handled()
+			KEY_R:
+				_lgs_show_source_type = not _lgs_show_source_type
+				_lgs_render_step()
+				get_viewport().set_input_as_handled()
+		return
 	if _input_box.has_focus():
 		if e.keycode == KEY_ESCAPE:
 			_input_box.release_focus()
@@ -245,7 +348,7 @@ func _pick(i: int) -> void:
 
 	if _is_lgs:
 		hud.set_directive("Zaman arşivi bozuldu! Mustafa Kemal Paşa ile konuşarak veya kararları seçerek Millî Mücadele'nin 4 temel adımını savun.")
-		hud.set_note("İTA.8.2.2 · Amasya Genelgesi, Erzurum ve Sivas Kongreleri, TBMM'nin Açılışı ve Lozan.")
+		hud.set_note("İTA.8.2.5 · Millî Mücadele'nin hazırlık dönemi. Kaynak kayıtlarının tarih ve kapsamını karşılaştır.")
 	else:
 		hud.set_directive("%s ile konuşarak unuttuğu 4 temel ilkeyi ve kararı hatırlat." % NAMES[id])
 		hud.set_note(NOTES.get(id, ""))
@@ -505,6 +608,9 @@ func apply_llm_trigger(result: Dictionary) -> void:
 
 
 func _on_action_pressed() -> void:
+	if _is_lgs:
+		_lgs_action_pressed()
+		return
 	_pick(_index)
 
 
@@ -550,3 +656,404 @@ func _run_demo() -> void:
 	await _type_and_send("23 Nisan 1920'de TBMM açıldı: Egemenlik kayıtsız şartsız milletindir.")
 	await get_tree().create_timer(6.0).timeout
 	await _type_and_send("Lozan Barış Antlaşması ile kapitülasyonlar kaldırıldı ve tam bağımsızlık tescillendi.")
+
+
+func _build_lgs_archive() -> void:
+	stage.choice_slot.add_theme_constant_override("separation", 0)
+	stage.choice_slot.mouse_filter = Control.MOUSE_FILTER_STOP
+	stage.resized.connect(_layout_lgs_archive)
+	resized.connect(_layout_lgs_archive)
+	hud.set_note("İTA.8.2.5 · Millî Mücadele hazırlık döneminde Mustafa Kemal’in çalışmalarını analiz et. Kaynaklar: MEB Öğretim Programı; Atatürk Ansiklopedisi; Atatürk Araştırma Merkezi.")
+	hud.set_action("")
+	hud.skip.hide()
+	hud.tools.add_child(_make_tool_button("SAR  Q", _lgs_rewind_current_step))
+	hud.tools.add_child(_make_tool_button("KAYNAĞI GÖR  R", func() -> void:
+		_lgs_show_source_type = not _lgs_show_source_type
+		_lgs_render_step()
+	))
+	_layout_lgs_archive()
+
+
+func _layout_lgs_archive() -> void:
+	if not is_instance_valid(stage) or not is_instance_valid(stage.choice_slot):
+		return
+	stage.choice_slot.position = Vector2(28, 142)
+	stage.choice_slot.size = Vector2(size.x * 0.66, maxf(size.y - 220, 320))
+
+
+func _make_tool_button(text: String, callback: Callable) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.theme_type_variation = "CompactButton"
+	button.custom_minimum_size = Vector2(150, 38)
+	button.pressed.connect(callback)
+	return button
+
+
+func _lgs_begin_step(step: int) -> void:
+	_lgs_step = clampi(step, 0, LGS_STEP_NAMES.size() - 1)
+	_lgs_feedback = ""
+	_lgs_inspected.clear()
+	_lgs_source_ids.clear()
+	_lgs_slots.clear()
+	_lgs_setting_choice = -1
+	_lgs_crisis_running = _lgs_step == 0
+	_lgs_crisis_elapsed = 0.0
+	if _lgs_step == 0:
+		_lgs_attempts = 3
+		stage.set_anger(0.72, false)
+		stage.set_memory_stage(0, false)
+		hud.set_directive("Zaman arşivinin sırası bozuldu. Kayıtların neden çakıştığını bul.")
+		hud.set_steps(0, 6, "KRİZ")
+		hud.set_action("KANITLARI AÇ")
+		hud.skip.text = "Geç"
+		hud.skip.show()
+		hud.say("KURMACA ARIZA · MERİDYEN, Sivas kararlarını yalnızca bölgesel gösteriyor.", &"bad")
+	elif _lgs_step == 1:
+		stage.set_anger(0.45, false)
+		hud.set_directive("Amasya ve Erzurum kayıtlarını tarih şeridine taşı.")
+		hud.set_steps(1, 6, "SINA")
+		hud.set_action("KAYITLARI KARŞILAŞTIR", false)
+		hud.skip.hide()
+		_lgs_source_ids = ["amasya", "erzurum"]
+		_lgs_slots = ["", ""]
+	elif _lgs_step == 2:
+		stage.set_anger(0.3, false)
+		hud.set_directive("Bozuk ayarı çürüten Sivas kaydını mühür alanına bırak.")
+		hud.set_steps(2, 6, "TEŞHİS")
+		hud.set_action("AYARI AÇ", false)
+		_lgs_source_ids = ["havza", "amasya", "erzurum", "sivas"]
+	elif _lgs_step == 3:
+		stage.set_anger(0.15, false)
+		hud.set_directive("Sivas kaydına uyan arşiv kuralını seç.")
+		hud.set_steps(3, 6, "DÜZELT")
+		hud.set_action("AYARI MÜHÜRLE", false)
+	elif _lgs_step == 4:
+		stage.set_anger(0.0, false)
+		hud.set_directive("Yeni kayıtlardan kongre sürecini yeniden kur. Üç hakkın var.")
+		hud.set_steps(4, 6, "TOPARLA")
+		hud.set_action("ZAMAN ÇİZGİSİNİ MÜHÜRLE", false)
+		_lgs_source_ids = ["havza", "amasya", "sivas", "amasya_meetings"]
+		_lgs_slots = ["", "", "", ""]
+	elif _lgs_step == 5:
+		stage.set_memory_stage(4, true)
+		stage.set_anger(0.0, true)
+		hud.set_directive("Mühürlendi. Hazırlık dönemi belgeleri yeniden doğru sırada.")
+		hud.set_steps(5, 6, "MÜHÜR")
+		hud.set_action("YENİDEN DENE")
+		hud.say("Havza'dan Amasya Görüşmeleri'ne uzanan kayıtlar doğrulandı.", &"good")
+		if not _lgs_completion_sent:
+			_lgs_completion_sent = true
+			completed.emit()
+	_lgs_render_step()
+
+
+func _lgs_render_step() -> void:
+	for child in stage.choice_slot.get_children():
+		stage.choice_slot.remove_child(child)
+		child.queue_free()
+
+	var panel := PanelContainer.new()
+	panel.theme_type_variation = "GlassPanel"
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stage.choice_slot.add_child(panel)
+	var margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(side, 16)
+	panel.add_child(margin)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 10)
+	margin.add_child(content)
+	_lgs_header = Label.new()
+	_lgs_header.theme_type_variation = "HeadlineLabel"
+	_lgs_header.text = "TARİH MEYDANI  ·  %s" % LGS_STEP_NAMES[_lgs_step]
+	content.add_child(_lgs_header)
+	_lgs_explanation = Label.new()
+	_lgs_explanation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_lgs_explanation.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_lgs_explanation.text = _lgs_feedback
+	content.add_child(_lgs_explanation)
+
+	match _lgs_step:
+		0:
+			_lgs_render_crisis(content)
+		1, 4:
+			_lgs_render_timeline(content)
+		2:
+			_lgs_render_diagnosis(content)
+		3:
+			_lgs_render_repair(content)
+		5:
+			_lgs_render_seal(content)
+
+	var tool_hint := Label.new()
+	tool_hint.theme_type_variation = "MutedLabel"
+	tool_hint.text = "Q  Sar · Bu adımı yeniden kur      R  Kaynak türünü göster"
+	content.add_child(tool_hint)
+
+
+func _lgs_render_crisis(content: VBoxContainer) -> void:
+	var incident := _lgs_record_panel("KURMACA ARIZA", "MERİDYEN'in yanlış ayarı: Sivas Kongresi yalnız bölgesel karar aldı.\n\nBu kurmaca iddia yüzünden Temsil Heyeti'nin ulusal kayıtları arşivde kilitli.")
+	content.add_child(incident)
+	var card := _lgs_record_panel("ARŞİV KÜNYESİ", "Sivas Kongresi · 4–11 Eylül 1919\nKaynağı incele, sonra doğru kaydı kullan.")
+	content.add_child(card)
+
+
+func _lgs_render_timeline(content: VBoxContainer) -> void:
+	_lgs_board = HBoxContainer.new()
+	_lgs_board.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_lgs_board.add_theme_constant_override("separation", 12)
+	content.add_child(_lgs_board)
+	_lgs_source_rack = VBoxContainer.new()
+	_lgs_source_rack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_lgs_source_rack.add_theme_constant_override("separation", 6)
+	_lgs_board.add_child(_lgs_source_rack)
+	_lgs_timeline = VBoxContainer.new()
+	_lgs_timeline.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_lgs_timeline.add_theme_constant_override("separation", 6)
+	_lgs_board.add_child(_lgs_timeline)
+	_lgs_source_rack.add_child(_lgs_section_label("KAYITLAR  ·  SÜRÜKLE"))
+	_lgs_timeline.add_child(_lgs_section_label("ZAMAN ŞERİDİ  ·  ÖNCE → SONRA"))
+	for event_id in _lgs_source_ids:
+		if _lgs_slots.has(event_id):
+			continue
+		_lgs_source_rack.add_child(_lgs_make_event_card(event_id))
+	for slot_index in _lgs_slots.size():
+		_lgs_timeline.add_child(_lgs_make_slot(slot_index, _lgs_slots[slot_index]))
+	if _lgs_step == 4:
+		var tries := _lgs_record_panel("HAK  ·  %d/3" % _lgs_attempts, "Yanlış yerleşimde kayıt odası kapanır. Q ile adımı baştan sar.")
+		content.add_child(tries)
+
+
+func _lgs_render_diagnosis(content: VBoxContainer) -> void:
+	content.add_child(_lgs_record_panel("BOZUK AYAR  ·  İMZA: MERİDYEN", "MERİDYEN etiketi: Sivas Kongresi yalnızca Doğu illerinin temsilini sağladı.\n\nKaynak kanıtını bu satıra sürükle."))
+	var row := HBoxContainer.new()
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 10)
+	content.add_child(row)
+	var rack := VBoxContainer.new()
+	rack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rack.add_theme_constant_override("separation", 5)
+	row.add_child(rack)
+	rack.add_child(_lgs_section_label("KAYNAK KAYITLARI"))
+	for event_id in _lgs_source_ids:
+		rack.add_child(_lgs_make_event_card(event_id))
+	var slot := TimelineSlot.new()
+	slot.callback_owner = self
+	slot.slot_index = -1
+	slot.theme_type_variation = "ConsolePanel"
+	slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slot.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var slot_label := Label.new()
+	slot_label.text = "KANITI BIRAK\n\nSivas Kongresi'nin karar ve temsil kapsamını gösteren kayıt"
+	slot_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	slot_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	slot_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	slot.add_child(slot_label)
+	row.add_child(slot)
+
+
+func _lgs_render_repair(content: VBoxContainer) -> void:
+	content.add_child(_lgs_record_panel("AYAR PLAKASI  ·  AÇIK", "Sivas Kongresi'nin kapsamını belgelenmiş kararlarla eşleştir."))
+	var choice := OptionButton.new()
+	choice.custom_minimum_size.y = 44
+	choice.add_item("Yalnız Doğu illerini temsil eder", 0)
+	choice.add_item("Ülke çapındaki millî cemiyetleri birleştirir", 1)
+	choice.item_selected.connect(func(index: int) -> void:
+		_lgs_setting_choice = index
+		hud.set_action("AYARI MÜHÜRLE", true)
+	)
+	content.add_child(choice)
+	if _lgs_feedback != "":
+		var feedback := Label.new()
+		feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		feedback.text = _lgs_feedback
+		content.add_child(feedback)
+
+
+func _lgs_render_seal(content: VBoxContainer) -> void:
+	content.add_child(_lgs_record_panel("ZAMAN ÇİZGİSİ ONARILDI", "Havza'daki tepkiden Amasya'daki görüşmelere uzanan belgeler sıralandı. Sivas Kongresi kayıtları millî örgütlenmenin ülke çapında genişlediğini gösteriyor."))
+	content.add_child(_lgs_record_panel("KAYNAKLAR", "MEB 8. sınıf kazanımı İTA.8.2.5\nAtatürk Ansiklopedisi · Havza, Amasya, Heyet-i Temsiliye\nAtatürk Araştırma Merkezi · Sivas Kongresi"))
+
+
+func _lgs_record_panel(title: String, body: String) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.theme_type_variation = "ConsolePanel"
+	var margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(side, 10)
+	panel.add_child(margin)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 4)
+	margin.add_child(stack)
+	var heading := Label.new()
+	heading.theme_type_variation = "SectionLabel"
+	heading.text = title
+	stack.add_child(heading)
+	var text := Label.new()
+	text.text = body
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	stack.add_child(text)
+	return panel
+
+
+func _lgs_section_label(text: String) -> Label:
+	var label := Label.new()
+	label.theme_type_variation = "SectionLabel"
+	label.text = text
+	return label
+
+
+func _lgs_make_event_card(event_id: String) -> EvidenceCard:
+	var card := EvidenceCard.new()
+	card.callback_owner = self
+	card.evidence_id = event_id
+	card.theme_type_variation = "GlassPanel"
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var stack := VBoxContainer.new()
+	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stack.add_theme_constant_override("separation", 2)
+	card.add_child(stack)
+	var title := Label.new()
+	title.text = _lgs_event_title(event_id)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title.theme_type_variation = "SectionLabel"
+	stack.add_child(title)
+	var date := Label.new()
+	date.text = String(LGS_EVENTS[event_id]["date"])
+	date.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	date.theme_type_variation = "MutedLabel"
+	stack.add_child(date)
+	var source := Label.new()
+	var source_kind := "Atatürk Ansiklopedisi maddesi" if event_id in ["havza", "amasya", "amasya_meetings"] else ("ATAM araştırma kitabı" if event_id == "erzurum" else "ATAM kurum tarih yazısı")
+	source.text = "KAYNAK TÜRÜ  ·  %s" % source_kind if _lgs_show_source_type else String(LGS_EVENTS[event_id]["clue"])
+	source.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	source.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	source.tooltip_text = String(LGS_EVENTS[event_id]["source"]) + "\n" + String(LGS_EVENTS[event_id]["url"])
+	stack.add_child(source)
+	var citation := Label.new()
+	citation.text = String(LGS_EVENTS[event_id]["source"])
+	citation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	citation.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	citation.add_theme_font_size_override("font_size", 12)
+	citation.theme_type_variation = "MutedLabel"
+	stack.add_child(citation)
+	return card
+
+
+func _lgs_make_slot(slot_index: int, event_id: String) -> TimelineSlot:
+	var slot := TimelineSlot.new()
+	slot.callback_owner = self
+	slot.slot_index = slot_index
+	slot.theme_type_variation = "ConsolePanel"
+	slot.custom_minimum_size = Vector2(0, 68)
+	slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var text := Label.new()
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	text.text = "%02d  ·  %s" % [slot_index + 1, _lgs_event_title(event_id)] if event_id != "" else "%02d  ·  Kaydı buraya bırak" % [slot_index + 1]
+	slot.add_child(text)
+	return slot
+
+
+func _lgs_event_title(event_id: String) -> String:
+	return String(LGS_EVENTS.get(event_id, {}).get("title", "Tarih kaydı"))
+
+
+func _lgs_evidence_dropped(slot_index: int, event_id: String) -> void:
+	if _lgs_step == 1 or _lgs_step == 4:
+		if _lgs_step == 4 and _lgs_attempts <= 0:
+			return
+		if slot_index < 0 or slot_index >= _lgs_slots.size():
+			return
+		var correct_order := ["amasya", "erzurum"] if _lgs_step == 1 else ["havza", "amasya", "sivas", "amasya_meetings"]
+		if event_id != correct_order[slot_index]:
+			if _lgs_step == 4:
+				_lgs_attempts -= 1
+				if _lgs_attempts <= 0:
+					_lgs_feedback = "Üç hak bitti. Arşivi kriz kaydına sarıp yeniden kur."
+					hud.set_action("BAŞTAN SAR")
+				else:
+					_lgs_feedback = "Bu tarih şeritle uyuşmadı. Kayıt %d/3 hak bıraktı." % _lgs_attempts
+			else:
+				_lgs_feedback = "Tarih şeridi uyuşmadı. Kaydın tarihini yeniden oku."
+			hud.say(_lgs_feedback, &"bad")
+			_lgs_render_step()
+			return
+		_lgs_slots[slot_index] = event_id
+		_lgs_feedback = "Kayıt zaman şeridine eklendi."
+		var complete := true
+		for item in _lgs_slots:
+			complete = complete and item != ""
+		if complete:
+			hud.set_action("KAYITLARI KARŞILAŞTIR" if _lgs_step == 1 else "ZAMAN ÇİZGİSİNİ MÜHÜRLE", true)
+		_lgs_render_step()
+		return
+	if _lgs_step == 2 and slot_index == -1:
+		if event_id != "sivas":
+			_lgs_feedback = "Bu kayıt bozuk ayar hakkındaki iddiayı sınamıyor."
+			hud.say(_lgs_feedback, &"bad")
+			_lgs_render_step()
+			return
+		_lgs_inspected["sivas"] = true
+		_lgs_feedback = "Kaynak, Sivas'ta cemiyetlerin ortak bir millî çatı altında birleştirildiğini bildiriyor."
+		hud.set_action("AYARI AÇ", true)
+		hud.say("İddia ile kaynak kaydı uyuşmuyor.", &"good")
+		_lgs_render_step()
+
+
+func _lgs_action_pressed() -> void:
+	match _lgs_step:
+		0:
+			_lgs_begin_step(1)
+		1:
+			_lgs_begin_step(2)
+		2:
+			if _lgs_inspected.has("sivas"):
+				_lgs_begin_step(3)
+		3:
+			if _lgs_setting_choice == 0:
+				_lgs_feedback = "Bu ayar kaynakla uyuşmuyor. Kongrenin temsil kapsamını yeniden incele."
+				hud.say(_lgs_feedback, &"bad")
+				_lgs_setting_choice = -1
+				_lgs_render_step()
+			else:
+				_lgs_begin_step(4)
+		4:
+			if _lgs_attempts <= 0:
+				_lgs_begin_step(0)
+			elif _lgs_all_slots_filled():
+				_lgs_begin_step(5)
+		5:
+			_lgs_completion_sent = false
+			_lgs_begin_step(0)
+
+
+func _lgs_all_slots_filled() -> bool:
+	for event_id in _lgs_slots:
+		if event_id == "":
+			return false
+	return true
+
+
+func _skip_lgs_crisis() -> void:
+	if _is_lgs and _lgs_step == 0:
+		_lgs_begin_step(1)
+
+
+func _lgs_rewind_current_step() -> void:
+	if not _is_lgs:
+		return
+	var attempts_remaining := _lgs_attempts
+	if _lgs_step == 4 and attempts_remaining <= 0:
+		_lgs_begin_step(0)
+		return
+	_lgs_begin_step(_lgs_step)
+	if _lgs_step == 4:
+		_lgs_attempts = attempts_remaining
+		_lgs_render_step()
+	hud.say("Adım baştan kuruldu. Harcanan haklar geri gelmedi.", &"neutral")
