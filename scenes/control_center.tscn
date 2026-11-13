@@ -186,6 +186,13 @@ layout_mode = 2
 theme_override_constants/separation = 12
 custom_minimum_size = Vector2(0, 130)
 
+[node name="BackToMissions" type="Button" parent="Margin/Hub/Missions/DetailDock/Details"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 0
+text = "← Görev listesi"
+
 [node name="MissionTitle" type="Label" parent="Margin/Hub/Missions/DetailDock/Details"]
 unique_name_in_owner = true
 layout_mode = 2

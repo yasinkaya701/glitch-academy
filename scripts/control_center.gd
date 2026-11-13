@@ -76,6 +76,7 @@ var active_mission: Mission
 var active_mission_definition: MissionDefinition
 var visible_missions: Array[MissionDefinition] = []
 var _hub_scroll: ScrollContainer
+var _mobile_detail_active := false
 var _advance_after_completion := false
 var _story_overlay: Control
 var _story_shield: Control
@@ -105,8 +106,9 @@ func _ready() -> void:
 	field_filter.item_selected.connect(_on_field_selected)
 	get_viewport().size_changed.connect(_update_responsive_layout)
 	mission_list.fixed_icon_size = Vector2i(32, 32)
-	mission_list.item_selected.connect(_select_mission)
+	mission_list.item_selected.connect(_on_mission_selected)
 	mission_list.item_activated.connect(_activate_mission)
+	%BackToMissions.pressed.connect(_return_to_mission_list)
 	start_mission.pressed.connect(_start_mission)
 	%Info.pressed.connect(_toggle_curriculum)
 	%Back.pressed.connect(_return_to_hub)
@@ -216,6 +218,7 @@ func _on_field_selected(index: int) -> void:
 
 
 func _refresh_list() -> void:
+	_mobile_detail_active = false
 	var selected_id: StringName = selected_mission.id if selected_mission != null and not _advance_after_completion else &""
 	mission_list.clear()
 	visible_missions.clear()
@@ -297,6 +300,7 @@ func _refresh_list() -> void:
 		%Subtitle.text = "KONTROL MERKEZİ  ·  %s" % ("LGS" if active_mode == &"lgs" else "SINIF KEŞFİ")
 		%Title.text = "Yanlış Dünya"
 		route_purpose.text = "Görevleri seç, düzeneği çalıştır ve her onarımla gözlemevini geri kazan."
+	_update_mobile_mission_view()
 
 
 func _mission_fields(mission: MissionDefinition) -> PackedStringArray:
@@ -344,7 +348,7 @@ func _clear_selection() -> void:
 	%Info.disabled = true
 
 
-func _select_mission(index: int) -> void:
+func _select_mission(index: int, open_mobile_detail := false) -> void:
 	if index < 0 or index >= visible_missions.size():
 		_clear_selection()
 		return
@@ -371,6 +375,28 @@ func _select_mission(index: int) -> void:
 	mission_curriculum.visible = false
 	%Info.text = "ⓘ Bilgi"
 	%Info.disabled = false
+	if open_mobile_detail and get_viewport_rect().size.x < 820.0:
+		_mobile_detail_active = true
+		_update_mobile_mission_view()
+
+
+func _on_mission_selected(index: int) -> void:
+	_select_mission(index, true)
+
+
+func _return_to_mission_list() -> void:
+	_mobile_detail_active = false
+	_update_mobile_mission_view()
+	var selected_items := mission_list.get_selected_items()
+	if not selected_items.is_empty():
+		mission_list.ensure_current_is_visible()
+
+
+func _update_mobile_mission_view() -> void:
+	var narrow := get_viewport_rect().size.x < 820.0
+	mission_list.visible = not narrow or not _mobile_detail_active
+	%DetailDock.visible = not narrow or _mobile_detail_active
+	%BackToMissions.visible = narrow and _mobile_detail_active
 
 
 func _mission_display_title(mission: MissionDefinition) -> String:
@@ -645,13 +671,14 @@ func _update_responsive_layout() -> void:
 	%DetailDock.custom_minimum_size = Vector2(0, 0) if narrow else Vector2(286, 0)
 	%DetailDock.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	%DetailDock.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if narrow else Control.SIZE_EXPAND_FILL
+	_update_mobile_mission_view()
 	if _story_overlay != null:
 		call_deferred("_position_transmission", _story_overlay)
 	_refresh_mission_row_labels()
 
 
 func _mission_row_text(mission: MissionDefinition, state_text: String, marker: String) -> String:
-	var is_compact := get_viewport_rect().size.x < 360.0
+	var is_compact := get_viewport_rect().size.x < 430.0
 	var title := _mission_display_title(mission)
 	if is_compact:
 		return "%s  ·  %s" % [title, state_text]
@@ -661,7 +688,7 @@ func _mission_row_text(mission: MissionDefinition, state_text: String, marker: S
 func _refresh_mission_row_labels() -> void:
 	if mission_list == null or visible_missions.is_empty():
 		return
-	var is_compact := get_viewport_rect().size.x < 360.0
+	var is_compact := get_viewport_rect().size.x < 430.0
 	mission_list.add_theme_font_size_override("font_size", 14 if is_compact else 15)
 	var recommended_id: StringName = &""
 	for mission in visible_missions:
@@ -675,6 +702,10 @@ func _refresh_mission_row_labels() -> void:
 		var state_text := "Onarıldı" if completed else "Kilitli" if not available else "Sıradaki" if mission.id == recommended_id else "Açık"
 		var marker := "✓" if completed else "▣" if not available else "▶" if mission.id == recommended_id else "◉"
 		mission_list.set_item_text(index, _mission_row_text(mission, state_text, marker))
+		if is_compact:
+			mission_list.set_item_icon(index, null)
+		else:
+			mission_list.set_item_icon(index, _mission_icon(mission))
 
 
 func _wrap_hub_in_scroll_container() -> void:
