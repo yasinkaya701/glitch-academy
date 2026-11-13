@@ -555,8 +555,11 @@ func _update_responsive_layout() -> void:
 	var narrow := get_viewport_rect().size.x < 820.0
 	var compact := get_viewport_rect().size.x < 340.0
 	missions_layout.vertical = narrow
-	%Routes.vertical = compact
-	%YksRoutes.vertical = compact
+	%Routes.vertical = false
+	%YksRoutes.vertical = false
+	%Class.text = "Sınıf" if compact else "Sınıflar"
+	%YKS.text = "YKS" if compact else "YKS Kampanyası"
+	%YDT.text = "YDT" if compact else "YDT · İsteğe bağlı"
 	%Margin.add_theme_constant_override("margin_left", 16 if compact else 26 if narrow else 46)
 	%Margin.add_theme_constant_override("margin_right", 16 if compact else 26 if narrow else 46)
 	%Margin.add_theme_constant_override("margin_top", 18 if compact else 26 if narrow else 38)
