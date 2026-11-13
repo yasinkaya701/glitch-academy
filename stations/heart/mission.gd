@@ -4,6 +4,7 @@ extends "res://scripts/mission.gd"
 
 const Model = preload("res://stations/heart/heart_model.gd")
 const Stage = preload("res://stations/heart/heart_stage.gd")
+const Hud = preload("res://scripts/mission_hud.gd")
 
 const GOOD := Color("#a0dfbc")
 const BAD := Color("#ffb093")
@@ -85,13 +86,14 @@ class TrayPiece extends Button:
 
 var step := Step.INTRO
 var stage: Stage
+var hud: Hud
 var section: Label
 var headline: Label
 var body: Label
 var feedback: Label
 var status: Label
-var tray: HFlowContainer
-var question: VBoxContainer
+var tray: HBoxContainer
+var question: HBoxContainer
 var question_toggles: Dictionary[int, CheckButton] = {}
 var action: Button
 var skip: Button
@@ -122,70 +124,39 @@ func _ready() -> void:
 
 func _build_ui() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var root := HBoxContainer.new()
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 16)
-	add_child(root)
-
 	stage = Stage.new()
-	stage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stage.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	stage.spot_pressed.connect(_on_spot)
 	stage.valve_dropped.connect(_place_piece)
 	stage.ports_connected.connect(_on_link)
 	stage.port_cleared.connect(_on_unlink)
-	root.add_child(stage)
+	add_child(stage)
 
-	var console := PanelContainer.new()
-	console.custom_minimum_size = Vector2(350, 0)
-	console.theme_type_variation = "ConsolePanel"
-	root.add_child(console)
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 10)
-	console.add_child(column)
-
-	section = Label.new()
-	section.theme_type_variation = "SectionLabel"
-	headline = Label.new()
-	headline.theme_type_variation = "HeadlineLabel"
-	headline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body = _label(15, INK)
-	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	status = _label(15, Color("#ffc082"))
-	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(section)
-	column.add_child(headline)
-	column.add_child(body)
-	column.add_child(status)
-
-	tray = HFlowContainer.new()
-	tray.add_theme_constant_override("h_separation", 6)
-	tray.add_theme_constant_override("v_separation", 6)
-	column.add_child(tray)
-
-	question = VBoxContainer.new()
-	column.add_child(question)
-
-	feedback = _label(15, MUTED)
-	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(feedback)
-
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(spacer)
-
-	pause = Button.new()
-	pause.pressed.connect(_toggle_run)
-	column.add_child(pause)
-	action = Button.new()
-	action.theme_type_variation = "PrimaryButton"
-	action.custom_minimum_size = Vector2(0, 44)
-	action.pressed.connect(_on_action)
-	column.add_child(action)
-	skip = Button.new()
+	hud = Hud.new()
+	add_child(hud)
+	hud.action_pressed.connect(_on_action)
+	hud.skip_pressed.connect(_finish_intro)
+	hud.pause_pressed.connect(_toggle_run)
+	action = hud.action
+	skip = hud.skip
+	pause = hud.pause
 	skip.text = "Açılışı geç"
-	skip.pressed.connect(_finish_intro)
-	column.add_child(skip)
+	tray = HBoxContainer.new()
+	tray.add_theme_constant_override("separation", 8)
+	hud.tools.add_child(tray)
+	question = HBoxContainer.new()
+	question.add_theme_constant_override("separation", 12)
+	hud.tools.add_child(question)
+	# Eski metin alanları görünmez vekillerdir: yazı yönergeye ve balona gider.
+	section = Label.new()
+	headline = Label.new()
+	body = Label.new()
+	feedback = Label.new()
+	status = Label.new()
+	status.theme_type_variation = "MutedLabel"
+	status.position = Vector2(28, 80)
+	status.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(status)
 
 
 func _label(font_size: int, color: Color) -> Label:
@@ -205,7 +176,35 @@ func _panel_style() -> StyleBoxFlat:
 	return style
 
 
+const DIRECTIVES := {
+	"Kalp tek yönlü tutamıyor": "Mitral kapak sızdırıyor: kan geri kaçıyor.",
+	"Kalbin yapısını tanı": "Sorulan bölgeye tıkla.",
+	"Yapıyı tanıdın": "Yapı tamam. Şimdi pompayı izle.",
+	"Kapaklar nasıl çalışır?": "Bir tam turu izle.",
+	"Kapakçıkları yerleştir": "Kapakları yuvalarına sürükle.",
+	"Kapakçıklar yerinde": "Kapaklar yerinde.",
+	"Kan geri akıyor": "Geri akışı bul, arızalı kapağa tıkla.",
+	"Geri akış durdu": "Geri akış durdu.",
+	"Damarları kalbe bağla": "Her çıkışı doğru girişe sürükle.",
+	"İki dolaşım kapandı": "İki dolaşım kapandı.",
+	"Kan akışını ayarla": "Dokuların ihtiyacını karşıla.",
+	"Dolaşım dengede": "Dolaşım dengede.",
+}
+
+
 func _set_ui(sec: String, head: String, text: String, button: String = "") -> void:
+	var directive_text: String = DIRECTIVES.get(head, head)
+	hud.set_directive(directive_text)
+	var index := 0
+	var parts := sec.split(" · ")
+	if parts.size() == 2 and parts[0].is_valid_int():
+		index = int(parts[0])
+		hud.set_steps(index, 6, parts[1])
+	elif sec == "ONARILDI":
+		hud.set_steps(6, 6, sec)
+	else:
+		hud.set_steps(0, 6, sec)
+	hud.set_note(text)
 	section.text = sec
 	headline.text = head
 	body.text = text
@@ -225,7 +224,12 @@ func _set_ui(sec: String, head: String, text: String, button: String = "") -> vo
 
 func _say(text: String, color: Color = MUTED) -> void:
 	feedback.text = text
-	feedback.add_theme_color_override("font_color", color)
+	var tone: StringName = &"neutral"
+	if color == GOOD:
+		tone = &"good"
+	elif color == BAD:
+		tone = &"bad"
+	hud.say(text, tone)
 
 
 func _tween_oxygen(value: float, seconds: float = 1.6) -> void:
@@ -784,9 +788,11 @@ func _enter_rate() -> void:
 	slider.step = 1
 	slider.value = REST_RATE
 	slider.value_changed.connect(_on_rate_changed)
+	slider.custom_minimum_size = Vector2(320, 0)
+	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	question.add_child(slider)
 	rate_label = Label.new()
-	rate_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rate_label.add_theme_color_override("font_color", Color("#ffc082"))
 	question.add_child(rate_label)
 	_start_pump()
 	_on_rate_changed(REST_RATE)
@@ -798,8 +804,7 @@ func _on_rate_changed(value: float) -> void:
 	stage.flow_speed = clampf(value / REST_RATE, 0.5, 3.0)
 	var output := value * STROKE_VOLUME
 	var ratio := output / DEMAND_ML
-	rate_label.text = "Kalp hızı: %d atım/dk\nDebi: %d × %d = %d mL/dk\nDokuların ihtiyacı: %d mL/dk (%%%d)" % [
-		int(value), int(value), int(STROKE_VOLUME), int(output), int(DEMAND_ML), roundi(ratio * 100.0)]
+	rate_label.text = "%d atım/dk  ×  %d mL  =  %d mL/dk   (ihtiyaç %d)" % [int(value), int(STROKE_VOLUME), int(output), int(DEMAND_ML)]
 	stage.body_oxygen = clampf(ratio, 0.0, 1.0)
 
 

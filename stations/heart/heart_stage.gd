@@ -367,7 +367,7 @@ func _draw_model_panels() -> void:
 	draw_texture_rect(lungs_viewport.get_texture(), lungs_rect, false)
 	draw_texture_rect(body_viewport.get_texture(), body_rect, false, tint)
 	# Oksijen göstergesi
-	var gauge := Rect2(body_rect.position + Vector2(body_rect.size.x * 0.22, body_rect.size.y - 34.0), Vector2(body_rect.size.x * 0.56, 7.0))
+	var gauge := Rect2(body_rect.position + Vector2(body_rect.size.x * 0.22, body_rect.size.y * 0.03), Vector2(body_rect.size.x * 0.56, 7.0))
 	draw_rect(gauge, Color("#1b2c3f"))
 	var fill_color := JADE if body_oxygen > 0.66 else (GOLD if body_oxygen > 0.33 else RED)
 	draw_rect(Rect2(gauge.position, Vector2(gauge.size.x * clampf(body_oxygen, 0.0, 1.0), gauge.size.y)), fill_color)

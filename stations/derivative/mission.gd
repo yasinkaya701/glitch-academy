@@ -4,6 +4,7 @@ extends "res://scripts/mission.gd"
 
 const BoxPlot = preload("res://stations/derivative/box_plot.gd")
 const Workshop = preload("res://stations/derivative/workshop.gd")
+const Hud = preload("res://scripts/mission_hud.gd")
 const GOOD := Color("#a0dfbc")
 const BAD := Color("#ffb093")
 const MUTED := Color("#b0c4bf")
@@ -17,13 +18,14 @@ enum Step { INTRO, EXPLORE, SLOPE, APPLY, DONE }
 var step := Step.INTRO
 var plot: BoxPlot
 var workshop: Workshop
+var hud: Hud
 var section: Label
 var headline: Label
 var body: Label
 var readout: Label
 var feedback: Label
 var slider: HSlider
-var slider_row: Control
+var slider_row: HBoxContainer
 var answer_row: HBoxContainer
 var answer: LineEdit
 var action: Button
@@ -43,21 +45,10 @@ func _ready() -> void:
 
 func _build_ui() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var root := HBoxContainer.new()
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 16)
-	add_child(root)
-
-	var left := VBoxContainer.new()
-	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	left.add_theme_constant_override("separation", 10)
-	root.add_child(left)
-
 	var view_frame := SubViewportContainer.new()
 	view_frame.stretch = true
-	view_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	view_frame.size_flags_stretch_ratio = 1.55
-	left.add_child(view_frame)
+	view_frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(view_frame)
 	var viewport := SubViewport.new()
 	viewport.own_world_3d = true
 	viewport.msaa_3d = Viewport.MSAA_4X
@@ -65,56 +56,49 @@ func _build_ui() -> void:
 	workshop = Workshop.new()
 	viewport.add_child(workshop)
 
+	# Grafik: sağ üstte, ölçümlerle dolan küçük bir cihaz ekranı.
 	var graph_frame := PanelContainer.new()
 	graph_frame.theme_type_variation = "GlassPanel"
-	graph_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	graph_frame.size_flags_stretch_ratio = 1.0
-	graph_frame.add_theme_constant_override("margin_left", 0)
-	left.add_child(graph_frame)
+	graph_frame.anchor_left = 1.0
+	graph_frame.anchor_right = 1.0
+	graph_frame.offset_left = -470.0
+	graph_frame.offset_right = -24.0
+	graph_frame.offset_top = 72.0
+	graph_frame.offset_bottom = 340.0
+	add_child(graph_frame)
 	plot = BoxPlot.new()
 	plot.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	plot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	graph_frame.add_child(plot)
 
-	var console := PanelContainer.new()
-	console.theme_type_variation = "ConsolePanel"
-	console.custom_minimum_size = Vector2(350, 0)
-	root.add_child(console)
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 10)
-	console.add_child(column)
+	hud = Hud.new()
+	add_child(hud)
+	hud.action_pressed.connect(_on_action)
+	hud.skip_pressed.connect(_skip_intro)
+	action = hud.action
+	skip = hud.skip
+	skip.text = "Açılışı geç"
 
-	section = Label.new()
-	section.theme_type_variation = "SectionLabel"
-	headline = Label.new()
-	headline.theme_type_variation = "HeadlineLabel"
-	headline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body = Label.new()
-	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(section)
-	column.add_child(headline)
-	column.add_child(body)
-
-	slider_row = VBoxContainer.new()
+	slider_row = HBoxContainer.new()
+	slider_row.add_theme_constant_override("separation", 12)
 	slider = HSlider.new()
 	slider.min_value = 0.1
 	slider.max_value = 5.9
 	slider.step = 0.05
 	slider.value = 1.0
+	slider.custom_minimum_size = Vector2(320, 0)
+	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	slider.value_changed.connect(_on_slider)
 	slider_row.add_child(slider)
 	measure = Button.new()
-	measure.text = "Kutuyu ölç (ölçü silindirine boşalt)"
+	measure.text = "Ölç"
+	measure.custom_minimum_size = Vector2(90, 0)
 	measure.pressed.connect(_measure)
 	slider_row.add_child(measure)
-	column.add_child(slider_row)
-
-	readout = Label.new()
-	readout.add_theme_color_override("font_color", Color("#ffc082"))
-	readout.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(readout)
+	hud.tools.add_child(slider_row)
 
 	answer_row = HBoxContainer.new()
+	answer_row.add_theme_constant_override("separation", 8)
 	var x_label := Label.new()
 	x_label.text = "x ="
 	answer = LineEdit.new()
@@ -124,32 +108,42 @@ func _build_ui() -> void:
 	var unit := Label.new()
 	unit.text = "dm"
 	unit.theme_type_variation = "MutedLabel"
-	answer_row.add_theme_constant_override("separation", 8)
 	answer_row.add_child(x_label)
 	answer_row.add_child(answer)
 	answer_row.add_child(unit)
-	column.add_child(answer_row)
+	hud.tools.add_child(answer_row)
 
+	section = Label.new()
+	headline = Label.new()
+	body = Label.new()
 	feedback = Label.new()
-	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(feedback)
+	readout = Label.new()
+	readout.add_theme_color_override("font_color", Color("#ffc082"))
+	readout.position = Vector2(28, 80)
+	readout.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(readout)
 
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(spacer)
 
-	action = Button.new()
-	action.theme_type_variation = "PrimaryButton"
-	action.custom_minimum_size = Vector2(0, 44)
-	action.pressed.connect(_on_action)
-	column.add_child(action)
-	skip = Button.new()
-	skip.text = "Açılışı geç"
-	skip.pressed.connect(_skip_intro)
-	column.add_child(skip)
+const DIRECTIVES := {
+	"Depo tahminle kesiyor": "Depo köşeleri tahminle kesiyor.",
+	"Kutuyu kes, kat, ölç": "x'i ayarla, kutuyu ölç.",
+	"Teğet ne söylüyor?": "Eğimi sıfır yapan x'i bul.",
+	"Eğim sıfırsa tepe": "Eğim sıfır: hacim tepede.",
+	"Yeni levha: a = 18 dm": "a = 18 dm: en büyük hacim için x'i hesapla.",
+	"Depo en iyi kutuyu kesiyor": "Depo en iyi kutuyu kesiyor.",
+}
 
 
 func _set_ui(sec: String, head: String, text: String, button: String) -> void:
+	hud.set_directive(DIRECTIVES.get(head, head))
+	var parts := sec.split(" · ")
+	if parts.size() == 2 and parts[0].is_valid_int():
+		hud.set_steps(int(parts[0]), 3, parts[1])
+	elif sec == "ONARILDI":
+		hud.set_steps(3, 3, sec)
+	else:
+		hud.set_steps(0, 3, sec)
+	hud.set_note(text)
 	section.text = sec
 	headline.text = head
 	body.text = text
@@ -162,7 +156,12 @@ func _set_ui(sec: String, head: String, text: String, button: String) -> void:
 
 func _say(text: String, color: Color = MUTED) -> void:
 	feedback.text = text
-	feedback.add_theme_color_override("font_color", color)
+	var tone: StringName = &"neutral"
+	if color == GOOD:
+		tone = &"good"
+	elif color == BAD:
+		tone = &"bad"
+	hud.say(text, tone)
 
 
 func _pour(volume: float, seconds: float = 1.1) -> void:
