@@ -55,25 +55,51 @@ func _ready() -> void:
 	_build()
 
 
+func _floor_height() -> float:
+	return -0.8
+
+
 ## Alt sınıflar nesnelerini burada kurar.
 func _build() -> void:
 	pass
 
 
 func _build_base() -> void:
+	var sky_material := ProceduralSkyMaterial.new()
+	sky_material.sky_top_color = Color("#060a11")
+	sky_material.sky_horizon_color = Color("#1a2431")
+	sky_material.ground_horizon_color = Color("#10161e")
+	sky_material.ground_bottom_color = Color("#06090e")
+	sky_material.sky_energy_multiplier = 0.7
+	var sky := Sky.new()
+	sky.sky_material = sky_material
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = BACK
-	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.36, 0.43, 0.56)
-	environment.ambient_light_energy = 0.8
+	environment.background_color = Color("#04070c")
+	environment.sky = sky
+	environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	environment.ambient_light_energy = 0.9
+	environment.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
 	environment.tonemap_mode = Environment.TONE_MAPPER_ACES
+	environment.tonemap_white = 6.0
 	environment.glow_enabled = true
-	environment.glow_intensity = 0.12
+	environment.glow_intensity = 0.32
+	environment.glow_strength = 0.9
+	environment.glow_bloom = 0.06
+	environment.glow_hdr_threshold = 1.6
 	environment.ssao_enabled = true
-	environment.fog_enabled = true
-	environment.fog_light_color = Color("#070d16")
-	environment.fog_density = 0.09
+	environment.ssao_radius = 0.6
+	environment.ssao_intensity = 2.2
+	environment.ssil_enabled = true
+	environment.ssr_enabled = false
+	environment.volumetric_fog_enabled = true
+	environment.volumetric_fog_density = 0.003
+	environment.volumetric_fog_albedo = Color("#4a5d78")
+	environment.volumetric_fog_emission = Color("#070d16")
+	environment.volumetric_fog_anisotropy = 0.55
+	environment.adjustment_enabled = true
+	environment.adjustment_contrast = 1.08
+	environment.adjustment_saturation = 1.08
 	var env_node := WorldEnvironment.new()
 	env_node.environment = environment
 	world.add_child(env_node)
@@ -88,24 +114,28 @@ func _build_base() -> void:
 	var key := DirectionalLight3D.new()
 	key.rotation_degrees = Vector3(-38, 28, 0)
 	key.light_color = Color(1.0, 0.92, 0.82)
-	key.light_energy = 1.5
+	key.light_energy = 2.2
 	key.shadow_enabled = true
+	key.light_volumetric_fog_energy = 1.4
 	world.add_child(key)
+	_add_softbox(Vector3(-2.2, 2.6, 2.4), Vector3(-0.25, 0.6, 0.0), Color(1.0, 0.9, 0.78), 2.2, Vector2(2.2, 1.4))
+	_add_softbox(Vector3(2.6, 1.4, -1.6), Vector3(0.0, 0.2, 0.0), Color(0.55, 0.78, 1.0), 1.6, Vector2(1.8, 1.0))
 	var rim := DirectionalLight3D.new()
 	rim.rotation_degrees = Vector3(-18, 205, 0)
 	rim.light_color = Color(0.55, 0.78, 1.0)
-	rim.light_energy = 0.9
+	rim.light_energy = 1.2
 	world.add_child(rim)
 
 	_floor_material = StandardMaterial3D.new()
-	_floor_material.albedo_color = Color("#070b11")
-	_floor_material.roughness = 1.0
+	_floor_material.albedo_color = Color("#060a10")
+	_floor_material.metallic = 0.0
+	_floor_material.roughness = 0.9
 	var floor_mesh := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(80, 80)
 	floor_mesh.mesh = plane
 	floor_mesh.material_override = _floor_material
-	floor_mesh.position = Vector3(0, -0.8, 0)
+	floor_mesh.position = Vector3(0, _floor_height(), 0)
 	world.add_child(floor_mesh)
 
 	_highlight_marker = MeshInstance3D.new()
@@ -120,6 +150,23 @@ func _build_base() -> void:
 	_highlight_marker.material_override = marker_material
 	_highlight_marker.hide()
 	world.add_child(_highlight_marker)
+
+
+func _add_softbox(position: Vector3, look_at_point: Vector3, color: Color, energy: float, panel_size: Vector2) -> void:
+	var panel := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = panel_size
+	panel.mesh = quad
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = color
+	material.emission_enabled = true
+	material.emission = color
+	material.emission_energy_multiplier = energy
+	panel.material_override = material
+	panel.position = position
+	world.add_child(panel)
+	panel.look_at(look_at_point, Vector3.UP)
 
 
 func place_model(scene: PackedScene, position: Vector3, scale_factor: float, rotation_degrees: Vector3 = Vector3.ZERO) -> Node3D:

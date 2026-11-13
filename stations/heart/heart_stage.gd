@@ -11,6 +11,7 @@ signal port_cleared(from_port: StringName)
 const Model = preload("res://stations/heart/heart_model.gd")
 const Network = preload("res://stations/heart/heart_network.gd")
 const Prosthesis = preload("res://stations/heart/valve_prosthesis.gd")
+const Waveform = preload("res://scripts/anatomy/waveform_monitor.gd")
 const HEART = preload("res://stations/heart/assets/model/heart_cutaway_light.glb")
 const LUNGS = preload("res://assets/models/human-lungs.glb")
 const BODY = preload("res://assets/models/human-muscles.glb")
@@ -19,9 +20,9 @@ const BLOOD_RICH := Color("#ff4a3d")
 const BLOOD_POOR := Color("#4f7bff")
 
 ## Kalp modeli ölçeği (modelin yerel birimi 1 = 1 m, kalp yaklaşık 0,13).
-const S := 7.5
+const S := 9.0
 const HEART_CENTER := Vector3(0.0, 0.065, 0.0)
-const HEART_SHIFT := Vector3(0.0, -0.4875, 0.0)
+const HEART_SHIFT := -HEART_CENTER * S
 
 ## Model koordinatında ölçülmüş noktalar (derinlik haritasından).
 const SPOT_POS := {
@@ -66,8 +67,8 @@ const FLOWS := {
 const FLOW_RICH := [&"l_in", &"l_av", &"l_out"]
 
 ## Dış damar uçları. Kalp uçları dünya koordinatında (model × ölçek + kaydırma).
-const LUNGS_POS := Vector3(1.12, 0.10, 0.05)
-const BODY_POS := Vector3(-1.28, -0.22, 0.0)
+const LUNGS_POS := Vector3(1.12, -0.215, 0.05)
+const BODY_POS := Vector3(-1.2, -0.10, 0.0)
 const PORT_WORLD := {
 	&"svc_in": Vector3(-0.0210, 0.1190, 0.0140) * S + HEART_SHIFT,
 	&"aorta_out": Vector3(0.0023, 0.1305, 0.0145) * S + HEART_SHIFT,
@@ -75,8 +76,8 @@ const PORT_WORLD := {
 	&"pv_in": Vector3(0.0450, 0.0878, 0.0095) * S + HEART_SHIFT,
 	&"lungs_in": LUNGS_POS + Vector3(-0.34, 0.26, 0.0),
 	&"lungs_out": LUNGS_POS + Vector3(-0.34, -0.08, 0.0),
-	&"body_out": BODY_POS + Vector3(0.30, 0.46, 0.0),
-	&"body_in": BODY_POS + Vector3(0.14, 0.66, 0.0),
+	&"body_out": BODY_POS + Vector3(0.32, 0.16, 0.0),
+	&"body_in": BODY_POS + Vector3(0.16, 0.36, 0.0),
 }
 ## Hortumun porttan çıkış yönü.
 const PORT_OUT_DIR := {
@@ -132,12 +133,21 @@ var _drag_tube: MeshInstance3D
 var _oxygen_overlay: StandardMaterial3D
 var _oxygen_bar: MeshInstance3D
 var _oxygen_label: Label3D
+var _waveform: Waveform
+var _wave_ids: Array[int] = []
+var _wave_clock := 0.0
+var _metal: StandardMaterial3D
+## Görev tarafından beslenir: döngü içi konum 0–1, geri akış 0–1 (sızıntı), kalp hızı.
+var cycle_t := 0.0
+var backflow := 0.0
+var rate_hz := 1.2
+var running := false
 
 
 func _build() -> void:
 	spots_active = active_pickables
-	default_target = Vector3(0.0, 0.05, 0.0)
-	default_distance = 3.3
+	default_target = Vector3(0.0, 0.2, 0.0)
+	default_distance = 3.5
 	rig.target = default_target
 	rig.distance = default_distance
 	for valve in Model.VALVE_NAMES:
@@ -149,9 +159,11 @@ func _build() -> void:
 	heart_root.scale = Vector3.ONE * S
 	heart_root.position = -HEART_CENTER * S
 	world.add_child(heart_root)
-	heart_root.add_child(HEART.instantiate())
-	lungs_node = place_model(LUNGS, LUNGS_POS, 2.4, Vector3(0, 8, 0))
-	body_node = place_model(BODY, BODY_POS, 0.55, Vector3.ZERO)
+	var heart_model: Node3D = HEART.instantiate()
+	heart_root.add_child(heart_model)
+	_wet_tissue(heart_model)
+	lungs_node = place_model(LUNGS, LUNGS_POS, 2.7, Vector3(0, 8, 0))
+	body_node = place_model(BODY, BODY_POS, 0.6, Vector3.ZERO)
 	_setup_oxygen_visuals()
 	_register_pickables()
 	_build_ports()
@@ -159,7 +171,171 @@ func _build() -> void:
 	_tubes = Node3D.new()
 	world.add_child(_tubes)
 	_build_flow_particles()
+	_build_equipment()
 	_rebuild_tubes()
+
+
+func _pbr(id: String, scale: float, tint: Color) -> StandardMaterial3D:
+	var base := "res://assets/materials/%s/%s_2K-JPG_" % [id, id]
+	var material := StandardMaterial3D.new()
+	material.albedo_texture = load(base + "Color.jpg")
+	material.albedo_color = tint
+	material.normal_enabled = true
+	material.normal_texture = load(base + "NormalGL.jpg")
+	material.roughness_texture = load(base + "Roughness.jpg")
+	material.roughness = 1.0
+	material.metallic_texture = load(base + "Metalness.jpg")
+	material.metallic = 1.0
+	material.uv1_triplanar = true
+	material.uv1_world_triplanar = true
+	material.uv1_scale = Vector3.ONE * scale
+	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	return material
+
+
+func _glow_material(color: Color, energy: float) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = color
+	material.emission_enabled = true
+	material.emission = color
+	material.emission_energy_multiplier = energy
+	return material
+
+
+func _cylinder(radius: float, height: float, position: Vector3, material: Material) -> MeshInstance3D:
+	var node := MeshInstance3D.new()
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = radius
+	mesh.bottom_radius = radius
+	mesh.height = height
+	mesh.radial_segments = 48
+	node.mesh = mesh
+	node.material_override = material
+	node.position = position
+	world.add_child(node)
+	return node
+
+
+func _ring(radius: float, thickness: float, position: Vector3, material: Material) -> MeshInstance3D:
+	var node := MeshInstance3D.new()
+	var mesh := TorusMesh.new()
+	mesh.outer_radius = radius + thickness
+	mesh.inner_radius = radius
+	mesh.rings = 64
+	mesh.ring_segments = 8
+	node.mesh = mesh
+	node.material_override = material
+	node.position = position
+	world.add_child(node)
+	return node
+
+
+func _build_equipment() -> void:
+	## Fiziksel düzenek: kaideler, bağlantı kolyeleri ve canlı dalga monitörü.
+	_metal = _pbr("Metal009", 0.4, Color(0.55, 0.58, 0.62))
+	var dark := _pbr("Metal009", 0.4, Color(0.22, 0.24, 0.27))
+	var glow := _glow_material(Color("#3fd9c0"), 1.6)
+	var floor_y := -0.9
+	_cylinder(2.7, 0.06, Vector3(0, floor_y + 0.03, 0), dark)
+	_ring(2.7, 0.012, Vector3(0, floor_y + 0.065, 0), glow)
+	# Kalp kaidesi: üst yüzey kalbin altında (kalp tabanı -0.585)
+	_cylinder(0.7, 0.26, Vector3(0, -0.74, 0), _metal)
+	_cylinder(0.56, 0.04, Vector3(0, -0.61, 0), dark)
+	_ring(0.56, 0.008, Vector3(0, -0.59, 0), glow)
+	# Akciğer ve vücut kaideleri
+	_cylinder(0.48, 0.22, Vector3(LUNGS_POS.x, -0.73, LUNGS_POS.z), _metal)
+	_ring(0.48, 0.007, Vector3(LUNGS_POS.x, -0.62, LUNGS_POS.z), glow)
+	_cylinder(0.44, 0.2, Vector3(BODY_POS.x, -0.74, BODY_POS.z), _metal)
+	_ring(0.44, 0.007, Vector3(BODY_POS.x, -0.64, BODY_POS.z), glow)
+	# Arka panel: monitör
+	var panel := MeshInstance3D.new()
+	var panel_mesh := BoxMesh.new()
+	panel_mesh.size = Vector3(2.7, 0.9, 0.06)
+	panel.mesh = panel_mesh
+	panel.material_override = dark
+	panel.position = Vector3(0.0, 1.35, -1.6)
+	world.add_child(panel)
+	_waveform = Waveform.new()
+	_waveform.size = Vector2(1280, 390)
+	_wave_ids = [
+		_waveform.add_channel("EKG", Color("#6fe3c1"), -0.4, 1.1),
+		_waveform.add_channel("Sol karıncık basıncı", Color("#f2a65a"), 0.0, 130.0),
+		_waveform.add_channel("Aort basıncı", Color("#ff6b5e"), 0.0, 130.0),
+	]
+	var monitor_viewport := SubViewport.new()
+	monitor_viewport.size = Vector2i(1280, 390)
+	monitor_viewport.transparent_bg = false
+	monitor_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	monitor_viewport.add_child(_waveform)
+	add_child(monitor_viewport)
+	var screen := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(2.56, 0.78)
+	screen.mesh = quad
+	var screen_material := StandardMaterial3D.new()
+	screen_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	screen_material.albedo_texture = monitor_viewport.get_texture()
+	screen_material.emission_enabled = true
+	screen_material.emission_texture = monitor_viewport.get_texture()
+	screen_material.emission_energy_multiplier = 1.1
+	screen.material_override = screen_material
+	screen.position = Vector3(0.0, 1.35, -1.565)
+	world.add_child(screen)
+
+
+func _wave_step(delta: float) -> void:
+	if _waveform == null:
+		return
+	_wave_clock += delta
+	if not running:
+		for index in _wave_ids:
+			_waveform.push(index, _wave_clock, 0.0)
+		return
+	var t := cycle_t
+	# Döngü evreleri: dolum 0–0.385, basınç yükselişi –0.538, atım –0.846, basınç düşüşü –1.
+	var ecg := 0.12 * exp(-pow((t - 0.24) / 0.035, 2.0)) - 0.12 * exp(-pow((t - 0.365) / 0.010, 2.0)) \
+		+ 1.0 * exp(-pow((t - 0.385) / 0.012, 2.0)) - 0.2 * exp(-pow((t - 0.41) / 0.013, 2.0)) \
+		+ 0.26 * exp(-pow((t - 0.72) / 0.07, 2.0))
+	var ventricle := 6.0
+	if t >= 0.385 and t < 0.9:
+		var u := (t - 0.385) / 0.515
+		ventricle = 6.0 + 104.0 * pow(sin(u * PI), 0.8)
+	var diastolic := 80.0 - 38.0 * backflow
+	var aorta := diastolic
+	if t >= 0.538 and t < 0.846:
+		var u := (t - 0.538) / 0.308
+		aorta = diastolic + (112.0 - diastolic) * sin(u * PI * 0.5 + 0.0) * (1.0 - 0.12 * u)
+	elif t >= 0.846:
+		aorta = lerpf(104.0, diastolic + 6.0, clampf((t - 0.846) / 0.154, 0.0, 1.0))
+	else:
+		aorta = lerpf(diastolic + 6.0, diastolic, clampf(t / 0.538, 0.0, 1.0))
+	_waveform.push(_wave_ids[0], _wave_clock, ecg)
+	_waveform.push(_wave_ids[1], _wave_clock, ventricle)
+	_waveform.push(_wave_ids[2], _wave_clock, aorta)
+
+
+func _wet_tissue(model: Node) -> void:
+	## Yaş doku görünümü: parlak yansıma, cilalı katman, hafif ışık saçılımı.
+	var stack: Array[Node] = [model]
+	while not stack.is_empty():
+		var current: Node = stack.pop_back()
+		stack.append_array(current.get_children())
+		if current is MeshInstance3D:
+			var mesh_instance := current as MeshInstance3D
+			var source := mesh_instance.mesh.surface_get_material(0)
+			if source is StandardMaterial3D:
+				var material := (source as StandardMaterial3D).duplicate() as StandardMaterial3D
+				material.roughness = 0.52
+				material.clearcoat_enabled = true
+				material.clearcoat = 0.7
+				material.clearcoat_roughness = 0.18
+				material.rim_enabled = true
+				material.rim = 0.35
+				material.rim_tint = 0.4
+				material.subsurf_scatter_enabled = true
+				material.subsurf_scatter_strength = 0.35
+				mesh_instance.material_override = material
 
 
 func _register_pickables() -> void:
@@ -190,10 +366,10 @@ func _setup_oxygen_visuals() -> void:
 	bar_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	bar_material.albedo_color = JADE
 	_oxygen_bar.material_override = bar_material
-	_oxygen_bar.position = BODY_POS + Vector3(0, 0.80, 0.1)
+	_oxygen_bar.position = BODY_POS + Vector3(0, 0.66, 0.1)
 	world.add_child(_oxygen_bar)
 	_oxygen_label = make_label("Doku oksijeni", INK, 13)
-	_oxygen_label.position = BODY_POS + Vector3(0, 0.88, 0.1)
+	_oxygen_label.position = BODY_POS + Vector3(0, 0.74, 0.1)
 	world.add_child(_oxygen_label)
 
 
@@ -263,6 +439,7 @@ func _update(delta: float) -> void:
 	_update_flows()
 	_update_oxygen()
 	_sync_tubes()
+	_wave_step(delta)
 
 
 func _update_slots_and_valves() -> void:
@@ -303,6 +480,10 @@ func _update_oxygen() -> void:
 	_oxygen_bar.position.x = BODY_POS.x - 0.25 + 0.25 * o
 	(_oxygen_bar.material_override as StandardMaterial3D).albedo_color = (JADE if o > 0.66 else (GOLD if o > 0.33 else RED)) * 0.85
 	_oxygen_label.text = "Doku oksijeni  %d%%" % roundi(o * 100.0)
+
+
+func _floor_height() -> float:
+	return -0.9
 
 
 func label_world(id: Variant) -> Vector3:

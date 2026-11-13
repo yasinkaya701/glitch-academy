@@ -260,6 +260,18 @@ func _process(delta: float) -> void:
 			_on_cycle_complete()
 		_apply_phase()
 	stage.beat = sin(clampf(phase_time / duration, 0.0, 1.0) * PI) if phase == Model.Phase.EJECTION else 0.0
+	stage.cycle_t = _cycle_fraction()
+
+
+func _cycle_fraction() -> float:
+	var total := 0.0
+	var before := 0.0
+	for p in DURATION:
+		var d: float = DURATION[p] * tempo
+		if p < phase:
+			before += d
+		total += d
+	return clampf((before + phase_time) / total, 0.0, 1.0)
 
 
 func _start_pump() -> void:
@@ -273,6 +285,7 @@ func _start_pump() -> void:
 
 func _stop_pump() -> void:
 	running = false
+	stage.running = false
 	stage.beat = 0.0
 	for key in Stage.FLOWS:
 		stage.flow_dir[key] = 0.0
@@ -316,6 +329,8 @@ func _apply_phase() -> void:
 		Model.Valve.PULMONARY: &"r_out", Model.Valve.AORTIC: &"l_out",
 	}
 	var net := _net_slots()
+	stage.running = running
+	stage.backflow = clampf(1.0 - minf(Network.valve_health(Model.Valve.AORTIC, net, defects), Network.valve_health(Model.Valve.MITRAL, net, defects)), 0.0, 1.0)
 	for slot in Model.VALVE_NAMES:
 		var key: StringName = flow_for[slot]
 		var piece: int = slots.get(slot, -1)
