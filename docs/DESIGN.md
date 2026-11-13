@@ -343,6 +343,10 @@ YAML'daki bileşenler `scripts/ui_theme.gd` içinde tema türü olarak bulunur: 
 | Mühürlendi | Altıgen mühür ve onay |
 | Kayma aktif | Kırık çizgi |
 
+**Konuşma satırı.** Alt üçte birde durur. Solda konuşanın adı (byline), sağda satırın kendisi yer alır. Altında oyuncunun giriş kutusu bulunur: yer tutucusu "Gerekçeni yaz", gönderme tuşu Enter. Mikrofon simgesi yalnızca mikrofon açıksa görünür. Konuşma geçmişi Tab ile açılan bir kayıt olarak durur, ekranda kalıcı panel olmaz.
+
+**Hüküm kaydı.** Oyuncunun cümlesi değerlendirildikten sonra kısa bir kayıt düşer: rubrik ölçütleri satır satır, her birinin yanında simge ve tek kelime (karşılandı / eksik). Puan, yıldız ya da yüzde gösterilmez.
+
 **Veri bölgeleri.** Veri gösteren her bölgenin dört hâli vardır: yükleniyor, boş, hata ve dolu. Örneğin kayıt defteri boşken "Henüz mühür yok. İlk düzeneği onar." yazar ve tek bir eylem sunar.
 
 ## Do's and Don'ts
@@ -386,6 +390,7 @@ Hallmark'ın taban (Floor) ve refleks (Reflex) kapıları Godot'a şöyle uyarla
 | 63 | Noktalı meta dizisi, metne yapışık ok ve süs nokta kullanılmaz | Floor | Bilgi satıra ya da sütuna bölünür. |
 | 2a, 30a, 4 | Mor-mavi gradyan, emoji simge ve kart içinde kart kullanılmaz | Floor | |
 | 19 | Yapay zekâ ağzı kullanılmaz | Floor | Aşağıdaki dil listesine bak. |
+| 46a+ | Uydurma alıntı, üretilmiş yüz, LLM'in serbest karakter konuşması yok | Floor | Bilgi kartı, satır bankası ve kişi temsili kuralları |
 | 23 | Accent alanı en çok %5 | Reflex | |
 | 29 | Arayüzde parıltı ve halo kullanılmaz | Reflex | 3D sahne ışığı (spot, sis) bu kuralın dışındadır. |
 | 37 | En çok iki aile, bir istisna | Reflex | Rajdhani ve Barlow |
@@ -636,8 +641,28 @@ ZORUNLU kurallar:
 - **Görüş notlanmaz.** Oyun Descartes ile Locke, Kant ile Mill arasında taraf tutmaz. Notlanan şeyler: çıkarımın geçerliliği, tutarlılık, kanıt ile sonuç ilişkisi, görüşün doğru filozofa atfedilmesi ve kavramın doğru tanımı.
 - **Alıntılar gerçek ve kaynaklıdır.** Eser, bölüm ve çeviri belirtilir. Uydurma ya da başka sözcüklerle yazılıp tırnak içine alınmış filozof sözü kullanılmaz. Bu, bu alandaki en tipik AI slop örneğidir.
 - **Filozof ağzıyla uzun konuşma yazılmaz.** Karakter, görüşünü tek cümleyle ve kaynağa dayanarak söyler. Ayrıntı "i" altındaki kaynak notundadır.
-- **Filozoflar yüzsüz silüet olarak gösterilir.** Portre üretilmez.
+- **Düşünürler, onlardan kalan gerçek izle temsil edilir** (bkz. Kişi temsili). Portre üretilmez.
 - Metin bu derslerde malzemedir. Bu yüzden deney ekranındaki 30 kelime sınırı burada kaynak metne uygulanmaz. Yönerge ve toast kuralları aynen geçerlidir.
+
+#### Fikir Meydanı (Felsefe, konuşma deneyi)
+
+Oyuncu bir düşünürle konuşur. Yazdığı cümleyi bir LLM değerlendirir ve düşünür buna göre karşılık verir (bkz. LLM Evaluation). Kapsam 11. sınıf felsefe tarihi ve AYT felsefe grubudur: Sokrates, Platon, Aristoteles, Epikuros, Kindî, Fârâbî, İbn Sînâ, İbn Rüşd.
+
+- **Mekân:** Gece arşivinin konsey odası. Her düşünür bir kürsüde, ondan kalan gerçek izle durur:
+  - Antik düşünürler için mermer büst (müze fotoğrafı ya da 3D tarama).
+  - Yüz görüntüsü kalmamış düşünürler için el yazması ve eser.
+  - Konuşan kürsünün ışığı açılır, satır altyazı olarak gelir.
+- **Bozma:** MERİDYEN düşünürün hafıza kaydına, öğrencilerin sık karıştırdığı bir yanlış atıf ya da yanlış okuma yazar. Düşünür bu bozuk görüşü kendi görüşüymüş gibi savunur. Örnekler (her biri tasarım kartında kaynakla doğrulanır):
+  - Sokrates'e "İnsan her şeyin ölçüsüdür" (Protagoras'ın sözü).
+  - Aristoteles'e "İdealar ayrı bir dünyadadır" (Platon'un görüşü).
+  - Epikuros'a "Haz sınırsız zevktir" (ataraksiayı silen bir okuma).
+  - İbn Rüşd'e "Felsefe dine aykırıdır" (Faslü'l-Makâl'ın tezinin tersi).
+- **Ters çalışma:** Konsey bozuk görüşe dayanarak bir karar verir ve kararın zararı odada görünür: arşiv rafı yanlış ilkeye göre dizilir, bir kapı yanlış gerekçeyle kapanır.
+- **Sına:** Oyuncu düşünürün kendi eserinden gelen kaynak kartlarını açar ve düşünce deneyini masada çalıştırır. Örnekler: Platon'un mağarasında ışık ve gölge, İbn Sînâ'nın uçan adamında duyuların tek tek kapatılması.
+- **Teşhis (LLM):** Oyuncu tek bir cümleyle itiraz eder: bozuk görüşü, gerekçesini ve dayandığı kaynağı söyler. LLM cümleyi rubriğe göre değerlendirir. Düşünür hükme göre karşılık verir: ikna olur, gerekçe ister ya da atfın yanlış olduğunu söyler.
+- **Düzelt:** Doğru görüş, düşünürün eserinden künyeli bir alıntıyla geri yüklenir. Bu alıntı bilgi kartından gelir, LLM yazmaz.
+- **Toparla:** Konseyin bozuk kararı yeniden görüşülür. Oyuncu düzeltilmiş görüşü yeni bir vakaya uygulayan ikinci bir cümle yazar ve karar düzelir. Hak üçtür. Düşünürün sabrı biterse oda krizin başına döner.
+- **Mühür:** Kürsünün ışığı ısınır, kayıt defterine düşünürün künyeli sözü girer.
 
 ### Kaynak kafası (Tarih, Türkçe, Edebiyat, Din Kültürü, YDT)
 
@@ -646,6 +671,16 @@ ZORUNLU kurallar:
 - **Ters çalışma:** Bozuk kayda dayanan sonraki karar dayanaksız kalır. Zaman çizelgesi rayı kopar, metnin anlamı tersine döner.
 - **Din Kültürü:** İnanca not verilmez. Kavram, kaynak metin (ayet, hadis, ilmihal) ve künyesi üzerinden ilerlenir. Peygamberler ve kutsal kişiler tasvir edilmez. Mezhepler arası tartışmalı konularda oyun taraf tutmaz.
 - **Tarih:** Belge metinleri gerçek ve tarihlidir. Kurmaca arıza ile belgelenmiş olay çizgisi sahnede açıkça ayrı gösterilir.
+
+#### Tarih Meydanı (LGS İnkılap Tarihi ve TYT/AYT Tarih, belge deneyi)
+
+- **Mekân:** Arşivin ışık masası ve üstünde bir zaman çizelgesi rayı. Ray üzerinde olay yuvaları vardır: Amasya Genelgesi (22 Haziran 1919), Erzurum Kongresi, Sivas Kongresi, TBMM'nin açılışı (23 Nisan 1920), Lozan (24 Temmuz 1923). Her yuva, bir öncekinin kararına dayanır.
+- **Bozma:** MERİDYEN bir kaydı kaydırır. Bu, öğrencilerin sık yaptığı bir hatadır: "Sivas Kongresi'nde manda kabul edildi", iki kongrenin kararlarının yer değiştirmesi ya da sırası bozulmuş bir tarih.
+- **Ters çalışma:** Bozuk kayda dayanan sonraki yuva dayanaksız kalır. Ray o noktada kopar ve sonraki olayların ışığı söner.
+- **Sına:** Oyuncu belgeyi ışık masasına koyar, tarih damgasını ve künyesini okur, karar cümlesinin altını çizer. Örnek karar cümlesi: "Milletin istiklâlini yine milletin azim ve kararı kurtaracaktır."
+- **Teşhis (LLM):** Oyuncu tek cümleyle bozuk kaydı çürütür: hangi belge, hangi karar, neden. LLM cümleyi rubriğe göre değerlendirir: belgeye atıf, doğru olay ve tarih, iddia ile kanıt arasındaki bağ.
+- **Düzelt ve toparla:** Doğru belge yuvasına oturur ve ray yeniden bağlanır. Toparla adımında yeni bir bozuk kayıt gelir, oyuncu onu ipucusuz çürütür.
+- **Seçenek kartı yoktur.** Üç karttan doğrusunu seçmek görev sayılmaz.
 
 ### Ölçüm kafasında psikoloji ve sosyoloji
 
@@ -657,6 +692,60 @@ Psikoloji ve sosyolojinin deneysel konuları ölçüm kafasıyla kurulur. Veri, 
 - Sosyolojide örneklem seçimi ve ağ simülasyonu kullanılır.
 
 Bozma bir yöntem hatasıdır: tek kişiden genelleme, kontrol grubu olmaması, örneklem yanlılığı. Ters çalışma ise yanlış sonuca ulaşan bir rapordur.
+
+## LLM Evaluation · Cümle değerlendirmesi
+
+Kaynak ve argüman kafasındaki deneylerde oyuncu cevabını kendi cümlesiyle yazar ya da söyler. Cümleyi bir LLM değerlendirir. Temel kural şudur: **LLM yargılar, karakter yazılmış metinle konuşur.** Slop'u önleyen ayrım budur.
+
+### Akış
+
+```
+oyuncu cümlesi ──► yerel ön kontrol ──► LLM (rubrik + bilgi kartı) ──► JSON hüküm ──► şema kontrolü
+                                                                                         │
+       satır bankasından karşılık ◄── reply_id ◄─────────────────────────────────────────┘
+       sahnede sonuç (ray bağlanır, kürsü ışığı, karar düzelir)
+```
+
+### Kurallar (ZORUNLU)
+
+1. **LLM yalnızca değerlendirir.** Karakterin söylediği her satır yazılmış bir satır bankasından gelir. Banka, her adım ve her hüküm için önceden hazırlanır. LLM yalnızca `reply_id` seçer ve isterse oyuncunun cümlesinden en çok altı kelimelik bir yankı yuvasını doldurur ("Gemiyi iki kez saydın diyorsun…"). LLM serbest karakter konuşması, alıntı, tarih ya da biyografi üretmez.
+2. **Bilgi kartı.** Her düşünür ve her olay için kaynaklı bir kart vardır: görüşler, kavramlar, eserler, künyeli gerçek alıntılar, sık karıştırılan görüşler ve sahipleri. LLM'e kart verilir ve LLM yalnızca karta göre değerlendirir. Kartta olmayan bir iddiayı doğru saymaz, "kartta yok" olarak işaretler.
+3. **Rubrik.** İstasyonun tasarım kartında 3–5 evet/hayır ölçütü bulunur. Örnek: *bozuk görüşü adlandırdı*, *gerekçe verdi*, *doğru kaynağa dayandı*, *atıf doğru*, *safsata yok*. LLM her ölçütü ayrı işaretler.
+4. **Hüküm şeması.** LLM şu biçimde JSON döndürür:
+
+   ```json
+   {"verdict": "ikna | eksik_gerekce | yanlis_atif | safsata | ilgisiz",
+    "criteria": {"<ölçüt>": true},
+    "evidence": "<oyuncu cümlesinden alıntı>",
+    "missing": "<eksik ölçütün adı>",
+    "reply_id": "<satır bankası kimliği>"}
+   ```
+
+   Şemaya uymayan, eksik ya da zaman aşımına uğrayan yanıt yok sayılır ve yerel değerlendirici devreye girer.
+5. **Neye puan verilmez.** Uzunluk, anahtar kelime sayısı, filozof adı ya da ezber söz tek başına puan getirmez. Gerekçesiz bir kavram yığını `eksik_gerekce` alır. Görüş notlanmaz: oyuncu düşünüre katılmak zorunda değildir, doğru temsil etmek ve gerekçelendirmek zorundadır.
+6. **Geri bildirim cevabı vermez.** Düşünür eksik ölçütü kendi diliyle ister ("Bunu nereden biliyorsun?", "Bu söz bana ait değil."). Doğru görüşü hazır cümle olarak söylemez.
+7. **Çevrimdışı oynanabilirlik.** Her konuşma deneyi LLM olmadan da baştan sona bitirilebilir. Çevrimdışı modda oyuncu cümlesini kaynak kartlarındaki parçalardan kurar (cümle kurucu) ve aynı rubriği yerel kurallar değerlendirir. Jüri demosu LLM'siz de çalışır.
+8. **Güvenlik.** Konu dışı mesajlar, hakaret ve "bana doğru de" türü yönlendirmeler `ilgisiz` sayılır. Karakter rolünden çıkmaz. Oyuncu metni dışında hiçbir kişisel veri gönderilmez. Mikrofon isteğe bağlıdır ve açıkken bu ekranda görünür.
+9. **Teknik.**
+   - Sıcaklık 0, zaman aşımı 7 sn.
+   - API anahtarı istek başlığında gider; URL'de, repoda ya da logda bulunmaz.
+   - Kullanılan sağlayıcı ayarlar ekranında görünür.
+   - Bekleme sırasında "Kayıt inceleniyor" yazan tek bir satır ve ince bir ilerleme çizgisi gösterilir. Dönen halka kullanılmaz.
+10. **Test.**
+    - Her istasyonun en az 30 cümlelik bir altın seti vardır: doğru itiraz, eksik gerekçe, yanlış atıf, anahtar kelime yığını, konu dışı ve yönlendirme denemesi. Her cümlenin beklenen hükmü yazılıdır.
+    - Headless test kaydedilmiş yanıtlarla çalışır. Canlı LLM ile ayrı bir değerlendirme betiği koşulur.
+    - Hükümlerin altın setle uyumu %90'ın altına düşerse istasyon teslim edilmez.
+
+### Kişi temsili (ZORUNLU)
+
+Düşünürler ve tarihî kişiler, onlardan bize kalan **gerçek izle** temsil edilir:
+
+- Antik büst, el yazması sayfası, arşiv fotoğrafı ya da eserin kendisi.
+- Her görselin künyesi (müze ya da arşiv, eser, lisans) [ASSET_SOURCES.md](ASSET_SOURCES.md) içine yazılır.
+- Gerçek görüntüsü kalmamış kişi eseriyle ya da el yazmasıyla temsil edilir. Örnek: İbn Sînâ için el-Kânûn fi't-Tıb el yazması.
+- Üretilmiş yüz, yeniden çizilmiş portre, yüz canlandırma, dudak senkronu ve ifade kareleri kullanılmaz.
+- Atatürk ve diğer tarihî kişilerin arşiv fotoğrafları değiştirilmeden ve saygıyla kullanılır. Rötuşlanmaz, canlandırılmaz, ağızlarına uydurma söz konmaz.
+- Seslendirme isteğe bağlıdır. Altyazı tek başına yeterlidir.
 
 ## 3D Lab Standard · Gece laboratuvarı
 
