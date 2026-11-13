@@ -5,6 +5,7 @@ extends "res://scripts/mission.gd"
 const BoxPlot = preload("res://stations/derivative/box_plot.gd")
 const Workshop = preload("res://stations/derivative/workshop.gd")
 const Hud = preload("res://scripts/mission_hud.gd")
+const DerivativeRig = preload("res://stations/derivative/derivative_rig.tscn")
 const GOOD := Color("#a0dfbc")
 const BAD := Color("#ffb093")
 const MUTED := Color("#b0c4bf")
@@ -18,6 +19,7 @@ enum Step { INTRO, EXPLORE, SLOPE, APPLY, DONE }
 var step := Step.INTRO
 var plot: BoxPlot
 var workshop: Workshop
+var derivative_rig
 var hud: Hud
 var section: Label
 var headline: Label
@@ -70,6 +72,30 @@ func _build_ui() -> void:
 	plot.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	plot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	graph_frame.add_child(plot)
+
+	# 3D graph inset: physical curve and tangent use the same x and V(x) as the 2D instrument.
+	var rig_frame := PanelContainer.new()
+	rig_frame.theme_type_variation = "GlassPanel"
+	rig_frame.anchor_left = 1.0
+	rig_frame.anchor_right = 1.0
+	rig_frame.anchor_top = 1.0
+	rig_frame.anchor_bottom = 1.0
+	rig_frame.offset_left = -508.0
+	rig_frame.offset_right = -24.0
+	rig_frame.offset_top = -370.0
+	rig_frame.offset_bottom = -120.0
+	add_child(rig_frame)
+	var rig_column := VBoxContainer.new()
+	rig_column.add_theme_constant_override("separation", 4)
+	rig_frame.add_child(rig_column)
+	var rig_title := Label.new()
+	rig_title.text = "HACİM EĞRİSİ  ·  TEĞET MODELİ"
+	rig_title.theme_type_variation = "SectionLabel"
+	rig_column.add_child(rig_title)
+	derivative_rig = DerivativeRig.instantiate()
+	derivative_rig.custom_minimum_size = Vector2(430, 176)
+	derivative_rig.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rig_column.add_child(derivative_rig)
 
 	hud = Hud.new()
 	add_child(hud)
@@ -175,6 +201,7 @@ func _pour(volume: float, seconds: float = 1.1) -> void:
 
 func _enter_intro() -> void:
 	step = Step.INTRO
+	derivative_rig.hide()
 	plot.side = KEEP_SIDE
 	plot.measured.clear()
 	plot.show_curve = false
@@ -222,6 +249,7 @@ func _skip_intro() -> void:
 
 func _enter_explore() -> void:
 	step = Step.EXPLORE
+	derivative_rig.show()
 	skip.hide()
 	action.show()
 	slider_row.show()
@@ -244,6 +272,7 @@ func _enter_explore() -> void:
 	_say("En az %d farklı x için ölçüm yap." % MIN_MEASURES)
 	_update_readout()
 	plot.queue_redraw()
+	_sync_derivative_rig()
 
 
 func _on_slider(value: float) -> void:
@@ -256,6 +285,7 @@ func _on_slider(value: float) -> void:
 		_update_measure_control(value)
 	_update_readout()
 	plot.queue_redraw()
+	_sync_derivative_rig()
 
 
 func _update_readout() -> void:
@@ -306,6 +336,7 @@ func _measure() -> void:
 	else:
 		_say("Silindir %s L gösterdi. (%d / %d ölçüm)" % [_num(volume), count, MIN_MEASURES])
 	plot.queue_redraw()
+	_sync_derivative_rig()
 
 
 # --- Eğim ---------------------------------------------------------------
@@ -327,6 +358,7 @@ func _check_slope() -> void:
 		plot.show_optimum = true
 		_pour(BoxPlot.volume(KEEP_SIDE, target))
 		plot.queue_redraw()
+		_sync_derivative_rig()
 		_set_ui("2 · EĞİM", "Eğim sıfırsa tepe",
 			"Türev V′(x) = (a − 2x)(a − 6x). Sıfır olduğu yerde x = a/6. a = 12 için x = 2 dm ve V = 128 L. Denemeyle bulamayacağın kesinlikte.", "Yeni levhaya geç")
 		readout.text = "V′(x) = (a − 2x)(a − 6x) = 0   →   x = a/6"
@@ -364,6 +396,7 @@ func _enter_apply() -> void:
 		"Depo yeni, daha büyük levhalarla çalışacak. Kutunun hacmi en büyük olacak x değerini hesapla ve gir.", "Kutuyu kes")
 	action.remove_meta("go")
 	plot.queue_redraw()
+	_sync_derivative_rig()
 
 
 func _submit_answer() -> void:
@@ -411,6 +444,7 @@ func _submit_answer() -> void:
 			extra = "\nİpucu: a = 12 için x = 2 idi. x ile a arasındaki oranı bul."
 		_say("Hacim en büyük değil. " + hint + extra, BAD)
 	plot.queue_redraw()
+	_sync_derivative_rig()
 
 
 # --- Akış ---------------------------------------------------------------
@@ -432,3 +466,9 @@ func _num(value: float) -> String:
 	if absf(value - roundf(value)) < 0.005:
 		return str(int(roundf(value)))
 	return ("%.2f" % value).replace(".", ",")
+
+
+func _sync_derivative_rig() -> void:
+	if derivative_rig == null:
+		return
+	derivative_rig.set_experiment_state(plot.side, plot.cut, plot.show_curve, plot.show_tangent, plot.show_optimum, plot.measured)

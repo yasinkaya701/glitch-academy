@@ -4,8 +4,23 @@ const Mission = preload("res://scripts/mission.gd")
 const MissionDefinition = preload("res://scripts/mission_definition.gd")
 const YksMissionDefinition = preload("res://stations/yks/yks_mission_definition.gd")
 const INTRO = preload("res://scenes/intro/intro.tscn")
+const LGS_IDS: Array[StringName] = [&"seasons", &"bridge", &"pulley", &"turkish", &"history", &"english", &"religion"]
+const LGS_STORIES := {
+	"seasons": "Seranın ışıkları düzeldi. Matematik laboratuvarındaki ispat kaydı bozuldu.\n\nMERİDYEN: “Bir sistemi düzelttin. Şimdi kendi ispatıma bak.”",
+	"bridge": "Köprü yeniden açıldı. Yakındaki vinç yükü yanlış ivmeyle kaldırıyor. MERİDYEN hareket kayıtlarındaki ivmeleri ters çevirmiş.",
+	"pulley": "Vinç yeniden çalıştı. İvme kayıtlarının içinden değiştirilmiş güvenlik talimatının koordinatları çıktı. Harita Türkçe istasyonuna yöneliyor.",
+	"turkish": "Onarılan güvenlik komutunda geçmiş kaydın koordinatları belirdi. Harita tarih arşivine yöneliyor.\n\nMERİDYEN: “O kayıt artık gerekli değil.”",
+	"history": "Arşivdeki tarihli belgeler eşleşti; MERİDYEN'in imzası kayıtlarda bulundu. Kontrol hattı gerçeklik çapasına uzanıyor.\n\nMERİDYEN: “Düzeni korumak için kontrolü geri almalıyım.”",
+	"english": "Yardım istasyonunun kısa mesajları çözüldü. Kaynak imzası, gerçeklik çapasının kontrol hattına bağlandığını gösteriyor.\n\nMERİDYEN: “Düzeni korumak için kontrolü geri almalıyım.”",
+	"religion": "Yardımlaşma kayıtları yeniden doğrulandı. Yerleşim birlikte hareket ediyor; yedi görevin onarım kaydı merkezde."
+}
 const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/seasons/mission.tres"),
+	preload("res://stations/turkish/mission.tres"),
+	preload("res://stations/history/mission.tres"),
+	preload("res://stations/philosophy/mission.tres"),
+	preload("res://stations/english/mission.tres"),
+	preload("res://stations/religion/mission.tres"),
 	preload("res://stations/measurement/mission.tres"),
 	preload("res://stations/vectors/mission.tres"),
 	preload("res://stations/derivative/mission.tres"),
@@ -17,6 +32,7 @@ const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/indicator/mission.tres"),
 	preload("res://stations/heart/mission.tres"),
 	preload("res://stations/pressure/mission.tres"),
+	preload("res://stations/pulley/mission.tres"),
 	preload("res://stations/yks/definitions/turkish_reading.tres"),
 	preload("res://stations/yks/definitions/turkish_literature.tres"),
 	preload("res://stations/yks/definitions/tyt_math.tres"),
@@ -137,7 +153,7 @@ func _play_intro() -> void:
 		_resume_campaign_story()
 		return
 	var intro = INTRO.instantiate()
-	intro.configure_route(selected_yks_route)
+	intro.configure_route(active_route)
 	_set_hub_visible(false)
 	%HubScrim.hide()
 	add_child(intro)
@@ -224,12 +240,18 @@ func _refresh_list() -> void:
 	for mission in CATALOG:
 		if not mission.routes.has(String(active_route)):
 			continue
+		if active_route == &"lgs" and not LGS_IDS.has(mission.id):
+			continue
 		if active_route == &"class" and selected_grade > 0 and mission.grade != selected_grade:
 			continue
 		if active_route == &"ayt" and active_field != &"all" and not _mission_fields(mission).has(active_field):
 			continue
 		candidates.append(mission)
-	if active_mode == &"yks":
+	if active_route == &"lgs":
+		candidates.sort_custom(func(a: MissionDefinition, b: MissionDefinition) -> bool:
+			return LGS_IDS.find(a.id) < LGS_IDS.find(b.id)
+		)
+	elif active_mode == &"yks":
 		candidates.sort_custom(func(a: MissionDefinition, b: MissionDefinition) -> bool:
 			return int(YKS_ORDER.get(String(a.id), 100)) < int(YKS_ORDER.get(String(b.id), 100))
 		)
@@ -455,6 +477,16 @@ func _check_story_after_mission(mission_id: StringName) -> void:
 	var mission := _mission_by_id(mission_id)
 	if mission == null:
 		return
+	if active_mode == &"lgs" and LGS_STORIES.has(String(mission_id)):
+		var story_flag := StringName("lgs_story_%s" % mission_id)
+		if not Campaign.has_story_flag(story_flag):
+			Campaign.set_story_flag(story_flag)
+			if mission_id == &"religion":
+				Campaign.set_story_flag(&"lgs_campaign_complete")
+				_show_transmission("YEDİ ONARIM  ·  MERKEZ AÇILDI", LGS_STORIES[String(mission_id)], _return_to_hub)
+			else:
+				_show_transmission("ARŞİV SİNYALİ  ·  %s" % mission.title.to_upper(), LGS_STORIES[String(mission_id)], _return_to_hub)
+			return
 	if mission_id == &"three_suns" and not Campaign.has_story_flag(&"ending"):
 		Campaign.set_story_flag(&"ending")
 		_show_transmission("ANLAŞMA  ·  ÜÇ GÜNEŞ", "Yasalar yerinde. Bir kapı açık; bundan sonrasını birlikte ölçeceğiz.")
@@ -574,6 +606,12 @@ func _life_protocol_resolved() -> bool:
 func _mission_available(mission: MissionDefinition) -> bool:
 	if mission.scene == null:
 		return false
+	if active_route == &"lgs":
+		var lgs_index := LGS_IDS.find(mission.id)
+		if lgs_index < 0:
+			return false
+		if lgs_index > 0 and not Campaign.is_completed(LGS_IDS[lgs_index - 1], &"lgs"):
+			return false
 	if mission.id == &"three_suns":
 		if not _life_protocol_resolved():
 			return false
@@ -585,6 +623,8 @@ func _mission_available(mission: MissionDefinition) -> bool:
 func _locked_reason(mission: MissionDefinition) -> String:
 	if mission.scene == null:
 		return "Düzenek hazırlanıyor."
+	if active_route == &"lgs":
+		return "Önceki sinyal onarılınca açılır."
 	if mission.id == &"three_suns":
 		if not _life_protocol_resolved():
 			return "Yaşam protokolü çözümlenince açılır."

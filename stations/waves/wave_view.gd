@@ -3,7 +3,8 @@ extends Control
 ## Hesap wave_sim.gd'den gelir.
 
 const Wave = preload("res://stations/waves/wave_sim.gd")
-const SHADER = preload("res://stations/waves/wave_field.gdshader")
+const Experiment3D = preload("res://scenes/experiment_3d.tscn")
+const Tank = preload("res://stations/waves/wave_tank.gd")
 
 const INK := Color("#e8f1f2")
 const MUTED := Color("#8fa6b3")
@@ -11,26 +12,35 @@ const ACCENT := Color("#6fe3c1")
 const WARM := Color("#f2a65a")
 const DANGER := Color("#e5645a")
 const BG := Color("#070b12")
-const FIELD := Vector2(40.0, 28.0)          ## cm
 const AREA := Rect2(40.0, 110.0, 1000.0, 700.0)   ## 1600×900 düzleminde alan
 
 var frequency := 4.0
 var two_sources := true
 var faulty_display := false
 
-var _field: ColorRect
+var _stage_3d: SubViewportContainer
 var _overlay: Control
-var _material: ShaderMaterial
-var _clock := 0.0
+var _tank
 
 
 func _ready() -> void:
-	_field = ColorRect.new()
-	_material = ShaderMaterial.new()
-	_material.shader = SHADER
-	_field.material = _material
-	_field.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_field)
+	_stage_3d = Experiment3D.instantiate() as SubViewportContainer
+	_stage_3d.position = _p(AREA.position.x, AREA.position.y)
+	_stage_3d.size = AREA.size * _scale()
+	_stage_3d.stretch = false
+	_stage_3d.clip_contents = true
+	_stage_3d.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_stage_3d)
+	var viewport := _stage_3d.get_node("Viewport") as SubViewport
+	viewport.size = Vector2i(1000, 700)
+	_stage_3d.stretch = true
+	var camera := _stage_3d.get_node("Viewport/World/Camera3D") as Camera3D
+	camera.position = Vector3(0.0, 7.3, 8.5)
+	camera.rotation_degrees = Vector3(-40.0, 0.0, 0.0)
+	camera.size = 7.0
+	var model := _stage_3d.get_node("Viewport/World/Model") as Node3D
+	_tank = Tank.new()
+	model.add_child(_tank)
 	_overlay = Control.new()
 	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -50,23 +60,11 @@ func _p(x: float, y: float) -> Vector2:
 	return _origin() + Vector2(x, y) * _scale()
 
 
-func _cm(point: Vector2) -> Vector2:
-	return _p(AREA.position.x + point.x / FIELD.x * AREA.size.x, AREA.position.y + point.y / FIELD.y * AREA.size.y)
-
-
-func _process(delta: float) -> void:
-	_clock += delta
-	var wavelength := Wave.wavelength(frequency)
-	_material.set_shader_parameter("k", TAU / wavelength)
-	_material.set_shader_parameter("omega", TAU * frequency)
-	_material.set_shader_parameter("t", _clock)
-	_material.set_shader_parameter("two", 1.0 if two_sources else 0.0)
-	_material.set_shader_parameter("s1_cm", Wave.S1)
-	_material.set_shader_parameter("s2_cm", Wave.S2)
-	_material.set_shader_parameter("field_cm", FIELD)
+func _process(_delta: float) -> void:
 	var top_left := _p(AREA.position.x, AREA.position.y)
-	_field.position = top_left
-	_field.size = AREA.size * _scale()
+	_stage_3d.position = top_left
+	_stage_3d.size = AREA.size * _scale()
+	_tank.set_wave_state(frequency, two_sources, faulty_display)
 	queue_redraw()
 	_overlay.queue_redraw()
 
@@ -87,31 +85,11 @@ func _draw_overlay() -> void:
 	var s := _scale()
 	var canvas := _overlay
 	canvas.draw_rect(Rect2(_p(AREA.position.x, AREA.position.y), AREA.size * s), Color(1, 1, 1, 0.18), false, 1.5)
-	for source in [Wave.S1, Wave.S2]:
-		if source == Wave.S2 and not two_sources:
-			canvas.draw_circle(_cm(source), 7.0 * s, Color(MUTED, 0.5))
-			continue
-		canvas.draw_circle(_cm(source), 14.0 * s, Color(WARM, 0.22))
-		canvas.draw_circle(_cm(source), 6.5 * s, WARM)
+	_t(_p(58.0, 150.0), "3D DALGA HAVUZU  ·  ÜSTTEN / EĞİK GÖZLEM", 16.0 * s, ACCENT)
+	_t(_p(58.0, 184.0), "Turkuaz: tepe   ·   Amber: çukur   ·   İnce çizgi: düğüm", 14.0 * s, MUTED)
 	var amp_a := Wave.amplitude(Wave.SENSOR_A, frequency, two_sources)
 	var amp_b := Wave.amplitude(Wave.SENSOR_B, frequency, two_sources)
-	_draw_sensor(Wave.SENSOR_A, "A", amp_a, s, true)
-	_draw_sensor(Wave.SENSOR_B, "B", amp_b, s, false)
 	_draw_board(s, amp_a, amp_b)
-
-
-func _draw_sensor(point: Vector2, name: String, amplitude: float, s: float, sensitive: bool) -> void:
-	var c := _cm(point)
-	var colour := INK
-	if sensitive and amplitude > 1.6:
-		colour = DANGER
-	elif sensitive and amplitude < 0.3:
-		colour = ACCENT
-	elif not sensitive and amplitude > 1.7:
-		colour = ACCENT
-	_overlay.draw_arc(c, 17.0 * s, 0.0, TAU, 32, colour, 2.5 * s)
-	_overlay.draw_circle(c, 3.5 * s, colour)
-	_t(c + Vector2(22.0, -14.0) * s, name, 26.0 * s, colour)
 
 
 func _draw_board(s: float, amp_a: float, amp_b: float) -> void:

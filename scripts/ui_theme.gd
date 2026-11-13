@@ -3,8 +3,8 @@ extends Node
 ## Renkler docs/ART_DIRECTION.md paletinden. Özel türler: PrimaryButton, DangerButton, HeadlineLabel,
 ## SectionLabel, MutedLabel, GlassPanel, ConsolePanel.
 
-const FONT = preload("res://assets/fonts/Inter.ttf")
-const DISPLAY_FONT = preload("res://assets/fonts/YanlisDunyaMeridian-Display.ttf")
+const FONT = preload("res://assets/fonts/IBMPlexSans.ttf")
+const DISPLAY_FONT = preload("res://assets/fonts/SpaceGrotesk.ttf")
 
 const BG := Color("#070b12")
 const PANEL := Color("#0f1824")
@@ -27,23 +27,25 @@ static func build() -> Theme:
 	var theme := Theme.new()
 	var regular := FontVariation.new()
 	regular.base_font = FONT
-	regular.variation_opentype = {"wght": 450}
+	regular.variation_opentype = {"wght": 400, "wdth": 100}
 	var semibold := FontVariation.new()
 	semibold.base_font = FONT
-	semibold.variation_opentype = {"wght": 650}
+	semibold.base_font = FONT
+	semibold.variation_opentype = {"wght": 600, "wdth": 100}
 	var display := FontVariation.new()
 	display.base_font = DISPLAY_FONT
+	display.variation_opentype = {"wght": 700}
 	theme.default_font = regular
-	theme.default_font_size = 15
+	theme.default_font_size = 16
 
 	# Label
 	theme.set_color("font_color", "Label", INK)
 	theme.set_type_variation("HeadlineLabel", "Label")
 	theme.set_font("font", "HeadlineLabel", display)
-	theme.set_font_size("font_size", "HeadlineLabel", 24)
+	theme.set_font_size("font_size", "HeadlineLabel", 27)
 	theme.set_type_variation("SectionLabel", "Label")
 	theme.set_font("font", "SectionLabel", semibold)
-	theme.set_font_size("font_size", "SectionLabel", 12)
+	theme.set_font_size("font_size", "SectionLabel", 14)
 	theme.set_color("font_color", "SectionLabel", ACCENT)
 	theme.set_type_variation("MutedLabel", "Label")
 	theme.set_color("font_color", "MutedLabel", MUTED)

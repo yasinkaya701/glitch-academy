@@ -1,19 +1,51 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Material" path="res://stations/shared_assets/materials/blue_titanium.tres" id="1_blue_titanium"]
 
 [sub_resource type="Environment" id="Environment_lab"]
 background_mode = 1
 background_color = Color(0.055, 0.085, 0.135, 1)
 ambient_light_source = 3
 ambient_light_color = Color(0.76, 0.84, 1, 1)
-ambient_light_energy = 0.65
+ambient_light_energy = 0.7
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.12, 0.24, 0.35, 1)
+fog_density = 0.008
+glow_enabled = true
+glow_intensity = 0.3
+
+[sub_resource type="StandardMaterial3D" id="GridMaterial"]
+albedo_color = Color(0.18, 0.72, 0.72, 1)
+emission_enabled = true
+emission = Color(0.09, 0.48, 0.5, 1)
+emission_energy_multiplier = 0.7
+roughness = 0.4
+
+[sub_resource type="CylinderMesh" id="StageBaseMesh"]
+top_radius = 2.65
+bottom_radius = 2.72
+height = 0.18
+radial_segments = 64
+
+[sub_resource type="CylinderMesh" id="StageTopMesh"]
+top_radius = 2.52
+bottom_radius = 2.52
+height = 0.035
+radial_segments = 64
+
+[sub_resource type="TorusMesh" id="StageRimMesh"]
+inner_radius = 2.49
+outer_radius = 2.56
+radial_segments = 64
 
 [node name="Experiment3D" type="SubViewportContainer"]
-custom_minimum_size = Vector2(320, 240)
+custom_minimum_size = Vector2(480, 270)
 stretch = true
 
 [node name="Viewport" type="SubViewport" parent="."]
 own_world_3d = true
-size = Vector2i(320, 240)
+size = Vector2i(640, 360)
 render_target_update_mode = 2
 
 [node name="World" type="Node3D" parent="Viewport"]
@@ -23,13 +55,55 @@ environment = SubResource("Environment_lab")
 
 [node name="Camera3D" type="Camera3D" parent="Viewport/World"]
 rotation_degrees = Vector3(-22, 30, 0)
-position = Vector3(3.2, 2.65, 5.54)
+position = Vector3(3.8, 3.1, 6.1)
 projection = 1
-size = 5.5
+size = 5.8
 current = true
 
 [node name="KeyLight" type="DirectionalLight3D" parent="Viewport/World"]
 rotation_degrees = Vector3(-42, -25, 0)
-light_energy = 1.1
+light_energy = 1.25
+shadow_enabled = true
+
+[node name="FillLight" type="OmniLight3D" parent="Viewport/World"]
+position = Vector3(-3.2, 1.8, 1.5)
+light_color = Color(0.24, 0.68, 0.82, 1)
+light_energy = 0.75
+omni_range = 9.0
+
+[node name="RimLight" type="OmniLight3D" parent="Viewport/World"]
+position = Vector3(0, 3.2, -3.8)
+light_color = Color(0.98, 0.56, 0.26, 1)
+light_energy = 0.85
+omni_range = 8.0
+
+[node name="StudioFloor" type="MeshInstance3D" parent="Viewport/World"]
+position = Vector3(0, -0.1, 0)
+mesh = SubResource("StageBaseMesh")
+material_override = ExtResource("1_blue_titanium")
+
+[node name="StageTop" type="MeshInstance3D" parent="Viewport/World"]
+position = Vector3(0, 0.0075, 0)
+mesh = SubResource("StageTopMesh")
+material_override = ExtResource("1_blue_titanium")
+
+[node name="StageRim" type="MeshInstance3D" parent="Viewport/World"]
+position = Vector3(0, 0.025, 0)
+mesh = SubResource("StageRimMesh")
+material_override = SubResource("GridMaterial")
+
+[node name="MeasurementGrid" type="Node3D" parent="Viewport/World"]
+
+[node name="GridRingSmall" type="MeshInstance3D" parent="Viewport/World/MeasurementGrid"]
+position = Vector3(0, 0.025, 0)
+mesh = SubResource("StageRimMesh")
+material_override = SubResource("GridMaterial")
+scale = Vector3(0.62, 1, 0.62)
+
+[node name="GridRingInner" type="MeshInstance3D" parent="Viewport/World/MeasurementGrid"]
+position = Vector3(0, 0.025, 0)
+mesh = SubResource("StageRimMesh")
+material_override = SubResource("GridMaterial")
+scale = Vector3(0.78, 1, 0.78)
 
 [node name="Model" type="Node3D" parent="Viewport/World"]

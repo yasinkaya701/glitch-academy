@@ -148,7 +148,7 @@ func _sync_layout() -> void:
 		_stage_panel.custom_minimum_size = Vector2(420, 330)
 		_instrument_scroll.custom_minimum_size = Vector2(360, 0)
 	_update_stage()
-	
+
 
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), BG, true)

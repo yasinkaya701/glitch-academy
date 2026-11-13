@@ -3,6 +3,7 @@ extends Control
 ## Hesaplar photo_sim.gd'den gelir, çizim süreleri ya da akımı uydurmaz.
 
 const Photo = preload("res://stations/photoelectric/photo_sim.gd")
+const LabScene = preload("res://stations/photoelectric/photo_lab_3d.tscn")
 
 const INK := Color("#e8f1f2")
 const MUTED := Color("#8fa6b3")
@@ -20,12 +21,23 @@ var door_burned := false
 
 var _clock := 0.0
 var _electrons: Array[Dictionary] = []
-var _photon_phase := 0.0
+var _lab_viewport: SubViewport
+var _lab
+
+
+func _ready() -> void:
+	_lab_viewport = SubViewport.new()
+	_lab_viewport.name = "PhotoelectricViewport"
+	_lab_viewport.own_world_3d = true
+	_lab_viewport.size = Vector2i(1000, 500)
+	_lab_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	add_child(_lab_viewport)
+	_lab = LabScene.instantiate()
+	_lab_viewport.add_child(_lab)
 
 
 func _process(delta: float) -> void:
 	_clock += delta
-	_photon_phase += delta
 	var phi: float = Photo.METALS[metal]["phi"]
 	var rate := 14.0 * intensity if Photo.photon_energy(frequency) > phi else 0.0
 	if rate > 0.0 and randf() < rate * delta:
@@ -36,6 +48,9 @@ func _process(delta: float) -> void:
 		e["y"] += e["dy"] * delta
 		e["life"] += delta
 	_electrons = _electrons.filter(func(e: Dictionary) -> bool: return e["x"] < 1.15)
+	var current := Photo.faulty_current(frequency, intensity, phi) if faulty_display else Photo.photocurrent(frequency, intensity, phi)
+	_lab.set_conditions(frequency, intensity, current, Photo.k_max(frequency, phi), metal,
+		faulty_display, door_open, door_burned, _electrons)
 	queue_redraw()
 
 
@@ -58,51 +73,12 @@ func _draw() -> void:
 		draw_line(o + Vector2(0.0, j * 100.0) * s, o + Vector2(1600.0, j * 100.0) * s, Color(1, 1, 1, 0.025), 1.0)
 	var phi: float = Photo.METALS[metal]["phi"]
 	var k := Photo.k_max(frequency, phi)
-	var colour := Photo.light_color(frequency)
 	var current := Photo.faulty_current(frequency, intensity, phi) if faulty_display else Photo.photocurrent(frequency, intensity, phi)
-	var tube := Rect2(o + Vector2(330, 250) * s, Vector2(560, 300) * s)
-	var plate_x := tube.position.x + 60.0 * s
-	# Lamba
-	var lamp := Rect2(o + Vector2(70, 330) * s, Vector2(150, 140) * s)
-	draw_rect(lamp, Color("#1b2430"))
-	draw_rect(Rect2(lamp.position + Vector2(10, 10) * s, lamp.size - Vector2(20, 20) * s), colour.darkened(0.55))
-	draw_rect(Rect2(lamp.position + Vector2(10, 10) * s, lamp.size - Vector2(20, 20) * s), Color(colour, 0.35 + 0.5 * intensity))
-	# Işın ve fotonlar
-	var beam_a := lamp.position + Vector2(lamp.size.x, lamp.size.y * 0.5)
-	var plate_mid := Vector2(plate_x, tube.position.y + tube.size.y * 0.5)
-	draw_polygon(PackedVector2Array([beam_a + Vector2(0, -50 * s), plate_mid + Vector2(0, -110 * s), plate_mid + Vector2(0, 110 * s), beam_a + Vector2(0, 50 * s)]),
-		PackedColorArray([Color(colour, 0.0), Color(colour, 0.08 * (0.3 + intensity)), Color(colour, 0.08 * (0.3 + intensity)), Color(colour, 0.0)]))
-	var photons := int(6 + 22 * intensity)
-	var wave := 6.0 + 0.0 * frequency
-	for i in photons:
-		var u := fposmod(float(i) / float(photons) + _photon_phase * 0.35, 1.0)
-		var base := beam_a.lerp(plate_mid, u)
-		var lane := (float(i % 5) - 2.0) * 0.28
-		base.y += lane * 48.0 * s * (1.0 - u * 0.4)
-		var length := 26.0 * s
-		var step := Vector2(length / 6.0, 0.0)
-		var points := PackedVector2Array()
-		var wl := clampf(Photo.wavelength_nm(frequency) / 700.0, 0.35, 1.25)
-		for q in 7:
-			points.append(base + Vector2(step.x * q, sin((q + _clock * 8.0) * (3.2 / wl)) * wave * s))
-		draw_polyline(points, Color(colour, 0.9), 2.0 * s)
-	# Vakum tüpü
-	draw_rect(tube, Color(0.55, 0.75, 0.9, 0.05))
-	draw_rect(tube, Color(0.55, 0.75, 0.9, 0.35), false, 2.0 * s)
-	# Plaka (katot) ve anot
-	var plate := Rect2(Vector2(plate_x - 12.0 * s, tube.position.y + 40.0 * s), Vector2(24.0 * s, tube.size.y - 80.0 * s))
-	draw_rect(plate, Color("#b4895a") if metal != &"zinc" else Color("#9aa7b3"))
-	draw_rect(Rect2(plate.position, Vector2(7.0 * s, plate.size.y)), Color(1, 1, 1, 0.25))
-	var anode := Rect2(Vector2(tube.end.x - 70.0 * s, tube.position.y + 40.0 * s), Vector2(14.0 * s, tube.size.y - 80.0 * s))
-	draw_rect(anode, Color("#8c97a3"))
-	# Elektronlar
-	var span := (anode.position.x - plate.end.x)
-	for e in _electrons:
-		var pos := Vector2(plate.end.x + span * e["x"], plate_mid.y + 100.0 * s * e["y"])
-		draw_circle(pos, 6.0 * s, Color(ACCENT, 0.25))
-		draw_circle(pos, 3.2 * s, ACCENT)
-	# Plaka başlığı
-	_t(o + Vector2(plate_x / s - 70.0, 224.0) * s, String(Photo.METALS[metal]["name"]).to_upper() + "   φ = %s eV" % str(phi).replace(".", ","), 18.0 * s, MUTED)
+	# Render the apparatus as a real 3D sub-scene; meter, graph and equations stay crisp in 2D.
+	var lab_rect := Rect2(o + Vector2(42, 212) * s, Vector2(900, 408) * s)
+	draw_texture_rect(_lab_viewport.get_texture(), lab_rect, false)
+	draw_rect(lab_rect, Color("#4d6b7b"), false, 1.5 * s)
+	_t(o + Vector2(70, 198) * s, String(Photo.METALS[metal]["name"]).to_upper() + "   φ = %s eV" % str(phi).replace(".", ","), 18.0 * s, MUTED)
 	_draw_meter(o, s, current)
 	_draw_board(o, s, phi, k, current)
 	_draw_graph(o, s, phi, k)
@@ -110,16 +86,11 @@ func _draw() -> void:
 
 
 func _draw_meter(o: Vector2, s: float, current: float) -> void:
-	var c := o + Vector2(600, 700) * s
-	var r := 105.0 * s
-	draw_arc(c, r, PI * 1.1, PI * 1.9, 48, Color(MUTED, 0.6), 3.0 * s)
-	for i in 9:
-		var a := lerpf(PI * 1.1, PI * 1.9, float(i) / 8.0)
-		draw_line(c + Vector2(cos(a), sin(a)) * r * 0.88, c + Vector2(cos(a), sin(a)) * r, Color(MUTED, 0.8), 2.0 * s)
-	var needle := lerpf(PI * 1.1, PI * 1.9, clampf(current / 8.0, 0.0, 1.0))
-	draw_line(c, c + Vector2(cos(needle), sin(needle)) * r * 0.9, WARM, 3.0 * s)
-	draw_circle(c, 6.0 * s, WARM)
-	_t(c + Vector2(-80, 50) * s, "AKIM  %s µA" % str(snappedf(current, 0.1)).replace(".", ","), 22.0 * s, INK, HORIZONTAL_ALIGNMENT_CENTER, 160.0 * s)
+	var card := Rect2(o + Vector2(470, 690) * s, Vector2(250, 54) * s)
+	draw_rect(card, Color("#10202e"))
+	draw_rect(card, Color("#466373"), false, 1.5 * s)
+	_t(card.position + Vector2(16, 35) * s,
+		"AKIM  %s µA" % str(snappedf(current, 0.1)).replace(".", ","), 23.0 * s, INK)
 
 
 func _draw_board(o: Vector2, s: float, phi: float, k: float, current: float) -> void:

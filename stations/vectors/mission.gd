@@ -1,6 +1,7 @@
 extends "res://scripts/mission.gd"
 
 const Plot = preload("res://stations/vectors/route_plot.gd")
+const HarborView = preload("res://stations/vectors/harbor_view.tscn")
 const INTRO := 0
 const EXPLORE := 1
 const APPLY := 2
@@ -13,6 +14,7 @@ const WARNING := Color("#ffc082")
 
 var _stage := INTRO
 var _plot: Plot
+var _harbor
 var _plot_caption: Label
 var _heading: Label
 var _stage_title: Label
@@ -75,6 +77,11 @@ func _build_interface() -> void:
 	left.add_theme_constant_override("separation", 7)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_child(left)
+	_harbor = HarborView.instantiate()
+	_harbor.custom_minimum_size = Vector2(410, 220)
+	_harbor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_harbor.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	left.add_child(_harbor)
 	_plot = Plot.new()
 	_plot.custom_minimum_size = Vector2(410, 295)
 	_plot.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -140,6 +147,7 @@ func _show_stage(stage: int) -> void:
 	_plot.route_draw = 0.0
 	_plot.attempted = false
 	_plot.queue_redraw()
+	_sync_harbor()
 	_explore.visible = stage == EXPLORE
 	_apply.visible = stage == APPLY
 	_skip.visible = stage == INTRO
@@ -173,6 +181,7 @@ func _set_method(method: int) -> void:
 	_plot.method = method
 	_methods[method].set_pressed_no_signal(true)
 	_plot.queue_redraw()
+	_sync_harbor()
 	if _plot.revealed:
 		_update_result_feedback()
 
@@ -182,6 +191,7 @@ func _reveal_result() -> void:
 	_plot.revealed = true
 	_next.disabled = false
 	_update_result_feedback()
+	_sync_harbor()
 	_animation = create_tween()
 	_animation.tween_method(_set_route_draw, 0.0, 1.0, 0.48).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 
@@ -222,6 +232,7 @@ func _launch_capsule() -> void:
 func _landing_result(correct: bool, submitted: Vector2) -> void:
 	_plot.docked = correct
 	_plot.queue_redraw()
+	_sync_harbor()
 	if correct:
 		_feedback.text = "Yanaşma tamamlandı.\n(5, −12) · 13 birim"
 		_feedback.modulate = ACCENT
@@ -242,11 +253,21 @@ func _landing_result(correct: bool, submitted: Vector2) -> void:
 func _set_capsule(value: Vector2) -> void:
 	_plot.capsule = value
 	_plot.queue_redraw()
+	_sync_harbor()
 
 
 func _set_route_draw(value: float) -> void:
 	_plot.route_draw = value
 	_plot.queue_redraw()
+	_sync_harbor()
+
+
+func _sync_harbor() -> void:
+	if _harbor == null:
+		return
+	var destination := EXPECTED if _stage == APPLY else Vector2(3, 4)
+	_harbor.set_mission_state(_stage, destination, _plot.capsule, _plot.route_draw,
+		_plot.revealed, _plot.method, _plot.attempted, _plot.attempt, _plot.docked)
 
 
 func _stop_animation() -> void:

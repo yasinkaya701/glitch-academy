@@ -1,6 +1,6 @@
 extends "res://scripts/mission.gd"
 
-const Diagram = preload("res://stations/seasons/observatory_diagram.gd")
+const DiagramScript = preload("res://stations/seasons/observatory_diagram.gd")
 const Model = preload("res://stations/seasons/seasons_model.gd")
 const PAPER := Color("e6f1ef")
 const MUTED := Color("a3b9bf")
@@ -17,7 +17,7 @@ var seen_june := false
 var seen_december := false
 var north_setting := Season.UNSET
 var south_setting := Season.UNSET
-var diagram: Diagram
+var diagram: Control
 var controls: VBoxContainer
 var date_buttons: Array[Button] = []
 var tilt_toggle: CheckButton
@@ -35,10 +35,10 @@ func _ready() -> void:
 	add_child(row)
 	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	diagram = Diagram.new()
+	diagram = DiagramScript.new()
 	diagram.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	diagram.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	diagram.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	diagram.mouse_filter = Control.MOUSE_FILTER_STOP
 	row.add_child(diagram)
 
 	var panel := PanelContainer.new()
@@ -79,6 +79,7 @@ func _show_experiment() -> void:
 		_button("21 Haziran", _observe.bind(false), dates),
 		_button("21 Aralık", _observe.bind(true), dates),
 	]
+	_text("3B modeli sürükleyerek döndür · Tekerlekle yakınlaş · Çift tıklayarak sıfırla", 12, MUTED)
 	for index in date_buttons.size():
 		var button := date_buttons[index]
 		button.toggle_mode = true
