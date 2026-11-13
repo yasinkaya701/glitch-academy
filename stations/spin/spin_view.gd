@@ -33,8 +33,9 @@ var rate := 22.0                   ## atom/s
 var up_hits := 0
 var down_hits := 0
 var emitted := 0
+var center_hits := 0              ## ekranda ortada kalan (ayrılmamış) izler
 
-var gradient := 1.0               ## alan eğimi çarpanı (iki iz arası açılma)
+var gradient := 0.0               ## alan eğimi çarpanı. 0 = düzgün alan: atomlar sapmaz (arıza). 1 = normal
 var oven_temp := 1000.0          ## K, gümüş atom demeti
 var faulty := false                ## arıza: tüp camında çatlak
 var intro_t := -1.0                ## >= 0 iken açılış oynuyor
@@ -49,6 +50,7 @@ var _magnets: Array[Node3D] = []
 var _station_labels: Array[Label3D] = []
 var _crack: Node3D
 var _field_lines: Array[Node3D] = []
+var _field_lines_gradient := -1.0
 var _atom_mesh: SphereMesh
 var _atom_material: StandardMaterial3D
 var _dead_material: StandardMaterial3D
@@ -98,12 +100,12 @@ func _build_set() -> void:
 	# Fırın
 	stage.box(Vector3(0.34, 0.36, 0.36), steel, Vector3(-1.82, 0.18, 0.0))
 	stage.box(Vector3(0.012, 0.03, 0.2), Stage.glow_material(Color("#ff8a3d"), 1.6), Vector3(-1.64, TUBE_Y, 0.0))
-	# Süzgeç mıknatısları (gerçek nal mıknatısı) ve etiketleri
+	# Süzgeç mıknatısları: gerçek Stern–Gerlach kutup geometrisi (üstte bıçak kenarı, altta oluk), boyunduruk ve bakır bobinler
 	for i in 3:
-		var holder := stage.model("res://assets/models/horseshoe-magnet.glb", 0.48)
-		holder.rotation_degrees = Vector3(80, 0, 0)
-		holder.position = Vector3(wx(STAGE_X[i]), TUBE_Y + 0.2, 0.0)
-		_magnets.append(holder)
+		var magnet := _build_magnet()
+		magnet.position = Vector3(wx(STAGE_X[i]), TUBE_Y, 0.0)
+		stage.world.add_child(magnet)
+		_magnets.append(magnet)
 		var label := Label3D.new()
 		label.font = FONT
 		label.font_size = 64
@@ -113,6 +115,10 @@ func _build_set() -> void:
 		label.position = Vector3(wx(STAGE_X[i]), 0.004, 0.36)
 		stage.world.add_child(label)
 		_station_labels.append(label)
+	# Daraltıcı yarıklar: fırından sonra atom demetini inceltir
+	for x in [-1.38, -1.22]:
+		for side in [-1.0, 1.0]:
+			stage.box(Vector3(0.012, 0.1, 0.2), steel, Vector3(x, TUBE_Y + side * 0.075, 0.0))
 	# Dedektör (X-ışını tüpü)
 	var detector := stage.model("res://assets/models/x-ray-tube.glb", 0.5)
 	detector.position = Vector3(wx(DETECTOR_X), TUBE_Y + 0.05, 0.0)
@@ -178,6 +184,43 @@ func _build_set() -> void:
 	_update_stations()
 
 
+func _build_magnet() -> Node3D:
+	var root := Node3D.new()
+	var steel := Stage.pbr(Stage.METAL_DIR, Vector3(2, 2, 2), Color(0.78, 0.8, 0.84), 1.0)
+	var copper := Stage.pbr(Stage.METAL_DIR, Vector3(3, 3, 3), Color(0.95, 0.52, 0.3), 1.0)
+	var dark := StandardMaterial3D.new()
+	dark.albedo_color = Color("#14171b")
+	dark.roughness = 0.6
+	# Boyunduruk: arkada C biçimli demir yol
+	stage.box(Vector3(0.3, 0.6, 0.07), steel, Vector3(0, 0.0, -0.2), root)
+	# Üst kutup: bıçak kenarı (üçgen prizma, ucu aşağı ve ışına bakar)
+	var upper := stage.cylinder(0.085, 0.24, steel, Vector3(0, 0.185, 0.0), Vector3(0, 0, 90), root)
+	(upper.mesh as CylinderMesh).radial_segments = 3
+	upper.rotation_degrees = Vector3(90, 0, 90)
+	stage.box(Vector3(0.24, 0.1, 0.18), steel, Vector3(0, 0.28, -0.04), root)
+	# Alt kutup: oluklu (ortasında V olukla ayrılmış iki omuz)
+	stage.box(Vector3(0.24, 0.12, 0.2), steel, Vector3(0, -0.23, -0.02), root)
+	stage.box(Vector3(0.24, 0.012, 0.05), dark, Vector3(0, -0.168, 0.0), root)
+	# Bakır bobinler kutup gövdelerinin etrafında
+	for y in [0.3, -0.27]:
+		stage.cylinder(0.105, 0.08, copper, Vector3(0, y, -0.04), Vector3.ZERO, root)
+	return root
+
+
+## Alan çizgileri: düzgün alanda paralel ve eşit aralıklı, eşit olmayan alanda üst kutba doğru sıklaşır.
+func _update_field_lines() -> void:
+	if is_equal_approx(_field_lines_gradient, gradient):
+		return
+	_field_lines_gradient = gradient
+	var spread := clampf(gradient, 0.0, 1.5)
+	for group in _field_lines:
+		for k in group.get_child_count():
+			var u := float(k) / float(maxi(group.get_child_count() - 1, 1)) - 0.5
+			var line := group.get_child(k) as Node3D
+			line.position.x = u * (0.17 - 0.06 * spread)
+			line.rotation.z = u * 0.6 * spread
+
+
 func _update_stations() -> void:
 	for i in 3:
 		var active: bool = not (stages[i] as Dictionary).is_empty()
@@ -196,6 +239,7 @@ func _update_stations() -> void:
 func reset_counts() -> void:
 	up_hits = 0
 	down_hits = 0
+	center_hits = 0
 	emitted = 0
 	for atom in _atoms:
 		if atom.has("node") and is_instance_valid(atom["node"]):
@@ -226,6 +270,7 @@ func _process(delta: float) -> void:
 	if _magnets.is_empty():
 		return
 	_clock += delta
+	_update_field_lines()
 	var frozen := false
 	if intro_t >= 0.0:
 		intro_t += delta
@@ -257,8 +302,11 @@ func _process(delta: float) -> void:
 			atom["t"] += delta * 0.42 * sqrt(oven_temp / 1000.0)
 		for atom in _atoms.filter(func(a: Dictionary) -> bool: return a["t"] >= 1.0):
 			if atom["result"] != 0:
-				_marks.append({"u": -float(atom["result"]) * gradient + _rng.randfn(0.0, 0.07), "dx": _rng.randf_range(-6.0, 6.0), "age": 0.0})
-				if atom["result"] > 0:
+				_marks.append({"u": -float(atom["result"]) * gradient + _rng.randfn(0.0, 0.12), "dx": _rng.randf_range(-6.0, 6.0), "age": 0.0})
+				var landing_u: float = float(_marks[_marks.size() - 1]["u"])
+				if absf(landing_u) < 0.3:
+					center_hits += 1
+				elif landing_u < 0.0:
 					up_hits += 1
 				else:
 					down_hits += 1
@@ -331,6 +379,8 @@ func _draw_screen(canvas: Control, size_px: Vector2) -> void:
 	for mark in _marks:
 		var yy: float = centre_y + float(mark["u"]) * 150.0 * s
 		canvas.draw_circle(Vector2(plate.position.x + plate.size.x * 0.5 + mark["dx"] * 3.0 * s, yy), 9.0 * s, Color(ACCENT, 0.85))
+	var field_text := "ALAN DÜZGÜN: atomlar sapmıyor" if gradient < 0.3 else "ALAN EŞİT DEĞİL: eğim %s T/m" % str(snappedf(gradient * 10.0, 1.0)).replace(".0", "")
+	canvas.draw_string(FONT, Vector2(plate.position.x + 20.0, plate.end.y - 20.0 * s), field_text, HORIZONTAL_ALIGNMENT_LEFT, -1, int(24 * s), DANGER if gradient < 0.3 else ACCENT)
 	canvas.draw_string(FONT_REGULAR, Vector2(plate.end.x - 120.0 * s, centre_y - 150.0 * s), "yukarı", HORIZONTAL_ALIGNMENT_LEFT, -1, int(24 * s), MUTED)
 	canvas.draw_string(FONT_REGULAR, Vector2(plate.end.x - 120.0 * s, centre_y + 160.0 * s), "aşağı", HORIZONTAL_ALIGNMENT_LEFT, -1, int(24 * s), MUTED)
 	# Sayaçlar
@@ -339,7 +389,7 @@ func _draw_screen(canvas: Control, size_px: Vector2) -> void:
 	var down_pct := 100.0 * float(down_hits) / maxf(float(total), 1.0)
 	Kit.readout(canvas, Rect2(Vector2(870, 110) * s, Vector2(300, 150) * s), "YUKARI", "%d" % up_hits, "%%%d" % roundi(up_pct), FONT_REGULAR, s * 1.8, ACCENT)
 	Kit.readout(canvas, Rect2(Vector2(1190, 110) * s, Vector2(300, 150) * s), "AŞAĞI", "%d" % down_hits, "%%%d" % roundi(down_pct), FONT_REGULAR, s * 1.8, ACCENT)
-	Kit.readout(canvas, Rect2(Vector2(870, 290) * s, Vector2(300, 150) * s), "FIRINDAN ÇIKAN", "%d" % emitted, "", FONT_REGULAR, s * 1.8, INK)
+	Kit.readout(canvas, Rect2(Vector2(870, 290) * s, Vector2(300, 150) * s), "MERKEZDE KALAN", "%d" % center_hits, "", FONT_REGULAR, s * 1.8, INK)
 	Kit.readout(canvas, Rect2(Vector2(1190, 290) * s, Vector2(300, 150) * s), "DEDEKTÖR EKSENİ", String(detector_axis).to_upper(), "", FONT_REGULAR, s * 1.8, WARM)
-	Kit.readout(canvas, Rect2(Vector2(870, 470) * s, Vector2(300, 150) * s), "İKİ İZ ARASI", str(snappedf(3.0 * gradient, 0.1)).replace(".", ","), "mm", FONT_REGULAR, s * 1.8, ACCENT)
+	Kit.readout(canvas, Rect2(Vector2(870, 470) * s, Vector2(300, 150) * s), "İZ ARALIĞI", str(snappedf(6.0 * gradient, 0.1)).replace(".", ","), "mm", FONT_REGULAR, s * 1.8, ACCENT)
 	Kit.readout(canvas, Rect2(Vector2(1190, 470) * s, Vector2(300, 150) * s), "FIRIN (Ag)", "%d" % int(oven_temp), "K", FONT_REGULAR, s * 1.8, WARM)

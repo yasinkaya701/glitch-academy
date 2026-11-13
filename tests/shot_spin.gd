@@ -19,6 +19,7 @@ func _ready() -> void:
 	await get_tree().create_timer(3.0).timeout
 	_save(out, "spin_crisis")
 	scene._on_action()
+	scene._view().gradient = 1.0
 	scene._cycle_stage(0)
 	scene._cycle_stage(1)
 	scene._cycle_stage(1)

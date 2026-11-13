@@ -19,7 +19,10 @@ func _ready() -> void:
 	_check("spin: sına adımı", m.step == m.Step.TEST)
 	# Z↑ süz, Z ölç: aynı sonuç
 	m._cycle_stage(0)
+	_check("spin: düzgün alanda (arıza) gözlem sayılmadı", not m._seen_same and not m._seen_split)
+	m._view().gradient = 1.0
 	m._after_change()
+	_check("spin: alan eşit değilken iki iz gözlemi", m._seen_split)
 	_check("spin: aynı eksen gözlemi", m._seen_same)
 	m._toggle_detector()
 	_check("spin: dik eksen gözlemi", m._seen_cross)
@@ -28,7 +31,7 @@ func _ready() -> void:
 	_check("spin: silinen bilgi gözlemi, Nedeni seç açıldı", m._seen_erased and m.hud.action.text == "Nedeni seç")
 	m._on_action()
 	m._on_reason(&"spread")
-	m._on_reason(&"split")
+	m._on_reason(&"uniform")
 	_check("spin: yanlış neden ilerlemedi", m.step == m.Step.REASON)
 	m._on_reason(&"two")
 	m._on_action()

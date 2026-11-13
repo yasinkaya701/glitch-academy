@@ -17,6 +17,7 @@ var step := Step.CRISIS
 var _seen_same := false
 var _seen_cross := false
 var _seen_erased := false
+var _seen_split := false
 var _choice := [0, 0, 0]
 var _stage_knobs: Array = []
 var _detector_knob: Node3D
@@ -62,14 +63,15 @@ func _enter_crisis() -> void:
 	var view := _view()
 	view.show_classical = true
 	view.faulty = true
+	view.gradient = 0.0
 	view.stages = [{}, {}, {}]
 	view.detector_axis = &"z"
 	view.reset_counts()
 	view.play_intro()
 	if not view.intro_finished.is_connected(_on_intro_finished):
 		view.intro_finished.connect(_on_intro_finished)
-	screen(0, "KRİZ", "Hat tek leke bekliyor, ekranda iki ayrı iz var.", "Nedenini bul",
-		"Fırından çıkan atomlar mıknatıstan geçip ekrana düşüyor. Cihaz atomların yönünü sürekli sanıyor ve tek yayılmış leke için kalibre. Turuncu leke cihazın beklentisi, yeşil noktalar gerçek ölçüm.")
+	screen(0, "KRİZ", "Ekranda tek iz var. Cihaz da atomların yönünü sürekli sanıp tek yayılmış leke bekliyor.", "Nedenini bul",
+		"Gümüş atomları fırından yarıklardan geçip mıknatıs alanına girer, sonra ekrana düşer. Alan şu an düzgün ayarlı: atomlar sapmıyor, ekranda tek iz var. Gerçek atomların ikiye ayrılması gerekir.")
 	hud.set_action("Nedenini bul", false)
 	hud.skip.show()
 
@@ -89,6 +91,7 @@ func _enter_test() -> void:
 	_seen_same = false
 	_seen_cross = false
 	_seen_erased = false
+	_seen_split = false
 	_choice = [0, 0, 0]
 	_view().show_classical = false
 	_apply_setup()
@@ -114,9 +117,10 @@ func _build_controls() -> void:
 		_after_change())
 	_detector_knob.value_labels = ["Z", "X"]
 	_detector_knob.refresh()
-	_view().add_knob("Alan eğimi (T/m)", 5.0, 20.0, _view().gradient * 10.0, 5.0, func(v: float) -> void:
+	_view().add_knob("Alan eğimi (T/m)", 0.0, 15.0, _view().gradient * 10.0, 5.0, func(v: float) -> void:
 		_view().gradient = v / 10.0
-		_view().reset_counts())
+		_view().reset_counts()
+		_after_change())
 	_view().add_knob("Fırın (K)", 600.0, 1400.0, _view().oven_temp, 200.0, func(v: float) -> void:
 		_view().oven_temp = v
 		_view().reset_counts())
@@ -146,6 +150,12 @@ func _after_change() -> void:
 	if active.is_empty():
 		return
 	var detector := _view().detector_axis
+	if _view().gradient < 0.5:
+		say("Alan düzgün: atomlar sapmıyor, hangi kanala gittikleri okunamıyor. Atomları ayırmak için alanın nasıl olması gerekir?", BAD)
+		return
+	if _view().gradient >= 1.0 and not _seen_split:
+		_seen_split = true
+		say("Alan eşit değil: ekranda iki ayrı iz var, aralarında hiçbir şey yok. Klasik beklenti tek yayılmış lekeydi.", GOOD)
 	var f: Dictionary = Spin.fractions(_view().stages, detector)
 	if f["reach"] <= 0.0:
 		say("Hiç atom geçmiyor: aynı eksende yukarıyı süzdükten sonra aşağıyı süzemezsin.", BAD)
@@ -163,7 +173,7 @@ func _after_change() -> void:
 		if not _seen_erased:
 			_seen_erased = true
 			say("Dik süzgeçten sonra ilk eksene döndün: %50 – %50. Dik süzgeç eski bilgiyi sildi.", GOOD)
-	if _seen_same and _seen_cross and _seen_erased:
+	if _seen_same and _seen_cross and _seen_erased and _seen_split:
 		hud.set_action("Nedeni seç", true)
 
 
@@ -174,7 +184,7 @@ func _enter_reason() -> void:
 	var options := {
 		&"spread": "Atomlar her yöne dönüyor, yayılmış bir leke vermeli",
 		&"two": "Spin, ölçülen eksende iki sonuçtan biridir; dik eksen ölçümü öncekini siler",
-		&"split": "Mıknatıs atomu ikiye böler, ikisi iki ize gider",
+		&"uniform": "Alan düzgün de olsa atomlar iki ize ayrılır",
 	}
 	for choice in options:
 		var button := Button.new()
@@ -192,7 +202,7 @@ func _on_reason(choice: StringName) -> void:
 		&"spread":
 			say("Yayılmış leke klasik beklentiydi. Ekranda hiç ara nokta yok, yalnızca iki iz.", BAD)
 		_:
-			say("Her atom tek bir izde biter, atom sayısı korunur. Bölünme yok, iki sonuçtan biri çıkıyor.", BAD)
+			say("Düzgün alanda ekranda tek iz vardı: atomlar sapmadı. Ayrılma için alanın eşit olmaması gerekiyor.", BAD)
 
 
 func _enter_measure() -> void:

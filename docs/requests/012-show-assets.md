@@ -17,15 +17,16 @@ Kabul: Godot'ta `Ring` ve yaprak düğümleri tek tek döndürülebilir, mekanik
 
 ## B. Spin Hattı (Stern–Gerlach), `stations/spin/assets/`
 
-Sahne şu an 2D çiziliyor (`stations/spin/spin_view.gd`). Şov sahnesi için fotogerçekçi laboratuvar düzeneği:
+Deney (kaynak: [Wikipedia](https://en.wikipedia.org/wiki/Stern%E2%80%93Gerlach_experiment)): fırından çıkan nötr gümüş atomları dar yarıklardan geçer, **eşit olmayan** manyetik alana girer, soğuk cam plakaya düşer. Düzgün alanda sapma olmaz, eşit olmayan alanda iki ayrı iz çıkar. Oyunda bozulma, alanın düzgünleştirilmesidir. Hazır CC0 model bulunamadı, o yüzden gerçek geometri isteniyor. Sahne 3B, bu parçalar `.glb`:
 
-- `apparatus_bg.png` (1920×1080): karanlık vakum hattı laboratuvarı, soldan sağa uzanan ince çelik tüp, üç mıknatıs aşaması ve bir dedektör yerleşimi için boş duraklar, sağda bir ekran plakası. Sağ alt köşe metin için sade.
-- `oven.png` (şeffaf, 512×512): ince bir çıkış deliği olan sıcak atom fırını, tel sargı, çıkışta turuncu ışıma.
-- `magnet_pair.png` (şeffaf, 512×768, yandan): eşit olmayan alan için keskin kenarlı üst kutup ve oluklu alt kutup, bobinler, soğutma boruları. İki durum: kapalı ve açık (mavi-beyaz iç ışık). Atom kanalı iki kutbun arasında okunabilsin.
-- `detector_head.png` (şeffaf, 512×512): sezyum, gümüş atom sayacı kafası, `magnet_pair` ile uyumlu malzeme.
-- `screen_plate.png` (şeffaf, 256×768): temiz cam ekran, iz bırakacak fosfor yüzey. Atom izleri kod ile çizilecek.
+- `sg_magnet.glb`: gerçek Stern–Gerlach elektromıknatısı. Demir boyunduruk, **üstte bıçak kenarı**, **altta oluklu** kutup, iki bakır bobin. Düğümler: `Yoke`, `PoleKnife`, `PoleGroove`, `CoilTop`, `CoilBottom`. Kutuplar arası açıklık atom demetinin geçeceği 0,15 birim.
+- `atom_oven.glb`: gümüş atom fırını. Ağır tuğla gövde, ısıtıcı bobin, ışıyan çıkış deliği. Düğüm: `Slit`.
+- `collimator_slits.glb`: iki ince yarıklı levha ve tutucu.
+- `vacuum_tube.glb`: cam vakum gövdesi, flanşlı uçlar, pompa bağlantısı. Cam ayrı düğüm: `Glass`.
+- `cold_plate.glb`: soğuk cam dedektör plakası, dikey duran, üstünde iki gümüş çizgisinin çökeceği yüzey (`Surface`).
+- `vacuum_gauge.glb`, `diffusion_pump.glb`: tezgâh aletleri.
 
-Spin dönen küre olarak çizilmeyecek (docs/EXPERIMENTS.md modelleme kuralı): hiçbir görselde dönen top, ok veya "sarmal" olmasın.
+Hiçbir görselde dönen top, ok veya "sarmal" olmasın (docs/EXPERIMENTS.md modelleme kuralı). Stil: fotogerçekçi, nötr çelik ve bakır, tek sıcak ana ışık. Pembe, mor ve neon yok.
 
 ## C. Fizik düzenekleri, cila paketi
 
