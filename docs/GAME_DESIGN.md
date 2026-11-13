@@ -317,33 +317,12 @@ Kaynak ve argüman kafasının mekânları (arşiv, konsey odası, kabartma masa
 
 ## 9. Varlık yolu
 
-Varlık iki yoldan gelir: internetten bulunan hazır varlık ya da GitHub üzerinden kendi ürettiğimiz varlık. Nereden bulunacağı, nasıl talep edileceği ve nasıl teslim alınacağı [ASSETS.md](ASSETS.md) içindedir. Bu bölüm iki yol için de geçerli olan kuralları verir.
+Hedef: sahne, gece çalışan gerçek bir laboratuvar, arşiv ya da konsey odası gibi görünür. Varlık internetten bulunabilir, GitHub üzerinden üretilebilir, birleştirilebilir ya da düzenlenebilir. Yöntem serbesttir. Kaynaklar, talep akışı ve sahnede sorulacak altı kalite sorusu [ASSETS.md](ASSETS.md) içindedir.
 
-**Kaynak sırası:**
-
-1. **Hazır CC0 kütüphane:** `assets/models/` (Grab3D) ve `assets/polyhaven/`. Kayıt [ASSET_SOURCES.md](ASSET_SOURCES.md) içinde tutulur.
-2. **Yeni CC0 indirme:** Poly Haven, ambientCG, Grab3D, müze açık koleksiyonları (büst taramaları, el yazmaları), NASA ve arşiv görüntüleri.
-3. **Talep:** `docs/requests/NNN-ad.md` şablonuyla ve bir GitHub issue ile Codex'e açılır. Kota dolarsa talep Gemini'ye geçer.
-4. **Godot ile kurulan geometri:** Ray, kutu, kablo ve tüp gibi parçalar mesh olarak kurulur ve PBR malzeme alır.
-
-**Talepte bulunması ZORUNLU olanlar:**
-
-- Oyuncunun ne gördüğü ve neyi hareket ettirdiği.
-- Gerçek dünyadan bir referans fotoğrafı.
-- 3D mi 2D mi olduğu. Deney nesnesi her zaman 3D'dir.
-- Ölçek (metre), pivot ve ayrı hareket eden parçaların düğüm adları.
-- Kamera açısı, poligon ve doku bütçesi.
-- Kabul koşulu.
-
-**Varlık kabul kapısı (ZORUNLU).** Aşağıdakilerden biri varsa varlık sahneye girmez:
-
-- Oyuncak, çizgi film, stilize ya da düz 2D çizim görünümü. Yanlış oran ya da ölçek.
-- Bozuk anatomi, eğri ya da erimiş geometri.
-- Okunur metin gömülmüş doku. Üretilmiş yüz.
-- Pürüzlülük haritası olmayan "plastik" yüzey.
-- Kaynağı ya da lisansı bilinmeyen dosya.
-
-Üretilmiş görsel yalnızca uzak arka plan ve doku için kullanılır. Etkileşimli nesneler, insan figürleri ve okunur metin üretilmiş görselden gelmez. Hazır model tek parçaysa etkileşimli parçalar üstüne ayrı `Node3D` olarak kurulur.
+- Deney nesneleri sahnede 3D olarak durur ve oyuncunun dokunduğu parçalar ayrı, adlandırılmış düğümlerdir.
+- Okunması gereken yazılar Godot'ta canlı metin olarak çizilir.
+- Gerçek kişiler ve eserler, onlardan kalan gerçek izle gösterilir (bölüm 7).
+- Her varlığın kaynağı [ASSET_SOURCES.md](ASSET_SOURCES.md) içindedir.
 
 ## 10. Açılış ve final
 
