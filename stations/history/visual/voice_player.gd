@@ -60,16 +60,22 @@ func bind_actor(actor: Node2D) -> void:
 
 
 func get_line_text(figure_id: StringName, line_id: StringName) -> String:
+	if _db.is_empty():
+		_load_db()
 	var p: Dictionary = _db.get("figures", {}).get(String(figure_id), {})
 	return String(p.get("lines", {}).get(String(line_id), ""))
 
 
 func get_lines(figure_id: StringName) -> Dictionary:
+	if _db.is_empty():
+		_load_db()
 	var p: Dictionary = _db.get("figures", {}).get(String(figure_id), {})
 	return p.get("lines", {})
 
 
 func get_choices(figure_id: StringName) -> Array:
+	if _db.is_empty():
+		_load_db()
 	var p: Dictionary = _db.get("figures", {}).get(String(figure_id), {})
 	return p.get("choices", [])
 
