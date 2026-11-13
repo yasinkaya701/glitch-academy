@@ -194,6 +194,8 @@ func _layout() -> void:
 	var h: float = size.y
 	_backdrop_rect.position = Vector2.ZERO
 	_backdrop_rect.size = size
+	_backdrop_tex.position = Vector2.ZERO
+	_backdrop_tex.size = size
 	_vignette.position = Vector2.ZERO
 	_vignette.size = size
 	_floor_shadow.position = Vector2.ZERO

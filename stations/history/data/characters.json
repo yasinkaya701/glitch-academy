@@ -2,109 +2,105 @@
   "figures": {
     "mete_han": {
       "body_size": [
-        817,
-        1092
+        830,
+        1102
       ],
       "face_rect": [
-        148,
-        3,
-        556,
-        386
+        207,
+        55,
+        415,
+        385
       ],
       "faces": [
+        "neutral",
+        "smile",
         "angry",
         "confused",
-        "eyes_closed",
-        "mouth_mid",
-        "mouth_open",
-        "neutral",
-        "smile"
+        "thinking"
       ],
       "uppers": {
         "smile": {
           "rect": [
-            148,
-            3,
-            556,
-            386
+            207,
+            55,
+            415,
+            385
           ]
         },
         "angry": {
           "rect": [
-            148,
-            3,
-            556,
-            386
+            207,
+            55,
+            415,
+            385
           ]
         },
         "confused": {
           "rect": [
-            148,
-            3,
-            556,
-            386
+            207,
+            55,
+            415,
+            385
           ]
         },
         "thinking": {
           "rect": [
-            148,
-            3,
-            556,
-            386
+            207,
+            55,
+            415,
+            385
           ]
         }
       }
     },
     "alparslan": {
       "body_size": [
-        817,
-        1092
+        865,
+        1104
       ],
       "face_rect": [
-        148,
-        3,
-        556,
+        216,
+        55,
+        432,
         386
       ],
       "faces": [
+        "neutral",
+        "smile",
         "angry",
         "confused",
-        "eyes_closed",
-        "mouth_mid",
-        "mouth_open",
-        "neutral",
-        "smile"
+        "thinking"
       ],
       "uppers": {
         "smile": {
           "rect": [
-            148,
-            3,
-            556,
+            216,
+            55,
+            432,
             386
           ]
         },
         "angry": {
           "rect": [
-            148,
-            3,
-            556,
+            216,
+            55,
+            432,
             386
           ]
         },
         "confused": {
           "rect": [
-            148,
-            3,
-            556,
+            216,
+            55,
+            432,
             386
           ]
         },
         "thinking": {
           "rect": [
-            148,
-            3,
-            556,
+            216,
+            55,
+            432,
             386
           ]
         }
@@ -112,200 +108,215 @@
     },
     "fatih": {
       "body_size": [
-        741,
-        1168
+        886,
+        1200
       ],
       "face_rect": [
-        207,
-        0,
-        310,
-        415
+        221,
+        60,
+        443,
+        420
       ],
       "faces": [
+        "neutral",
+        "smile",
         "angry",
         "confused",
-        "eyes_closed",
-        "mouth_mid",
-        "mouth_open",
-        "neutral",
-        "smile"
+        "thinking"
       ],
       "uppers": {
         "smile": {
           "rect": [
-            207,
-            0,
-            310,
-            415
+            221,
+            60,
+            443,
+            420
           ]
         },
         "angry": {
           "rect": [
-            207,
-            0,
-            310,
-            415
+            221,
+            60,
+            443,
+            420
           ]
         },
         "confused": {
           "rect": [
-            207,
-            0,
-            310,
-            415
+            221,
+            60,
+            443,
+            420
           ]
         },
         "thinking": {
           "rect": [
-            207,
-            0,
-            310,
-            415
+            221,
+            60,
+            443,
+            420
           ]
         }
       }
     },
     "kanuni": {
       "body_size": [
-        741,
-        1168
+        755,
+        1176
       ],
       "face_rect": [
-        207,
-        0,
-        310,
-        415
+        188,
+        58,
+        377,
+        411
       ],
       "faces": [
+        "neutral",
+        "smile",
         "angry",
         "confused",
-        "eyes_closed",
-        "mouth_mid",
-        "mouth_open",
-        "neutral",
-        "smile"
+        "thinking"
       ],
       "uppers": {
         "smile": {
           "rect": [
-            207,
-            0,
-            310,
-            415
+            188,
+            58,
+            377,
+            411
           ]
         },
         "angry": {
           "rect": [
-            207,
-            0,
-            310,
-            415
+            188,
+            58,
+            377,
+            411
           ]
         },
         "confused": {
           "rect": [
-            207,
-            0,
-            310,
-            415
+            188,
+            58,
+            377,
+            411
           ]
         },
         "thinking": {
           "rect": [
-            207,
-            0,
-            310,
-            415
-          ]
-        }
-      }
-    },
-    "ataturk": {
-      "body_size": [
-        418,
-        1124
-      ],
-      "face_rect": [
-        111,
-        0,
-        199,
-        422
-      ],
-      "faces": [
-        "angry",
-        "confused",
-        "eyes_closed",
-        "mouth_mid",
-        "mouth_open",
-        "neutral",
-        "smile"
-      ],
-      "uppers": {
-        "smile": {
-          "rect": [
-            111,
-            0,
-            199,
-            422
-          ]
-        },
-        "angry": {
-          "rect": [
-            111,
-            0,
-            199,
-            422
-          ]
-        },
-        "confused": {
-          "rect": [
-            111,
-            0,
-            199,
-            422
-          ]
-        },
-        "thinking": {
-          "rect": [
-            111,
-            0,
-            199,
-            422
+            188,
+            58,
+            377,
+            411
           ]
         }
       }
     },
     "mimar_sinan": {
       "body_size": [
-        413,
-        1156
-      ],
-      "expressions": [
-        "angry",
-        "confused",
-        "eyes_closed",
-        "mouth_mid",
-        "mouth_open",
-        "smile"
+        896,
+        1096
       ],
       "face_rect": [
-        58,
-        0,
-        285,
-        323
+        224,
+        54,
+        448,
+        383
       ],
-      "mouth_y": 153,
-      "neck": [
-        142.5,
-        213.2
-      ],
-      "poses": {},
-      "upper": [
+      "faces": [
+        "neutral",
+        "smile",
         "angry",
         "confused",
-        "eyes_closed",
-        "smile"
-      ]
+        "thinking"
+      ],
+      "uppers": {
+        "smile": {
+          "rect": [
+            224,
+            54,
+            448,
+            383
+          ]
+        },
+        "angry": {
+          "rect": [
+            224,
+            54,
+            448,
+            383
+          ]
+        },
+        "confused": {
+          "rect": [
+            224,
+            54,
+            448,
+            383
+          ]
+        },
+        "thinking": {
+          "rect": [
+            224,
+            54,
+            448,
+            383
+          ]
+        }
+      }
+    },
+    "ataturk": {
+      "body_size": [
+        896,
+        1133
+      ],
+      "face_rect": [
+        224,
+        56,
+        448,
+        396
+      ],
+      "faces": [
+        "neutral",
+        "smile",
+        "angry",
+        "confused",
+        "thinking"
+      ],
+      "uppers": {
+        "smile": {
+          "rect": [
+            224,
+            56,
+            448,
+            396
+          ]
+        },
+        "angry": {
+          "rect": [
+            224,
+            56,
+            448,
+            396
+          ]
+        },
+        "confused": {
+          "rect": [
+            224,
+            56,
+            448,
+            396
+          ]
+        },
+        "thinking": {
+          "rect": [
+            224,
+            56,
+            448,
+            396
+          ]
+        }
+      }
     }
   }
 }
