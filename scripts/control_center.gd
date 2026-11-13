@@ -154,6 +154,7 @@ func _start_mission() -> void:
 	_remove_active_mission()
 	active_mission = next_mission
 	active_mission.route = active_route
+	active_mission.exit_requested.connect(_return_to_hub)
 	active_mission.completed.connect(_on_mission_completed.bind(selected_mission.id))
 	play_title.text = selected_mission.title
 	play_status.text = ""

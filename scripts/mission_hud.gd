@@ -5,6 +5,7 @@ extends Control
 signal action_pressed
 signal skip_pressed
 signal pause_pressed
+signal back_pressed
 
 const INK := Color("#e8f1f2")
 const MUTED := Color("#8fa6b3")
@@ -20,6 +21,7 @@ var tools: HBoxContainer
 var action: Button
 var skip: Button
 var pause: Button
+var back: Button
 var info_button: Button
 var info_card: PanelContainer
 var info_label: Label
@@ -89,6 +91,12 @@ func _ready() -> void:
 	pause.pressed.connect(func() -> void: pause_pressed.emit())
 	add_child(pause)
 
+	back = Button.new()
+	back.text = "← Merkez"
+	back.tooltip_text = "Kontrol merkezine dön (Esc)"
+	back.pressed.connect(func() -> void: back_pressed.emit())
+	add_child(back)
+
 	info_button = Button.new()
 	info_button.text = "i"
 	info_button.custom_minimum_size = Vector2(36, 36)
@@ -111,11 +119,14 @@ func _process(_delta: float) -> void:
 	tools.position = Vector2(28, bottom - 52.0)
 	tools.size = Vector2(maxf(size_now.x - 28.0 - 240.0, 200.0), 46.0)
 	action.position = Vector2(size_now.x - action.size.x - 28.0, bottom - 46.0)
-	skip.position = Vector2(size_now.x - skip.size.x - 28.0, 22.0)
-	pause.position = Vector2(size_now.x - pause.size.x - 28.0, 22.0)
+	var right := size_now.x - 28.0
+	back.position = Vector2(right - back.size.x, 22.0)
+	right -= back.size.x + 8.0
+	skip.position = Vector2(right - skip.size.x, 22.0)
+	pause.position = Vector2(right - pause.size.x, 22.0)
 	if skip.visible:
 		pause.position.x = skip.position.x - pause.size.x - 8.0
-	info_button.position = Vector2(size_now.x - 28.0 - info_button.size.x - (skip.size.x + 8.0 if skip.visible else 0.0) - (pause.size.x + 8.0 if pause.visible else 0.0) - 8.0, 22.0)
+	info_button.position = Vector2(right - info_button.size.x - (skip.size.x + 8.0 if skip.visible else 0.0) - (pause.size.x + 8.0 if pause.visible else 0.0) - 8.0, 22.0)
 	info_card.position = Vector2(size_now.x - info_card.size.x - 28.0, 66.0)
 	toast.position = Vector2((size_now.x - toast.size.x) * 0.5, bottom - 120.0)
 
@@ -132,10 +143,17 @@ func _draw() -> void:
 		PackedColorArray([dark, dark, clear, clear]))
 
 
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE and back.visible:
+		back_pressed.emit()
+		get_viewport().set_input_as_handled()
+
+
 func hide_all_buttons() -> void:
 	action.hide()
 	skip.hide()
 	pause.hide()
+	back.show()
 	info_button.hide()
 	info_card.hide()
 
