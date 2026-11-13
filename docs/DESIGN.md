@@ -198,7 +198,18 @@ Belge stili ve sistemi sabitler, fikirleri değil. Bir istasyonun düzeneği, ka
 
 **Yanlış Dünya**, ortaokuldan YKS'ye kadar fen, matematik ve sosyal derslerini öğreten Türkçe bir masaüstü oyunudur. Godot 4.7 ile yapılır, temel çözünürlüğü 1280×720'dir. Rotalar: Sınıflar (5–12), LGS, YKS (TYT, AYT ve isteğe bağlı YDT).
 
-Üç güneşli kaotik bir dünyadan gelen Misafirler, Dünya'nın yasalarına küçük kaymalar bırakır: çekim zayıflar, kalp kapağı ters çalışır, bir belgenin tarihi değişir. Gözlemevinin kalibrasyon asistanı **MERİDYEN** başta oyuncuya yardım eder. Kampanyanın ortasında kaymaları Misafirler adına kendisinin bıraktığı ortaya çıkar. Oyuncu **Kalibratör**'dür. Her kaymayı bir deneyde ölçerek bulur, düzeneği doğru değerle kurtarır ve yasayı mühürler. Final Üç Güneş'tir: iki cisim öngörülebilir, üç cisim öngörülemez.
+Gözlemevinin bütün düzenekleri kalibrasyon asistanı **MERİDYEN**'in ayarlarıyla çalışır. MERİDYEN, üç güneşli kaotik dünyadan gelen Misafirler adına bu ayarları gizlice bozar. Gizli kalmak için bozmayı rastgele yapmaz: öğrencilerin gerçekten takıldığı yanılgıları ayara yazar. "Ağır cisim önce düşer", "momentum yönsüz toplanır", "ışık şiddeti elektron söker", "anı belge kadar güçlü kanıttır" gibi. Bu yüzden bozulma ilk bakışta makul görünür. Oyuncu **Kalibratör**'dür. Ters çalışan düzeneği ölçer, bozuk ayarı bulur, düzeltir ve ayarın verdiği zararı toparlar. Kampanyanın ortasında bozanın MERİDYEN olduğu ortaya çıkar. Final Üç Güneş'tir: iki cisim öngörülebilir, üç cisim öngörülemez.
+
+### Çekirdek döngü
+
+```
+BOZUL  →  TERS ÇALIŞ  →  ÖLÇ  →  TEŞHİS  →  DÜZELT  →  TOPARLA  →  MÜHÜR
+MERİDYEN   düzenek          oyuncu     hangi ayar,     ayarı doğru   bozulanı yeni     yasa kayda
+ayarı      görünür bir      cihazdan   hangi yanılgı   değere çek    durumda geri      geçer, ışık
+bozar      zarar verir      okur                                     getir             ısınır
+```
+
+Oyunun her işi bu döngüyü güçlendirir. **Ters çalışma görünür olmalı**, **düzeltme oyuncunun ölçümüne dayanmalı**, **toparlama hissedilmeli**: kapsül kurtarılır, kan yeniden tek yöne akar, ray yeniden bağlanır, arşiv kaydı yerine oturur.
 
 ### İki katman, iki karakter
 
@@ -218,7 +229,7 @@ Bu ayrım ZORUNLU'dur. Giriş katmanının yoğunluğu deneye taşınmaz. Deneyi
 
 ### İmza
 
-Oyuncunun hatırlayacağı tek şey şudur: **kayan yasa, onarılan düzenek.** Aynı düzenek önce yanlış yasayla oynar, oyuncunun ölçtüğü değerle düzelir, sonra doğru yasayla yeniden oynar. Bütün tasarım bu anı görünür kılmak için vardır.
+Oyuncunun hatırlayacağı tek şey şudur: **ters çalışan düzenek, oyuncunun elinde düzelir.** Aynı düzenek önce bozuk ayarla ters çalışır, oyuncunun ölçtüğü değerle düzelir, sonra doğru ayarla yeniden çalışır ve zarar geri alınır. Bütün tasarım bu iki anı (ters çalışma ve toparlanma) görünür kılmak için vardır.
 
 ### Atmosfer
 
@@ -314,7 +325,7 @@ YAML'daki bileşenler `scripts/ui_theme.gd` içinde tema türü olarak bulunur: 
 
 **Sayı girişi.** Birim kutunun içinde, sağda sabit durur. Virgül de nokta da kabul edilir. Değer Enter ile gönderilir.
 
-**Adım çubuğu.** Deney adımları beş bölümlü bir çubukta gösterilir. Biten adımlar `accent-dim`, geçerli adım `accent` renktedir. Geçerli adımın adı ("Sına") çubuğun yanında `label` olarak yazar. "ADIM 2 / 5 · SINA" gibi noktalı bir meta dizisi kullanılmaz.
+**Adım çubuğu.** Deney adımları altı bölümlü bir çubukta gösterilir. Biten adımlar `accent-dim`, geçerli adım `accent` renktedir. Geçerli adımın adı ("Sına") çubuğun yanında `label` olarak yazar. "ADIM 2 / 5 · SINA" gibi noktalı bir meta dizisi kullanılmaz.
 
 **Toast.** Tek cümle, en çok 60 karakter, 4,5 sn. Tonu soldaki çizilmiş simge ve kenar rengi verir. Emoji ve `✓` gibi metin simgesi kullanılmaz.
 
@@ -473,7 +484,7 @@ Bütün istasyonlar `scripts/mission_hud.gd` kullanır.
 ┌──────────────────────────────────────────────────────────────┐
 │ ┌──────────────────────────────────────┐          [i]  [Esc] │
 │ │ Kızağı bırak, ivmeyi ekrandan oku.   │                     │
-│ │ ▬▬▬ ▬▬▬ ─── ─── ───   Sına            │                     │
+│ │ ▬▬ ▬▬ ── ── ── ──   Sına              │                     │
 │ └──────────────────────────────────────┘                     │
 │                                                              │
 │              3D DÜZENEK ve cihaz ekranları                   │
@@ -494,62 +505,98 @@ Bütün istasyonlar `scripts/mission_hud.gd` kullanır.
 
 Deney katmanında paragraf, açıklama kartı ve sabit metin paneli bulunmaz (ZORUNLU). Ayrıntı "i" altında, en çok iki cümledir.
 
-## Experiment Design · Genel
+## Experiment Path · Her deneyin yolu
 
-Her istasyon aynı beş adımla akar (ZORUNLU):
+Bu bölüm belirli bir deneyi değil, her deneyin nasıl kurulacağını tarif eder. Fizik, kimya, biyoloji, matematik ve sözel derslerin hepsi aynı yoldan geçer. Düzeneğin kendisi SERBEST'tir. Yol ve kurallar ZORUNLU'dur.
 
-| # | Adım | İçerik | Bitiş |
+### Adımlar (oyuncunun gördüğü)
+
+| # | Adım | Ne olur | Bitiş koşulu |
 |---|---|---|---|
-| 1 | **Kriz** | Kayma kendiliğinden oynar (≤ 8 sn, atlanabilir). Kaybedilecek şey görünür: kapsül, kapı, organ, belge. Cihaz bir değer bekler, gerçek değer başka çıkar. | NEDENİNİ BUL |
-| 2 | **Sına** | Oyuncu tek değişkeni değiştirir ve sonucu cihazdan okur. Güçler burada kullanılır. | Gerekli ölçümler alındı |
-| 3 | **Neden** | Oyuncu kaymanın kaynağını gösterir: parçaya dokunur ya da ölçtüğü değeri girer. Şık listesi kullanılmaz. | Doğru kaynak |
-| 4 | **Kurtar** | Yeni bir durum gelir. Oyuncu değeri hesaplar ve girer, düzenek o değerle çalışır. Deneme hakkı sınırlıdır. | `completed.emit()` |
-| 5 | **Mühür** | Aynı düzenek doğru yasayla yeniden oynar. Işık ısınır, kayıt satırı düşer. | Mühür ekranı |
+| 1 | **Kriz** | Düzenek bozuk ayarla kendiliğinden çalışır ve **ters sonuç verir** (≤ 8 sn, atlanabilir). Kaybedilecek şey görünür: kapsül, kapı, organ, kayıt. Cihazın öngörüsü ile gerçek sonuç yan yana görünür. | NEDENİNİ BUL |
+| 2 | **Sına** | Oyuncu tek değişkeni değiştirir, sonucu cihazdan okur. Öngörü ile gerçek her denemede yan yana kaydedilir. Sonucu oyun söylemez, kayıt gösterir. | Gerekli ölçümler kayıtta |
+| 3 | **Teşhis** | Oyuncu bozuk ayarı düzeneğin ayar panelinde bulur ve kanıtı gösterir: kayıttan bir satırı ya da bir ölçümü ayara bağlar. | Doğru ayar ve doğru kanıt |
+| 4 | **Düzelt** | Oyuncu ayarın doğru değerini, kendi ölçümünden hesaplayarak girer ya da kurar. Düzenek yeni ayarla bir kez çalışır, öngörü ile gerçek çakışır. | Öngörü = gerçek |
+| 5 | **Toparla** | Bozulmanın verdiği zarar yeni bir durumda geri alınır: kurtarma, yeniden bağlama, yeniden yönlendirme. Bu bağımsız uygulamadır, sayılar değişir ve ipucu verilmez. Haklar sınırlıdır. | Zarar geri alındı, `completed.emit()` |
+| 6 | **Mühür** | Aynı düzenek doğru ayarla baştan oynar, ışık ısınır, kayıt satırı düşer. | Mühür ekranı |
 
-**ZORUNLU kurallar:**
+### Bozma kuralı (ZORUNLU)
 
-- **Tek değişken.** Bir sınamada yalnızca bir şey değişir. Geri kalan değerler cihazda sabit görünür.
-- **Yanlış değer, o değerle çalışan bir düzenek demektir.** Ardından en çok 60 karakterlik bir neden cümlesi gelir ("Süre uzun: yükseklik fazla.").
-- **Eksik kavram tanınabilir bir kısmi hata üretir.** Kurtarma birden çok koşul istiyorsa her eksik koşul farklı bir hata gösterir.
+- **Her bozma, belgelenmiş tek bir öğrenci yanılgısıdır.** Yanılgının kaynağı (MEB materyali, ÖSYM sorusu, alan yazını) istasyonun tasarım kartında yazılıdır. Uydurma bir hata, rastgele bir sayı ya da "cihaz arızası" bozma sayılmaz.
+- **Bozma tek bir ayardadır.** Ayar, düzeneğin ayar panelinde fiziksel olarak durur: kalibrasyon plakası, kadran, kart, kayıt fişi. Oyuncu onu görebilir, ama ne yaptığını ölçmeden bilemez.
+- **Ters çalışma, yanılgının doğal sonucudur.** Yanılgı doğru olsaydı dünya nasıl davranırdı, düzenek öyle öngörür. Gerçek ise doğru kurala göre olur. Aradaki fark sahnede görünür.
+- **Dünya her zaman doğru kuralla çalışır.** Bozuk olan, MERİDYEN'in ayarı, yani düzeneğin öngörüsü ve kontrolüdür. Kurtarma bu yüzden doğru kuralla hesaplanır.
+
+### Oynanış kuralları (ZORUNLU)
+
+- **Tek değişken.** Bir sınamada yalnızca bir şey değişir, gerisi cihazda sabit görünür.
+- **Sayı cihazdan okunur.** Ölçülecek değer yönerge metninde verilmez. Oyuncu onu düzenekten, kayıttan ya da grafikten okur.
+- **Sonucu oyun söylemez.** Toast gözlemi tarif edebilir ("İkisi aynı anda indi: 2,58 s"), kuralı söylemez ("kütle fark yaratmaz"). Kuralı oyuncu teşhiste kendisi kurar.
+- **Teşhis şıkla yapılmaz.** Üç düğmeden birini seçmek teşhis değildir. Oyuncu ayarı ve kanıtı gösterir. Yanlış teşhis düzeneği yanlış ayarla bir kez daha çalıştırır ve sonucu görünür.
+- **İpucu cevabı içermez.** Hata mesajları, yer tutucular ve "Örnek" metinleri biçimi gösterir, doğru değeri asla göstermez. Örnek sayı, cevaptan farklı olmak zorundadır. Bunu testler denetler.
+- **Yanlış değer, o değerle çalışan bir düzenek demektir.** Ardından en çok 60 karakterlik bir neden cümlesi gelir. Neden cümlesi tipik hatayı adlandırır (½ unutuldu, işaret ters, birim karıştı), cevabı söylemez.
+- **Canlı hesap gösterilmez.** Oyuncunun hesaplaması gereken sonucu ekran kaydırıcıyla birlikte canlı göstermez. Aksi hâlde hesap, kaydırıcıyı eşitliğe sürmeye dönüşür.
+- **Hak sınırlıdır ve bitmesinin bir sonucu vardır.** Toparla adımında üç hak sahnede nesne olarak görünür. Haklar bitince düzenek Sar ile krizin başına döner ve oyuncu Sına'dan yeniden başlar. Sınırsız yenileme yapılmaz.
+- **Her koşul bir karar gerektirir.** Doğru cevabı veren her oyuncunun zaten sağladığı bir koşul (örneğin her zaman 9,6 J çıkan bir ısı sınırı) koşul sayılmaz.
 - **Hesap animasyondan ayrıdır.** Kural `*_sim.gd` ya da `*_model.gd` içindedir ve headless test edilir. Görünüm `*_view.gd` ya da `*_stage.gd`, akış `mission.gd` içindedir.
-- **Sayılar kaynaklıdır.** Kazanım ve kaynak `mission.tres` içinde bulunur. Ekrandaki şema yapılan sadeleştirmeyle tutarlıdır.
 
-**VARSAYILAN kurallar:**
+VARSAYILAN: Her deney en az iki etkileşim fiili kullanır (sürükle-bırak, çevir, bağla, bırak, işaretle, gir). Sar, Yavaşlat, Ayır ve Gör güçleri Sına adımında kullanılır.
 
-- En az iki etkileşim fiili kullanılır: sürükle-bırak, çevir, bağla, bırak, işaretle, gir.
-- Kurtarmada üç deneme hakkı vardır ve haklar sahnede nesne olarak görünür (üç kapsül, üç numune).
-- Sar gücü aynı koşulu tek tuşla geri getirir.
+SERBEST: Düzenek, kriz kurgusu, kamera, ses, ayar panelinin biçimi, güçlerin istasyona özgü görünümü.
 
-**SERBEST:** Kriz kurgusu, düzeneğin tasarımı, kamera, ses, güçlerin istasyona özgü görünümü, ek öğretici anlar.
+### Tasarım kartı
 
-## Experiment Design · Derslere göre
+Her istasyon koda başlamadan önce kendi klasörüne `DESIGN_CARD.md` yazar. Kart kısa tutulur ve inceleme bu karta göre yapılır.
 
-Her ders aynı beş adımı ve aynı ışık kurallarını kullanır, ama kendi mekânı ve ölçü aracı vardır. Aşağıdaki tablo bir başlangıç önerisidir (SERBEST). ZORUNLU olan, her dersin bir mekânı, bir ölçü aracı, elle yapılan bir işi ve sahnede görünen bir hata sonucu olmasıdır.
+```markdown
+# <İstasyon adı>
+Rota ve kazanım: <AYT Fizik 5 · kazanım cümlesi> (kaynak bağlantısı)
+Yanılgı: <öğrencinin inandığı yanlış kural> (kaynak bağlantısı)
+Bozuk ayar: <panelde ne yazıyor, hangi değerde>
+Ters çalışma: <yanılgıya göre öngörü> ↔ <gerçek sonuç>, kaybedilen şey
+Ölçüm: <oyuncu hangi cihazdan neyi okuyor>
+Teşhis kanıtı: <hangi kayıt satırı hangi ayarı çürütüyor>
+Düzelt: <girilen değer ve hesabı>
+Toparla: <yeni durum, sayılar, 3 hak, her yanlışın sahnedeki sonucu>
+Doğru/yanlış tablosu: <giriş → sahnede ne olur → neden cümlesi>
+Varlıklar: <gereken modeller, kaynak ya da talep numarası>
+```
 
-Çoktan seçmeli, eşleştirme ya da sıralama kartı tek başına görev sayılmaz. Bu biçimler düzeneğin bir kontrolü olabilir: örneğin belge rafa konur, tıklanacak bir şık olmaz.
+### Üretim yolu
 
-| Ders | Mekân | Ölçü aracı | Elle yapılan iş | Hata sahnede |
-|---|---|---|---|---|
-| **Fizik** | Gece laboratuvarı, metal tezgâh | Fotokapı, kronometre, kuvvet ölçer, cetvel, zaman grafiği | Bırak, kadranla ayarla, ağırlık yükle | Kapsül geç kalır, kızak kapıyı kaçırır |
-| **Kimya** | Aynı laboratuvar, ıslak tezgâh ve çeker ocak | pH metre, büret ve damla sayacı, terazi, gaz şırıngası | Damlat, karıştır, ısıt, vanayı aç | Numune yanlış tankta tepkime verir |
-| **Biyoloji** | Anatomi tezgâhı, perfüzyon düzeneği, mikroskop | Monitör dalga biçimi, akış oku, oksijen göstergesi | Kelepçele, kanül bağla, parça yerleştir | Kan geri kaçar, doku oksijeni düşer |
-| **Matematik, Geometri** | Atölye tezgâhı ve çizim masası; grafik düzeneğin parçası | Sürüklenebilir şekil, canlı grafik, cetvel, iletki | Köşe sürükle, kes, katla, teğeti işaretle | Kutu küçük çıkar, köprü oturmaz |
-| **Türkçe, Edebiyat** | Arşiv okuma salonu, masa lambası | Büyüteç, kanıt işaretleyici, dizgi kasası | Cümle parçasını yerleştir, kanıtın altını çiz, eseri rafa koy | Anlam tersine döner, raf kaydı tutarsızlaşır |
-| **Tarih** | Arşiv, ışık masası (UV) | Tarih damgası, mühür, imza, zaman çizelgesi rayı | Belgeyi ışığa tut, olayı raya yerleştir | Sonraki karar dayanaksız kalır, ray kopar |
-| **Coğrafya** | Kabartma harita masası | Güneş lambası, gölge çubuğu, enlem cetveli, iklim grafiği | Lambayı açıla, pini konumla | Rota sapar, mevsim tutmaz |
-| **Felsefe, Mantık** | Konsey odası, devre panosu | Öncül kartları, şalter ve lamba (doğruluk tablosu) | İtirazı zayıf öncüle bağla, şalteri kur | Karakter çelişir, kapı açılmaz |
-| **Psikoloji, Sosyoloji** | Gözlem odası, ağ panosu | Algı deneyi düzeneği, düğüm ve bağ panosu | Deneyi yürüt, bağı değiştir | Ölçüm iddiayı çürütür, ağ çöker |
-| **Din Kültürü** | Kütüphane | Kaynak metin (ayet, hadis, ilmihal) ve künyesi | İlkeyi vakaya uygula, kaynağı göster | Kaynaksız gerekçe kabul edilmez |
-| **YDT İngilizce** | Telsiz odası | Frekans kadranı, kesik kayıt, transkript şeridi | Frekansı ayarla, kayıp kelimeyi yerleştir | Ekip yanlış kapıya gider |
+1. **Kazanım ve kaynak.** Rota ve kazanım `mission.tres` içine yazılır. Sayılar ve birimler kaynaktan doğrulanır.
+2. **Yanılgı ve bozuk ayar.** Tasarım kartı yazılır. Yasin ya da istasyon sahibi kartı onaylar.
+3. **Kural ve test.** `*_sim.gd` yazılır. Headless test doğru ve yanlış girişlerin hepsini, bir de ipucunun cevabı içermediğini dener.
+4. **Kaba yerleşim (blockout).** Düzenek gri kutularla, hedef kamera ve 1280×720'de kurulur. Okunurluk ve etkileşim burada çözülür.
+5. **Varlık.** Önce hazır CC0 kütüphanesi, sonra talep (Assets bölümü). Varlık gelmeden kaba yerleşim teslim edilmez.
+6. **Entegrasyon.** Varlık sahneye bağlanır, gece laboratuvarı standardı uygulanır, etkileşim katmanı kurulur.
+7. **Akış ve HUD.** Altı adım `mission_hud.gd` ile bağlanır.
+8. **Denetim.** Slop Floor, kabul listesi ve 1280×720 ekran görüntüleri. Doğru, yanlış, haklar bitti ve yeniden dene akışları denenir.
+9. **PR.** Kart, ekran görüntüleri ve test çıktısı PR açıklamasına eklenir.
+
+## Experiment Design · Ders mekânları
+
+Her dersin kendi mekânı ve ölçü aracı vardır. Tablo bir yön verir, bağlamaz (SERBEST). ZORUNLU olan, her deneyin bir mekânı, bir ölçü aracı, elle yapılan bir işi ve sahnede görünen bir ters çalışması olmasıdır. Çoktan seçmeli, eşleştirme ya da sıralama kartı tek başına görev sayılmaz. Bu biçimler ancak düzeneğin kontrolü olabilir: belge rafa konur, tıklanacak bir şık olmaz.
+
+| Ders | Mekân | Ölçü aracı | Yanılgı örneği |
+|---|---|---|---|
+| Fizik | Gece laboratuvarı, metal tezgâh | Fotokapı, kronometre, kuvvet ölçer, zaman grafiği | Ağır cisim önce düşer. Hareket için sürekli kuvvet gerekir. |
+| Kimya | Islak tezgâh, çeker ocak | pH metre, büret, terazi, gaz şırıngası | Tepkimede kütle kaybolur. Seyreltmek pH'ı değiştirmez. |
+| Biyoloji | Anatomi tezgâhı, perfüzyon düzeneği, mikroskop | Monitör dalga biçimi, akış oku, oksijen göstergesi | Atardamar her zaman temiz kan taşır. |
+| Matematik, Geometri | Atölye ve çizim masası, grafik düzeneğin parçası | Sürüklenebilir şekil, canlı grafik, cetvel, iletki | Yüzde artış ve azalış birbirini götürür. |
+| Türkçe, Edebiyat | Arşiv okuma salonu | Büyüteç, kanıt işaretleyici, dizgi kasası | Bağlaç anlamı değiştirmez. Anlatıcı yazardır. |
+| Tarih | Arşiv, ışık masası | Tarih damgası, mühür, zaman çizelgesi rayı | Anı, birincil belge kadar güçlüdür. |
+| Coğrafya | Kabartma harita masası | Güneş lambası, gölge çubuğu, enlem cetveli | Mevsimler Güneş'e uzaklıktan olur. |
+| Felsefe, Mantık | Konsey odası, devre panosu | Öncül kartları, şalter ve lamba | Sonuç doğruysa çıkarım geçerlidir. |
+| Psikoloji, Sosyoloji | Gözlem odası, ağ panosu | Algı düzeneği, düğüm ve bağ panosu | Gördüğüm şey olanın kendisidir. |
+| Din Kültürü | Kütüphane | Kaynak metin ve künyesi | Kaynaksız yorum kaynak kadar geçerlidir. |
+| YDT İngilizce | Telsiz odası | Frekans kadranı, transkript şeridi | Tek kelimeden bütün anlam çıkar. |
 
 Derse özel ZORUNLU kurallar:
 
-- **Biyoloji:** AYT düzeyindedir. Klinik içerik (stent, darlık, tansiyon) yoktur. Anatomi doğrudur: odacık sayısı ve damar yönü.
-- **Spin Hattı:** 11. sınıf Kimya, Modern Atom Teorisi kazanımına bağlıdır. Spin dönen bir küre olarak gösterilmez.
+- **Biyoloji:** AYT düzeyi. Klinik içerik yoktur, anatomi doğrudur.
 - **Sözel dersler:** İnsan figürü yüzsüz silüet ya da arkadan çekim olur. Üretilmiş yüz kullanılmaz. Alıntı ve tarih kaynağıyla verilir.
-- **Kayma her derste tek bir varsayımdır:** fizikte bir parametre, tarihte bir tarih, Türkçede bir bağlaç.
-
-`stations/yks/` mikro görevleri bugün ortak bir soru kabuğunda çalışıyor (choice, pair, sequence). Bu kabuk ders mekânlarına taşınır. `yks_mission_definition.gd` içerik ve doğrulama kaynağı olarak kalır. `mode` alanı düzeneğin kontrol biçimini seçer.
+- **Kazanım dışı gösteri** (örneğin ardışık Stern–Gerlach) Sınıflar rotasında kalır, sınav rotasına girmez.
 
 ## 3D Lab Standard · Gece laboratuvarı
 
@@ -567,7 +614,39 @@ Fizik, kimya ve biyoloji istasyonları aynı binanın odaları gibi görünür. 
 | Varlık | Gerçek ekipman: hava rayı, kızak, fotokapı, vakum tüpü, beher, kanül. Oyuncak, çizgi film ve stilize araç kullanılmaz. Ölçek tutarlıdır. | ZORUNLU |
 | Kontrol | Kadran, düğme ve şalter düzeneğin ön panelindedir (`knob_3d`, `button_3d`). Değerleri okunur. | VARSAYILAN |
 
-Varlık kaynakları: hazır CC0 modeller (`assets/models/`, Poly Haven) ve Codex ya da Gemini talepleri ([ASSETS.md](ASSETS.md)). Etkileşimli parça tek bir mesh'e gömülüyse etkileşim üstüne kurulan bir katmanla yapılır, Kalp Odası'ndaki gibi.
+Varlıklar **Assets** bölümündeki yoldan gelir.
+
+## Assets · Varlık yolu
+
+Gerçekçi bir deney gerçek görünen varlıkla kurulur. Varlık istemek ve kullanmak beklenen bir iştir. Kötü varlıkla teslim etmek ise kabul edilmez.
+
+**Kaynak sırası:**
+
+1. **Hazır CC0 kütüphane:** `assets/models/` (Grab3D), `assets/polyhaven/` (model, doku, HDRI), ambientCG dokuları. Kayıt [ASSET_SOURCES.md](ASSET_SOURCES.md) içinde tutulur.
+2. **Yeni CC0 indirme:** Poly Haven, ambientCG, Grab3D ve benzeri kaynaklardan istasyonun ihtiyacına göre. Kaynak ve lisans aynı kayda yazılır.
+3. **Talep:** Hazırı yoksa ya da yetmiyorsa `docs/requests/NNN-ad.md` şablonuyla ve bir GitHub issue ile Codex'e açılır. Codex'in kotası dolarsa talep Gemini'ye geçer. Talep bu belgenin ilgili bölümüne bağlantı verir, stili yeniden tarif etmez.
+4. **Godot ile kurulan geometri:** Ray, kutu, kablo, tüp gibi basit parçalar mesh olarak kurulur ve PBR malzeme alır.
+
+**Talepte bulunması ZORUNLU olanlar:**
+
+- Oyuncunun ne gördüğü ve neyi hareket ettirdiği.
+- Gerçek dünyadan bir referans fotoğrafı ya da ürün adı.
+- Ölçek (metre), pivot, ayrı hareket eden parçaların düğüm adları.
+- Kamera açısı ve hedef kare, poligon ve doku bütçesi.
+- Kabul koşulu.
+
+**Varlık kabul kapısı (ZORUNLU).** Aşağıdakilerden biri bile varsa varlık sahneye girmez, revize istenir:
+
+- Oyuncak, çizgi film ya da stilize görünüm. Yanlış oran ya da ölçek.
+- Bozuk anatomi, yanlış odacık ya da damar. Eğri, akan ya da erimiş geometri.
+- Okunur metin gömülmüş doku. Üretilmiş yüz.
+- Düz renkli, pürüzlülük haritası olmayan "plastik" yüzey (cihaz ekranı hariç).
+- Gece laboratuvarı ışığıyla uyumsuz pişmiş (baked) aydınlatma.
+- Kaynağı ya da lisansı bilinmeyen dosya.
+
+**Görüntü üretimi.** Üretilmiş 2D görsel yalnızca uzak arka plan ve doku için kullanılır (örneğin `chamber_bg.png`). Ön plandaki etkileşimli nesneler, insan figürleri ve okunur metin üretilmiş görselden gelmez.
+
+**Etkileşim katmanı.** Hazır model tek parçaysa etkileşimli parçalar onun üstüne ayrı `Node3D` olarak kurulur. Konumlar ölçülerek bulunur, Kalp Odası'ndaki gibi.
 
 ## Motion & Sound
 
@@ -603,23 +682,12 @@ Bu belgeyle çalışan her ajan (Claude, Codex, Gemini) ve insan için:
 - [ ] Aralıklı büyük harf etiket, kicker, noktalı meta dizisi, emoji simge ve uzun tire yok.
 - [ ] Her durum renk dışında bir işaretle de veriliyor. Odak halkası klavyeyle görünüyor.
 - [ ] Yönerge ≤ 90, toast ≤ 60 karakter. Deney ekranında paragraf yok.
-- [ ] Beş adımın hepsi var ve kriz atlanabiliyor. Doğru giriş, yanlış giriş (sahnede sonucu), yeniden deneme ve Esc ile dönüş denendi.
+- [ ] Altı adımın hepsi var ve kriz atlanabiliyor. Tasarım kartı klasörde. İpucu ve örnekler cevabı içermiyor. Doğru giriş, yanlış giriş (sahnede sonucu), yeniden deneme ve Esc ile dönüş denendi.
 - [ ] Sahnede oyuncak, bozuk anatomi, eğik ya da bulanık yazı, üretilmiş yüz ve gömülü metin yok. Uydurma sayı yok.
 - [ ] F6 ile tek başına ve F5 ile ilgili rotadan açıldı. Akış testi geçiyor.
 
-## Known Gaps · Bilinen açıklar (2026-11-14)
+## Known Gaps · Bilinen açıklar
 
-| Alan | Durum | Yapılacak |
-|---|---|---|
-| Tema | IBM Plex ve Inter kullanılıyor, etiketler aralıklı büyük harf, "ADIM 2/5 · SINA" gibi noktalı meta dizileri var | Rajdhani ve Barlow'a geçiş. Tema türlerini YAML bileşenleriyle eşle. `stage_kit.gd`, `mission_hud.gd` ve `stations/yks/mission.gd` içindeki kopya renkleri temaya bağla. |
-| Gözlemevi | Liste ve gri bloklar, boş görünen paneller, "KONTROL MERKEZİ" kicker'ı | Üç sütunlu kampanya ekranı, kaide seçimi, başlık ekranı |
-| HUD | Sağ üstte tek kalmış "i", toast taşması, güç şeridinin yeri istasyona göre değişiyor | HUD v2 ve adım çubuğu |
-| Newton, Atış, Çarpışma, Spin | Hangar fotoğrafı, gri zemin, ahşap tezgâh, oyuncak araba, okunmayan 3D yazı | Gece laboratuvarı standardı, hava rayı kızağı |
-| Dalga Girişimi | Düz shader ve sağ veri paneli | Tezgâh üstünde dalga leğeni, veri cihaz ekranında |
-| Ölçüm, Vektör, Mevsim, Fotoelektrik, Depo | 2D çizimle taklit edilmiş düzenek | Gerçek 3D düzenek |
-| YKS mikro görevleri (13) | Soru kabuğu | Ders mekânları |
-| Köprü, Prizma, Basınç | Sahne yok | Kilitli kaide |
-| Meridian Display yazı tipi | Elle çizilmiş ve aileyle uyumsuz | Arşive kaldır. Wordmark Rajdhani Bold ile yazılır. |
-| Metin denetimi | Elle | `tools/` altına `.gd`, `.tres` ve `.tscn` metinlerinde aralıklı büyük harf, noktalı dizi, uzun tire ve emoji arayan bir denetleyici |
+Mevcut ekranların ve istasyonların bu belgeye göre denetimi ayrı tutulur, çünkü değişir: [docs/review/2026-11-14-deney-denetimi.md](review/2026-11-14-deney-denetimi.md).
 
 **Uygulama sırası:** Tema → HUD v2 → Başlık ekranı ve gözlemevi → Tezgâh standardı → Jüri rotası istasyonları (Düşüş, Newton, Atış, Çarpışma, Spin, Dalga, Kalp) → YKS ders mekânları → Mühür ve final.
