@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="128" viewBox="0 0 512 128">
+<defs><linearGradient id="wall" x2="0" y2="1"><stop stop-color="#e07b70"/><stop offset=".4" stop-color="#9b343a"/><stop offset="1" stop-color="#180d12"/></linearGradient>
+<linearGradient id="lumen" x2="0" y2="1"><stop stop-color="#3b1c22"/><stop offset=".45" stop-color="#180d12"/><stop offset="1" stop-color="#32191e"/></linearGradient>
+<pattern id="fiber" width="128" height="128" patternUnits="userSpaceOnUse"><path d="M5 18 C35 12 79 25 123 16 M0 28 C38 21 78 36 128 26" fill="none" stroke="#e07b70" stroke-opacity=".22" stroke-width="1.2"/><path d="M8 105 C41 99 82 112 124 103" fill="none" stroke="#130f18" stroke-opacity=".24" stroke-width="2"/><path d="M28 0 Q40 42 32 128 M94 0 Q82 64 96 128" fill="none" stroke="#e07b70" stroke-opacity=".06"/></pattern></defs>
+<rect x="0" y="31" width="512" height="66" fill="url(#wall)"/>
+<rect x="0" y="43" width="512" height="42" fill="url(#lumen)"/>
+<rect width="512" height="128" fill="url(#fiber)"/>
+<path d="M0 43 H512" stroke="#e07b70" stroke-opacity=".5"/><path d="M0 85 H512" stroke="#08080e" stroke-opacity=".78" stroke-width="2"/>
+</svg>

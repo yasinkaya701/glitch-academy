@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<defs><linearGradient id="tissue" x2="0" y2="1"><stop stop-color="#b3bfd6"/><stop offset=".5" stop-color="#677197"/><stop offset="1" stop-color="#2f3454"/></linearGradient><radialGradient id="lumen"><stop stop-color="#090a10"/><stop offset=".82" stop-color="#17131a"/><stop offset="1" stop-color="#2f3454"/></radialGradient></defs>
+<path d="M40 171h233l59 21v128l-59 21H40z" fill="url(#tissue)"/><path d="M44 180h225l45 17M45 333h224l45-17" fill="none" stroke="#b3bfd6" stroke-opacity=".72" stroke-width="6"/>
+<path d="M75 198h166M76 207h160M75 305h166" fill="none" stroke="#b3bfd6" stroke-opacity=".19" stroke-width="3"/>
+<ellipse cx="354" cy="256" rx="70" ry="86" fill="#2f3454" stroke="#37434d" stroke-width="8"/><ellipse cx="354" cy="256" rx="59" ry="76" fill="#b3bfd6" stroke="#eee0d5" stroke-opacity=".8" stroke-width="4"/>
+<ellipse cx="357" cy="256" rx="39" ry="55" fill="url(#lumen)" stroke="#2f3454" stroke-width="4"/><path d="M325 217a37 52 0 0 0 5 53" fill="none" stroke="#f2c5b6" stroke-opacity=".7" stroke-width="4"/>
+</svg>
