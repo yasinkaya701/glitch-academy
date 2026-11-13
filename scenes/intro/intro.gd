@@ -15,7 +15,6 @@ const CAPTIONS := [
 	"Merhaba. Gözlemevi denetimi için seni bekliyordum.",
 	"İlk kalibrasyonda küçük bir sapma gördüm.",
 	"Aynı anda bırakılan iki yük, sensöre farklı zamanlarda ulaştı.",
-	"Birlikte kontrol edelim. Önce bir TYT kaydını inceleyelim.",
 ]
 const ACCENT_NORMAL := Color("#87cfc4")
 const ACCENT_ALARM := Color("#ff9d79")
@@ -34,6 +33,7 @@ var elapsed := 0.0
 var cue_index := -1
 var started := false
 var playing := false
+var campaign_route: StringName = &"tyt"
 
 
 func _ready() -> void:
@@ -53,6 +53,10 @@ func start() -> void:
 	show()
 	set_process(true)
 	set_process_input(true)
+
+
+func configure_route(route: StringName) -> void:
+	campaign_route = route
 
 
 func _input(event: InputEvent) -> void:
@@ -77,7 +81,7 @@ func _update_frame() -> void:
 	if next_cue != cue_index:
 		cue_index = next_cue
 		headline.text = HEADLINES[cue_index]
-		caption.text = CAPTIONS[cue_index]
+		caption.text = CAPTIONS[cue_index] if cue_index < CAPTIONS.size() else _route_caption()
 		headline.add_theme_font_size_override("font_size", 60 if cue_index == 3 else 36)
 		trace.visible = cue_index == 1
 	var cue_start: float = CUE_STARTS[cue_index]
@@ -94,6 +98,13 @@ func _update_frame() -> void:
 		_update_trace(elapsed - cue_start)
 	progress.value = elapsed / DURATION
 	alarm_changed.emit(alarm)
+
+
+func _route_caption() -> String:
+	match campaign_route:
+		&"ayt": return "Birlikte kontrol edelim. Alan kaydını inceleyelim."
+		&"ydt": return "Birlikte kontrol edelim. Kesilen frekansı dinleyelim."
+	return "Birlikte kontrol edelim. TYT kaydını inceleyelim."
 
 
 func _update_trace(cue_elapsed: float) -> void:

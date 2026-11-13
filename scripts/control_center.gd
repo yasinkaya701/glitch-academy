@@ -127,6 +127,7 @@ func _input(event: InputEvent) -> void:
 
 func _play_intro() -> void:
 	var intro = INTRO.instantiate()
+	intro.configure_route(selected_yks_route)
 	hub.hide()
 	%HubScrim.hide()
 	add_child(intro)
