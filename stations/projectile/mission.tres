@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/projectile/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"projectile"
+title = "Atış Alanı"
+subject = "Fizik"
+grade = 12
+routes = PackedStringArray("class", "ayt")
+description = "Bırak ve fırlat: iki hareketi ayır, kapsülü 60 m'deki hedef halkasına indir."
+curriculum = "AYT Fizik · Atışlar, yatay atış"
+source_url = "https://ttkb.meb.gov.tr/www/icerik_goruntule.php?DIL=tr&KNO=831"
+scene = ExtResource("2")
