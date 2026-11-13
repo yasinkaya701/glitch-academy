@@ -186,9 +186,11 @@ static func _theme_route_tabs(theme: Theme, font: Font) -> void:
 	theme.set_type_variation("RouteTab", "Button")
 	var idle := _texture_box("res://assets/ui/tab_idle.png", 14, 14, 8, 8, 12, 12, 4, 4)
 	var active := _texture_box("res://assets/ui/tab_active.png", 14, 14, 8, 8, 12, 12, 4, 4)
+	var hover: StyleBoxTexture = idle.duplicate() as StyleBoxTexture
+	hover.modulate_color = Color("#cbd9da")
 	theme.set_stylebox("normal", "RouteTab", idle)
 	theme.set_stylebox("disabled", "RouteTab", idle)
-	theme.set_stylebox("hover", "RouteTab", active)
+	theme.set_stylebox("hover", "RouteTab", hover)
 	theme.set_stylebox("pressed", "RouteTab", active)
 	theme.set_stylebox("hover_pressed", "RouteTab", active)
 	theme.set_stylebox("focus", "RouteTab", _flat(Color(0, 0, 0, 0), ACCENT, 1, 4, 10, 6))

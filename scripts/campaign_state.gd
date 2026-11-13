@@ -67,6 +67,8 @@ func completed_subject_count(catalog: Array, include_y_d_t := true, route_scope:
 	var subjects: Dictionary[String, bool] = {}
 	for mission in catalog:
 		var routes: PackedStringArray = mission.get("routes")
+		if mission.get("id") == &"three_suns":
+			continue
 		if not (routes.has("tyt") or routes.has("ayt") or routes.has("ydt")):
 			continue
 		if route_scope == &"ydt" and not include_y_d_t:

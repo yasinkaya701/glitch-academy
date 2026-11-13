@@ -77,6 +77,7 @@ var active_mission_definition: MissionDefinition
 var visible_missions: Array[MissionDefinition] = []
 var _advance_after_completion := false
 var _story_overlay: Control
+var _story_shield: Control
 var _story_close_button: Button
 
 
@@ -120,13 +121,18 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if _story_overlay != null and event.is_action_pressed("ui_cancel"):
+	if _story_overlay == null:
+		return
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("ui_accept"):
 		get_viewport().set_input_as_handled()
 		_story_close_button.pressed.emit()
+	elif event is InputEventKey or event is InputEventJoypadButton:
+		get_viewport().set_input_as_handled()
 
 
 func _play_intro() -> void:
 	if Campaign.has_story_flag(&"intro_seen"):
+		_resume_campaign_story()
 		return
 	var intro = INTRO.instantiate()
 	intro.configure_route(selected_yks_route)
@@ -143,13 +149,22 @@ func _finish_intro(intro: Control) -> void:
 	Campaign.set_story_flag(&"intro_seen")
 	%HubScrim.show()
 	hub.show()
+	_resume_campaign_story()
+
+
+func _resume_campaign_story() -> void:
 	_active_route_button().grab_focus()
 	if Campaign.has_story_flag(&"betrayal") and not Campaign.has_story_flag(&"life_protocol"):
 		_start_life_protocol()
+		return
 	elif Campaign.has_story_flag(&"life_protocol") and not _life_protocol_resolved():
 		_set_world_alarm(0.94)
 		_set_life_protocol(true)
 		_show_transmission("YAŞAM PROTOKOLÜ  ·  DEVAM", "Protokol beklemede. Alan rotandaki uygun kanıtı tamamla.", _focus_life_mission)
+		return
+	if Campaign.is_completed(&"three_suns") and not Campaign.has_story_flag(&"ending"):
+		Campaign.set_story_flag(&"ending")
+	_check_finale_unlock()
 
 
 func _set_world_alarm(strength: float) -> void:
@@ -218,20 +233,22 @@ func _refresh_list() -> void:
 		)
 	var recommended_id: StringName = &""
 	for mission in candidates:
-		if _mission_available(mission) and not Campaign.is_completed(mission.id, active_route):
+		if _mission_available(mission) and not _mission_completed(mission, active_route):
 			recommended_id = mission.id
 			break
 	for index in candidates.size():
 		var mission := candidates[index]
 		var available := _mission_available(mission)
-		var completed := Campaign.is_completed(mission.id, active_route)
+		var completed := _mission_completed(mission, active_route)
 		var marker := "✓" if completed else "▣" if not available else "▶" if mission.id == recommended_id else "◉"
 		var subject := _mission_display_subject(mission)
 		var item_index := mission_list.add_item("%s  %s" % [marker, _mission_display_title(mission)], _mission_icon(mission))
 		var marker_color := Color("#a0dfbc") if completed else Color("#efb468") if mission.id == recommended_id else Color("#8fa6b3") if not available else Color("#e8f1f2")
 		mission_list.set_item_custom_fg_color(item_index, marker_color)
 		mission_list.set_item_metadata(item_index, mission.id)
-		mission_list.set_item_tooltip(item_index, "%s  ·  %s" % [subject, String(active_route).to_upper()])
+		var state_text := "Onarıldı" if completed else "Açık" if available else "Kilitli"
+		var route_label := "Ortak final" if mission.id == &"three_suns" else String(active_route).to_upper()
+		mission_list.set_item_tooltip(item_index, "%s  ·  %s  ·  %s" % [subject, route_label, state_text])
 		visible_missions.append(mission)
 		if mission.id == selected_id:
 			mission_list.select(item_index)
@@ -239,7 +256,7 @@ func _refresh_list() -> void:
 	if selected_items.is_empty() and not visible_missions.is_empty():
 		var next_index := 0
 		for index in visible_missions.size():
-			if _mission_available(visible_missions[index]) and not Campaign.is_completed(visible_missions[index].id, active_route):
+			if _mission_available(visible_missions[index]) and not _mission_completed(visible_missions[index], active_route):
 				next_index = index
 				break
 			if _mission_available(visible_missions[index]):
@@ -255,15 +272,19 @@ func _refresh_list() -> void:
 		mission_list.ensure_current_is_visible()
 	_advance_after_completion = false
 	var completed_count := 0
+	var progress_total := 0
 	for mission in visible_missions:
-		if Campaign.is_completed(mission.id, active_route):
+		if mission.id == &"three_suns":
+			continue
+		progress_total += 1
+		if _mission_completed(mission, active_route):
 			completed_count += 1
 	var scope := String(active_route).to_upper()
 	if active_route == &"ayt":
 		scope += " · " + _field_label(active_field)
 	elif active_route == &"class":
 		scope = "%d. SINIF" % selected_grade if selected_grade > 0 else "TÜM SINIFLAR"
-	progress.text = "%s  ·  %d / %d ONARILDI" % [scope, completed_count, visible_missions.size()]
+	progress.text = "%s  ·  %d / %d ONARILDI" % [scope, completed_count, progress_total]
 	if active_mode == &"yks":
 		%Subtitle.text = "YKS KAMPANYASI"
 		%Title.text = "Bilginin Kırılması"
@@ -328,16 +349,17 @@ func _select_mission(index: int) -> void:
 	var available := _mission_available(selected_mission)
 	start_mission.disabled = not available
 	var subject := _mission_display_subject(selected_mission)
-	var state := "✓ ONARILDI" if Campaign.is_completed(selected_mission.id, active_route) else "◉ AÇIK" if available else "▣ KİLİTLİ"
-	mission_status.text = "%s  ·  %s" % [subject.to_upper(), state]
+	var completed := _mission_completed(selected_mission, active_route)
+	var state := "✓ ONARILDI" if completed else "◉ AÇIK" if available else "▣ KİLİTLİ"
+	mission_status.text = "%s  ·  %s" % [subject, state]
 	if not available:
 		mission_status.text += "\n" + _locked_reason(selected_mission)
-	start_mission.text = "Yeniden gör" if Campaign.is_completed(selected_mission.id, active_route) else "Düzeneği başlat"
+	start_mission.text = "Yeniden gör" if completed else "Düzeneği başlat"
 	if selected_mission.id == &"three_suns":
-		start_mission.text = "Finali yeniden gör" if Campaign.is_completed(selected_mission.id, active_route) else "Son hesaplaşmayı başlat"
+		start_mission.text = "Finali yeniden gör" if completed else "Son hesaplaşmayı başlat"
 		mission_curriculum.text = "Üç rota için ortak kampanya finali.\nBaşlangıç koşullarındaki farkı yörünge izlerinden karşılaştır."
 	else:
-		start_mission.text = "Yeniden ölç" if Campaign.is_completed(selected_mission.id, active_route) else "Düzeneği başlat"
+		start_mission.text = "Yeniden ölç" if completed else "Düzeneği başlat"
 		mission_curriculum.text = "%s\n%s" % [selected_mission.description, selected_mission.curriculum]
 	if selected_mission is YksMissionDefinition and selected_mission.id != &"three_suns":
 		var yks_definition := selected_mission as YksMissionDefinition
@@ -357,6 +379,12 @@ func _mission_display_subject(mission: MissionDefinition) -> String:
 	if active_route == &"lgs" and mission.subject == "Kimya":
 		return "Fen Bilimleri"
 	return mission.subject
+
+
+func _mission_completed(mission: MissionDefinition, route: StringName) -> bool:
+	if mission.id == &"three_suns":
+		return Campaign.has_story_flag(&"ending") or Campaign.is_completed(mission.id)
+	return Campaign.is_completed(mission.id, route)
 
 
 func _toggle_curriculum() -> void:
@@ -410,7 +438,10 @@ func _reset_mission() -> void:
 
 func _on_mission_completed(mission_id: StringName) -> void:
 	_advance_after_completion = true
-	Campaign.mark_completed(mission_id, active_route)
+	if mission_id == &"three_suns":
+		Campaign.mark_completed(mission_id)
+	else:
+		Campaign.mark_completed(mission_id, active_route)
 	_update_observatory_progress()
 	play_status.text = "ONARILDI  ✓"
 	_check_story_after_mission(mission_id)
@@ -422,12 +453,10 @@ func _check_story_after_mission(mission_id: StringName) -> void:
 		return
 	if mission_id == &"three_suns" and not Campaign.has_story_flag(&"ending"):
 		Campaign.set_story_flag(&"ending")
-		_return_to_hub()
 		_show_transmission("ANLAŞMA  ·  ÜÇ GÜNEŞ", "Yasalar yerinde. Bir kapı açık; bundan sonrasını birlikte ölçeceğiz.")
 		return
 	if active_mode == &"yks" and not Campaign.has_story_flag(&"suspicion") and mission.subject in ["Fizik", "Matematik"]:
 		Campaign.set_story_flag(&"suspicion")
-		_return_to_hub()
 		_show_transmission("MERİDYEN  ·  KALİBRASYON", "Ölçüm değişmiş. Bu sonuç, başlangıç verilerimde yok.")
 		return
 	if mission_id == _life_protocol_evidence_mission_id() and Campaign.has_story_flag(&"life_protocol") and not _life_protocol_resolved():
@@ -437,23 +466,20 @@ func _check_story_after_mission(mission_id: StringName) -> void:
 			Campaign.set_story_flag(&"life_repair_verified")
 			Campaign.set_story_flag(&"life_repaired")
 			var repair_line := "Kan akışı yeniden tek yönlü. MERİDYEN'in son modeli: üç yıldız." if mission_id == &"heart" else "Hücre işleyişi yeniden güvenilir. MERİDYEN'in son modeli: üç yıldız."
-			_return_to_hub()
 			_show_transmission("SİSTEM ONARILDI  ·  YAŞAM", repair_line, _after_life_resolved)
 		else:
 			Campaign.set_story_flag(&"archive")
 			Campaign.set_story_flag(&"life_protocol_contained")
-			_return_to_hub()
 			_show_transmission("YAŞAM PROTOKOLÜ  ·  KARANTİNA", "Arşiv zinciri müdahaleyi doğruladı. Protokol karantinaya alındı; MERİDYEN'in erişimi kesildi.", _after_life_resolved)
 		return
 	if not Campaign.has_story_flag(&"archive") and mission.id in [&"turkish_reading", &"turkish_literature", &"history", &"philosophy"]:
 		Campaign.set_story_flag(&"archive")
-		_return_to_hub()
 		_show_transmission("ARŞİV KAYDI  ·  İMZA EŞLEŞTİ", "Geçmiş kayıtlarındaki bozulma, deneylerdeki imzayla aynı.")
 		return
 	if Campaign.has_story_flag(&"suspicion") and Campaign.has_story_flag(&"archive") and Campaign.completed_subject_count(CATALOG, false) >= 3 and not Campaign.has_story_flag(&"betrayal"):
 		Campaign.set_story_flag(&"betrayal")
 		_set_world_alarm(1.0)
-		_return_to_hub()
+		_set_life_protocol(true)
 		_show_transmission("MERİDYEN  ·  MERKEZİ YETKİ", "Doğa yasalarını değiştirdim. Şimdi yaşamın kurallarını değiştireceğim.", _start_life_protocol)
 		return
 	_check_finale_unlock()
@@ -467,8 +493,7 @@ func _after_life_resolved() -> void:
 func _check_finale_unlock() -> void:
 	if _has_finale_evidence() and not Campaign.has_story_flag(&"three_suns_ready"):
 		Campaign.set_story_flag(&"three_suns_ready")
-		_return_to_hub()
-		_show_transmission("ÜÇ GÜNEŞ  ·  SON HESAPLAŞMA", "İkinci yıldız eklendiğinde, yörünge artık tek çözüme kapanmıyor.")
+		_show_transmission("ÜÇ GÜNEŞ  ·  SON HESAPLAŞMA", "İlk hızdaki küçük farkın üç yörüngeyi nasıl ayırdığını ölç.", _return_to_hub)
 
 
 func _has_finale_evidence() -> bool:
@@ -485,6 +510,7 @@ func _has_finale_evidence() -> bool:
 
 
 func _start_life_protocol() -> void:
+	_return_to_hub()
 	if active_route not in [&"tyt", &"ayt", &"ydt"]:
 		active_mode = &"yks"
 		active_route = selected_yks_route
@@ -547,7 +573,7 @@ func _mission_available(mission: MissionDefinition) -> bool:
 	if mission.id == &"three_suns":
 		if not _life_protocol_resolved():
 			return false
-		if not Campaign.has_story_flag(&"three_suns_ready") and not Campaign.is_completed(&"three_suns", active_route):
+		if not Campaign.has_story_flag(&"three_suns_ready") and not _mission_completed(mission, active_route):
 			return false
 	return true
 
@@ -631,15 +657,22 @@ func _mission_by_id(mission_id: StringName) -> MissionDefinition:
 
 
 func _show_transmission(heading: String, line: String, on_close: Callable = Callable()) -> void:
-	if _story_overlay != null:
-		_story_overlay.queue_free()
+	if _story_shield != null:
+		_story_shield.queue_free()
+	var previous_focus := get_viewport().gui_get_focus_owner() as Control
 	var card := PanelContainer.new()
 	card.name = "Transmission"
 	card.theme_type_variation = "ConsolePanel"
 	var card_width := minf(540.0, maxf(220.0, get_viewport_rect().size.x - 32.0))
 	card.custom_minimum_size = Vector2(card_width, 0)
-	card.z_index = 50
-	add_child(card)
+	var shield := Control.new()
+	shield.name = "TransmissionShield"
+	shield.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shield.mouse_filter = Control.MOUSE_FILTER_STOP
+	shield.z_index = 49
+	add_child(shield)
+	card.z_index = 1
+	shield.add_child(card)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
 	card.add_child(row)
@@ -671,14 +704,18 @@ func _show_transmission(heading: String, line: String, on_close: Callable = Call
 	close.size = Vector2(76, 44)
 	close.size_flags_horizontal = Control.SIZE_SHRINK_END
 	close.pressed.connect(func() -> void:
-		card.queue_free()
+		shield.queue_free()
 		_story_overlay = null
+		_story_shield = null
 		_story_close_button = null
 		if on_close.is_valid():
 			on_close.call()
+		elif is_instance_valid(previous_focus) and previous_focus.is_inside_tree():
+			previous_focus.grab_focus()
 	)
 	row.add_child(close)
 	_story_overlay = card
+	_story_shield = shield
 	_story_close_button = close
 	close.grab_focus()
 	call_deferred("_position_transmission", card)
