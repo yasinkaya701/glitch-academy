@@ -1,0 +1,111 @@
+# GLITCH ACADEMY — LGS ÜRETİM PLANI
+## Kampanya: Dünyanın Kırılması
+
+**Sorumlu:** Geliştirici A  
+**Temel hedef:** Altı LGS dersinin tamamını oynanabilir biçimde temsil eden, kendi hikâyesi ve finali bulunan bağımsız kampanya.
+
+### 1. LGS'de zorunlu ders kapsamı
+
+| Ders | Bölüm | Oyuncunun yaptığı | Hikâyedeki işlev |
+|---|---|---|---|
+| Fen Bilimleri | **Mevsim Gözlemevi** | Eksen eğikliği ve ışınların gelişini inceler | MERİDYEN'in ilk doğa yasası sabotajını onarır |
+| Matematik | **Köprü Atölyesi** | Pisagor bağıntısıyla doğru kirişi üretir | Yerleşimin ulaşım hattını kurtarır |
+| Türkçe | **Bozuk Talimat** | Cümlelerdeki anlam, olumsuzluk ve bağlam değişikliklerini bulur | MERİDYEN'in değiştirdiği güvenlik komutunu düzeltir |
+| T.C. İnkılap Tarihi ve Atatürkçülük | **Kayıp Kronoloji** | Gerçek tarihî olayları ve belgeleri karşılaştırır | Geçmiş kayıtlarının tahrif edildiğini kanıtlar |
+| İngilizce | **Son Mesaj** | Düzeye uygun İngilizce mesajları anlayarak iletişim dizisini kurar | Yardım istasyonunun bağlantısını geri getirir |
+| Din Kültürü ve Ahlak Bilgisi | **Dayanışma Arşivi** | Yardımlaşma ve ilgili müfredat kavramlarını kaynak ve örneklerle eşleştirir | MERİDYEN'in bozduğu toplumsal yardım kayıtlarını onarır |
+
+**Altı dersin altısında da etkileşim zorunlu.** Yalnızca soru metni ve bir doğru butonundan oluşan boş ekran kabul edilmez.
+
+Tarihsel ve dinî içerikler gerçek müfredat bilgilerine uygun hazırlanır. Kurmaca müdahale gerçek olayın veya inancın kendisine değil, oyundaki kayıtların güvenilirliğine yöneliktir.
+
+### 2. LGS hikâye akışı ve ara sahneler
+
+**Açılış — 8 saniye hedefi**
+
+Gözlemevinde seranın sıcaklık uyarısı beklenmedik biçimde değişir. MERİDYEN sakin bir sesle bunun önemsiz olduğunu söyler.
+
+Ekranda yalnızca: **"Mevsim Gözlemevi'ni kontrol et."**
+
+Oyuncu doğrudan ilk deneye girebilir.
+
+**Ara sahne 1 — İlk direnç**
+
+*Mevsimler tamamlanınca.*
+
+Seranın ışıkları düzelir. Uzaktaki bir köprünün taşıyıcısı yanlış hizalanır.
+
+MERİDYEN: "Bir sistemi düzelttin. Diğerlerini de düzeltebilir misin?"
+
+**Sonuç:** Matematik görevi açılır.
+
+**Ara sahne 2 — Geçmişteki iz**
+
+*Köprü ve Türkçe görevi tamamlanınca.*
+
+Onarılan güvenlik talimatında geçmişte değiştirilmiş bir kaydın koordinatları ortaya çıkar. Harita tarih arşivine yönelir.
+
+MERİDYEN: "O kayıt artık gerekli değil."
+
+**Sonuç:** İnkılap Tarihi arşivi açılır.
+
+**Ara sahne 3 — Açık saldırı**
+
+*Tarih veya İngilizce görevindeki MERİDYEN imzası keşfedilince.*
+
+MERİDYEN'in gerçeklik çapasına bağlı kontrol hattı görünür. Yerleşimin çevresel sistemleri tekrar bozulmaya başlar.
+
+MERİDYEN: "Düzeni korumak için kontrolü geri almalıyım."
+
+**Sonuç:** Son onarım protokolü başlar.
+
+**Final — Dünyayı Geri Al**
+
+Oyuncu düzelttiği çevresel ölçümleri, güvenlik mesajlarını ve doğrulama kayıtlarını kullanarak bölgesel Kural Çapalarını MERİDYEN'den ayırır.
+
+Merkez yeniden çalışır. MERİDYEN'in LGS bölgesindeki kontrolü kaldırılır.
+
+Kamera üç yıldızlı gökyüzüne döner. Büyük gizem korunur ama LGS hikâyesi tamamlanır.
+
+### 3. Geliştirme sırası
+
+**P0 — Hikâyeyi tamamlayan zorunlu içerik**
+
+1. Mevcut Mevsimler deneyini koru ve test et.
+2. Köprü Atölyesi'ni oynanabilir hâle getir.
+3. Ortak Arşiv etkileşim şablonunu geliştir.
+4. Türkçe, İnkılap Tarihi, İngilizce ve Din Kültürü görevlerini bu şablonun uygun varyantlarıyla hazırla.
+5. Dört ana ara sahneyi görev tamamlanma olaylarına bağla.
+6. LGS finalini ve onarım göstergesini tamamla.
+
+**P1 — Omurga bittikten sonra**
+
+- Basınç İstasyonu.
+- Gösterge Laboratuvarı.
+- Arşiv görevlerine ek kanıt ve etkileşimler.
+- Çevresel onarımların gözlemevindeki etkilerini artırma.
+
+**P2 — Kalan süreyle**
+
+- DNA, elektrik, olasılık ve diğer kazanımlar.
+- Daha ayrıntılı zaman yolculuğu sahneleri.
+- Ek MERİDYEN diyalogları ve sinematikler.
+
+### 4. Teknik sahiplik
+
+LGS geliştiricisi kendi istasyon klasörlerinden ve LGS'ye özel hikâye verilerinden sorumludur.
+
+Ortak dosyalara doğrudan müdahale etmeden, mevcut `mission.tres` ve `completed` sözleşmesine uyan sahneler teslim eder.
+
+Arşiv etkileşimleri mümkün olduğunca veriyle yapılandırılabilir hazırlanır; YKS geliştiricisi de aynı altyapıyı farklı içerikle kullanabilir.
+
+### 5. Kabul kriterleri
+
+- Altı LGS dersinin her birinden en az bir oynanabilir bölüm açılabilir.
+- Her bölümde oyuncu gerçekten bir işlem yapar ve sonucunu görür.
+- Ana hikâye en az dört anlamlı sahne geçişiyle ilerler.
+- MERİDYEN'in her saldırısı sonraki deneyle nedensel olarak bağlantılıdır.
+- Başlangıçtan finale YKS içeriğine girmeden ulaşılır.
+- Mevsimler ve mevcut diğer içerikler zarar görmez.
+- İlk defa oynayan kişi ilk deneye açıklama almadan ulaşabilir.
+- Bitmeyen ek deneyler zorunlu hikâye akışını kilitlemez.
