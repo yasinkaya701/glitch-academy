@@ -93,7 +93,7 @@ func _panel_layout() -> Dictionary:
 	if size.x < 900.0:
 		var stack_gap := 10.0
 		var available_height := maxf(300.0, size.y - panel_top - 18.0 - stack_gap)
-		var visual_height := clampf(available_height * 0.2, 96.0, 132.0) if size.y < 600.0 else clampf(available_height * 0.42, 190.0, 286.0)
+		var visual_height := clampf(available_height * 0.28, 120.0, 170.0) if size.y < 600.0 else clampf(available_height * 0.42, 190.0, 286.0)
 		var work_height := available_height - visual_height - stack_gap
 		var stacked_visual := Rect2(Vector2(18, panel_top), Vector2(available_width, visual_height))
 		var stacked_work := Rect2(Vector2(18, panel_top + visual_height + stack_gap), Vector2(available_width, work_height))
@@ -213,6 +213,7 @@ func _layout_interface() -> void:
 	_evidence_label.size = Vector2(right_panel.size.x - 36.0, 18)
 	var text_width := right_panel.size.x - 36.0
 	_compact_content_flow = right_panel.size.y < 440.0
+	_evidence_label.text = "KAYIT  ·  YANITLAR ↓" if _compact_content_flow else "KAYIT"
 	_prompt_label.add_theme_font_size_override("font_size", 15 if _compact_content_flow else 17)
 	_instruction_label.add_theme_font_size_override("font_size", 14 if _compact_content_flow else 16)
 	if _compact_content_flow:
@@ -225,9 +226,8 @@ func _layout_interface() -> void:
 		_prompt_label.position = Vector2(4, 0)
 		_prompt_label.size = Vector2(compact_width, prompt_height)
 		var instruction_top := prompt_height + 8.0
-		var compact_instruction := mission_definition.instruction + "\n↓  Yanıtları görmek için kaydır"
-		_instruction_label.text = compact_instruction
-		var instruction_height := _estimated_text_height(compact_instruction, compact_width, 14, 34.0)
+		_instruction_label.text = mission_definition.instruction
+		var instruction_height := _estimated_text_height(mission_definition.instruction, compact_width, 14, 34.0)
 		_instruction_label.position = Vector2(4, instruction_top)
 		_instruction_label.size = Vector2(compact_width, instruction_height)
 		_answer_controls_top = instruction_top + instruction_height + 12.0
@@ -249,7 +249,7 @@ func _layout_interface() -> void:
 		_answer_controls_top = 4.0
 		_answer_scroll.position = right_panel.position + Vector2(14, answers_top)
 	var action_height := 48.0
-	var action_top := right_panel.size.y - action_height - 14.0
+	var action_top := right_panel.size.y - action_height - 32.0
 	_verify_button.position = right_panel.position + Vector2(14, action_top)
 	_verify_button.size = Vector2(right_panel.size.x - 28.0, action_height)
 	var scroll_top := _answer_scroll.position.y - right_panel.position.y
