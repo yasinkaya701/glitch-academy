@@ -7,6 +7,10 @@ config/name="Yanlış Dünya"
 run/main_scene="res://scenes/control_center.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
+[autoload]
+
+UITheme="*res://scripts/ui_theme.gd"
+
 [display]
 
 window/size/viewport_width=1280
