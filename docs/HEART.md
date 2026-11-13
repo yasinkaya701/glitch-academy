@@ -18,3 +18,12 @@ Oyuncu sanal bir insan modeline oksijen taşınmasını geri kazandırır. AYT g
 - Görsel kontrol dört odacığı, dört kapakçığı ve ana damarları ayrı etiketlerle doğrular. Akış animasyonu, görev kurallarıyla aynı veriyi kullanır.
 
 [MEB kalp anatomisi](https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/biyoloji/11/unite1/bolum4567/files/basic-html/page4.html), [MEB kalp döngüsü](https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/konu-pekistirme/ayt/biyoloji/files/basic-html/page80.html), [ÖSYM 2026 AYT Fen, soru 32](https://dokuman.osym.gov.tr/pdfdokuman/2026/yks/tsk/yks_ayt_2026_kitapcik_kt12.pdf)
+
+## Uygulama notu · hazır model ve etkileşim katmanı
+
+Gerçekçi görsel hazır modelden gelir (`stations/heart/assets/model/heart_cutaway_light.glb`, CC0). Model tek parça ve tek malzeme, kapakçıklar ayrı düğüm değil, topolojiyle ayrılamıyor. Oyuncunun yaptığı iş bu yüzden modelin üstündeki etkileşim katmanında yaşar:
+
+- Dört kapak yuvası ve oyuncunun yerleştirdiği kapakçık parçaları Godot'ta ayrı `Node3D` olarak, model koordinatında kurulur (açık ve kapalı animasyon, hasarlı hâl).
+- Akış parçacıkları kalbin içinde sabit yollar boyunca ilerler. Geri kaçışta ters döner. Oksijen düzeyi renkle ve etiketle.
+- Damar uçları tıklanabilir bağlantı noktalarıdır. Oyuncu yolu bağlar, tam tur kapanınca oksijen vücuda ulaşır.
+- Model koordinatı: boyut yaklaşık 0,083 × 0,13 × 0,07 birim, merkez (0, 0,065, 0).
