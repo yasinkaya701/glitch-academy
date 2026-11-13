@@ -6,9 +6,21 @@ extends Control
 signal landed(results: Dictionary)
 
 const Fall = preload("res://stations/free_fall/fall_sim.gd")
-const BACKDROP = preload("res://stations/free_fall/assets/chamber_bg.png")
+const BACKDROP = preload("res://stations/free_fall/assets/chamber_bg_clear.png")
 const SENSOR_OFF = preload("res://stations/free_fall/assets/sensor_plate_off.png")
 const SENSOR_ON = preload("res://stations/free_fall/assets/sensor_plate_on.png")
+const STEEL_BALL = preload("res://stations/free_fall/assets/ball_steel.png")
+const FOAM_BALL = preload("res://stations/free_fall/assets/ball_foam.png")
+const CARGO_CAPSULE = preload("res://stations/free_fall/assets/capsule.png")
+const GLASS_HIGHLIGHT = preload("res://stations/free_fall/assets/glass_highlight.png")
+const GHOST_RING = preload("res://assets/world/signature/ghost_ring.png")
+const SIGNATURE_NOISE = preload("res://assets/world/signature/glitch_noise.png")
+const TEARS: Array[Texture2D] = [
+	preload("res://assets/world/signature/tear_01.png"),
+	preload("res://assets/world/signature/tear_02.png"),
+	preload("res://assets/world/signature/tear_03.png"),
+	preload("res://assets/world/signature/tear_04.png"),
+]
 
 const MAX_RELEASE := 58.0
 const PUMP_RATE := 28.0           ## kPa/s
@@ -53,6 +65,8 @@ var _flash := 0.0
 var _clock := 0.0
 var _release_countdown := -1.0
 var _pending: Array = []
+var _expectation_was_on := false
+var _signature_remaining := 0.0
 
 
 func _ready() -> void:
@@ -134,6 +148,10 @@ func _ball_y(id: StringName, depth: float) -> float:
 
 func _process(delta: float) -> void:
 	_clock += delta
+	if show_expectation and not _expectation_was_on:
+		_signature_remaining = 0.72
+	_expectation_was_on = show_expectation
+	_signature_remaining = maxf(_signature_remaining - delta, 0.0)
 	pressure = move_toward(pressure, pressure_target, PUMP_RATE * delta)
 	_flash = maxf(_flash - delta * 2.2, 0.0)
 	_outcome_clock += delta
@@ -214,6 +232,7 @@ func _draw() -> void:
 		if visible_ids.has(id):
 			_draw_body(id, factor)
 	_draw_signature(factor)
+	_draw_glass_highlight(factor)
 	_draw_board(factor)
 	_draw_gauge(factor)
 
@@ -305,12 +324,9 @@ func _draw_body(id: StringName, factor: float) -> void:
 	draw_set_transform(shadow_y, 0.0, Vector2(1.0, 0.22))
 	draw_circle(Vector2.ZERO, r * (0.5 + 0.7 * height_ratio), Color(0, 0, 0, 0.12 + 0.28 * height_ratio))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	if id == &"capsule":
-		_draw_capsule(centre, r)
-	elif id == &"steel":
-		_draw_sphere(centre, r, Color("#3c434b"), Color("#9aa3ad"), Color("#eef3f7"))
-	else:
-		_draw_sphere(centre, r, Color("#a88a3d"), Color("#e6c777"), Color("#fff1c4"))
+	var body_texture: Texture2D = CARGO_CAPSULE if id == &"capsule" else (STEEL_BALL if id == &"steel" else FOAM_BALL)
+	var body_size := Vector2(r * 2.85, r * (5.2 if id == &"capsule" else 2.85))
+	draw_texture_rect(body_texture, Rect2(centre - body_size * 0.5, body_size), false)
 	if data["active"]:
 		var done: bool = data["landed"]
 		var label := seconds_text(data["result"]["time"] if done else _elapsed)
@@ -340,18 +356,13 @@ func _draw_capsule(centre: Vector2, r: float) -> void:
 
 ## Misafir imzası: kayma açıkken cisimlerde renk ayrışması ve camda kısa yırtık çizgileri.
 func _draw_signature(factor: float) -> void:
-	if not show_expectation:
+	if not show_expectation or _signature_remaining <= 0.0:
 		return
-	var rng := RandomNumberGenerator.new()
-	rng.seed = floori(_clock * 9.0)
-	for i in 3:
-		if rng.randf() < 0.55:
-			continue
-		var y := rng.randf_range(GLASS_TOP + 30.0, FLOOR_Y - 20.0)
-		var x := rng.randf_range(GLASS_LEFT + 4.0, GLASS_RIGHT - 60.0)
-		var w := rng.randf_range(24.0, 70.0)
-		draw_rect(Rect2(_p(x, y), Vector2(w, 1.8) * factor), Color("#6fe3f2", 0.55))
-		draw_rect(Rect2(_p(x + 4.0, y + 3.0), Vector2(w, 1.4) * factor), Color("#f26fb8", 0.4))
+	var frame := posmod(floori(_clock * 18.0), TEARS.size())
+	var pulse := clampf(_signature_remaining / 0.18, 0.0, 1.0)
+	var glass_rect := Rect2(_p(GLASS_LEFT, GLASS_TOP), Vector2(GLASS_RIGHT - GLASS_LEFT, FLOOR_Y - GLASS_TOP) * factor)
+	draw_texture_rect(TEARS[frame], glass_rect, false, Color(1.0, 1.0, 1.0, 0.46 * pulse))
+	draw_texture_rect(SIGNATURE_NOISE, Rect2(_p(GLASS_LEFT, GLASS_TOP + 160.0), Vector2(GLASS_RIGHT - GLASS_LEFT, 240.0) * factor), false, Color(1.0, 1.0, 1.0, 0.10 * pulse))
 	for id in visible_ids:
 		var data: Dictionary = _bodies[id]
 		if not data["active"] or data["landed"]:
@@ -359,8 +370,12 @@ func _draw_signature(factor: float) -> void:
 		var depth := (data["state"] as Fall.State).depth
 		var centre := _p(SLOT_X[id], _ball_y(id, depth))
 		var r: float = BALL_RADIUS[id] * factor
-		draw_arc(centre + Vector2(2.5, 0.0) * factor, r, 0.0, TAU, 32, Color("#6fe3f2", 0.5), 1.5)
-		draw_arc(centre + Vector2(-2.5, 0.0) * factor, r, 0.0, TAU, 32, Color("#f26fb8", 0.4), 1.5)
+		draw_texture_rect(GHOST_RING, Rect2(centre - Vector2.ONE * r * 1.65, Vector2.ONE * r * 3.3), false, Color(1.0, 1.0, 1.0, 0.7 * pulse))
+
+
+func _draw_glass_highlight(factor: float) -> void:
+	var rect := Rect2(_p(GLASS_LEFT, GLASS_TOP), Vector2(GLASS_RIGHT - GLASS_LEFT, FLOOR_Y - GLASS_TOP) * factor)
+	draw_texture_rect(GLASS_HIGHLIGHT, rect, false, Color(1.0, 1.0, 1.0, 0.58))
 
 
 func _draw_board(factor: float) -> void:
