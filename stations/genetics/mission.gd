@@ -197,7 +197,7 @@ func _show_cross(first: String, second: String, visible_result: bool) -> void:
 
 func _draw_board() -> void:
 	var s := _board.size
-	var cell := minf(68.0, (s.y - 34.0) * 0.43)
+	var cell := minf(60.0, (s.y - 50.0) / 2.0)
 	var x := 130.0
 	var y := 31.0
 	var font := ThemeDB.fallback_font
