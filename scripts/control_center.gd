@@ -7,6 +7,7 @@ const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/seasons/mission.tres"),
 	preload("res://stations/measurement/mission.tres"),
 	preload("res://stations/vectors/mission.tres"),
+	preload("res://stations/derivative/mission.tres"),
 	preload("res://stations/bridge/mission.tres"),
 	preload("res://stations/prism/mission.tres"),
 	preload("res://stations/free_fall/mission.tres"),
