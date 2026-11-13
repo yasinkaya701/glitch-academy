@@ -7,6 +7,7 @@ extends Node2D
 
 const CHAR_DIR := "res://stations/philosophy/assets/characters/"
 const CHAR_DATA := "res://stations/philosophy/data/characters.json"
+const CHIAROSCURO_SHADER := preload("res://stations/philosophy/visual/chiaroscuro.gdshader")
 
 const BREATH_SPEED := 1.35
 
@@ -33,6 +34,9 @@ func _ready() -> void:
 	_load_manifest()
 	add_child(_rig)
 	_body.centered = false
+	var mat := ShaderMaterial.new()
+	mat.shader = CHIAROSCURO_SHADER
+	_body.material = mat
 	_rig.add_child(_body)
 
 
