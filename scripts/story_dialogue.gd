@@ -18,6 +18,25 @@ const SUPPLEMENTAL_FRAMES := {
     "optics": Rect2(0, 449, 882, 438), "pulley": Rect2(892, 449, 882, 438),
 }
 
+const NEWS_IMAGES := {
+	"seasons": preload("res://assets/story/news_photos/season_anomaly.png"),
+	"measurement": preload("res://assets/story/news_photos/freight_scale.png"),
+	"vectors": preload("res://assets/story/news_photos/harbor_vectors.png"),
+	"derivative": preload("res://assets/story/news_photos/carton_optimization.png"),
+	"bridge": preload("res://assets/story/news_photos/bridge_survey.png"),
+	"prism": preload("res://assets/story/news_photos/carton_optimization.png"),
+	"free_fall": preload("res://assets/story/news_photos/free_fall.png"),
+	"newton": preload("res://assets/story/news_photos/newton_cart.png"),
+	"projectile": preload("res://assets/story/news_photos/projectile_lab.png"),
+	"collision": preload("res://assets/story/news_photos/collision_track.png"),
+	"indicator": preload("res://assets/story/news_photos/chemistry_indicator.png"),
+	"heart": preload("res://assets/story/news_photos/heart_lesson.png"),
+	"pressure": preload("res://assets/story/news_photos/pressure_column.png"),
+	"pulley": preload("res://assets/story/news_photos/pulley_workshop.png"),
+	"genetics": preload("res://assets/story/news_photos/genetics_peas.png"),
+	"spin": preload("res://assets/story/news_photos/spin_lab.png"),
+}
+
 const NEWS_REPORTS := {
 	"seasons": {"region": NEWS_FRAMES.sun, "place": "GÖZLEMEVİ · EGE GÖZLEM HATTI", "headline": "ÜÇ GÜNEŞ, AYNI AVLUDA ÜÇ FARKLI GÖLGE OLUŞTURDU", "report": "Güneş ışığının geliş açısı kayda göre değişmedi. Ancak gözlem avlusundaki gölgeler aynı anda üç yöne uzadı; seradaki sıcaklık çizelgesi de mevsim hesabından saptı."},
 	"measurement": {"region": NEWS_FRAMES.lift, "place": "GÖZLEMEVİ · TAŞIMA LABORATUVARI", "headline": "YÜK ASANSÖRÜ, KÜTLE VE AĞIRLIK KAYDI KARIŞINCA DURDU", "report": "Kayıt ekranı kilogram ile newtonu tek ölçü gibi gösterdi. Aynı yük, iki istasyonda farklı sınırda göründü ve güvenlik kilidi asansörü kapattı."},
@@ -175,11 +194,15 @@ func present(title: String, text: String, action_text: String, on_continue: Call
 	_news_place.visible = showing_news
 	_news_headline.visible = showing_news
 	_news_report.visible = showing_news
+	var news_texture: Texture2D = NEWS_IMAGES.get(String(news_id)) as Texture2D
 	if showing_news:
-		var atlas_texture := AtlasTexture.new()
-		atlas_texture.atlas = LAB_NEWS_ATLAS if report.get("atlas", "news") == "supplemental" else NEWS_ATLAS
-		atlas_texture.region = report["region"]
-		_news_image.texture = atlas_texture
+		if news_texture != null:
+			_news_image.texture = news_texture
+		else:
+			var atlas_texture := AtlasTexture.new()
+			atlas_texture.atlas = LAB_NEWS_ATLAS if report.get("atlas", "news") == "supplemental" else NEWS_ATLAS
+			atlas_texture.region = report["region"]
+			_news_image.texture = atlas_texture
 		_news_place.text = "CANLI GÖZLEM  ·  " + String(report["place"])
 		_news_headline.text = String(report["headline"])
 		_news_report.text = String(report["report"])
