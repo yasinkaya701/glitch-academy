@@ -4,7 +4,7 @@ extends Node
 ## Kullanım: Audio.enter_hub(), Audio.enter_mission(subject), Audio.play_ui(&"confirm"), Audio.play_sfx("heart_valve_seat")
 
 const ROOT := "res://assets/audio/"
-const BUSES := ["Music", "Ambience", "SFX", "UI"]
+const BUSES := ["Music", "Ambience", "SFX", "UI", "Voice"]
 const MUSIC_DB := -18.0
 const AMBIENCE_DB := -26.0
 const FADE := 1.2
@@ -165,6 +165,15 @@ func _one_shot(stream: AudioStream, bus_name: String, volume_db: float) -> void:
 func _on_node_added(node: Node) -> void:
 	if node is BaseButton and not node.has_meta(&"silent"):
 		(node as BaseButton).pressed.connect(func() -> void: play_ui(&"select", -16.0))
+
+
+## Konuşma sırasında müzik ve ortam kısılır; konuşma bitince geri gelir.
+func duck(on: bool) -> void:
+	for bus_name in ["Music", "Ambience"]:
+		var index := AudioServer.get_bus_index(bus_name)
+		if index >= 0:
+			var tween := create_tween()
+			tween.tween_method(func(db: float) -> void: AudioServer.set_bus_volume_db(index, db), AudioServer.get_bus_volume_db(index), -9.0 if on else 0.0, 0.4)
 
 
 func set_bus_volume(bus_name: String, linear: float) -> void:

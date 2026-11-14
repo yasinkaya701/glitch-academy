@@ -19,6 +19,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 UITheme="*res://scripts/ui_theme.gd"
 Sfx="*res://scripts/sfx.gd"
 Audio="*res://scripts/audio_director.gd"
+Narrator="*res://scripts/narrator.gd"
 Campaign="*res://scripts/campaign_state.gd"
 
 [display]

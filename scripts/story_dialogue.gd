@@ -253,10 +253,12 @@ func present(title: String, text: String, action_text: String, on_continue: Call
 	entrance.tween_property(_card, "modulate:a", 1.0, 0.2)
 	entrance.tween_property(_card, "scale", Vector2.ONE, 0.24).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_continue_button.grab_focus()
+	Narrator.speak(String(report.get("report", text)) if showing_news else text, &"meridyen")
 
 
 func _continue() -> void:
 	var action := _continue_action
+	Narrator.stop()
 	hide()
 	_continue_action = Callable()
 	_return_action = Callable()

@@ -59,9 +59,9 @@ def resolve_api_key(cli_key: str | None = None) -> str:
 
     # Godot app_userdata kontrolü (macOS ve Linux/Windows uyumlu)
     godot_paths = [
-        Path.home() / "Library" / "Application Support" / "Godot" / "app_userdata" / "Yanlış Dünya" / "elevenlabs_key.txt",
-        Path.home() / ".local" / "share" / "godot" / "app_userdata" / "Yanlış Dünya" / "elevenlabs_key.txt",
-        Path(os.environ.get("APPDATA", "")) / "Godot" / "app_userdata" / "Yanlış Dünya" / "elevenlabs_key.txt"
+        Path.home() / "Library" / "Application Support" / "Godot" / "app_userdata" / "3 Cisim 1 Dünya" / "elevenlabs_key.txt",
+        Path.home() / ".local" / "share" / "godot" / "app_userdata" / "3 Cisim 1 Dünya" / "elevenlabs_key.txt",
+        Path(os.environ.get("APPDATA", "")) / "Godot" / "app_userdata" / "3 Cisim 1 Dünya" / "elevenlabs_key.txt"
     ]
     for p in godot_paths:
         if p.exists():

@@ -116,6 +116,9 @@ func speak_live(philosopher_id: StringName, text: String, tag_id: StringName = &
 			return
 
 	var api_key: String = _resolve_api_key()
+	if api_key == "" and Narrator.available():
+		_speak_gemini(philosopher_id, text, tag_id)
+		return
 	if api_key != "" and voice_id != "":
 		_pending_live_hash = sig
 		_pending_live_text = text
@@ -145,6 +148,23 @@ func speak_live(philosopher_id: StringName, text: String, tag_id: StringName = &
 
 	var est_duration: float = clampf(float(text.length()) * 0.065, 1.8, 7.0)
 	_start_fallback_speaking(text, est_duration)
+
+
+## Gemini TTS: ses gelene kadar ağız prosedürel hareket eder, gelince sesle çalar.
+func _speak_gemini(philosopher_id: StringName, text: String, tag_id: StringName) -> void:
+	_start_fallback_speaking(text, 14.0)
+	var stream: AudioStreamWAV = await Narrator.synthesize(text, philosopher_id)
+	if _active_id != tag_id or not is_inside_tree():
+		return
+	_using_fallback = false
+	if stream == null:
+		_start_fallback_speaking(text, clampf(float(text.length()) * 0.065, 1.8, 7.0))
+		return
+	_levels = []
+	_player.stream = stream
+	_player.play()
+	if _actor != null:
+		_actor.set_speaking(true, -1.0)
 
 
 ## Mikrofondan oyuncunun sesini dinleyip Türkçe metne çevirir ve speech_recognized sinyali yayar.
