@@ -10,6 +10,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 [autoload]
 
 UITheme="*res://scripts/ui_theme.gd"
+Sfx="*res://scripts/sfx.gd"
 
 [display]
 

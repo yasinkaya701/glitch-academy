@@ -5,6 +5,7 @@ extends "res://scripts/mission.gd"
 const Model = preload("res://stations/heart/heart_model.gd")
 const Stage = preload("res://stations/heart/heart_stage.gd")
 const Hud = preload("res://scripts/mission_hud.gd")
+const Network = preload("res://stations/heart/heart_network.gd")
 
 const GOOD := Color("#a0dfbc")
 const BAD := Color("#ffb093")
@@ -105,6 +106,7 @@ var running := false
 var cycles := 0
 var held: int = -1
 var slots: Dictionary = {}
+var flips: Dictionary = {}
 var defects: Dictionary = {}
 var recognized := 0
 var tempo := 1.0
@@ -181,7 +183,7 @@ const DIRECTIVES := {
 	"Kalbin yapısını tanı": "Sorulan bölgeye tıkla.",
 	"Yapıyı tanıdın": "Yapı tamam. Şimdi pompayı izle.",
 	"Kapaklar nasıl çalışır?": "Bir tam turu izle.",
-	"Kapakçıkları yerleştir": "Kapakları yuvalarına sürükle.",
+	"Kapakçıkları yerleştir": "Kapağı yuvaya sürükle. Ok akışı göstermeli: tıkla çevir.",
 	"Kapakçıklar yerinde": "Kapaklar yerinde.",
 	"Kan geri akıyor": "Geri akışı bul, arızalı kapağa tıkla.",
 	"Geri akış durdu": "Geri akış durdu.",
@@ -230,6 +232,10 @@ func _say(text: String, color: Color = MUTED) -> void:
 	elif color == BAD:
 		tone = &"bad"
 	hud.say(text, tone)
+	if tone == &"bad":
+		Sfx.play(&"buzz", -14.0)
+	elif tone == &"good":
+		Sfx.play(&"click", -12.0)
 
 
 func _tween_oxygen(value: float, seconds: float = 1.6) -> void:
@@ -253,11 +259,27 @@ func _process(delta: float) -> void:
 	if phase_time >= duration:
 		phase_time = 0.0
 		phase = (phase + 1) % 4
+		if phase == Model.Phase.EJECTION:
+			Sfx.play(&"lub")
+		elif phase == Model.Phase.PRESSURE_FALL:
+			Sfx.play(&"dub")
 		if phase == Model.Phase.FILLING:
 			cycles += 1
 			_on_cycle_complete()
 		_apply_phase()
 	stage.beat = sin(clampf(phase_time / duration, 0.0, 1.0) * PI) if phase == Model.Phase.EJECTION else 0.0
+	stage.cycle_t = _cycle_fraction()
+
+
+func _cycle_fraction() -> float:
+	var total := 0.0
+	var before := 0.0
+	for p in DURATION:
+		var d: float = DURATION[p] * tempo
+		if p < phase:
+			before += d
+		total += d
+	return clampf((before + phase_time) / total, 0.0, 1.0)
 
 
 func _start_pump() -> void:
@@ -271,6 +293,7 @@ func _start_pump() -> void:
 
 func _stop_pump() -> void:
 	running = false
+	stage.running = false
 	stage.beat = 0.0
 	for key in Stage.FLOWS:
 		stage.flow_dir[key] = 0.0
@@ -287,31 +310,19 @@ func _toggle_run() -> void:
 		pause.text = "Duraklat"
 
 
-func _placement() -> Dictionary:
-	var placement := {}
+func _net_slots() -> Dictionary:
+	## Ağ modeli için: yuva → {piece, flipped}. Boş yuvalar yer almaz.
+	var result := {}
 	for slot in slots:
 		var piece: int = slots[slot]
 		if piece >= 0:
-			placement[piece] = Model.SLOT_OF[slot]
-	return placement
+			result[slot] = {"piece": piece, "flipped": flips.get(slot, false)}
+	return result
 
 
-func _leaks(slot: int) -> bool:
-	## Yuvadaki kapak, kapalı olması gereken evrede sızdırır mı?
-	if phase_closes(slot):
-		var piece: int = slots.get(slot, -1)
-		if piece != slot:
-			return true
-		var defect: StringName = defects.get(slot, &"")
-		if defect == &"stuck_open":
-			return true
-		if defect == &"leaky":
-			return true
-	return false
-
-
-func phase_closes(slot: int) -> bool:
-	return not Model.is_open(slot, phase)
+func _initial_flip(slot: int, piece: int) -> bool:
+	## Takılan kapak yön oku akışa bakmayabilir: oyuncu okuyup karar vermeli.
+	return ((piece + 1) * (slot + 2)) % 3 == 0
 
 
 func _apply_phase() -> void:
@@ -325,17 +336,20 @@ func _apply_phase() -> void:
 		Model.Valve.TRICUSPID: &"r_av", Model.Valve.MITRAL: &"l_av",
 		Model.Valve.PULMONARY: &"r_out", Model.Valve.AORTIC: &"l_out",
 	}
+	var net := _net_slots()
+	stage.running = running
+	stage.backflow = clampf(1.0 - minf(Network.valve_health(Model.Valve.AORTIC, net, defects), Network.valve_health(Model.Valve.MITRAL, net, defects)), 0.0, 1.0)
 	for slot in Model.VALVE_NAMES:
 		var key: StringName = flow_for[slot]
 		var piece: int = slots.get(slot, -1)
-		if piece < 0:
-			stage.valve_present[slot] = false
-		else:
-			stage.valve_present[slot] = true
-		if _leaks(slot):
+		stage.valve_present[slot] = piece >= 0
+		stage.valve_flipped[slot] = flips.get(slot, false)
+		var flow := Network.valve_flow(slot, net, defects, phase)
+		stage.valve_target[slot] = 1.0 if flow["forward"] else 0.0
+		if flow["back"]:
 			stage.flow_dir[key] = -1.0
 			stage.flow_color_override[key] = Color("#ffc082")
-		elif Model.is_open(slot, phase) and piece == slot:
+		elif flow["forward"]:
 			stage.flow_dir[key] = 1.0
 
 
@@ -367,6 +381,7 @@ func _enter_intro() -> void:
 
 
 func _full_slots() -> Dictionary:
+	flips = {}
 	var result := {}
 	for valve in Model.VALVE_NAMES:
 		result[valve] = valve
@@ -391,6 +406,7 @@ func _enter_recognize() -> void:
 	_set_ui("1 · TANI", "Kalbin yapısını tanı",
 		"Şemada hastanın sağ tarafı ekranın solundadır. Soruyu oku, ilgili bölgeye tıkla.")
 	_tween_oxygen(0.45)
+	_say("Sürükle: döndür · Tekerlek: yakınlaş · Çift tık: kapağa gir")
 	for id in Stage.SPOTS:
 		stage.spots_active[id] = id != &"lungs" and id != &"body"
 	stage.labels.clear()
@@ -502,7 +518,7 @@ func _enter_repair() -> void:
 		button.toggle_mode = true
 		button.button_group = group
 		button.text = Model.VALVE_NAMES[valve]
-		button.tooltip_text = "Sürükleyip yuvaya bırak ya da seç ve yuvaya tıkla."
+		button.tooltip_text = "Yuvaya sürükle. Yerleşen kapağa tıkla: çevir. Shift+tık: sök."
 		button.toggled.connect(_on_tray.bind(valve))
 		tray.add_child(button)
 	for valve in Model.VALVE_NAMES:
@@ -520,9 +536,9 @@ func _on_tray(pressed: bool, valve: int) -> void:
 func _slot_click(slot: int) -> void:
 	if step == Step.REPAIR:
 		if slots[slot] >= 0 and held < 0:
-			var piece: int = slots[slot]
-			slots[slot] = -1
-			_say("%s geri alındı." % Model.VALVE_NAMES[piece])
+			flips[slot] = not flips.get(slot, false)
+			Sfx.play(&"click")
+			_say("%s çevrildi." % Model.VALVE_NAMES[slots[slot]])
 			_refresh_repair()
 		elif held >= 0:
 			_place_piece(slot, held)
@@ -530,16 +546,28 @@ func _slot_click(slot: int) -> void:
 		_diagnose_click(slot)
 
 
+func _remove_slot(slot: int) -> void:
+	if step != Step.REPAIR or slots.get(slot, -1) < 0:
+		return
+	var piece: int = slots[slot]
+	slots[slot] = -1
+	flips.erase(slot)
+	_say("%s söküldü." % Model.VALVE_NAMES[piece])
+	_refresh_repair()
+
+
 func _place_piece(slot: int, piece: int) -> void:
 	if step != Step.REPAIR:
 		return
 	if slots[slot] >= 0:
-		_say("Bu yuva dolu. Önce içindeki kapağı geri al.", BAD)
+		_say("Bu yuva dolu. Shift + tık ile kapağı sök.", BAD)
 		return
 	if slots.values().has(piece):
 		_say("Bu kapak zaten yerleştirildi.", BAD)
 		return
+	Sfx.play(&"snap")
 	slots[slot] = piece
+	flips[slot] = _initial_flip(slot, piece)
 	_say("%s yerleştirildi." % Model.VALVE_NAMES[piece])
 	_release_tray()
 	_refresh_repair()
@@ -559,6 +587,8 @@ func _refresh_repair() -> void:
 	for slot in Model.VALVE_NAMES:
 		var piece: int = slots[slot]
 		stage.valve_present[slot] = piece >= 0
+		stage.valve_flipped[slot] = flips.get(slot, false)
+		stage.valve_target[slot] = 0.0
 		if piece >= 0:
 			stage.labels[slot] = Model.VALVE_NAMES[piece]
 			stage.valve_amount[slot] = 0.0
@@ -588,39 +618,43 @@ func _run_repair_check() -> void:
 
 
 func _evaluate_cycle() -> void:
-	var problems := Model.all_problems(_placement(), defects)
-	var wrong_slots: Array[int] = []
-	for slot in slots:
-		if slots[slot] != slot and slots[slot] >= 0:
-			wrong_slots.append(slot)
-	if step == Step.REPAIR:
-		if wrong_slots.is_empty() and problems.is_empty():
-			_stop_pump()
-			_tween_oxygen(0.72)
-			stage.valve_target[Model.Valve.TRICUSPID] = 0.0
-			_say("Kan artık tek yönlü akıyor, geri kaçış yok. Doku oksijeni yükseldi.", GOOD)
-			_set_ui("3 · ONAR", "Kapakçıklar yerinde",
-				"Her kapak, kanın gideceği yönü kapatır. Kulakçık–karıncık kapakları (triküspit, mitral) dolumda açılır, atımda kapanır. Yarım ay kapakları (pulmoner, aort) tersini yapar.", "Yeni arızayı gör")
-		else:
-			_stop_pump()
-			var lines: Array[String] = []
-			for slot in wrong_slots:
-				stage.valve_marked[slot] = true
-				lines.append("%s yanlış yuvada. Akış yönüne göre kapağın bulunduğu odaları kontrol et." % Model.VALVE_NAMES[slots[slot]])
-			_say("Geri kaçış var. " + "\n".join(lines), BAD)
-			tray.show()
-			action.disabled = false
-			_enter_repair_retry()
-	elif step == Step.DIAGNOSE:
-		pass
+	if step != Step.REPAIR:
+		return
+	var net := _net_slots()
+	var issues: Array[String] = []
+	var bad_slots: Array[int] = []
+	for slot in Model.VALVE_NAMES:
+		var piece: int = slots.get(slot, -1)
+		if piece >= 0 and piece != slot:
+			issues.append("%s yanlış yuvada." % Model.VALVE_NAMES[piece])
+			bad_slots.append(slot)
+		elif piece >= 0 and flips.get(slot, false):
+			issues.append("%s ters: ok akış yönünü göstermeli." % Model.VALVE_NAMES[piece])
+			bad_slots.append(slot)
+		elif Network.valve_health(slot, net, defects) < 0.99:
+			issues.append("%s çalışmıyor." % Model.VALVE_NAMES[slot])
+			bad_slots.append(slot)
+	_stop_pump()
+	if issues.is_empty():
+		_tween_oxygen(0.72)
+		_say("Kan tek yönlü akıyor.", GOOD)
+		_set_ui("3 · ONAR", "Kapakçıklar yerinde",
+			"Kulakçık–karıncık kapakları (triküspit, mitral) dolumda açılır, atımda kapanır. Yarım ay kapakları (pulmoner, aort) tersini yapar. Yön oku her zaman akışı göstermeli.", "Yeni arızayı gör")
+	else:
+		for slot in bad_slots:
+			stage.valve_marked[slot] = true
+		_say(" ".join(issues.slice(0, 2)), BAD)
+		tray.show()
+		action.disabled = false
+		_enter_repair_retry()
 
 
 func _enter_repair_retry() -> void:
 	step = Step.REPAIR
-	for slot in slots:
-		if stage.valve_marked.get(slot, false):
+	for slot in slots.keys():
+		if slots[slot] >= 0 and slots[slot] != slot:
 			slots[slot] = -1
-			stage.valve_marked.erase(slot)
+			flips.erase(slot)
 	for valve in Model.VALVE_NAMES:
 		stage.spots_active[StringName("valve_%d" % valve)] = true
 	for button in tray.get_children():
@@ -628,6 +662,7 @@ func _enter_repair_retry() -> void:
 	_release_tray()
 	_refresh_repair()
 	action.text = "Pompayı çalıştır"
+	action.show()
 
 
 # --- 4 · Yeni arıza -----------------------------------------------------
@@ -816,6 +851,7 @@ func _check_rate() -> void:
 		_set_ui("ONARILDI", "Dolaşım dengede",
 			"Kalp hızı %d atım/dk, debi %d mL/dk: dokuların istediği kadar kan taşınıyor. Kan tek yönlü, iki dolaşım kapalı, oksijen yerine ulaşıyor." % [int(heart_rate), int(heart_rate * STROKE_VOLUME)])
 		_say("Onarıldı.", GOOD)
+		Sfx.play(&"chime")
 		completed.emit()
 	elif ratio < 0.95:
 		_say("Debi dokuların ihtiyacının altında. Gereken hızı hesapla: 10500 mL ÷ 70 mL.", BAD)
@@ -827,6 +863,9 @@ func _check_rate() -> void:
 
 func _on_spot(id: StringName) -> void:
 	var text := String(id)
+	if text.begins_with("valve_remove_"):
+		_remove_slot(int(text.trim_prefix("valve_remove_")))
+		return
 	if text.begins_with("valve_"):
 		_slot_click(int(text.trim_prefix("valve_")))
 		return

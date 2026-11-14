@@ -4,8 +4,8 @@
 
 | # | Deney | Rota | Durum | Varlık talebi |
 |---|---|---|---|---|
-| 1 | Vektör Limanı | AYT Fizik | Çizim yenilendi, arka plan bekliyor | 002 |
-| 2 | Kalp Odası | AYT Biyoloji | Tasarım hazır | 003 |
+| 1 | Vektör Limanı | AYT Fizik | Okların çizimi yenilendi, sahne yeniden tasarlanacak (3B motor) | 002 |
+| 2 | Kalp Odası | AYT Biyoloji | **3B etkileşimli sahne çalışıyor** (kapak sürükle-çevir, damar bağla, hız hesabı, canlı monitör, ses). Görsel son kat: Codex #7 | 003, 006, 007 |
 | 3 | Düşüş Odası | AYT Fizik | Tasarım hazır | 004 |
 | 4 | Refleks Merkezi | AYT Biyoloji | Tasarım hazır | 005 |
 | 5 | Depo Atölyesi (türev) | AYT Matematik | Tasarım hazır, varlık gerekmiyor | yok |
@@ -21,3 +21,6 @@ Ortak parçalar (arayüz kiti, kontrol merkezi) talep 001. Önce 001 ve 002 tesl
 
 ## Claude'un kodla yapabileceği ve varlık beklemeyen işler
 Türev, integral, köprü: 3Blue1Brown çizgisi, Godot'ta çizim. Bunlar varlık gelmeden başlar.
+
+## Motor ve sonraki deneyler
+Ortak 3B çekirdek: [ENGINE.md](ENGINE.md). Kalp bittikten sonra aynı çekirdekle: **Kas Atölyesi** (izole kas, sarkomer, uzunluk–kuvvet eğrisi; `stations/muscle/` yarım), Refleks Merkezi, Düşüş Odası.
