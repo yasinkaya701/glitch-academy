@@ -42,12 +42,16 @@ func _camera_target() -> Vector3:
 	return Vector3(0.0, 0.34, 0.25)
 
 
+func _narrow_shift() -> float:
+	return 0.55
+
+
 func _screen_size() -> Vector2:
-	return Vector2(1.5, 0.84)
+	return Vector2(2.0, 1.12)
 
 
 func _screen_transform() -> Transform3D:
-	return Transform3D(Basis(Vector3.RIGHT, deg_to_rad(-8.0)), Vector3(0.62, 0.74, -0.8))
+	return Transform3D(Basis(Vector3.RIGHT, deg_to_rad(-8.0)), Vector3(0.95, 0.72, -0.8))
 
 
 func _build_set() -> void:
@@ -141,7 +145,7 @@ func _rebuild_sled(index: int) -> void:
 	label.pixel_size = 0.03 / 56.0
 	label.modulate = colour
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.position = Vector3(0, 0.2, 0)
+	label.position = Vector3(-0.14 if index == 0 else 0.14, 0.2, 0)
 	label.shaded = false
 	node.add_child(label)
 	_built_mass[index] = mass
@@ -232,7 +236,7 @@ func _process(delta: float) -> void:
 
 func _draw_screen(canvas: Control, size: Vector2) -> void:
 	var s := size.x / 1600.0
-	canvas.draw_string(FONT_REGULAR, Vector2(40, 54) * s, "KIZAK  ·  HIZ – ZAMAN", HORIZONTAL_ALIGNMENT_LEFT, -1, int(26 * s), MUTED)
+	canvas.draw_string(FONT_REGULAR, Vector2(40, 54) * s, "KIZAK  ·  HIZ – ZAMAN", HORIZONTAL_ALIGNMENT_LEFT, -1, int(32 * s), MUTED)
 	# Okuma kartları
 	var cards: Array = [["SÜRE", str(snappedf(time, 0.01)).replace(".", ","), "s", INK]]
 	for i in sleds.size():
@@ -243,9 +247,9 @@ func _draw_screen(canvas: Control, size: Vector2) -> void:
 			cards.append(["%s İVME" % String(sleds[i]["name"]).to_upper(), str(snappedf(accel(i), 0.01)).replace(".", ","), "m/s²", sleds[i]["color"]])
 	for k in cards.size():
 		var card: Array = cards[k]
-		Kit.readout(canvas, Rect2(Vector2(40.0 + 300.0 * (k % 5), 80.0) * s, Vector2(280.0, 140.0) * s), card[0], card[1], card[2], FONT_REGULAR, s * 1.7, card[3])
+		Kit.readout(canvas, Rect2(Vector2(40.0 + 300.0 * (k % 5), 80.0) * s, Vector2(280.0, 150.0) * s), card[0], card[1], card[2], FONT_REGULAR, s * 2.3, card[3])
 	# Grafik
-	var graph := Rect2(Vector2(130.0, 290.0) * s, Vector2(1380.0, 450.0) * s)
+	var graph := Rect2(Vector2(150.0, 320.0) * s, Vector2(1360.0, 420.0) * s)
 	canvas.draw_rect(graph, Color("#141510"))
 	canvas.draw_rect(graph, Color(MUTED, 0.35), false, 2.0)
 	var t_max := 8.0
@@ -253,12 +257,12 @@ func _draw_screen(canvas: Control, size: Vector2) -> void:
 	for tick in range(0, int(t_max) + 1, 2):
 		var gx := graph.position.x + graph.size.x * float(tick) / t_max
 		canvas.draw_line(Vector2(gx, graph.position.y), Vector2(gx, graph.end.y), Color(1, 1, 1, 0.07), 1.0)
-		canvas.draw_string(FONT_REGULAR, Vector2(gx - 14.0, graph.end.y + 34.0), "%d s" % tick, HORIZONTAL_ALIGNMENT_LEFT, -1, int(24 * s), MUTED)
+		canvas.draw_string(FONT_REGULAR, Vector2(gx - 14.0, graph.end.y + 40.0), "%d s" % tick, HORIZONTAL_ALIGNMENT_LEFT, -1, int(32 * s), MUTED)
 	for tick in range(0, int(v_max) + 1, 10):
 		var gy := graph.position.y + graph.size.y * (1.0 - float(tick) / v_max)
 		canvas.draw_line(Vector2(graph.position.x, gy), Vector2(graph.end.x, gy), Color(1, 1, 1, 0.07), 1.0)
-		canvas.draw_string(FONT_REGULAR, Vector2(graph.position.x - 60.0, gy + 8.0), "%d" % tick, HORIZONTAL_ALIGNMENT_LEFT, -1, int(24 * s), MUTED)
-	canvas.draw_string(FONT_REGULAR, Vector2(40, graph.position.y - 10.0), "m/s", HORIZONTAL_ALIGNMENT_LEFT, -1, int(22 * s), MUTED)
+		canvas.draw_string(FONT_REGULAR, Vector2(graph.position.x - 76.0, gy + 10.0), "%d" % tick, HORIZONTAL_ALIGNMENT_LEFT, -1, int(32 * s), MUTED)
+	canvas.draw_string(FONT_REGULAR, Vector2(40, graph.position.y - 12.0), "m/s", HORIZONTAL_ALIGNMENT_LEFT, -1, int(30 * s), MUTED)
 	for i in sleds.size():
 		var colour: Color = sleds[i]["color"]
 		var points := PackedVector2Array()
@@ -268,7 +272,7 @@ func _draw_screen(canvas: Control, size: Vector2) -> void:
 		if points.size() >= 2:
 			canvas.draw_polyline(points, colour, 5.0, true)
 	if faulty_display and not sleds.is_empty():
-		canvas.draw_string(FONT, Vector2(140, 330) * s, "CİHAZ: a = F → ikisi de %s m/s²" % str(snappedf(sleds[0]["force"], 0.1)).replace(".", ","), HORIZONTAL_ALIGNMENT_LEFT, -1, int(32 * s), WARM)
+		canvas.draw_string(FONT, Vector2(170, 372) * s, "CİHAZ: a = F → ikisi de %s m/s²" % str(snappedf(sleds[0]["force"], 0.1)).replace(".", ","), HORIZONTAL_ALIGNMENT_LEFT, -1, int(38 * s), WARM)
 		for i in sleds.size():
 			if time >= faulty_arrival(i) and gate_opened_early(i):
-				canvas.draw_string(FONT, Vector2(140, 380 + 44 * i) * s, "%s: kapı %s s'de açıldı, kızak henüz varmadı" % [String(sleds[i]["name"]), str(snappedf(faulty_arrival(i), 0.1)).replace(".", ",")], HORIZONTAL_ALIGNMENT_LEFT, -1, int(28 * s), DANGER)
+				canvas.draw_string(FONT, Vector2(170, 430 + 52 * i) * s, "%s: kapı %s s'de açıldı, kızak henüz varmadı" % [String(sleds[i]["name"]), str(snappedf(faulty_arrival(i), 0.1)).replace(".", ",")], HORIZONTAL_ALIGNMENT_LEFT, -1, int(34 * s), DANGER)
