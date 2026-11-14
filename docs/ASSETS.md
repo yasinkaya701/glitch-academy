@@ -1,4 +1,4 @@
-# Yanlış Dünya · Varlık kılavuzu
+# 3 Cisim 1 Dünya · Varlık kılavuzu
 
 **Hedef:** Oyuncu sahneye baktığında gece çalışan gerçek bir laboratuvar, arşiv ya da konsey odası görür. Nesneler elle tutulacak kadar inandırıcıdır ve oyuncunun dokunduğu her parça ne işe yaradığını belli eder.
 

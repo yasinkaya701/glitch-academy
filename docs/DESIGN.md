@@ -1,6 +1,6 @@
 ---
 version: alpha
-name: Yanlış Dünya
+name: 3 Cisim 1 Dünya
 description: Gece gözlemevinde geçen Türkçe bilim oyununun arayüzü. Giriş katmanı zengin bir oyun menüsü, deney katmanı gerçekçi 3D sahnenin üstünde sade bir HUD.
 colors:
   bg: "#070B12"
@@ -210,7 +210,7 @@ components:
     rounded: "{rounded.sm}"
 ---
 
-# Yanlış Dünya · DESIGN.md
+# 3 Cisim 1 Dünya · DESIGN.md
 
 Bu dosya oyunun **arayüzü** için tek kaynaktır: renk, yazı, yerleşim, bileşenler, ekranlar, geçişler ve erişilebilirlik. Biçimi [Google Stitch DESIGN.md](https://github.com/google-labs-code/design.md) standardını izler: üstteki YAML ölçülebilir değerleri verir, metin gerekçeyi ve kullanım kuralını anlatır. Yapay zekâ izine karşı taban kuralları [Hallmark](https://github.com/nutlope/hallmark) kural setinden Godot'a uyarlanmıştır.
 

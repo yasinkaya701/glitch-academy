@@ -1,6 +1,6 @@
 # YKS Fizik — Deney, 3B Modelleme ve Etkileşimli Öğrenme Envanteri
 
-> **Glitch Academy / Yanlış Dünya** · TYT + AYT · İçerik tasarım raporu · 13 Kasım 2026  
+> **Glitch Academy / 3 Cisim 1 Dünya** · TYT + AYT · İçerik tasarım raporu · 13 Kasım 2026  
 > **Durum:** Fikir ve tasarım envanteri; listelenen istasyonlar uygulanmış/oynanabilir kabul edilmez.  
 > **Amaç:** Fizik müfredatındaki deneysel olguları ve uzamsal olarak zor kavramları, gözlem → kontrollü deney → ölçüm → çıkarım → yeni durumda uygulama → bozulan kuralı onarma döngüsüne dönüştürmek.
 

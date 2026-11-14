@@ -1,6 +1,6 @@
 # YKS Biyoloji — Sanal deney, 3D modelleme ve etkileşimli istasyon envanteri
 
-**Proje:** Yanlış Dünya · Glitch Academy  
+**Proje:** 3 Cisim 1 Dünya · Glitch Academy  
 **Kapsam:** TYT ve AYT biyoloji; 9–12. sınıf kavramları  
 **Tarih:** 13 Kasım 2026  
 **Durum:** Ürün/içerik tasarım raporu. Buradaki istasyonlar **uygulanmış özellikler değil**, geliştirme adaylarıdır.

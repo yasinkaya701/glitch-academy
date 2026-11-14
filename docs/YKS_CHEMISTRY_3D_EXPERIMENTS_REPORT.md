@@ -1,6 +1,6 @@
 # YKS Kimya — Deney, 3B Modelleme ve Oyun İstasyonları Raporu
 
-**Proje:** Yanlış Dünya · Glitch Academy  
+**Proje:** 3 Cisim 1 Dünya · Glitch Academy  
 **Tarih:** 13 Kasım 2026  
 **Kapsam:** TYT–AYT kimya, 9–12. sınıf; eski YKS konu sırası + Türkiye Yüzyılı Maarif Modeli (TYMM) içerikleri  
 **Durum:** Araştırma ve içerik tasarım belgesi. Aşağıdaki sahneler geliştirilmiş/oynanabilir kabul edilmez.

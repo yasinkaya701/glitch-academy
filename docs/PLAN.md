@@ -1,4 +1,4 @@
-# Yanlış Dünya · Hackathon planı
+# 3 Cisim 1 Dünya · Hackathon planı
 
 Godot 4.7.2 ve GDScript ile Türkçe bir masaüstü oyunu. Yaklaşık 15 saniyelik atlanabilir açılışta bir köprü kapanmaz, vakum odasında iki yük farklı zamanlarda düşer ve kalp modelinde kan geriye kaçar. Oyuncu kontrol merkezinden istasyon seçer, bozulmayı gözlemler, ölçüm yapar ve öğrendiği kuralı yeni bir durumda kullanarak istasyonu onarır.
 

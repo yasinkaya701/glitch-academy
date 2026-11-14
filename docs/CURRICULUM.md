@@ -1,6 +1,6 @@
 # Müfredat haritası ve deney havuzu
 
-Ürünün asıl kapsamı: ortaokuldan liseye, LGS ve YKS rotalarında müfredatın her konusunu bir deneyle öğretmek. Bu dosya, deney üretiminin tek sırası. Her konu bir "Yanlış Dünya" arızası ve onarım görevi olur.
+Ürünün asıl kapsamı: ortaokuldan liseye, LGS ve YKS rotalarında müfredatın her konusunu bir deneyle öğretmek. Bu dosya, deney üretiminin tek sırası. Her konu bir "3 Cisim 1 Dünya" arızası ve onarım görevi olur.
 
 **Kaynaklar.** TYT ve Sayısal AYT konu listeleri okundu: [TYT 2022](https://aksaraysbl.meb.k12.tr/meb_iys_dosyalar/68/01/973040/dosyalar/2022_03/07093256_2022-TYT-Konulari.pdf), [AYT Sayısal 2022](https://sehitcancalskanmtal.meb.k12.tr/meb_iys_dosyalar/06/21/761800/dosyalar/2021_11/01205648_2022-AYT-Sayisal-konulari.pdf). İkisi 2022 listesi. Güncel TTKB 2026 listesiyle her görev uygulanmadan önce teyit edilir. LGS 8. sınıf listesi ve 5–12. sınıf kataloğu henüz MEB programından satır satır okunmadı, aşağıdaki LGS bölümü bu yüzden **teyit bekliyor**.
 

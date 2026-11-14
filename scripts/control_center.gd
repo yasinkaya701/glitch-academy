@@ -12,6 +12,8 @@ const LEVEL_NEXT := Color("#9a5a14")
 const LEVEL_LOCKED := Color("#7d8782")
 const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/seasons/mission.tres"),
+	# Fikir Meydanı ikinci sırada: oyuncu ilk ölçümden sonra düşünce yöntemiyle tanışır.
+	preload("res://stations/philosophy/mission.tres"),
 	preload("res://stations/measurement/mission.tres"),
 	preload("res://stations/vectors/mission.tres"),
 	preload("res://stations/derivative/mission.tres"),
@@ -26,7 +28,6 @@ const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/heart/mission.tres"),
 	preload("res://stations/spin/mission.tres"),
 	preload("res://stations/pressure/mission.tres"),
-	preload("res://stations/philosophy/mission.tres"),
 	preload("res://stations/history/mission.tres"),
 	# LGS: bütün ders görevleri ve basit makine düzeneği.
 	preload("res://stations/pulley/mission.tres"),
@@ -114,6 +115,7 @@ func _ready() -> void:
 
 
 func _play_intro() -> void:
+	Audio.malfunction_intro()
 	var intro = INTRO.instantiate()
 	hub.hide()
 	%HubScrim.hide()
@@ -125,6 +127,7 @@ func _play_intro() -> void:
 
 func _finish_intro(intro: Control) -> void:
 	intro.queue_free()
+	Audio.enter_hub()
 	%HubScrim.show()
 	hub.show()
 	%TYT.grab_focus()
@@ -258,7 +261,7 @@ func _build_path() -> void:
 func _clear_selection() -> void:
 	selected_mission = null
 	mission_title.text = "Görev seç"
-	mission_description.text = "Bir istasyon seçtiğinde deneyin amacı burada görünür."
+	mission_description.text = "Bir istasyon seçtiğinde düzeneğin amacı burada görünür."
 	if visible_missions.is_empty():
 		mission_description.text = "Bu seçim için henüz görev bulunmuyor."
 	mission_status.text = ""
@@ -280,7 +283,7 @@ func _select_mission(index: int) -> void:
 	elif active_route != &"class" and pending != null and pending.id == selected_mission.id:
 		mission_status.text = "▶ Sıradaki düzenek"
 	else:
-		mission_status.text = "Deneye hazır"
+		mission_status.text = "Düzeneğe hazır"
 	start_mission.text = "Yeniden dene" if _is_completed(selected_mission.id) else "Düzeneğe gir" if start_mission.disabled == false else "Kilitli"
 
 
@@ -328,6 +331,7 @@ func _launch_selected_mission() -> void:
 	%Backdrop.hide()
 	_layout()
 	play_screen.show()
+	Audio.enter_mission(selected_mission.subject)
 	mission_host.add_child(active_mission)
 	active_mission.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
@@ -343,6 +347,7 @@ func _on_mission_completed(mission_id: StringName) -> void:
 	if %Observatory.has_method("set_operational_count"):
 		%Observatory.call("set_operational_count", roundi(6.0 * _route_completed_count() / maxi(_route_missions().size(), 1)))
 	play_status.text = "Onarıldı"
+	Audio.mission_repaired()
 	if first_completion:
 		_show_completion_story.call_deferred(mission_id)
 	else:
@@ -378,6 +383,7 @@ func _return_to_hub() -> void:
 	_completion_pending = false
 	_remove_active_mission()
 	play_screen.hide()
+	Audio.enter_hub()
 	%WorldView.show()
 	%Backdrop.show()
 	%HubScrim.show()

@@ -166,7 +166,7 @@ func _next() -> void:
 
 func _show_guided() -> void:
 	phase = &"guided"
-	section.text = "Yönlendirmeli deney"
+	section.text = "Yönlendirmeli ölçüm"
 	headline.text = "Sürat ve yön"
 	body.text = "Taşıyıcı 3 m boyunca doğuya gider. Hareketi başlat ve süreyi izle."
 	reading.text = ""

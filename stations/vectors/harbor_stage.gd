@@ -257,6 +257,7 @@ func fly(points: Array, seconds: float) -> void:
 	if _flight != null:
 		_flight.kill()
 	_exhaust.visible = true
+	Audio.play_sfx("capsule_thruster_dock", -10.0)
 	_flight = create_tween()
 	var total := 0.0
 	var last: Vector2 = capsule_position

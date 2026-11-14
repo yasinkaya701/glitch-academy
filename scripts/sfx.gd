@@ -22,7 +22,19 @@ func _ready() -> void:
 		_players.append(player)
 
 
+## Üretilmiş basit sesler yerine gerçek ses varlıkları (assets/audio) çalar. Kalp atışı üretilmiş kalır (hız ve evreye bağlı).
+const FILE_SOUNDS := {
+	&"click": &"select",
+	&"snap": &"snap",
+	&"chime": &"correct",
+	&"buzz": &"retry",
+}
+
+
 func play(id: StringName, volume_db: float = -10.0) -> void:
+	if FILE_SOUNDS.has(id):
+		Audio.play_ui(FILE_SOUNDS[id], volume_db - 4.0)
+		return
 	var stream: AudioStream = _streams.get(id)
 	if stream == null:
 		return

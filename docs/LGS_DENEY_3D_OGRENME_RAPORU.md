@@ -1,6 +1,6 @@
 # LGS — Deneyler, 3B Modeller ve Etkileşimli Öğrenme Raporu
 
-**Proje:** Glitch Academy / Yanlış Dünya  
+**Proje:** Glitch Academy / 3 Cisim 1 Dünya  
 **Hedef:** 8. sınıf LGS rotası; ortaokul kazanımlarıyla yeniden kullanılabilir deney altyapısı  
 **Tarih:** 13 Kasım 2026  
 **Durum:** Ürün ve öğretim tasarımı önerisi — kodlanmış/oynanabilir içerik iddiası değildir.
@@ -44,7 +44,7 @@ Her istasyon için önerilen veri alanları: **route=lgs, grade=8, program_surum
 | 5 | Hava hareketleri | Sıcaklık ve hava basıncı alanlarını yorumlayarak rüzgâr yönü tahmin et | S |
 | 6 | Hava durumu ve iklim | Günlük hava grafiğini uzun dönem ortalama ile karşılaştır; doğru çıkarımı seç | 2B |
 
-**Yanlış Dünya görevi:** Mevsim Gözlemevi, Dünya'nın eksenini yanlış yönlendiriyor. Oyuncu önce kuzey-güney yarım kürede beklenen mevsimleri tahmin eder, sonra modeli düzeltir. **Yanılgı kontrolü:** Mevsimlerin temel nedeni Güneş'e uzaklık değildir. Dünya ekseni, yörüngedeki konum ve ışığın geliş açısı birlikte gösterilmelidir.
+**3 Cisim 1 Dünya görevi:** Mevsim Gözlemevi, Dünya'nın eksenini yanlış yönlendiriyor. Oyuncu önce kuzey-güney yarım kürede beklenen mevsimleri tahmin eder, sonra modeli düzeltir. **Yanılgı kontrolü:** Mevsimlerin temel nedeni Güneş'e uzaklık değildir. Dünya ekseni, yörüngedeki konum ve ışığın geliş açısı birlikte gösterilmelidir.
 
 ### Ünite 2 — DNA ve Genetik Kod (7–15)
 
@@ -60,7 +60,7 @@ Her istasyon için önerilen veri alanları: **route=lgs, grade=8, program_surum
 | 14 | Adaptasyon | Kalıtsal varyasyonların farklı ortamlarda nesiller boyunca nasıl seçildiğini gör | S |
 | 15 | Biyoteknoloji | Islah, gen aktarımı, klonlama örneklerini amaç, yarar ve etik boyutlarıyla eşleştir | H |
 
-**Yanlış Dünya görevi:** DNA istasyonu yanlış eşleşme yüzünden veriyi kopyalayamıyor. Oyuncu sarmalı tamir eder; ayrı bir bölümde bezelyelerin olası yavrularını hesaplar. **Yanılgı kontrolü:** Modifikasyon doğrudan DNA dizisini değiştirmez; tek bir bireyin yaşamı boyunca kazandığı özellikleri otomatik olarak adaptasyon gibi sunma. DNA eşlenmesinde molekülün gerçeğe uygun şematik sadeleştirmesi belirtilebilir.
+**3 Cisim 1 Dünya görevi:** DNA istasyonu yanlış eşleşme yüzünden veriyi kopyalayamıyor. Oyuncu sarmalı tamir eder; ayrı bir bölümde bezelyelerin olası yavrularını hesaplar. **Yanılgı kontrolü:** Modifikasyon doğrudan DNA dizisini değiştirmez; tek bir bireyin yaşamı boyunca kazandığı özellikleri otomatik olarak adaptasyon gibi sunma. DNA eşlenmesinde molekülün gerçeğe uygun şematik sadeleştirmesi belirtilebilir.
 
 ### Ünite 3 — Basınç (16–23)
 
@@ -75,7 +75,7 @@ Her istasyon için önerilen veri alanları: **route=lgs, grade=8, program_surum
 | 22 | Açık hava basıncı | Atmosfer basıncını gösteren güvenli sanal örnekleri incele | H |
 | 23 | Basıncın uygulamaları | Baraj, kar ayakkabısı, bıçak, enjektör ve fren tasarımlarını eşleştir | S |
 
-**Yanlış Dünya görevi:** Barajda basınç sensörleri ters okuyor. Oyuncu önce tahmin yapar, sadece bir bağımsız değişkeni değiştirerek ölçer, ardından güçlendirilmesi gereken seviyeyi seçer. **Yanılgı kontrolü:** Eşit derinlik ve eşit yoğunlukta kabın şekli sıvı basıncını tek başına değiştirmez. Gaz basıncı ve hidrolik ayrıntıların hesaplama seviyesi LGS kazanım sınırını aşmamalı.
+**3 Cisim 1 Dünya görevi:** Barajda basınç sensörleri ters okuyor. Oyuncu önce tahmin yapar, sadece bir bağımsız değişkeni değiştirerek ölçer, ardından güçlendirilmesi gereken seviyeyi seçer. **Yanılgı kontrolü:** Eşit derinlik ve eşit yoğunlukta kabın şekli sıvı basıncını tek başına değiştirmez. Gaz basıncı ve hidrolik ayrıntıların hesaplama seviyesi LGS kazanım sınırını aşmamalı.
 
 ### Ünite 4 — Madde ve Endüstri (24–35)
 
@@ -94,7 +94,7 @@ Her istasyon için önerilen veri alanları: **route=lgs, grade=8, program_surum
 | 34 | Hâl değişimi grafiği | Isı ver/al; sıcaklık-zaman grafiğinde hâl değişimi aralıklarını yorumla | H |
 | 35 | Kimya endüstrisi | Üretim sürecinde uygun madde, güvenlik ve çevre kararları ver | S |
 
-**Yanlış Dünya görevi:** Gösterge Laboratuvarı bilinmeyen sıvıları yanlış hatta gönderiyor. Oyuncu ayıraçla ölçer, sınıflandırır, doğru vanayı onarır. **Güvenlik:** Gerçek hayatta ev kimyasallarını karıştırmayı öneren talimat verilmez. Asit-baz renkleri kullanılan ayıraca ve pH'a göre doğru gösterilir. Isı/sıcaklık eş anlamlı değildir; hâl değişimi grafiği saf madde ve uygun koşul varsayımını belirtir.
+**3 Cisim 1 Dünya görevi:** Gösterge Laboratuvarı bilinmeyen sıvıları yanlış hatta gönderiyor. Oyuncu ayıraçla ölçer, sınıflandırır, doğru vanayı onarır. **Güvenlik:** Gerçek hayatta ev kimyasallarını karıştırmayı öneren talimat verilmez. Asit-baz renkleri kullanılan ayıraca ve pH'a göre doğru gösterilir. Isı/sıcaklık eş anlamlı değildir; hâl değişimi grafiği saf madde ve uygun koşul varsayımını belirtir.
 
 ### Ünite 5 — Basit Makineler (36–43)
 
@@ -109,7 +109,7 @@ Her istasyon için önerilen veri alanları: **route=lgs, grade=8, program_surum
 | 42 | Dişli/vida/çark | Farklı basit makine düzeneklerinde hareketin yönünü ve işlevini gözlemle | 3B |
 | 43 | Birleşik makine tasarımı | Vinçte kaldıraç, makara veya eğik düzlem seçerek hedef yükü kaldır | 3B |
 
-**Yanlış Dünya görevi:** İnşaat vincinin makara düzeni bozuk. Oyuncu yükü kaldırmak için doğru düzeneği kurar. **Yanılgı kontrolü:** İdeal basit makineler işten ve enerjiden kazanç sağlamaz; kuvvet kazancı ile yol kaybı birlikte gösterilmeli. Sürtünme varsa verim ayrımı açık olmalı.
+**3 Cisim 1 Dünya görevi:** İnşaat vincinin makara düzeni bozuk. Oyuncu yükü kaldırmak için doğru düzeneği kurar. **Yanılgı kontrolü:** İdeal basit makineler işten ve enerjiden kazanç sağlamaz; kuvvet kazancı ile yol kaybı birlikte gösterilmeli. Sürtünme varsa verim ayrımı açık olmalı.
 
 ### Ünite 6 — Enerji Dönüşümleri ve Çevre Bilimi (44–54)
 
@@ -127,7 +127,7 @@ Her istasyon için önerilen veri alanları: **route=lgs, grade=8, program_surum
 | 53 | Sera etkisi | Işınım giriş-çıkışı ile sıcaklık eğilimini kavramsal modelde incele | H |
 | 54 | Geri dönüşüm ve sürdürülebilirlik | Atıkları ayrıştır, kaynak tüketimi ve enerji seçeneklerini karşılaştır | S |
 
-**Yanlış Dünya görevi:** Ekosistem merkezi tek türün kaybolmasını önemsiz sayıyor. Oyuncu besin ağı üzerindeki etkileri izleyerek dengeyi onarır. **Yanılgı kontrolü:** Enerji döngü yapmaz, ekosistemde akar; madde döngüye katılır. Fotosentez hızı basit doğrusal ve sınırsız artış şeklinde modellenmemeli. Sera etkisi yalnızca “ısıyı kapatan cam kapak” analojisine indirgenmemeli.
+**3 Cisim 1 Dünya görevi:** Ekosistem merkezi tek türün kaybolmasını önemsiz sayıyor. Oyuncu besin ağı üzerindeki etkileri izleyerek dengeyi onarır. **Yanılgı kontrolü:** Enerji döngü yapmaz, ekosistemde akar; madde döngüye katılır. Fotosentez hızı basit doğrusal ve sınırsız artış şeklinde modellenmemeli. Sera etkisi yalnızca “ısıyı kapatan cam kapak” analojisine indirgenmemeli.
 
 ### Ünite 7 — Elektrik Yükleri ve Elektrik Enerjisi (55–64)
 
@@ -144,7 +144,7 @@ Her istasyon için önerilen veri alanları: **route=lgs, grade=8, program_surum
 | 63 | Enerji santralleri | Hidroelektrik, rüzgâr, termik vb. üretim yollarını ve etkilerini karşılaştır | S |
 | 64 | Enerji verimliliği | Ev/şehir tüketimini azaltan seçimleri yap; kWh verilerini yorumla | S |
 
-**Yanlış Dünya görevi:** Enerji şehrindeki elektroskop yanlış işaret veriyor ve enerji kaynakları yanlış yönlendiriliyor. Oyuncu yüklerin etkileşimiyle problemi teşhis eder, sonra enerji dönüşümleri görevini tamamlar. **Yanılgı kontrolü:** Sürtünme yük yaratmaz, yüklerin aktarımını sağlar; toplam elektrik yükü korunur. “Nötr” kavramını “yük içermiyor” diye anlatma.
+**3 Cisim 1 Dünya görevi:** Enerji şehrindeki elektroskop yanlış işaret veriyor ve enerji kaynakları yanlış yönlendiriliyor. Oyuncu yüklerin etkileşimiyle problemi teşhis eder, sonra enerji dönüşümleri görevini tamamlar. **Yanılgı kontrolü:** Sürtünme yük yaratmaz, yüklerin aktarımını sağlar; toplam elektrik yükü korunur. “Nötr” kavramını “yük içermiyor” diye anlatma.
 
 ## 3. LGS Matematik — doğru yerde 3B, diğer yerde dinamik 2B
 

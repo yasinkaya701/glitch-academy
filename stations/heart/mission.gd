@@ -734,7 +734,7 @@ func _place_piece(slot: int, piece: int) -> void:
 	if slots.values().has(piece):
 		_say("Bu kapak zaten yerleştirildi.", BAD)
 		return
-	Sfx.play(&"snap")
+	Audio.play_sfx("heart_valve_seat", -8.0)
 	slots[slot] = piece
 	flips[slot] = _initial_flip(slot, piece)
 	_say("%s yerleştirildi." % Model.VALVE_NAMES[piece])
@@ -1111,7 +1111,7 @@ func _check_rate() -> void:
 		_set_ui("ONARILDI", "Dolaşım dengede",
 			"Kalp hızı %d atım/dk, debi %d mL/dk: dokuların istediği kadar kan taşınıyor. Kan tek yönlü, iki dolaşım kapalı, oksijen yerine ulaşıyor." % [int(heart_rate), int(heart_rate * STROKE_VOLUME)], "Müdahale masası")
 		_say("Onarıldı.", GOOD)
-		Sfx.play(&"chime")
+		Audio.play_sfx("heart_restored_flow", -8.0)
 		completed.emit()
 	elif ratio < 0.95:
 		_say("Debi dokuların ihtiyacının altında. Gereken hızı hesapla: 10500 mL ÷ 70 mL.", BAD)

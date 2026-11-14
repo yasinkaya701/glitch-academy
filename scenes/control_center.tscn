@@ -93,12 +93,12 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.13, 0.20, 0.18, 1)
 theme_type_variation = "HeadlineLabel"
 theme_override_font_sizes/font_size = 50
-text = "Yanlış Dünya"
+text = "3 Cisim 1 Dünya"
 
 [node name="Welcome" type="Label" parent="Margin/Hub"]
 layout_mode = 2
 theme_type_variation = "MutedLabel"
-text = "YKS konularını deneyerek öğren; her rotada adım adım ilerle."
+text = "Konuları ölçerek ve kurarak öğren; her rotada adım adım ilerle."
 autowrap_mode = 3
 
 [node name="Routes" type="HBoxContainer" parent="Margin/Hub"]

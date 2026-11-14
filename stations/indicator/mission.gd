@@ -119,7 +119,7 @@ func _build_interface() -> void:
 		_add_button("Nötr  /  pH = 7", _classify.bind("neutral"))
 		_add_button("Baz  /  pH > 7", _classify.bind("base"))
 	_controls.add_child(_spacer())
-	_add_button("↻  Deneyi sıfırla", _reset)
+	_add_button("↻  Düzeneği sıfırla", _reset)
 	_feedback.text = "pH ölçer hazır · A ve B'yi ölç." if _tyt else "K-03 hazır · iki şeritten kanıt topla."
 	if not _tyt:
 		for child in _controls.get_children():

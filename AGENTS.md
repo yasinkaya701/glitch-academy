@@ -1,4 +1,4 @@
-# Yanlış Dünya · Ekip çalışma kuralları
+# 3 Cisim 1 Dünya · Ekip çalışma kuralları
 
 Yasin görevleri ve sahiplerini belirler. Yasin Codex ve Claude ile, ekip arkadaşı Codex ve Gemini ile çalışır. Ajan işlerini de görevi alan kişi kendi çalışma kopyasında koordine eder. Deney sırası ve oynanış kararları Yasin ile netleştirilir.
 

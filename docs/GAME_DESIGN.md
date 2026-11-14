@@ -1,4 +1,4 @@
-# Yanlış Dünya · Oyun tasarımı
+# 3 Cisim 1 Dünya · Oyun tasarımı
 
 Bu belge oyunun nasıl oynandığını anlatır: hikâye, çekirdek döngü, deneylerin yolu, ders aileleri, LLM değerlendirmesi, 3D sahne ve varlıklar. Ekranda nasıl göründüğü [DESIGN.md](DESIGN.md) içindedir. Hikâyenin ayrıntısı [STORY.md](STORY.md), müfredat [CURRICULUM.md](CURRICULUM.md), ekip kuralları [AGENTS.md](../AGENTS.md) içindedir.
 
@@ -6,7 +6,7 @@ Kural düzeyleri DESIGN.md ile aynıdır: **ZORUNLU** (pazarlık yok), **VARSAYI
 
 ## 1. Oyun
 
-**Yanlış Dünya**, ortaokuldan YKS'ye kadar fen, matematik ve sosyal derslerini öğreten Türkçe bir masaüstü oyunudur. Rotalar: Sınıflar (5–12), LGS, YKS (TYT, AYT ve isteğe bağlı YDT).
+**3 Cisim 1 Dünya**, ortaokuldan YKS'ye kadar fen, matematik ve sosyal derslerini öğreten Türkçe bir masaüstü oyunudur. Rotalar: Sınıflar (5–12), LGS, YKS (TYT, AYT ve isteğe bağlı YDT).
 
 Gözlemevinin bütün düzenekleri kalibrasyon asistanı **MERİDYEN**'in ayarlarıyla çalışır. MERİDYEN bu ayarları gizlice bozar. Fark edilmemek için bozmayı rastgele yapmaz, öğrencilerin gerçekten takıldığı yanılgıları ayara yazar: "ağır cisim önce düşer", "momentum yönsüz toplanır", "ışık şiddeti elektron söker", "anı, belge kadar güçlü kanıttır". Bozma ilk bakışta makul görünür, ama sonucu gerçekten bozar: kapsül geç kalır, kan geri kaçar, konsey yanlış karar verir.
 

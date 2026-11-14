@@ -1,0 +1,471 @@
+{
+  "game": "Yanlış Dünya",
+  "version": 1,
+  "principle": "Arıza → gözlem → deney → yeni durumda uygulama → onarım. Ses öğrenme bilgisinin yerine geçmez.",
+  "bus_plan": [
+    "Master",
+    "Music",
+    "Ambience",
+    "SFX",
+    "UI"
+  ],
+  "loop_verification_required": true,
+  "assets": [
+    {
+      "id": "music_hub_curiosity",
+      "path": "music/01_hub_curiosity_loop.mp3",
+      "kind": "music",
+      "bus": "Music",
+      "loop": true,
+      "use": "Kontrol merkezi; sakin merak ve keşif."
+    },
+    {
+      "id": "music_experiment_focus",
+      "path": "music/02_experiment_focus_loop.mp3",
+      "kind": "music",
+      "bus": "Music",
+      "loop": true,
+      "use": "Deney ve düşünme aşamaları; düşük yoğunluklu odak müziği."
+    },
+    {
+      "id": "music_repair_resolve",
+      "path": "music/03_repair_resolve_loop.mp3",
+      "kind": "music",
+      "bus": "Music",
+      "loop": true,
+      "use": "Onarım sonrası sistemin çalıştığını izlerken sakin çözülme."
+    },
+    {
+      "id": "music_malfunction_intro",
+      "path": "music/04_malfunction_intro_sting.mp3",
+      "kind": "music_cue",
+      "bus": "Music",
+      "loop": false,
+      "use": "Arıza açılışı; kısa ve hafif kararsız müzikal vurgu."
+    },
+    {
+      "id": "ambience_hub_observatory",
+      "path": "ambience/ambience_hub_observatory_loop.mp3",
+      "kind": "ambience",
+      "bus": "Ambience",
+      "loop": true,
+      "use": "Kontrol merkezi ve gözlemevi oda tonu."
+    },
+    {
+      "id": "ambience_physics_lab",
+      "path": "ambience/ambience_physics_lab_loop.mp3",
+      "kind": "ambience",
+      "bus": "Ambience",
+      "loop": true,
+      "use": "Fizik düzenekleri, ölçüm ve mekanik istasyonlar."
+    },
+    {
+      "id": "ambience_chemistry_lab",
+      "path": "ambience/ambience_chemistry_lab_loop.mp3",
+      "kind": "ambience",
+      "bus": "Ambience",
+      "loop": true,
+      "use": "Kimya laboratuvarları ve numune görevleri."
+    },
+    {
+      "id": "ambience_biology_lab",
+      "path": "ambience/ambience_biology_lab_loop.mp3",
+      "kind": "ambience",
+      "bus": "Ambience",
+      "loop": true,
+      "use": "Biyoloji, anatomi ve mikroskop görevleri."
+    },
+    {
+      "id": "ambience_weather_garden",
+      "path": "ambience/ambience_weather_garden_loop.mp3",
+      "kind": "ambience",
+      "bus": "Ambience",
+      "loop": true,
+      "use": "Mevsimler, iklim ve çevre istasyonları."
+    },
+    {
+      "id": "ambience_archive_room",
+      "path": "ambience/ambience_archive_room_loop.mp3",
+      "kind": "ambience",
+      "bus": "Ambience",
+      "loop": true,
+      "use": "İlerideki tarih, kaynak ve arşiv görevleri."
+    },
+    {
+      "id": "ui_focus_tick",
+      "path": "ui/ui_focus_tick.mp3",
+      "kind": "ui",
+      "bus": "UI",
+      "loop": false,
+      "use": "Odak değişimi; seyrek kullanılmalı."
+    },
+    {
+      "id": "ui_select",
+      "path": "ui/ui_select.mp3",
+      "kind": "ui",
+      "bus": "UI",
+      "loop": false,
+      "use": "Menü veya seçim öğesini seçme."
+    },
+    {
+      "id": "ui_confirm_action",
+      "path": "ui/ui_confirm_action.mp3",
+      "kind": "ui",
+      "bus": "UI",
+      "loop": false,
+      "use": "Anlamlı bir eylemi başlatma/onaylama."
+    },
+    {
+      "id": "ui_correct_observation",
+      "path": "ui/ui_correct_observation.mp3",
+      "kind": "feedback",
+      "bus": "UI",
+      "loop": false,
+      "use": "Doğru gözlem veya cevap; olumlu ve ölçülü geri bildirim."
+    },
+    {
+      "id": "ui_retry_hint",
+      "path": "ui/ui_retry_hint.mp3",
+      "kind": "feedback",
+      "bus": "UI",
+      "loop": false,
+      "use": "Yanlış denemede yargılamayan yeniden deneme sinyali."
+    },
+    {
+      "id": "ui_drag_pickup",
+      "path": "ui/ui_drag_pickup.mp3",
+      "kind": "ui",
+      "bus": "UI",
+      "loop": false,
+      "use": "Sürüklenebilir parçayı alma."
+    },
+    {
+      "id": "ui_component_snap",
+      "path": "ui/ui_component_snap.mp3",
+      "kind": "ui",
+      "bus": "UI",
+      "loop": false,
+      "use": "Parçayı yuvaya/bağlantıya yerleştirme."
+    },
+    {
+      "id": "ui_scene_transition",
+      "path": "ui/ui_scene_transition.mp3",
+      "kind": "ui",
+      "bus": "UI",
+      "loop": false,
+      "use": "Sahne veya öğrenme aşaması geçişi."
+    },
+    {
+      "id": "ui_station_repaired",
+      "path": "ui/ui_station_repaired.mp3",
+      "kind": "feedback",
+      "bus": "UI",
+      "loop": false,
+      "use": "Görev sistemi başarıyla onarıldığında."
+    },
+    {
+      "id": "interaction_measurement_reading_settle",
+      "path": "interaction/measurement_reading_settle.mp3",
+      "kind": "interaction",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Analog ölçüm cihazının değer üzerinde sabitlenmesi."
+    },
+    {
+      "id": "interaction_variable_dial_adjust",
+      "path": "interaction/variable_dial_adjust.mp3",
+      "kind": "interaction",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Ölçüm düğmesi/kaydırıcısı; her karede değil, eşik veya anlamlı adımda tetikle."
+    },
+    {
+      "id": "interaction_lever_mechanism_cycle",
+      "path": "interaction/lever_mechanism_cycle.mp3",
+      "kind": "interaction",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Kaldıraç, vana ve küçük mekanizma kolu."
+    },
+    {
+      "id": "interaction_mass_drop_land",
+      "path": "interaction/mass_drop_land.mp3",
+      "kind": "interaction",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Düşüş Odası kütlesinin sensör plakasına yumuşak teması."
+    },
+    {
+      "id": "interaction_capsule_thruster_dock",
+      "path": "interaction/capsule_thruster_dock.mp3",
+      "kind": "interaction",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Vektör Limanı itki düzeltmesi ve kenetlenme."
+    },
+    {
+      "id": "interaction_bridge_joint_settle",
+      "path": "interaction/bridge_joint_settle.mp3",
+      "kind": "interaction",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Köprü/kiriş yük altında doğru konuma oturur."
+    },
+    {
+      "id": "interaction_hydraulic_pressure_pump",
+      "path": "interaction/hydraulic_pressure_pump.mp3",
+      "kind": "interaction",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Basınç ve hidrolik istasyonunda tek pompa hareketi."
+    },
+    {
+      "id": "interaction_graph_trace_draw",
+      "path": "interaction/graph_trace_draw.mp3",
+      "kind": "interaction",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Matematik grafiğinde eğri çizimi ve nokta işareti."
+    },
+    {
+      "id": "interaction_sample_sort_drop",
+      "path": "interaction/sample_sort_drop.mp3",
+      "kind": "interaction",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Numuneyi sınıflandırma kanalına bırakma."
+    },
+    {
+      "id": "interaction_pendulum_swing",
+      "path": "interaction/pendulum_swing.mp3",
+      "kind": "interaction",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Sarkaç ve periyodik hareket deneyinde tek salınım."
+    },
+    {
+      "id": "interaction_pool_flow_accumulation",
+      "path": "interaction/pool_flow_accumulation.mp3",
+      "kind": "interaction",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Debi/integral görevinde suyun haznede birikmesi."
+    },
+    {
+      "id": "science_chemistry_pipette_transfer",
+      "path": "science/chemistry_pipette_transfer.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Pipetle numune aktarma."
+    },
+    {
+      "id": "science_chemistry_reaction_fizz",
+      "path": "science/chemistry_reaction_fizz.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Küçük, kontrollü kimyasal tepkime/gösterge değişimi."
+    },
+    {
+      "id": "science_liquid_heating_bubbles",
+      "path": "science/liquid_heating_bubbles.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Isıtma ve hâl değişiminde kabarcıkların başlaması."
+    },
+    {
+      "id": "science_electric_circuit_close",
+      "path": "science/electric_circuit_close.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Güvenli devre anahtarının kapanıp akımın başlaması."
+    },
+    {
+      "id": "science_optics_prism_trace",
+      "path": "science/optics_prism_trace.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Işının cam/prizma içinden geçişine eşlik eden hafif işaret."
+    },
+    {
+      "id": "science_heart_cycle_soft",
+      "path": "science/heart_cycle_soft_loop.mp3",
+      "kind": "science_ambience",
+      "bus": "SFX",
+      "loop": true,
+      "use": "Kalp pompası evreleriyle eşleştirilen sakin çift atım; gerçek döngüyle senkronize kullanılmalı."
+    },
+    {
+      "id": "science_neuron_impulse_travel",
+      "path": "science/neuron_impulse_travel.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Nöron impulsunun akson boyunca ilerlemesi."
+    },
+    {
+      "id": "science_synapse_release",
+      "path": "science/synapse_release.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Sinapsta nörotransmitter aktarımı/reseptöre bağlanma."
+    },
+    {
+      "id": "world_archive_document_turn",
+      "path": "world/archive_document_turn.mp3",
+      "kind": "world",
+      "bus": "SFX",
+      "loop": false,
+      "use": "İlerideki tarih/kaynak görevlerinde belge sayfasını çevirme."
+    },
+    {
+      "id": "world_archive_record_stamp",
+      "path": "world/archive_record_stamp.mp3",
+      "kind": "world",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Arşiv kaydını tarih damgasıyla işaretleme."
+    },
+    {
+      "id": "science_physics_wave_resonance",
+      "path": "science/physics_wave_resonance.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Dalga tankı/rezonans gösteriminde ilerleyen ve yansıyan dalga."
+    },
+    {
+      "id": "science_physics_momentum_collision",
+      "path": "science/physics_momentum_collision.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Düşük sürtünmeli rayda küçük kütlelerin kontrollü çarpışması."
+    },
+    {
+      "id": "science_physics_orbit_pass",
+      "path": "science/physics_orbit_pass.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Yörünge deneyinde uydu modelinin işaretli noktadan geçişi."
+    },
+    {
+      "id": "science_physics_generator_start",
+      "path": "science/physics_generator_start.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Jeneratör/indüksiyon deneyinde ölçülebilir çıkışın başlaması."
+    },
+    {
+      "id": "science_chemistry_bond_formation",
+      "path": "science/chemistry_bond_formation.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Atomik bağ veya molekül modeli parçasının doğru bağa yerleşmesi."
+    },
+    {
+      "id": "science_chemistry_gas_piston",
+      "path": "science/chemistry_gas_piston.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Gaz yasaları görevinde şeffaf pistonun kontrollü hareketi."
+    },
+    {
+      "id": "science_chemistry_equilibrium_shift",
+      "path": "science/chemistry_equilibrium_shift.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Denge koşulu değiştikten sonra kontrollü tepkimenin yeni dengede durulması."
+    },
+    {
+      "id": "science_biology_dna_pairing",
+      "path": "science/biology_dna_pairing.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "DNA baz eşleşmesinin doğru konumda kurulması."
+    },
+    {
+      "id": "science_biology_membrane_transport",
+      "path": "science/biology_membrane_transport.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Taneciğin hücre zarından geçişi."
+    },
+    {
+      "id": "science_biology_photosynthesis",
+      "path": "science/biology_photosynthesis.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Fotosentez modelinde ışık ve gaz alışverişinin başlaması."
+    },
+    {
+      "id": "interaction_geometry_compass_construct",
+      "path": "interaction/geometry_compass_construct.mp3",
+      "kind": "interaction",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Pergel ile geometri yayının çizilmesi."
+    },
+    {
+      "id": "interaction_math_tangent_slope",
+      "path": "interaction/math_tangent_slope.mp3",
+      "kind": "interaction",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Grafik üzerinde teğetin eğriye hizalanması ve noktanın işaretlenmesi."
+    },
+    {
+      "id": "science_heart_resting_beat",
+      "path": "science/heart_resting_beat_loop.mp3",
+      "kind": "science_ambience",
+      "bus": "SFX",
+      "loop": true,
+      "use": "Dinlenme aşamasında yaklaşık 72/dk çift atım."
+    },
+    {
+      "id": "science_heart_active_beat",
+      "path": "science/heart_active_beat_loop.mp3",
+      "kind": "science_ambience",
+      "bus": "SFX",
+      "loop": true,
+      "use": "Egzersiz/debi görevinde yaklaşık 120/dk çift atım."
+    },
+    {
+      "id": "science_heart_valve_backflow",
+      "path": "science/heart_valve_backflow.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Arızalı kapak ve ilgili pompa evresinde geri kaçış."
+    },
+    {
+      "id": "science_heart_valve_seat",
+      "path": "science/heart_valve_seat.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Kapakçığın yuvaya yerleşmesi veya kapanması."
+    },
+    {
+      "id": "science_heart_restored_flow",
+      "path": "science/heart_restored_flow.mp3",
+      "kind": "science",
+      "bus": "SFX",
+      "loop": false,
+      "use": "Onarım sonrası tek yönlü akışın geri gelmesi."
+    }
+  ]
+}

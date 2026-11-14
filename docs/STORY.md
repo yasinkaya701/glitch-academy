@@ -1,4 +1,4 @@
-# Yanlış Dünya · Hikâye
+# 3 Cisim 1 Dünya · Hikâye
 
 Bu belgenin en üstündeki **2026-11-14 kanonu** anlatının tek kaynağıdır ve aşağıdaki eski notların önündedir. Eski notlardaki Misafirlerin yasaları doğrudan bozduğu veya MERİDYEN'in açılışta itiraf ettiği anlatımlar geçersizdir. Her istasyon kendi bozulmasını kanona göre yazar. Oyun içi metin kısa kalır (docs/UX.md); olaylar sahne, haber kaydı ve ölçüm farkıyla anlatılır.
 
