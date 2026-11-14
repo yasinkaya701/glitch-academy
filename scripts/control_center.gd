@@ -5,6 +5,8 @@ const MissionDefinition = preload("res://scripts/mission_definition.gd")
 const YksMissionDefinition = preload("res://stations/yks/yks_mission_definition.gd")
 const INTRO = preload("res://scenes/intro/intro.tscn")
 const LGS_IDS: Array[StringName] = [&"seasons", &"bridge", &"pulley", &"turkish", &"history", &"english", &"religion"]
+## Keşif amaçlı isteğe bağlı yeni deneyler; yedi bölümlük hikâye zincirini değiştirmez.
+const LGS_OPTIONAL_IDS: Array[StringName] = [&"genetics"]
 const LGS_STORIES := {
 	"seasons": "Seranın ışıkları düzeldi. Matematik laboratuvarındaki ispat kaydı bozuldu.\n\nMERİDYEN: “Bir sistemi düzelttin. Şimdi kendi ispatıma bak.”",
 	"bridge": "Köprü yeniden açıldı. Yakındaki vinç yükü yanlış ivmeyle kaldırıyor. MERİDYEN hareket kayıtlarındaki ivmeleri ters çevirmiş.",
@@ -16,6 +18,7 @@ const LGS_STORIES := {
 }
 const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/seasons/mission.tres"),
+	preload("res://stations/genetics/mission.tres"),
 	preload("res://stations/turkish/mission.tres"),
 	preload("res://stations/history/mission.tres"),
 	preload("res://stations/philosophy/mission.tres"),
@@ -24,6 +27,7 @@ const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/measurement/mission.tres"),
 	preload("res://stations/vectors/mission.tres"),
 	preload("res://stations/derivative/mission.tres"),
+	preload("res://stations/integral/mission.tres"),
 	preload("res://stations/bridge/mission.tres"),
 	preload("res://stations/prism/mission.tres"),
 	preload("res://stations/free_fall/mission.tres"),
@@ -51,11 +55,11 @@ const CATALOG: Array[MissionDefinition] = [
 ]
 const YKS_ORDER := {
 	"turkish_reading": 0, "tyt_math": 1, "measurement": 2, "indicator": 3,
-	"tyt_biology": 4, "geometry": 5, "vectors": 6, "derivative": 7,
-	"free_fall": 8, "waves": 9, "photoelectric": 10, "heart": 11,
-	"turkish_literature": 12, "history": 13, "geography": 14, "philosophy": 15,
-	"religion_culture": 16, "psychology": 17, "sociology": 18, "logic": 19,
-	"chemistry": 20, "ydt_english": 21, "three_suns": 22,
+	"tyt_biology": 4, "geometry": 5, "vectors": 6, "derivative": 7, "integral": 8,
+	"free_fall": 9, "waves": 10, "photoelectric": 11, "heart": 12,
+	"turkish_literature": 13, "history": 14, "geography": 15, "philosophy": 16,
+	"religion_culture": 17, "psychology": 18, "sociology": 19, "logic": 20,
+	"chemistry": 21, "ydt_english": 22, "three_suns": 23,
 }
 const ICONS := {
 	"Türkçe": "language", "Türk Dili ve Edebiyatı": "language",
@@ -240,7 +244,7 @@ func _refresh_list() -> void:
 	for mission in CATALOG:
 		if not mission.routes.has(String(active_route)):
 			continue
-		if active_route == &"lgs" and not LGS_IDS.has(mission.id):
+		if active_route == &"lgs" and not LGS_IDS.has(mission.id) and not LGS_OPTIONAL_IDS.has(mission.id):
 			continue
 		if active_route == &"class" and selected_grade > 0 and mission.grade != selected_grade:
 			continue
@@ -249,7 +253,13 @@ func _refresh_list() -> void:
 		candidates.append(mission)
 	if active_route == &"lgs":
 		candidates.sort_custom(func(a: MissionDefinition, b: MissionDefinition) -> bool:
-			return LGS_IDS.find(a.id) < LGS_IDS.find(b.id)
+			var a_index := LGS_IDS.find(a.id)
+			var b_index := LGS_IDS.find(b.id)
+			if a_index < 0:
+				a_index = LGS_IDS.size() + LGS_OPTIONAL_IDS.find(a.id)
+			if b_index < 0:
+				b_index = LGS_IDS.size() + LGS_OPTIONAL_IDS.find(b.id)
+			return a_index < b_index
 		)
 	elif active_mode == &"yks":
 		candidates.sort_custom(func(a: MissionDefinition, b: MissionDefinition) -> bool:
@@ -606,7 +616,7 @@ func _life_protocol_resolved() -> bool:
 func _mission_available(mission: MissionDefinition) -> bool:
 	if mission.scene == null:
 		return false
-	if active_route == &"lgs":
+	if active_route == &"lgs" and not LGS_OPTIONAL_IDS.has(mission.id):
 		var lgs_index := LGS_IDS.find(mission.id)
 		if lgs_index < 0:
 			return false
