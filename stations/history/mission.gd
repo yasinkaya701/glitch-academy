@@ -4,7 +4,7 @@ extends "res://scripts/mission.gd"
 
 const HistoryStageScript = preload("res://stations/history/visual/history_stage.gd")
 const HistoryBrainScript = preload("res://stations/history/visual/history_brain.gd")
-const Hud = preload("res://scripts/mission_hud.gd")
+const Hud = preload("res://stations/history/visual/archive_hud.gd")
 const UITheme = preload("res://scripts/ui_theme.gd")
 
 const ORDER: Array[StringName] = [&"mete_han", &"alparslan", &"fatih", &"kanuni", &"mimar_sinan", &"ataturk"]
@@ -111,9 +111,9 @@ func _ready() -> void:
 
 
 func _build_dialogue_controls() -> void:
-	var font_cinzel := preload("res://fonts/Cinzel-Regular.ttf")
-	var font_cinzel_bold := preload("res://fonts/CinzelDecorative-Bold.ttf")
-	var font_marcellus := preload("res://fonts/Marcellus-Regular.ttf")
+	var font_cinzel := UITheme.FONT
+	var font_cinzel_bold := UITheme.DISPLAY_FONT
+	var font_marcellus := UITheme.FONT
 
 	if hud != null:
 		hud.directive.add_theme_font_override("font", font_cinzel)
@@ -222,6 +222,9 @@ func _layout_evidence_controls() -> void:
 	var compact := stage.size.x < 560.0
 	_player_quote.add_theme_font_size_override("font_size", 14 if compact else 17)
 	_evidence_prompt.add_theme_font_size_override("font_size", 14 if compact else 16)
+	_input_box.custom_minimum_size.x = 130 if compact else 200
+	_mic_btn.text = "Konuş" if compact else "Konuş (V)"
+	_mic_btn.custom_minimum_size.x = 70 if compact else 108
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -332,8 +335,8 @@ func _refresh_decision_cards() -> void:
 		display_cards[k] = display_cards[swap_idx]
 		display_cards[swap_idx] = tmp
 
-	var font_marcellus := preload("res://fonts/Marcellus-Regular.ttf")
-	var font_cinzel := preload("res://fonts/Cinzel-Regular.ttf")
+	var font_marcellus := UITheme.FONT
+	var font_cinzel := UITheme.FONT
 
 	for c in display_cards:
 		var btn := Button.new()
