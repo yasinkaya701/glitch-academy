@@ -40,18 +40,18 @@ func _ready() -> void:
 
 func _build_environment() -> void:
 	var sky_material := ProceduralSkyMaterial.new()
-	sky_material.sky_top_color = Color("#2b3036")
-	sky_material.sky_horizon_color = Color("#b4b1ad")
-	sky_material.ground_horizon_color = Color("#6a6764")
-	sky_material.ground_bottom_color = Color("#1d1e20")
-	sky_material.sky_energy_multiplier = 1.1
+	sky_material.sky_top_color = Color("#171815")
+	sky_material.sky_horizon_color = Color("#34332e")
+	sky_material.ground_horizon_color = Color("#292923")
+	sky_material.ground_bottom_color = Color("#10110f")
+	sky_material.sky_energy_multiplier = 0.8
 	var sky := Sky.new()
 	sky.sky_material = sky_material
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_SKY
 	environment.sky = sky
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	environment.ambient_light_energy = 1.5
+	environment.ambient_light_energy = 0.9
 	environment.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
 	environment.tonemap_mode = Environment.TONE_MAPPER_ACES
 	environment.glow_enabled = true
@@ -111,7 +111,7 @@ func _pbr(folder: String, id: String, scale: float, tint: Color = Color.WHITE) -
 
 
 func _build_bench() -> void:
-	var top := _pbr("Metal009", "Metal009", 0.12, Color(0.32, 0.34, 0.37))
+	var top := _pbr("Metal009", "Metal009", 0.12, Color(0.24, 0.23, 0.20))
 	top.normal_scale = 0.5
 	top.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 	var plane := MeshInstance3D.new()
@@ -121,31 +121,31 @@ func _build_bench() -> void:
 	plane.material_override = top
 	add_child(plane)
 
-	_metal = _pbr("Metal009", "Metal009", 0.30, Color(1.05, 1.05, 1.1))
-	_metal_dark = _pbr("Metal009", "Metal009", 0.30, Color(0.55, 0.58, 0.62))
+	_metal = _pbr("Metal009", "Metal009", 0.30, Color(0.96, 0.91, 0.80))
+	_metal_dark = _pbr("Metal009", "Metal009", 0.30, Color(0.43, 0.41, 0.36))
 	_glass = StandardMaterial3D.new()
-	_glass.albedo_color = Color(0.75, 0.92, 1.0, 0.14)
+	_glass.albedo_color = Color(0.90, 0.84, 0.72, 0.12)
 	_glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	_glass.roughness = 0.03
 	_glass.metallic = 0.0
 	_glass.cull_mode = BaseMaterial3D.CULL_DISABLED
 	_water = StandardMaterial3D.new()
-	_water.albedo_color = Color(0.22, 0.62, 0.9, 0.78)
+	_water.albedo_color = Color(0.49, 0.72, 0.59, 0.78)
 	_water.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	_water.roughness = 0.08
 	_water.emission_enabled = true
-	_water.emission = Color(0.05, 0.2, 0.4)
+	_water.emission = Color(0.10, 0.22, 0.14)
 	_water.emission_energy_multiplier = 0.25
 
 
 func _grid_texture() -> ImageTexture:
 	var size := 256
 	var image := Image.create(size, size, false, Image.FORMAT_RGB8)
-	image.fill(Color("#1b232c"))
+	image.fill(Color("#211f1a"))
 	for i in size:
 		for k in 2:
-			image.set_pixel(i, k, Color("#3a4a5a"))
-			image.set_pixel(k, i, Color("#3a4a5a"))
+			image.set_pixel(i, k, Color("#514737"))
+			image.set_pixel(k, i, Color("#514737"))
 	image.generate_mipmaps()
 	return ImageTexture.create_from_image(image)
 

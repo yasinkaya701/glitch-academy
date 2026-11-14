@@ -7,11 +7,11 @@
 [resource]
 script = ExtResource("1")
 id = &"seasons"
-title = "Mevsim Gözlemevi"
-subject = "Fen Bilimleri"
-grade = 8
-routes = PackedStringArray("class", "lgs")
-description = "Dünya’nın eksen eğikliğini ve ışığın iki yarımküreye etkisini incele, sera uyarılarını onar."
-curriculum = "F.8.1.1.1"
-source_url = "https://odsgm.meb.gov.tr/www/8-sinif-fen-bilimleri-unitelendirilmis-ornek-sorular/icerik/676"
+title = "21 Haziran Gözlemevi"
+subject = "Coğrafya"
+grade = 12
+routes = PackedStringArray("tyt")
+description = "Eksen eğikliği, öğle Güneş açısı ve gündüz süresini 3B yörünge modelinde karşılaştır; iki istasyonun mevsim uyarısını düzelt."
+curriculum = "TYT Coğrafya · Dünya'nın şekli ve hareketleri · Eksen eğikliği ve mevsimler"
+source_url = ""
 scene = ExtResource("2")

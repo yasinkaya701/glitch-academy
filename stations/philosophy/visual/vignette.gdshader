@@ -15,7 +15,7 @@ void fragment() {
 	// Sağ üstten filozofun üzerine düşen sıcak altın güneş huzmesi
 	float sun_glow = exp(-length((uv - vec2(0.72, 0.24)) * vec2(1.2, 1.4)) * 2.4) * (0.14 + 0.12 * repaired);
 
-	vec3 base_dark = vec3(0.04, 0.05, 0.07);
+	vec3 base_dark = vec3(0.045, 0.045, 0.042);
 	vec3 anger_col = vec3(0.32, 0.06, 0.05);
 	vec3 gold_col = vec3(0.96, 0.78, 0.46);
 

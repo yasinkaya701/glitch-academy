@@ -1,8 +1,22 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://stations/yks/stage_visual.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/experiment_3d.tscn" id="2"]
+[ext_resource type="Script" path="res://stations/yks/stage_visual_3d.gd" id="3"]
 
 [node name="StageVisual" type="Control"]
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1")
+
+[node name="Experiment3D" parent="." instance=ExtResource("2")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="YksStageVisual3D" type="Node3D" parent="Experiment3D/Viewport/World/Model"]
+script = ExtResource("3")

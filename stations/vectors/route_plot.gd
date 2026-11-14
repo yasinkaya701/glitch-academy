@@ -1,13 +1,13 @@
 extends Control
 
 const INK := Color("#e9f1ee")
-const MUTED := Color("#a0b5bf")
+const MUTED := Color("#b1ac9e")
 const JADE := Color("#77dfba")
-const SKY := Color("#80b8e5")
-const GOLD := Color("#ffc082")
-const GRID := Color("#182a39")
-const GRID_MAJOR := Color("#27404f")
-const BACK := Color("#101f30")
+const PAPER := Color("#d2c7af")
+const GOLD := Color("#dfae63")
+const GRID := Color("#242520")
+const GRID_MAJOR := Color("#393b34")
+const BACK := Color("#11120f")
 
 var HARBOR_TEX: Texture2D = load("res://stations/vectors/assets/harbor_top.png")
 var CAPSULE_TEX: Texture2D = load("res://stations/vectors/assets/capsule_top.png")
@@ -59,18 +59,18 @@ func _draw() -> void:
 	elif inspecting:
 		if method == 0:
 			_arrow(start, _point(east), JADE, 3.0)
-			_arrow(_point(east), end, SKY, 3.0)
+			_arrow(_point(east), end, PAPER, 3.0)
 			_right_angle(_point(east), Vector2(-1, 0), Vector2(0, -1), MUTED)
 			_chip(_point(east * 0.5) + Vector2(0, 30), "3 doğu", JADE)
-			_chip(_point(Vector2(3, 2)) + Vector2(48, 0), "4 kuzey", SKY)
+			_chip(_point(Vector2(3, 2)) + Vector2(48, 0), "4 kuzey", PAPER)
 		else:
 			var north := Vector2(0, target.y)
 			_arrow(start, _point(east), JADE, 3.0)
-			_arrow(start, _point(north), SKY, 3.0)
-			_dashed(_point(east), end, SKY.darkened(0.19))
+			_arrow(start, _point(north), PAPER, 3.0)
+			_dashed(_point(east), end, PAPER.darkened(0.19))
 			_dashed(_point(north), end, JADE.darkened(0.19))
 			_chip(_point(east * 0.5) + Vector2(0, 30), "3 doğu", JADE)
-			_chip(_point(north * 0.5) + Vector2(-48, 0), "4 kuzey", SKY)
+			_chip(_point(north * 0.5) + Vector2(-48, 0), "4 kuzey", PAPER)
 		if route_draw > 0.0:
 			_arrow(start, _point(target * route_draw), GOLD, 3.4)
 		if revealed:
@@ -83,7 +83,7 @@ func _draw() -> void:
 
 
 func _draw_deck_outline() -> void:
-	var edge := Color("#263b4a")
+	var edge := Color("#3b3d35")
 	var shell := PackedVector2Array([
 		Vector2(13, size.y * 0.30), Vector2(13, 32), Vector2(32, 13),
 		Vector2(size.x - 32, 13), Vector2(size.x - 13, 32), Vector2(size.x - 13, size.y * 0.30)
@@ -151,20 +151,20 @@ func _draw_capsule(center: Vector2, active: bool) -> void:
 			center + Vector2(4, 7) * k
 		])
 		draw_circle(center, 22.0 * k, Color(color, 0.08), true, -1.0, true)
-		draw_colored_polygon(body, Color("#4a6477"))
+		draw_colored_polygon(body, Color("#6a675d"))
 		# Üst yarı aydınlık, alt yarı gölge: gövdeye hacim verir.
 		draw_colored_polygon(PackedVector2Array([
 			center + Vector2(14, 0) * k, center + Vector2(4, -7) * k, center + Vector2(-9, -7) * k,
 			center + Vector2(-13, -3) * k, center + Vector2(-13, 0) * k,
-		]), Color("#6f8ba0"))
+		]), Color("#8f897a"))
 		draw_colored_polygon(PackedVector2Array([
 			center + Vector2(-13, 0) * k, center + Vector2(-13, 3) * k, center + Vector2(-9, 7) * k,
 			center + Vector2(4, 7) * k, center + Vector2(14, 0) * k,
-		]), Color("#2b3f4f"))
+		]), Color("#42433b"))
 		body.append(body[0])
 		draw_polyline(body, color, 1.8, true)
-		draw_line(center + Vector2(-3, -7) * k, center + Vector2(-3, 7) * k, Color("#1b2a36"), 1.4, true)
-		draw_circle(center + Vector2(5, 0) * k, 2.6 * k, Color("#0c1520"), true, -1.0, true)
+		draw_line(center + Vector2(-3, -7) * k, center + Vector2(-3, 7) * k, Color("#262720"), 1.4, true)
+		draw_circle(center + Vector2(5, 0) * k, 2.6 * k, Color("#11120f"), true, -1.0, true)
 		draw_circle(center + Vector2(5, 0) * k, 1.5 * k, color, true, -1.0, true)
 		for side in [-1.0, 1.0]:
 			draw_line(center + Vector2(-16, 3.2 * side) * k, center + Vector2(-26, 3.2 * side) * k, Color(GOLD, 0.35), 5.0, true)

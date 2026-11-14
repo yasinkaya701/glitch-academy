@@ -4,9 +4,9 @@ extends Control
 ## Yanmamış: içi boş ince hat. Yanmış: dolu, ışıklı. Onarılmış: yeşil ve hepsi bağlı.
 ## Durum renk dışında doluluk, boyut ve bağlantı çizgisiyle de okunur.
 
-const UNLIT := Color("#41627f")
-const LIT := Color("#f2a65a")
-const REPAIRED := Color("#6fe3c1")
+const UNLIT := Color("#73766f")
+const LIT := Color("#d49a54")
+const REPAIRED := Color("#9eaf95")
 
 var count: int = 5:
 	set(v):

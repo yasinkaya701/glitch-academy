@@ -7,12 +7,13 @@ signal skip_pressed
 signal pause_pressed
 signal back_pressed
 
-const INK := Color("#22332f")
-const MUTED := Color("#66766d")
-const ACCENT := Color("#3b7867")
-const WARM := Color("#c88755")
+const INK := Color("#eeeae0")
+const MUTED := Color("#b1ac9e")
+const ACCENT := Color("#8fbea0")
+const WARM := Color("#dfae63")
 const DANGER := Color("#b85f56")
-const BG := Color("#f4f6f2")
+const BG := Color("#191a17")
+const EDGE := Color("#3b3d35")
 
 var directive: Label
 var counter: Label
@@ -41,7 +42,9 @@ func _ready() -> void:
 	directive.add_theme_font_size_override("font_size", 20)
 	directive.add_theme_color_override("font_color", INK)
 	var reading_surface := StyleBoxFlat.new()
-	reading_surface.bg_color = Color(1, 1, 1, 0.96)
+	reading_surface.bg_color = Color("#191a17", 0.97)
+	reading_surface.border_color = EDGE
+	reading_surface.set_border_width_all(1)
 	reading_surface.set_corner_radius_all(8)
 	reading_surface.content_margin_left = 14
 	reading_surface.content_margin_right = 14
@@ -71,7 +74,7 @@ func _ready() -> void:
 	toast.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var toast_box := StyleBoxFlat.new()
 	toast_box.bg_color = Color(BG, 0.88)
-	toast_box.border_color = Color("#bdccc3")
+	toast_box.border_color = EDGE
 	toast_box.set_border_width_all(1)
 	toast_box.set_corner_radius_all(14)
 	toast_box.content_margin_left = 16
@@ -126,6 +129,11 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	_layout_hud()
+	queue_redraw()
+
+
+func _layout_hud() -> void:
 	var edge := 24.0
 	var right := size.x - edge
 	for button in [back, skip, pause, info_button]:
@@ -133,9 +141,12 @@ func _process(_delta: float) -> void:
 			button.size = button.get_combined_minimum_size().max(Vector2(44, 40))
 			button.position = Vector2(right - button.size.x, 18)
 			right = button.position.x - 8.0
-	counter.position = Vector2(edge, 18)
-	directive.position = Vector2(edge, 52)
-	directive.size = Vector2(maxf(size.x - edge * 2, 200), 0)
+	counter.position = Vector2(edge, 16)
+	counter.size = Vector2(maxf(right - edge - 12, 120), 24)
+	var directive_top := 64.0 if right - edge < 300.0 else 56.0
+	directive.position = Vector2(edge, directive_top)
+	directive.size = Vector2(maxf(right - edge, minf(size.x - edge * 2, 260)), 0)
+	directive.size.y = maxf(directive.get_combined_minimum_size().y, 30.0)
 	var action_width := action.get_combined_minimum_size().x if action.visible else 0.0
 	var tool_width := maxf(size.x - edge * 2 - action_width - (16 if action.visible else 0), 0)
 	var tool_height := maxf(tools.get_combined_minimum_size().y, 46)
@@ -152,12 +163,11 @@ func _process(_delta: float) -> void:
 	info_card.size.x = minf(size.x - edge * 2, 380)
 	info_card.size.y = info_card.get_minimum_size().y
 	info_card.position = Vector2(size.x - info_card.size.x - edge, 112)
-	queue_redraw()
 
 
 func _draw() -> void:
 	# Üstte ve altta açık okuma zemini: yönerge ve araçlar okunur kalır, panel yok.
-	var dark := Color(BG, 0.9)
+	var dark := Color("#10110f", 0.92)
 	var clear := Color(BG, 0.0)
 	var top := minf(size.y * 0.22, 150.0)
 	draw_polygon(PackedVector2Array([Vector2(0, 0), Vector2(size.x, 0), Vector2(size.x, top), Vector2(0, top)]),
@@ -165,6 +175,28 @@ func _draw() -> void:
 	var bottom := minf(size.y * 0.24, 170.0)
 	draw_polygon(PackedVector2Array([Vector2(0, size.y), Vector2(size.x, size.y), Vector2(size.x, size.y - bottom), Vector2(0, size.y - bottom)]),
 		PackedColorArray([dark, dark, clear, clear]))
+	_draw_step_track()
+
+
+func _draw_step_track() -> void:
+	if _steps_total <= 1 or size.x <= 0.0:
+		return
+	var track_y := _progress_track_y()
+	var track_width := minf(size.x - 48.0, 420.0)
+	var segment_gap := 5.0
+	var segment_width := (track_width - segment_gap * (_steps_total - 1)) / _steps_total
+	var track_left := 24.0
+	for index in _steps_total:
+		var color := Color("#3b3d35")
+		if index < _steps_current:
+			color = Color("#8fbea0")
+		elif index == _steps_current:
+			color = Color("#dfae63")
+		draw_rect(Rect2(track_left + index * (segment_width + segment_gap), track_y, segment_width, 6.0), color, true)
+
+
+func _progress_track_y() -> float:
+	return 47.0
 
 
 func _standalone() -> bool:
@@ -192,9 +224,10 @@ func set_directive(text: String) -> void:
 
 
 func set_steps(current: int, total: int, label: String = "") -> void:
-	_steps_current = clampi(current, 0, total)
 	_steps_total = maxi(total, 0)
-	counter.text = "%d / %d   %s" % [mini(current + 1, total), total, label.capitalize()]
+	_steps_current = clampi(current, 0, _steps_total)
+	counter.text = "%d / %d   %s" % [mini(current + 1, _steps_total), _steps_total, label.capitalize()]
+	queue_redraw()
 
 
 func set_action(text: String, enabled: bool = true) -> void:

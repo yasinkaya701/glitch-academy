@@ -1,13 +1,14 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
-[ext_resource type="PackedScene" path="res://stations/heart/assets/model/heart_cutaway_light.glb" id="1"]
+[ext_resource type="PackedScene" path="res://stations/heart/assets/model/heart_cutaway.glb" id="1"]
+[ext_resource type="Script" path="res://stations/heart/heart_view.gd" id="2"]
 
 [sub_resource type="Environment" id="Env"]
 background_mode = 0
-background_color = Color(0.027, 0.043, 0.071, 1)
+background_color = Color(0.063, 0.067, 0.059, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.36, 0.43, 0.55, 1)
-ambient_light_energy = 0.9
+ambient_light_color = Color(0.72, 0.68, 0.59, 1)
+ambient_light_energy = 0.75
 tonemap_mode = 3
 glow_enabled = true
 glow_intensity = 0.35
@@ -17,6 +18,7 @@ glow_bloom = 0.05
 dof_blur_far_enabled = false
 
 [node name="HeartView" type="Node3D"]
+script = ExtResource("2")
 
 [node name="Env" type="WorldEnvironment" parent="."]
 environment = SubResource("Env")
@@ -35,5 +37,5 @@ light_energy = 1.35
 
 [node name="Rim" type="DirectionalLight3D" parent="."]
 transform = Transform3D(-0.9, 0.2, 0.4, 0, 0.9, -0.43, -0.44, -0.39, -0.81, 0, 0.3, -0.5)
-light_color = Color(0.55, 0.78, 1, 1)
+light_color = Color(0.78, 0.73, 0.62, 1)
 light_energy = 0.8

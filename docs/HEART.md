@@ -21,9 +21,17 @@ Oyuncu sanal bir insan modeline oksijen taşınmasını geri kazandırır. AYT g
 
 ## Uygulama notu · hazır model ve etkileşim katmanı
 
-Gerçekçi görsel hazır modelden gelir (`stations/heart/assets/model/heart_cutaway_light.glb`, CC0). Model tek parça ve tek malzeme, kapakçıklar ayrı düğüm değil, topolojiyle ayrılamıyor. Oyuncunun yaptığı iş bu yüzden modelin üstündeki etkileşim katmanında yaşar:
+Gerçekçi kalp görseli hazır modelden gelir (`stations/heart/assets/model/heart_cutaway.glb`, CC0). Kalp tek parça olsa da kapak modelleri etkileşim katmanında ayrı GLB varlıklarıdır (`stations/heart/assets/segmented/valves/`); odacık ve damar müdahaleleri sahne üstündeki etkileşim katmanında kalır:
 
-- Dört kapak yuvası ve oyuncunun yerleştirdiği kapakçık parçaları Godot'ta ayrı `Node3D` olarak, model koordinatında kurulur (açık ve kapalı animasyon, hasarlı hâl).
+- Dört kapak varlığı ayrı yaprakçık, annulus ve destek parçalarına sahiptir. Triküspit ve mitral modellerde kordatlar ile papiller kaslar da bulunur. Yaprakçıklar sahnede açılma animasyonu alır.
+- Dolaşım görünümünde `assets/segmented/blood/red_blood_cell.glb` eritrosit modeli akış doğrultusunda döner. Oksijence fakir ve zengin kan, koyu bordo ile canlı kırmızı tonları ve metinle ayrılır.
 - Akış parçacıkları kalbin içinde sabit yollar boyunca ilerler. Geri kaçışta ters döner. Oksijen düzeyi renkle ve etiketle.
-- Damar uçları tıklanabilir bağlantı noktalarıdır. Oyuncu yolu bağlar, tam tur kapanınca oksijen vücuda ulaşır.
+- Dış dolaşım damarları gövde ve akciğer GLB'lerinin yüzey noktalarına oturur; uçları doku içine hafifçe girer ve ana çaplarından yumuşakça daralır. Gövdeye giden aort ve ana toplardamar yolları kesişmeyecek yüksekliklerde kıvrılır. Büyük metal kelepçeler yerine küçük, doku tonunda bağlantı halkaları kullanılır.
+- Damar uçları tıklanabilir bağlantı noktalarıdır. Oyuncu yolu bağlar, tam tur kapanınca oksijen vücuda ulaşır. İşaretçiler yalnız bağlantı etkileşimi sırasında görünür.
+- Gövde ve akciğer port merkezleri, iç içe model dönüşümleri hesaba katılarak gerçek mesh üçgenlerine izdüşürülür; portlar yüzeyden 2 mm dışarı yerleştirilir. Böylece damar ağızlarında görünür boşluk kalmaz.
+- Damarı sürüklerken mevcut bağlantı bırakılana kadar korunur. Boş hedefe bırakma bağlantıyı taşır; dolu giriş reddedilir ve eski yol yerinde kalır. Shift+tık bağlantıyı söker; son yol sökülünce pompa durur.
+- Aort kapağı müdahalesinde arızalı parça sahneden ve yuvasından çıkarılır. Yeni aort kapağı yönü kontrol edilerek takılır ve bir tam pompa atımıyla sınanır; yalnız başarılı akışta görev sonraki adıma geçer.
+- Akciğer GLB'sinin renk atlası kalp sahnesinde mozaik yamalara dönüştüğü için yalnız bu sahne örneğinde metalik olmayan, mat akciğer dokusu malzemesi kullanılır.
+- Kalp görevinin özel HUD'si aşama ve yönergeyi üstte, kontrolleri üst sağda, araçları alt dock'ta toplar; diğer görevlerin ortak HUD düzeni değişmez.
+- HUD 640×480, 800×600, 1024×720 ve 1280×720 görünümlerinde sınanır. Dar ekranda tanı yönergesi kontrollerin altına alınır; araç ve soru satırları yatay kaydırılır.
 - Model koordinatı: boyut yaklaşık 0,083 × 0,13 × 0,07 birim, merkez (0, 0,065, 0).

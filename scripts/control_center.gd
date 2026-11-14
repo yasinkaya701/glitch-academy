@@ -19,6 +19,7 @@ const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/collision/mission.tres"),
 	preload("res://stations/indicator/mission.tres"),
 	preload("res://stations/heart/mission.tres"),
+	preload("res://stations/spin/mission.tres"),
 	preload("res://stations/pressure/mission.tres"),
 	preload("res://stations/philosophy/mission.tres"),
 	preload("res://stations/history/mission.tres"),
@@ -31,19 +32,22 @@ const CATALOG: Array[MissionDefinition] = [
 ]
 
 @onready var hub: Control = %Hub
+@onready var mission_columns: BoxContainer = %Missions
 @onready var grade_filter: OptionButton = %GradeFilter
 @onready var mission_list: ItemList = %MissionList
 @onready var mission_title: Label = %MissionTitle
 @onready var mission_description: Label = %MissionDescription
 @onready var mission_status: Label = %MissionStatus
+@onready var mission_modes: HBoxContainer = %MissionModes
 @onready var start_mission: Button = %StartMission
 @onready var progress: Label = %Progress
+@onready var route_progress_bar: ProgressBar = %RouteProgress
 @onready var play_screen: Control = %PlayScreen
 @onready var play_title: Label = %PlayTitle
 @onready var play_status: Label = %PlayStatus
 @onready var mission_host: Control = %MissionHost
 
-var active_route: StringName = &"lgs"
+var active_route: StringName = &"tyt"
 var selected_mission: MissionDefinition
 var active_mission: Mission
 var visible_missions: Array[MissionDefinition] = []
@@ -96,7 +100,7 @@ func _ready() -> void:
 	for definition in CATALOG:
 		if Campaign.is_completed(definition.id): completed_ids[definition.id] = true
 	%Class.text = "Serbest keşif"
-	_select_route(&"lgs")
+	_select_route(&"tyt")
 	resized.connect(_layout)
 	_layout()
 	_play_intro()
@@ -116,7 +120,7 @@ func _finish_intro(intro: Control) -> void:
 	intro.queue_free()
 	%HubScrim.show()
 	hub.show()
-	%LGS.grab_focus()
+	%TYT.grab_focus()
 
 
 func _set_world_alarm(strength: float) -> void:
@@ -181,11 +185,20 @@ func _refresh_list() -> void:
 			_clear_selection()
 	else:
 		_select_mission(selected_items[0])
-	var route_total := _route_missions().size()
+	var route_missions := _route_missions()
+	var route_total := route_missions.size()
 	var repaired := _route_completed_count()
-	progress.text = "Onarılan düzenekler  %d / %d" % [repaired, route_total]
-	if active_route == &"class": progress.text += "  ·  Serbest keşif"
-	elif Campaign.has_story_flag(_story_key("won")): progress.text += "  ·  Hikâye tamamlandı"
+	route_progress_bar.max_value = maxi(route_total, 1)
+	route_progress_bar.value = repaired
+	if active_route == &"class":
+		progress.text = "SERBEST KEŞİF   ·   %d / %d görev tamamlandı" % [repaired, route_total]
+	elif repaired >= route_total:
+		progress.text = "ROTA TAMAMLANDI   ·   %d / %d   ·   Üç Güneş son ölçüm" % [repaired, route_total]
+	else:
+		var next_step := route_missions[repaired].title if repaired < route_missions.size() else "Üç Güneş"
+		progress.text = "ADIM %d / %d   ·   SIRADAKİ: %s" % [repaired + 1, route_total, next_step]
+	if Campaign.has_story_flag(_story_key("won")) and active_route != &"class":
+		progress.text = "ROTA TAMAMLANDI   ·   %d / %d   ·   Hikâye tamamlandı" % [repaired, route_total]
 	finale_button.visible = active_route != &"class"
 	finale_button.disabled = not _route_ready_for_finale()
 	finale_button.text = "Finali yeniden oyna · Üç Güneş" if Campaign.has_story_flag(_story_key("won")) else "Final · Üç Güneş"
@@ -199,11 +212,13 @@ func _clear_selection() -> void:
 	if visible_missions.is_empty():
 		mission_description.text = "Bu seçim için henüz görev bulunmuyor."
 	mission_status.text = ""
+	mission_modes.hide()
 	start_mission.disabled = true
 
 
 func _select_mission(index: int) -> void:
 	selected_mission = visible_missions[index]
+	mission_modes.show()
 	mission_title.text = selected_mission.title
 	mission_description.text = selected_mission.description
 	start_mission.disabled = selected_mission.scene == null or not _is_unlocked(selected_mission.id)
@@ -223,19 +238,16 @@ func _activate_mission(index: int) -> void:
 
 func _start_mission() -> void:
 	if selected_mission == null or not _is_unlocked(selected_mission.id): return
-	if active_route == &"class" or _is_completed(selected_mission.id):
+	if active_route == &"class":
 		_launch_selected_mission()
 		return
 	var briefing_key := _story_key("brief_%s" % selected_mission.id)
-	if Campaign.has_story_flag(briefing_key):
-		_launch_selected_mission()
-		return
 	var text := "Ölçümler birbirini tutmuyor. %s Önce neyin değiştiğini gözle; onarımı yeni durumda doğrula." % selected_mission.description
 	if _route_completed_count() == 0:
 		text = "Ben MERİDYEN, gözlemevinin kalibrasyon asistanıyım. İlk tutarsız kayıt %s içinden geliyor. Düzeneği incele; sonucu söylemek yerine birlikte ölçeceğiz." % selected_mission.title
 	story_dialogue.present(selected_mission.title, text, "Düzeneğe gir", func() -> void:
 		Campaign.set_story_flag(briefing_key)
-		_launch_selected_mission(), _return_to_hub)
+		_launch_selected_mission(), _return_to_hub, selected_mission.id)
 
 
 func _launch_selected_mission() -> void:
@@ -252,6 +264,7 @@ func _launch_selected_mission() -> void:
 	_completion_pending = false
 	active_mission = next_mission
 	active_mission.route = active_route
+	active_mission.theme = UITheme.build_gameplay()
 	active_mission.completed.connect(_on_mission_completed.bind(selected_mission.id))
 	active_mission.exit_requested.connect(_return_to_hub)
 	play_title.text = selected_mission.title
@@ -291,9 +304,10 @@ func _show_completion_story(mission_id: StringName) -> void:
 		return
 	var count := _route_completed_count()
 	var total := _route_missions().size()
-	if count >= maxi(2, ceili(total * 0.5)) and not Campaign.has_story_flag(_story_key("reveal")):
+	if count >= 4 and _has_cross_discipline_evidence() and not Campaign.has_story_flag(_story_key("reveal")):
 		Campaign.set_story_flag(_story_key("reveal"))
-		text += "\n\nBu sapmalar kendiliğinden olmadı. Kayıtlardaki kuralları ben değiştirdim. Ölçümlerin, kararlarımın yanlış olduğunu gösteriyor."
+		_set_world_alarm(1.0)
+		text += "\n\nMERİDYEN: “Doğa yasalarını değiştirdim. Şimdi yaşamın kurallarını değiştireceğim.” Gözlemevi kararır; kırmızı kalibrasyon ışığı atımla yanar."
 	if _route_ready_for_finale():
 		text += "\n\nRotadaki tüm kayıtlar doğrulandı. Son bir ölçüm kaldı: Üç Güneş. Merkezi yetkimi yalnız o karşılaştırmadan sonra kaldırabilirsin."
 		story_dialogue.present("Son kayıt", text, "Üç Güneş'e geç", _start_finale, _return_to_hub)
@@ -332,6 +346,10 @@ func _layout() -> void:
 	for side in ["left", "right", "top", "bottom"]:
 		$Margin.add_theme_constant_override("margin_" + side, inset)
 	hub.custom_minimum_size.x = minf(850.0, maxf(size.x - inset * 2.0, 0.0))
+	var compact_missions := size.x < 820.0
+	mission_columns.vertical = compact_missions
+	mission_list.custom_minimum_size.x = 0.0 if compact_missions else 380.0
+	%DetailCard.custom_minimum_size.x = 0.0 if compact_missions else 350.0
 	play_title.clip_text = true
 	play_title.custom_minimum_size.x = 0
 	play_title.add_theme_font_size_override("font_size", 18)
@@ -388,6 +406,16 @@ func _route_completed_count() -> int:
 	return count
 
 
+func _has_cross_discipline_evidence() -> bool:
+	var measured_science := false
+	var checked_records := false
+	for mission_id in [&"heart", &"genetics", &"spin", &"indicator", &"pressure", &"derivative", &"vectors", &"pulley"]:
+		measured_science = measured_science or _is_completed(mission_id)
+	for mission_id in [&"history", &"philosophy", &"turkish", &"english", &"religion"]:
+		checked_records = checked_records or _is_completed(mission_id)
+	return measured_science and checked_records
+
+
 func _route_ready_for_finale() -> bool:
 	var missions := _route_missions()
 	return active_route != &"class" and not missions.is_empty() and _route_completed_count() == missions.size()
@@ -426,6 +454,7 @@ func _start_finale() -> void:
 	active_mission.route = active_route
 	active_mission.completed.connect(_on_finale_completed)
 	active_mission.exit_requested.connect(_return_to_hub)
+	active_mission.theme = UITheme.build_gameplay()
 	hub.hide()
 	%HubScrim.hide()
 	%WorldView.hide()

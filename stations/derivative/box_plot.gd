@@ -3,14 +3,14 @@ extends Control
 ## Hacim ve eğim hesabı çizimden bağımsız, `volume()` ve `slope()` içinde.
 
 const INK := Color("#e9f1ee")
-const MUTED := Color("#a0b5bf")
-const JADE := Color("#77dfba")
-const SKY := Color("#80b8e5")
-const GOLD := Color("#ffc082")
-const RED := Color("#e5645a")
-const GRID := Color("#182a39")
-const GRID_MAJOR := Color("#27404f")
-const BACK := Color("#101f30")
+const MUTED := Color("#b1ac9e")
+const JADE := Color("#8fbea0")
+const SKY := Color("#dfae63")
+const GOLD := Color("#e8c986")
+const RED := Color("#d98e78")
+const GRID := Color("#242520")
+const GRID_MAJOR := Color("#3b3d35")
+const BACK := Color("#10110f")
 
 ## Levha kenarı (dm).
 var side := 12.0
@@ -55,7 +55,7 @@ func _draw_sheet(area: Rect2) -> void:
 	var s := px / side
 	var origin := area.position + Vector2((area.size.x - px) * 0.5, (area.size.y - px) * 0.5)
 	var c := cut * s
-	draw_rect(Rect2(origin, Vector2(px, px)), Color("#4a6477"))
+	draw_rect(Rect2(origin, Vector2(px, px)), Color("#292a25"))
 	draw_rect(Rect2(origin, Vector2(px, px)), MUTED, false, 1.5, true)
 	for corner in [Vector2.ZERO, Vector2(px - c, 0), Vector2(0, px - c), Vector2(px - c, px - c)]:
 		var r := Rect2(origin + corner, Vector2(c, c))
@@ -90,11 +90,11 @@ func _draw_box(area: Rect2) -> void:
 	draw_colored_polygon(PackedVector2Array([
 		p.call(-0.4, -0.4, 0) + Vector2(0, 5), p.call(b + 0.4, -0.4, 0) + Vector2(0, 5),
 		p.call(b + 0.4, b + 0.4, 0) + Vector2(0, 5), p.call(-0.4, b + 0.4, 0) + Vector2(0, 5)]), Color(0, 0, 0, 0.35))
-	draw_colored_polygon(floor_poly, Color("#2d4152"))
-	draw_colored_polygon(wall_l, Color("#38506a"))
-	draw_colored_polygon(wall_r, Color("#42607a"))
-	draw_colored_polygon(front_r, Color("#6f8ba0"))
-	draw_colored_polygon(front_l, Color("#8aa4b8"))
+	draw_colored_polygon(floor_poly, Color("#242520"))
+	draw_colored_polygon(wall_l, Color("#30312b"))
+	draw_colored_polygon(wall_r, Color("#3a3b33"))
+	draw_colored_polygon(front_r, Color("#615b50"))
+	draw_colored_polygon(front_l, Color("#857b68"))
 	for poly in [floor_poly, wall_l, wall_r, front_r, front_l]:
 		var outline: PackedVector2Array = poly.duplicate()
 		outline.append(outline[0])

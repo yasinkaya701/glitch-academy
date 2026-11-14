@@ -6,11 +6,11 @@
 [resource]
 script = ExtResource("1")
 id = &"genetics"
-title = "Kalıtım Laboratuvarı"
-subject = "Fen Bilimleri"
-grade = 8
-routes = PackedStringArray("class", "lgs")
-description = "İki ebeveynin alellerinden gametleri ve yavru genotiplerini kur; MERİDYEN'in sildiği çekinik özellikleri geri getir."
-curriculum = "8. sınıf Fen Bilimleri · DNA ve Genetik Kod · Kalıtım"
+title = "Kalıtım: Çaprazlama ve Olasılık"
+subject = "Biyoloji"
+grade = 12
+routes = PackedStringArray("ayt")
+description = "Gametleri eşleştir; genotip ve fenotip oranlarını hesapla. Çekinik alelin fenotipte görünmemesinin onu gen havuzundan silmediğini yeni çaprazlamada doğrula."
+curriculum = "YKS AYT Biyoloji · Kalıtımın genel ilkeleri · Çaprazlama, genotip/fenotip ve olasılık"
 source_url = "https://odsgm.meb.gov.tr/www/8-sinif-fen-bilimleri-unitelendirilmis-ornek-sorular/icerik/676"
 scene = ExtResource("2")

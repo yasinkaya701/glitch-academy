@@ -18,7 +18,9 @@ const LUNGS = preload("res://assets/models/human-lungs.glb")
 const BODY = preload("res://assets/models/human-muscles.glb")
 
 const BLOOD_RICH := Color("#ff4a3d")
-const BLOOD_POOR := Color("#4f7bff")
+const BLOOD_POOR := Color("#6d2c3d")
+const SAGE := Color("#a5ad84")
+const AMBER := Color("#d4a15f")
 
 ## Kalp modeli ölçeği (modelin yerel birimi 1 = 1 m, kalp yaklaşık 0,13).
 const S := 9.0
@@ -96,28 +98,28 @@ const BLOOD_SHADER = preload("res://scripts/anatomy/blood_tube.gdshader")
 ## Dış damar uçları. Kalp uçları dünya koordinatında (model × ölçek + kaydırma).
 const LUNGS_POS := Vector3(1.12, -0.215, 0.05)
 const BODY_POS := Vector3(-1.2, -0.10, 0.0)
-const PORT_WORLD := {
+var PORT_WORLD := {
 	&"svc_in": Vector3(-0.0210, 0.1190, 0.0140) * S + HEART_SHIFT,
 	&"aorta_out": Vector3(0.0023, 0.1305, 0.0145) * S + HEART_SHIFT,
 	&"pa_out": Vector3(0.0390, 0.0985, 0.0180) * S + HEART_SHIFT,
 	&"pv_in": Vector3(0.0450, 0.0878, 0.0095) * S + HEART_SHIFT,
-	&"lungs_in": LUNGS_POS + Vector3(-0.34, 0.26, 0.0),
-	&"lungs_out": LUNGS_POS + Vector3(-0.34, -0.08, 0.0),
-	&"body_out": BODY_POS + Vector3(0.32, 0.16, 0.0),
-	&"body_in": BODY_POS + Vector3(0.16, 0.36, 0.0),
+	&"lungs_in": Vector3.ZERO,
+	&"lungs_out": Vector3.ZERO,
+	&"body_out": Vector3.ZERO,
+	&"body_in": Vector3.ZERO,
 }
 ## Hortumun porttan çıkış yönü.
 const PORT_OUT_DIR := {
 	&"svc_in": Vector3(0, 1, 0), &"aorta_out": Vector3(0, 1, 0), &"pa_out": Vector3(1, 0.2, 0),
-	&"pv_in": Vector3(1, 0, 0), &"lungs_in": Vector3(-1, 0, 0), &"lungs_out": Vector3(-1, 0, 0),
-	&"body_out": Vector3(1, 0.1, 0), &"body_in": Vector3(1, 0.4, 0),
+	&"pv_in": Vector3(1, 0, 0), &"lungs_in": Vector3(-1, 0, 0.12), &"lungs_out": Vector3(-1, 0, 0.12),
+	&"body_out": Vector3(1, 0.08, 0.12), &"body_in": Vector3(1, 0.08, 0.12),
 }
 const OUT_PORTS := Network.OUT_PORTS
 const IN_PORTS := Network.IN_PORTS
 const CORRECT_LINKS := Network.CORRECT_LINKS
 const PORT_NAMES := {
 	&"body_out": "Vücuttan dönen kan", &"pa_out": "Akciğer atardamarı", &"lungs_out": "Akciğerden çıkan kan", &"aorta_out": "Aort",
-	&"svc_in": "Üst ana toplardamar", &"lungs_in": "Akciğere giriş", &"pv_in": "Akciğer toplardamarı", &"body_in": "Vücuda giriş",
+	&"svc_in": "Ana toplardamar → sağ kulakçık", &"lungs_in": "Akciğere giriş", &"pv_in": "Akciğer toplardamarı → sol kulakçık", &"body_in": "Vücuda giriş",
 }
 const PORT_RICH := {&"body_out": false, &"pa_out": false, &"lungs_out": true, &"aorta_out": true}
 
@@ -179,6 +181,7 @@ var _chamber_blood: Dictionary = {}
 
 
 func _build() -> void:
+	_tune_heart_palette()
 	spots_active = active_pickables
 	default_target = Vector3(0.0, 0.2, 0.0)
 	default_distance = 3.5
@@ -197,7 +200,9 @@ func _build() -> void:
 	heart_root.add_child(heart_model)
 	_wet_tissue(heart_model)
 	lungs_node = place_model(LUNGS, LUNGS_POS, 2.7, Vector3(0, 8, 0))
+	_apply_lung_tissue_material(lungs_node)
 	body_node = place_model(BODY, BODY_POS, 0.6, Vector3.ZERO)
+	_position_organ_ports()
 	_setup_oxygen_visuals()
 	_register_pickables()
 	_build_ports()
@@ -209,6 +214,44 @@ func _build() -> void:
 	_build_clamps()
 	_build_chamber_blood()
 	_rebuild_tubes()
+
+
+func _tune_heart_palette() -> void:
+	## AnatomyView is shared; this station uses graphite, warm neutrals and sage.
+	var environment_node := world.find_child("WorldEnvironment", true, false) as WorldEnvironment
+	if environment_node != null and environment_node.environment != null:
+		var environment := environment_node.environment.duplicate() as Environment
+		environment.background_color = Color("#10110f")
+		environment.ambient_light_color = Color("#c5bda9")
+		environment.ambient_light_energy = 0.75
+		environment.volumetric_fog_albedo = Color("#46443b")
+		environment.volumetric_fog_emission = Color("#10110f")
+		if environment.sky != null and environment.sky.sky_material is ProceduralSkyMaterial:
+			var sky_material := (environment.sky.sky_material as ProceduralSkyMaterial).duplicate() as ProceduralSkyMaterial
+			sky_material.sky_top_color = Color("#10110f")
+			sky_material.sky_horizon_color = Color("#282923")
+			sky_material.ground_horizon_color = Color("#1d1e19")
+			sky_material.ground_bottom_color = Color("#10110f")
+			var sky := environment.sky.duplicate() as Sky
+			sky.sky_material = sky_material
+			environment.sky = sky
+		environment_node.environment = environment
+	if _floor_material != null:
+		_floor_material.albedo_color = Color("#191a17")
+	var stack: Array[Node] = world.get_children()
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		stack.append_array(node.get_children())
+		if node is DirectionalLight3D:
+			var light := node as DirectionalLight3D
+			if light.light_color.b > light.light_color.r * 1.15:
+				light.light_color = Color("#c7bda7")
+		elif node is MeshInstance3D and (node as MeshInstance3D).mesh is QuadMesh:
+			var surface := (node as MeshInstance3D).material_override as StandardMaterial3D
+			if surface != null and surface.albedo_color.b > surface.albedo_color.r * 1.15:
+				surface.albedo_color = Color("#c7bda7")
+				if surface.emission_enabled:
+					surface.emission = Color("#c7bda7")
 
 
 func _pbr(id: String, scale: float, tint: Color) -> StandardMaterial3D:
@@ -271,7 +314,7 @@ func _build_equipment() -> void:
 	## Fiziksel düzenek: kaideler, bağlantı kolyeleri ve canlı dalga monitörü.
 	_metal = _pbr("Metal009", 0.4, Color(0.55, 0.58, 0.62))
 	var dark := _pbr("Metal009", 0.4, Color(0.22, 0.24, 0.27))
-	var glow := _glow_material(Color("#3fd9c0"), 1.6)
+	var glow := _glow_material(SAGE, 1.25)
 	var floor_y := -0.9
 	_cylinder(2.7, 0.06, Vector3(0, floor_y + 0.03, 0), dark)
 	_ring(2.7, 0.012, Vector3(0, floor_y + 0.065, 0), glow)
@@ -295,7 +338,7 @@ func _build_equipment() -> void:
 	_waveform = Waveform.new()
 	_waveform.size = Vector2(1280, 390)
 	_wave_ids = [
-		_waveform.add_channel("EKG", Color("#6fe3c1"), -0.4, 1.1),
+		_waveform.add_channel("EKG", SAGE, -0.4, 1.1),
 		_waveform.add_channel("Sol karıncık basıncı", Color("#f2a65a"), 0.0, 130.0),
 		_waveform.add_channel("Aort basıncı", Color("#ff6b5e"), 0.0, 130.0),
 	]
@@ -382,6 +425,32 @@ func _wet_tissue(model: Node) -> void:
 				mesh_instance.material_override = material
 
 
+func _apply_lung_tissue_material(model: Node) -> void:
+	## Its packed color atlas maps as vivid patches in this scene; use a nonmetallic tissue surface.
+	var stack: Array[Node] = [model]
+	while not stack.is_empty():
+		var current: Node = stack.pop_back()
+		stack.append_array(current.get_children())
+		if current is MeshInstance3D:
+			var mesh_instance := current as MeshInstance3D
+			for surface in mesh_instance.mesh.get_surface_count():
+				var source := mesh_instance.mesh.surface_get_material(surface)
+				if source is StandardMaterial3D:
+					var tissue := (source as StandardMaterial3D).duplicate() as StandardMaterial3D
+					tissue.albedo_texture = null
+					tissue.albedo_color = Color("#a55e61")
+					tissue.metallic = 0.0
+					tissue.metallic_texture = null
+					tissue.roughness = 0.72
+					tissue.roughness_texture = null
+					tissue.clearcoat_enabled = true
+					tissue.clearcoat = 0.08
+					tissue.clearcoat_roughness = 0.35
+					tissue.subsurf_scatter_enabled = true
+					tissue.subsurf_scatter_strength = 0.22
+					mesh_instance.set_surface_override_material(surface, tissue)
+
+
 func _register_pickables() -> void:
 	for id in SPOT_POS:
 		add_pickable(id, func() -> Vector3: return heart_root.to_global(SPOT_POS[id]), 0.1)
@@ -408,7 +477,7 @@ func _setup_oxygen_visuals() -> void:
 	_oxygen_bar.mesh = bar_mesh
 	var bar_material := StandardMaterial3D.new()
 	bar_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	bar_material.albedo_color = JADE
+	bar_material.albedo_color = SAGE
 	_oxygen_bar.material_override = bar_material
 	_oxygen_bar.position = BODY_POS + Vector3(0, 0.66, 0.1)
 	world.add_child(_oxygen_bar)
@@ -423,13 +492,13 @@ func _build_ports() -> void:
 	for id in PORT_WORLD:
 		var marker := MeshInstance3D.new()
 		var mesh := SphereMesh.new()
-		mesh.radius = 0.035
-		mesh.height = 0.07
+		mesh.radius = 0.018
+		mesh.height = 0.036
 		marker.mesh = mesh
 		var material := StandardMaterial3D.new()
 		var out := OUT_PORTS.has(id)
 		var rich: bool = PORT_RICH.get(id, false)
-		material.albedo_color = (BLOOD_RICH if rich else BLOOD_POOR) if out else JADE
+		material.albedo_color = (BLOOD_RICH if rich else BLOOD_POOR) if out else SAGE
 		material.emission_enabled = true
 		material.emission = material.albedo_color
 		material.emission_energy_multiplier = 1.4
@@ -460,7 +529,8 @@ func _build_slots() -> void:
 		var prosthesis := Prosthesis.new()
 		heart_root.add_child(prosthesis)
 		prosthesis.setup(slot, radius)
-		prosthesis.position = VALVE_POS[slot]
+		# Kapakçıklar tek parça kalp modelinin dış yüzünde kalıp gömülmesin.
+		prosthesis.position = VALVE_POS[slot] + Vector3(0.0, 0.0, 0.0025)
 		prosthesis.quaternion = orientation
 		_prostheses[slot] = prosthesis
 
@@ -486,6 +556,33 @@ func _update(delta: float) -> void:
 	_update_oxygen()
 	_sync_tubes()
 	_wave_step(delta)
+	queue_redraw()
+
+
+func _draw() -> void:
+	## Keep active hit targets legible over the detailed 3D model.
+	if rig == null or rig.camera == null:
+		return
+	var camera := rig.camera
+	for id in pickables:
+		if not active_pickables.get(id, false):
+			continue
+		var point: Vector3 = pickable_position(id)
+		if camera.is_position_behind(point):
+			continue
+		var screen := camera.unproject_position(point)
+		if not Rect2(Vector2.ZERO, size).has_point(screen):
+			continue
+		var is_target: bool = id == highlight_id
+		var color := AMBER if is_target else SAGE
+		var pulse := 1.0 + 0.08 * sin(_time * 4.0)
+		var radius := (31.0 if is_target else 25.0) * pulse
+		# Açık ve ayrıntılı model üstünde kaybolmaması için koyu zemin, beyaz ayraç ve renkli halo.
+		draw_circle(screen, radius + 6.0, Color("#ffffff", 0.88))
+		draw_circle(screen, radius, Color("#191a17", 0.92))
+		draw_circle(screen, radius - 5.0, Color(color, 0.28))
+		draw_arc(screen, radius - 2.0, 0.0, TAU, 48, color, 4.5 if is_target else 3.5, true)
+		draw_circle(screen, 5.0 if is_target else 4.0, color)
 
 
 func _update_slots_and_valves() -> void:
@@ -509,6 +606,16 @@ func _update_ports() -> void:
 		if ports_active:
 			var taken: bool = connections.values().has(id) or connections.has(id)
 			marker.scale = Vector3.ONE * (0.75 if taken else 1.0 + 0.18 * sin(_time * 4.0))
+			var warned: bool = port_warning.get(id, false)
+			for source in port_warning:
+				if connections.get(source) == id:
+					warned = true
+					break
+			var material := marker.material_override as StandardMaterial3D
+			if material != null:
+				var color: Color = AMBER if warned else (BLOOD_RICH if PORT_RICH.get(id, false) else BLOOD_POOR if OUT_PORTS.has(id) else SAGE)
+				material.albedo_color = color
+				material.emission = color
 
 
 func _blood_color(o2: float) -> Color:
@@ -535,7 +642,7 @@ func _update_sim_flows() -> void:
 		var color := _blood_color(circ.oxygen(FLOW_NODE[key]))
 		var backwards := q < -4.0 and not link.reversed or q > 4.0 and link.reversed
 		if backwards:
-			color = Color("#ffc082")
+			color = AMBER
 		_flow_phase[key] = fposmod(_flow_phase.get(key, 0.0) + q * delta * FLOW_PHASE_RATE, 1.0)
 		Util.flow_dots(_flow_meshes[key], FLOWS[key], color, _flow_phase[key], absf(q) / FLOW_FULL)
 
@@ -546,16 +653,18 @@ func _build_chamber_blood() -> void:
 		var mesh := SphereMesh.new()
 		mesh.radius = 1.0
 		mesh.height = 2.0
-		mesh.radial_segments = 32
-		mesh.rings = 16
+		mesh.radial_segments = 56
+		mesh.rings = 28
 		node.mesh = mesh
 		var material := StandardMaterial3D.new()
 		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		material.albedo_color = Color(BLOOD_POOR, 0.34)
-		material.roughness = 0.1
-		material.emission_enabled = true
-		material.emission = BLOOD_POOR
-		material.emission_energy_multiplier = 0.25
+		material.albedo_color = Color(BLOOD_POOR, 0.72)
+		material.roughness = 0.22
+		material.clearcoat_enabled = true
+		material.clearcoat = 0.4
+		material.clearcoat_roughness = 0.18
+		material.subsurf_scatter_enabled = true
+		material.subsurf_scatter_strength = 0.18
 		node.material_override = material
 		node.position = SPOT_POS[spot]
 		node.visible = false
@@ -574,7 +683,7 @@ func _update_chamber_blood() -> void:
 		node.scale = Vector3.ONE * lerpf(data[1], data[2], fill)
 		var color := _blood_color(circ.oxygen(data[0]))
 		var material := node.material_override as StandardMaterial3D
-		material.albedo_color = Color(color, 0.34)
+		material.albedo_color = Color(color, 0.72)
 		material.emission = color
 
 
@@ -618,7 +727,7 @@ func _update_oxygen() -> void:
 	var bar_mesh := _oxygen_bar.mesh as BoxMesh
 	bar_mesh.size = Vector3(maxf(0.5 * o, 0.002), 0.025, 0.025)
 	_oxygen_bar.position.x = BODY_POS.x - 0.25 + 0.25 * o
-	(_oxygen_bar.material_override as StandardMaterial3D).albedo_color = (JADE if o > 0.66 else (GOLD if o > 0.33 else RED)) * 0.85
+	(_oxygen_bar.material_override as StandardMaterial3D).albedo_color = (SAGE if o > 0.66 else (AMBER if o > 0.33 else RED)) * 0.85
 	_oxygen_label.text = "Doku oksijeni  %d%%" % roundi(o * 100.0)
 
 
@@ -645,12 +754,121 @@ func label_world(id: Variant) -> Vector3:
 
 # --- Damar hortumları ---------------------------------------------------
 
+func _position_organ_ports() -> void:
+	## Yaklaşık anatomik bölgeleri seç, ardından GLB üçgen yüzeyine tam oturt.
+	var body_model := body_node.get_child(0) as Node3D
+	var lungs_model := lungs_node.get_child(0) as Node3D
+	PORT_WORLD[&"body_out"] = _organ_contact(body_model, Vector3(0.68, 0.84, 0.60))
+	PORT_WORLD[&"body_in"] = _organ_contact(body_model, Vector3(0.66, 0.72, 0.79))
+	PORT_WORLD[&"lungs_in"] = _organ_contact(lungs_model, Vector3(0.08, 0.57, 0.94))
+	PORT_WORLD[&"lungs_out"] = _organ_contact(lungs_model, Vector3(0.08, 0.43, 0.94))
+
+
+func _organ_contact(model: Node3D, normalized: Vector3) -> Vector3:
+	var box := _model_local_bounds(model)
+	var query := model.to_global(box.position + box.size * normalized)
+	var surface := _nearest_surface(model, query, model.to_global(box.get_center()))
+	return surface["point"] + surface["normal"] * 0.002
+
+
+func _model_local_bounds(model: Node3D) -> AABB:
+	var bounds := AABB()
+	var first := true
+	var root_inverse := model.global_transform.affine_inverse()
+	var stack: Array[Node] = [model]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		stack.append_array(node.get_children())
+		if node is MeshInstance3D:
+			var instance := node as MeshInstance3D
+			if instance.mesh == null:
+				continue
+			var to_model := root_inverse * instance.global_transform
+			var transformed := instance.get_aabb() * to_model
+			bounds = transformed if first else bounds.merge(transformed)
+			first = false
+	return bounds
+
+
+func _nearest_surface(model: Node3D, query: Vector3, model_center: Vector3) -> Dictionary:
+	var best_distance := INF
+	var best_point := query
+	var best_normal := Vector3.ZERO
+	var stack: Array[Node] = [model]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		stack.append_array(node.get_children())
+		if not node is MeshInstance3D:
+			continue
+		var instance := node as MeshInstance3D
+		if instance.mesh == null:
+			continue
+		var faces := instance.mesh.get_faces()
+		for i in range(0, faces.size(), 3):
+			var a := instance.to_global(faces[i])
+			var b := instance.to_global(faces[i + 1])
+			var c := instance.to_global(faces[i + 2])
+			var point := _closest_point_on_triangle(query, a, b, c)
+			var distance := query.distance_squared_to(point)
+			if distance >= best_distance:
+				continue
+			best_distance = distance
+			best_point = point
+			best_normal = (b - a).cross(c - a).normalized()
+	var outward := (best_point - model_center).normalized()
+	if outward.is_zero_approx():
+		outward = Vector3.FORWARD
+	if best_normal.is_zero_approx():
+		best_normal = outward
+	elif best_normal.dot(outward) < 0.0:
+		best_normal = -best_normal
+	return {"point": best_point, "normal": best_normal}
+
+
+func _closest_point_on_triangle(p: Vector3, a: Vector3, b: Vector3, c: Vector3) -> Vector3:
+	var ab := b - a
+	var ac := c - a
+	var ap := p - a
+	var d1 := ab.dot(ap)
+	var d2 := ac.dot(ap)
+	if d1 <= 0.0 and d2 <= 0.0:
+		return a
+	var bp := p - b
+	var d3 := ab.dot(bp)
+	var d4 := ac.dot(bp)
+	if d3 >= 0.0 and d4 <= d3:
+		return b
+	var vc := d1 * d4 - d3 * d2
+	if vc <= 0.0 and d1 >= 0.0 and d3 <= 0.0:
+		return a + ab * (d1 / (d1 - d3))
+	var cp := p - c
+	var d5 := ab.dot(cp)
+	var d6 := ac.dot(cp)
+	if d6 >= 0.0 and d5 <= d6:
+		return c
+	var vb := d5 * d2 - d1 * d6
+	if vb <= 0.0 and d2 >= 0.0 and d6 <= 0.0:
+		return a + ac * (d2 / (d2 - d6))
+	var va := d3 * d6 - d5 * d4
+	if va <= 0.0 and d4 - d3 >= 0.0 and d5 - d6 >= 0.0:
+		return b + (c - b) * ((d4 - d3) / ((d4 - d3) + (d5 - d6)))
+	var inverse := 1.0 / (va + vb + vc)
+	return a + ab * (vb * inverse) + ac * (vc * inverse)
+
+
 func _tube_curve(from_port: StringName, to_port: StringName) -> PackedVector3Array:
 	var p0: Vector3 = PORT_WORLD[from_port]
 	var p1: Vector3 = PORT_WORLD[to_port]
-	var reach := clampf(p0.distance_to(p1) * 0.45, 0.2, 1.0)
+	var reach := clampf(p0.distance_to(p1) * 0.3, 0.12, 0.62)
 	var c0 := p0 + (PORT_OUT_DIR[from_port] as Vector3).normalized() * reach
 	var c1 := p1 + (PORT_OUT_DIR[to_port] as Vector3).normalized() * reach
+	## Torso bağlantılarını ayrı yüksekliklerde dolaştır; aort dönüşü VCS hattını kesmesin.
+	if from_port == &"aorta_out":
+		c0 += Vector3(-0.04, -0.50, 0.0)
+		c1 += Vector3(0.02, -0.10, 0.0)
+	elif from_port == &"body_out":
+		c0 += Vector3(0.0, 0.12, 0.0)
+		c1 += Vector3(0.04, 0.06, 0.0)
 	return Util.bezier(p0, c0, c1, p1)
 
 
@@ -668,8 +886,11 @@ func _sync_tubes() -> void:
 		var active := connection_flow and show_flow
 		if circ != null:
 			var q: float = circ.flow(PORT_LINK[from_port]) if (active and sim_active) else 0.0
-			if not warn:
-				color = _blood_color(circ.oxygen(PORT_NODE[from_port]))
+			color = _blood_color(circ.oxygen(PORT_NODE[from_port]))
+			# A wrong hose shows a short, source-colored route preview. The circulation
+			# motor still clamps the canonical vessel, so this preview is not counted as flow.
+			if warn and active and q <= 0.0:
+				q = FLOW_FULL * 0.28
 			var phase := fposmod(_flow_phase.get(from_port, 0.0) + q * get_process_delta_time() * FLOW_PHASE_RATE, 1.0)
 			_flow_phase[from_port] = phase
 			var blood_material: ShaderMaterial = data["material"]
@@ -700,36 +921,43 @@ func _rebuild_tubes() -> void:
 			blood_material.shader = BLOOD_SHADER
 			blood_material.set_shader_parameter("blood_color", color)
 			blood_material.set_shader_parameter("cycles", float(maxi(roundi(Util.path_length(Array(points)) * 14.0), 2)))
-		_tubes.add_child(Util.tube_mesh(points, color, 0.022, blood_material))
-		_add_collar(points[0], points[1] - points[0])
-		_add_collar(points[points.size() - 1], points[points.size() - 1] - points[points.size() - 2])
-		var holder: MultiMeshInstance3D = null if circ != null else Util.make_particles(_tubes, 0.012, 26)
+		var wall_material: Material = blood_material if blood_material != null else _vessel_wall_material(color)
+		const END_SCALE := 0.58
+		_tubes.add_child(Util.tube_mesh(points, color, 0.022, wall_material, END_SCALE, END_SCALE))
+		_add_vessel_rim(points[0], points[1] - points[0], 0.022 * END_SCALE)
+		_add_vessel_rim(points[points.size() - 1], points[points.size() - 2] - points[points.size() - 1], 0.022 * END_SCALE)
+		var holder: MultiMeshInstance3D = null if circ != null else Util.make_particles(_tubes, 0.0035, 26)
 		_link_particles[from_port] = {"holder": holder, "points": points, "material": blood_material}
 
 
-func _add_collar(position: Vector3, direction: Vector3) -> void:
-	## Hortum ucundaki metal konnektör kolyesi ve kauçuk halka.
+func _vessel_wall_material(color: Color) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(color.r * 0.72, color.g * 0.58, color.b * 0.68, 0.62)
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.roughness = 0.34
+	material.metallic = 0.0
+	material.clearcoat_enabled = true
+	material.clearcoat = 0.24
+	material.clearcoat_roughness = 0.28
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return material
+
+
+func _add_vessel_rim(position: Vector3, direction: Vector3, radius: float) -> void:
+	## Damarın dokuya girdiği yerde dar, dokuyla uyumlu bir sınır.
 	var tangent := direction.normalized()
-	var collar := MeshInstance3D.new()
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = 0.034
-	mesh.bottom_radius = 0.034
-	mesh.height = 0.07
-	collar.mesh = mesh
-	collar.material_override = _metal
-	collar.position = position
-	collar.quaternion = Quaternion(Vector3.UP, tangent)
-	_tubes.add_child(collar)
 	var ring := MeshInstance3D.new()
 	var ring_mesh := TorusMesh.new()
-	ring_mesh.outer_radius = 0.04
-	ring_mesh.inner_radius = 0.031
+	ring_mesh.outer_radius = radius * 1.12
+	ring_mesh.inner_radius = radius * 0.78
 	ring.mesh = ring_mesh
-	var rubber := StandardMaterial3D.new()
-	rubber.albedo_color = Color("#14181d")
-	rubber.roughness = 0.7
-	ring.material_override = rubber
-	ring.position = position + tangent * 0.03
+	var tissue := StandardMaterial3D.new()
+	tissue.albedo_color = Color("#85464d")
+	tissue.roughness = 0.42
+	tissue.clearcoat_enabled = true
+	tissue.clearcoat = 0.16
+	ring.material_override = tissue
+	ring.position = position + tangent * 0.003
 	ring.quaternion = Quaternion(Vector3.UP, tangent)
 	_tubes.add_child(ring)
 
@@ -767,11 +995,20 @@ func on_press(position: Vector2, _double: bool) -> bool:
 			best = id
 	if best == null:
 		return false
-	if connections.has(best):
-		connections.erase(best)
-		port_cleared.emit(best)
+	if Input.is_key_pressed(KEY_SHIFT):
+		disconnect_port(best)
+		_drag_from = &""
+		return true
 	_drag_from = best
 	_drag_world = PORT_WORLD[best]
+	return true
+
+
+func disconnect_port(from_port: StringName) -> bool:
+	if not OUT_PORTS.has(from_port) or not connections.has(from_port):
+		return false
+	connections.erase(from_port)
+	port_cleared.emit(from_port)
 	return true
 
 

@@ -7,6 +7,7 @@ const ActorScript = preload("res://stations/history/visual/history_actor.gd")
 const VoicePlayerScript = preload("res://stations/history/visual/voice_player.gd")
 const BACKDROP_SHADER = preload("res://stations/history/visual/backdrop_fallback.gdshader")
 const VIGNETTE_SHADER = preload("res://stations/history/visual/vignette.gdshader")
+const BACKGROUND_GRADE_SHADER = preload("res://stations/history/visual/background_grade.gdshader")
 const STAGE_DATA := "res://stations/history/data/stage.json"
 const BACKGROUND_DIR := "res://stations/history/assets/backgrounds/"
 
@@ -55,7 +56,9 @@ func _ready() -> void:
 	_backdrop_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_backdrop_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_backdrop_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_backdrop_tex.modulate = Color(1.03, 0.99, 0.95, 1.0)
+	var grade := ShaderMaterial.new()
+	grade.shader = BACKGROUND_GRADE_SHADER
+	_backdrop_tex.material = grade
 	_backdrop_tex.visible = false
 	add_child(_backdrop_tex)
 
@@ -201,14 +204,23 @@ func _layout() -> void:
 	_floor_shadow.position = Vector2.ZERO
 	_floor_shadow.size = size
 
-	var feet := Vector2(w * ACTOR_X_RATIO, h * FEET_Y_RATIO)
-	actor.position = feet
-	actor.fit_to_height(h * ACTOR_HEIGHT_RATIO * _cam_zoom)
-
-	_line_group.position = Vector2(48.0, h * 0.18)
-	_line_group.size = Vector2(w * 0.46, h * 0.26)
-	choice_slot.position = Vector2(48.0, h * 0.48)
-	choice_slot.size = Vector2(w * 0.46, h * 0.48)
+	if w < 920.0:
+		# Keep the portrait visible on the right while giving the evidence prompt and
+		# answer controls a full-width, predictable column below it.
+		actor.position = Vector2(w * 0.73, h * 0.80)
+		actor.fit_to_height(minf(h * 0.66, w * 0.82))
+		_line_group.position = Vector2(24.0, h * 0.10)
+		_line_group.size = Vector2(w - 48.0, h * 0.25)
+		choice_slot.position = Vector2(24.0, h * 0.40)
+		choice_slot.size = Vector2(w - 48.0, h * 0.57)
+	else:
+		var feet := Vector2(w * ACTOR_X_RATIO, h * FEET_Y_RATIO)
+		actor.position = feet
+		actor.fit_to_height(h * ACTOR_HEIGHT_RATIO * _cam_zoom)
+		_line_group.position = Vector2(48.0, h * 0.18)
+		_line_group.size = Vector2(w * 0.46, h * 0.26)
+		choice_slot.position = Vector2(48.0, h * 0.48)
+		choice_slot.size = Vector2(w * 0.46, h * 0.48)
 	_floor_shadow.queue_redraw()
 
 

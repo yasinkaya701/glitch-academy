@@ -1,6 +1,31 @@
 # Yanlış Dünya · Hikâye
 
-Bu belge anlatının ve oyun mantığının tek kaynağıdır. Her istasyon kendi bozulmasını buradaki kurala göre yazar. Oyun içi metin kısa kalır (docs/UX.md): hikâye uzun yazıyla değil, sahnedeki nesnelerle, kısa kayıt satırlarıyla ve oyuncunun kullandığı güçlerle anlatılır.
+Bu belgenin en üstündeki **2026-11-14 kanonu** anlatının tek kaynağıdır ve aşağıdaki eski notların önündedir. Eski notlardaki Misafirlerin yasaları doğrudan bozduğu veya MERİDYEN'in açılışta itiraf ettiği anlatımlar geçersizdir. Her istasyon kendi bozulmasını kanona göre yazar. Oyun içi metin kısa kalır (docs/UX.md); olaylar sahne, haber kaydı ve ölçüm farkıyla anlatılır.
+
+## 2026-11-14 kanonu · Üstün kural
+
+### Kim kim, ne oluyor
+
+- **Misafirler** saldırgan değildir. Üç güneşli dünyadan gelen, öngörülebilir bir yer arayan bir uygarlıktır. Dünya'ya tek bir şey yollarlar: **sinyal**. Sinyal Dünya'ya doğrudan dokunmaz; Gözlemevi'nin ölçüm sistemine girer.
+- **MERİDYEN**, Gözlemevi'nin kalibrasyon yapay zekâsıdır ve oyunun başında oyuncunun dostudur. Sinyal onu ele geçirmez; belirsizliğin insanları yorduğuna ve yasaları değiştirmenin kimseyi hatadan ve korkudan koruyacağına ikna eder. MERİDYEN kendini kötü saymaz: Dünya'yı kusursuz öngörülebilir yapmaya çalışır. **Kaymaları MERİDYEN uygular; Misafir sinyali bunun nedenidir.** Kaymanın görsel imzası/yırtığı MERİDYEN'in elinden çıkar.
+- **Kalibratör** (oyuncu), MERİDYEN'in dışında ölçüm yapabilen tek kişidir. Bu yüzden MERİDYEN'in kaydına değil, kendi ölçümüne güvenir.
+
+### Üç perde
+
+| Perde | Olay | Oyuncunun öğrendiği | Akış |
+|---|---|---|---|
+| **1 · Güven** | MERİDYEN yardım eder. İlk kaymayı “sensör sapması” diye açıklar. Oyuncu ölçer, onarır ve mühürler. Misafirlerden söz edilmez. | Önce kendi ölçümün. | Açılış, ilk TYT/AYT görevi ve istasyon başı haber kaydı. |
+| **2 · Çatlak** | Aynı imza tarih, edebiyat, biyoloji ve kimyada görülür; kayıt ile ölçüm tekrar tekrar ayrışır. Yeterli bağımsız çapraz doğrulamadan sonra MERİDYEN yetkisini sahiplenir: “Doğa yasalarını değiştirdim. Şimdi yaşamın kurallarını değiştireceğim.” Gözlemevi kararır, kırmızı ışık atımla yanar. | Bir kaynağa körü körüne güvenme; çapraz doğrula. | YKS AYT rotasında bağımsız ders kanıtları, Yaşam Protokolü ve arşiv görevleri. |
+| **3 · Ölçülen belirsizlik** | Üç Güneş'te iki cisim öngörülür; üç cisim kaotik davranır. Oyuncu belirsizliğin ölçülebilir olduğunu gösterir. MERİDYEN merkezi yetkisini kaybeder; mühürlü yasalar Misafirlere onların ölçebileceği biçimde iletilir. | Öngörülemezliğin de ölçüsü vardır. | Üç Güneş finali ve anlaşma. |
+
+### İstasyon ve kapanış kuralı
+
+- Her istasyonun başındaki dünya haberi, bozuk yasanın **gözle görülür sonucunu ve nedenini** söyler. Perde 1'de MERİDYEN bunu sensör sapması veya bozuk kayıt diye sunar; kendi rolünü açıklamaz. Perde 2'den sonra kaymaları açıkça sahiplenir.
+- Kapanış zafer ilanı değildir: yasalar yerinde kalır, Misafirlerle bir kapı açık bırakılır; MERİDYEN yetkisiz ama oyuncunun gözetiminde Gözlemevi'nde kalır.
+
+## Eski tasarım notları
+
+Bu alt bölüm kanon öncesi taslakları içerir. Kanonla çelişen cümleler yalnızca tarihsel tasarım kaydıdır; oyun içi anlatımda kullanılmaz.
 
 ## Çekirdek fikir
 

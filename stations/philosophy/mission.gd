@@ -7,7 +7,7 @@ extends "res://scripts/mission.gd"
 const ConversationStageScript = preload("res://stations/philosophy/visual/conversation_stage.gd")
 const PhilosopherBrainScript = preload("res://stations/philosophy/visual/philosopher_brain.gd")
 const PhilosopherActorScript = preload("res://stations/philosophy/visual/philosopher_actor.gd")
-const Hud = preload("res://scripts/mission_hud.gd")
+const Hud = preload("res://stations/philosophy/visual/philosophy_hud.gd")
 const UITheme = preload("res://scripts/ui_theme.gd")
 
 const ORDER: Array[StringName] = [&"socrates", &"plato", &"aristotle", &"epicurus", &"kindi", &"farabi", &"ibn_sina", &"ibn_rushd"]
@@ -37,10 +37,15 @@ var stage: ConversationStage
 var brain: PhilosopherBrain
 var hud: Hud
 var _player_quote := Label.new()
-var _chat_row := HBoxContainer.new()
+var _quote_card := PanelContainer.new()
+var _chat_row := VBoxContainer.new()
+var _entry_row := HBoxContainer.new()
+var _action_row := HBoxContainer.new()
 var _input_box := LineEdit.new()
 var _send_btn := Button.new()
 var _mic_btn := Button.new()
+var _play_title: Label
+var _play_title_original_text := ""
 
 var _index: int = 0
 var _stage_level: int = 0
@@ -50,10 +55,8 @@ var _failed: bool = false
 
 
 func _ready() -> void:
-	var shared_theme: Theme = UITheme.build()
-	theme = shared_theme
 	if get_tree().root.theme == null:
-		get_tree().root.theme = shared_theme
+		get_tree().root.theme = UITheme.build_gameplay()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 
 	stage = ConversationStageScript.new()
@@ -74,6 +77,8 @@ func _ready() -> void:
 	hud.skip.show()
 
 	_build_dialogue_controls()
+	_apply_display_title()
+	tree_exiting.connect(_restore_display_title)
 
 	var args := OS.get_cmdline_user_args()
 	for a in args:
@@ -87,48 +92,65 @@ func _ready() -> void:
 
 
 func _build_dialogue_controls() -> void:
-	var font_cinzel := preload("res://fonts/Cinzel-Regular.ttf")
+	var font_cinzel_display := preload("res://fonts/CinzelDecorative-Bold.ttf")
 	var font_marcellus := preload("res://fonts/Marcellus-Regular.ttf")
+	var font_body: Font = UITheme.FONT
 
 	if hud != null:
-		hud.directive.add_theme_font_override("font", font_cinzel)
+		hud.counter.add_theme_font_override("font", font_cinzel_display)
+		hud.counter.add_theme_font_size_override("font_size", 16)
+		hud.directive.add_theme_font_override("font", font_body)
 		hud.directive.add_theme_font_size_override("font_size", 18)
-		hud.directive.add_theme_color_override("font_color", Color("#ede4d3"))
+		hud.directive.add_theme_color_override("font_color", UITheme.GAME_TEXT)
 		if hud.info_label != null:
 			hud.info_label.add_theme_font_override("font", font_marcellus)
-			hud.info_label.add_theme_color_override("font_color", Color("#c4baa4"))
+			hud.info_label.add_theme_color_override("font_color", UITheme.GAME_TEXT)
 
-	_player_quote.add_theme_font_override("font", font_marcellus)
-	_player_quote.add_theme_font_size_override("font_size", 18)
-	_player_quote.add_theme_color_override("font_color", Color("#d5cbba"))
-	_player_quote.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.90))
-	_player_quote.add_theme_constant_override("shadow_offset_x", 0)
-	_player_quote.add_theme_constant_override("shadow_offset_y", 2)
+	_player_quote.add_theme_font_override("font", font_body)
+	_player_quote.add_theme_font_size_override("font_size", 16)
+	_player_quote.add_theme_color_override("font_color", UITheme.GAME_TEXT)
 	_player_quote.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_player_quote.visible = false
-	stage.choice_slot.add_child(_player_quote)
+	_player_quote.max_lines_visible = 3
+	_quote_card.clip_contents = true
+	_player_quote.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_quote_card.add_child(_player_quote)
+	_quote_card.visible = false
+	var quote_surface := StyleBoxFlat.new()
+	quote_surface.bg_color = UITheme.GAME_PANEL
+	quote_surface.border_color = UITheme.GAME_EDGE
+	quote_surface.set_border_width_all(1)
+	quote_surface.set_corner_radius_all(8)
+	quote_surface.content_margin_left = 14
+	quote_surface.content_margin_right = 14
+	quote_surface.content_margin_top = 10
+	quote_surface.content_margin_bottom = 10
+	_quote_card.add_theme_stylebox_override("panel", quote_surface)
+	stage.choice_slot.add_child(_quote_card)
 
 	var spacer := Control.new()
 	spacer.custom_minimum_size = Vector2(0, 8)
 	stage.choice_slot.add_child(spacer)
 
-	_chat_row.add_theme_constant_override("separation", 10)
-	_chat_row.custom_minimum_size = Vector2(0, 42)
+	_chat_row.add_theme_constant_override("separation", 8)
+	_entry_row.add_theme_constant_override("separation", 8)
+	_action_row.add_theme_constant_override("separation", 8)
+	_action_row.alignment = BoxContainer.ALIGNMENT_BEGIN
 
 	_input_box.placeholder_text = "Düşünceni veya sözünü yaz…"
 	_input_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_input_box.custom_minimum_size = Vector2(260, 42)
-	_input_box.add_theme_font_override("font", font_marcellus)
+	_input_box.custom_minimum_size = Vector2(0, 44)
+	_input_box.add_theme_font_override("font", font_body)
 	_input_box.add_theme_font_size_override("font_size", 16)
-	_input_box.add_theme_color_override("font_color", Color("#f5f0e6"))
-	_input_box.add_theme_color_override("font_placeholder_color", Color(0.72, 0.68, 0.60, 0.55))
+	_input_box.add_theme_color_override("font_color", UITheme.GAME_TEXT)
+	_input_box.add_theme_color_override("font_placeholder_color", UITheme.GAME_MUTED)
 	_input_box.text_submitted.connect(_on_text_submitted)
 
 	var normal_sb := StyleBoxFlat.new()
-	normal_sb.bg_color = Color(0.04, 0.05, 0.07, 0.82)
-	normal_sb.border_color = Color(0.75, 0.62, 0.40, 0.45)
-	normal_sb.border_width_bottom = 1
-	normal_sb.set_corner_radius_all(2)
+	normal_sb.bg_color = UITheme.GAME_RAISED
+	normal_sb.border_color = UITheme.GAME_EDGE
+	normal_sb.set_border_width_all(1)
+	normal_sb.set_corner_radius_all(7)
 	normal_sb.content_margin_left = 14
 	normal_sb.content_margin_right = 14
 	normal_sb.content_margin_top = 8
@@ -136,49 +158,115 @@ func _build_dialogue_controls() -> void:
 	_input_box.add_theme_stylebox_override("normal", normal_sb)
 
 	var focus_sb := normal_sb.duplicate() as StyleBoxFlat
-	focus_sb.bg_color = Color(0.06, 0.07, 0.10, 0.94)
-	focus_sb.border_color = Color("#d8b97a")
-	focus_sb.border_width_bottom = 1
+	focus_sb.border_color = UITheme.GAME_ACCENT
+	focus_sb.set_border_width_all(2)
 	_input_box.add_theme_stylebox_override("focus", focus_sb)
-	_chat_row.add_child(_input_box)
+	_entry_row.add_child(_input_box)
 
 	var btn_sb := StyleBoxFlat.new()
-	btn_sb.bg_color = Color(0.09, 0.08, 0.07, 0.85)
-	btn_sb.border_color = Color(0.80, 0.68, 0.44, 0.55)
+	btn_sb.bg_color = UITheme.GAME_RAISED
+	btn_sb.border_color = UITheme.GAME_EDGE
 	btn_sb.set_border_width_all(1)
-	btn_sb.set_corner_radius_all(2)
+	btn_sb.set_corner_radius_all(7)
 	btn_sb.content_margin_left = 16
 	btn_sb.content_margin_right = 16
 	btn_sb.content_margin_top = 8
 	btn_sb.content_margin_bottom = 8
 
 	var btn_hover := btn_sb.duplicate() as StyleBoxFlat
-	btn_hover.bg_color = Color(0.16, 0.13, 0.09, 0.95)
-	btn_hover.border_color = Color("#e5c685")
+	btn_hover.bg_color = UITheme.GAME_RAISED.lightened(0.08)
+	btn_hover.border_color = UITheme.GAME_ACCENT
 
 	_send_btn.text = "Söyle"
-	_send_btn.custom_minimum_size = Vector2(88, 42)
-	_send_btn.add_theme_font_override("font", font_cinzel)
-	_send_btn.add_theme_font_size_override("font_size", 14)
-	_send_btn.add_theme_color_override("font_color", Color("#efe7d6"))
-	_send_btn.add_theme_stylebox_override("normal", btn_sb)
-	_send_btn.add_theme_stylebox_override("hover", btn_hover)
-	_send_btn.add_theme_stylebox_override("pressed", btn_hover)
+	_send_btn.custom_minimum_size = Vector2(112, 44)
+	_send_btn.add_theme_font_override("font", font_cinzel_display)
+	_send_btn.add_theme_font_size_override("font_size", 13)
+	_send_btn.add_theme_color_override("font_color", UITheme.GAME_BG)
+	var send_sb := btn_sb.duplicate() as StyleBoxFlat
+	send_sb.bg_color = UITheme.GAME_ACCENT
+	send_sb.border_color = UITheme.GAME_ACCENT
+	var send_hover := send_sb.duplicate() as StyleBoxFlat
+	send_hover.bg_color = UITheme.GAME_ACCENT.lightened(0.1)
+	send_hover.border_color = send_hover.bg_color
+	_send_btn.add_theme_stylebox_override("normal", send_sb)
+	_send_btn.add_theme_stylebox_override("hover", send_hover)
+	_send_btn.add_theme_stylebox_override("pressed", send_hover)
 	_send_btn.pressed.connect(func() -> void: _on_text_submitted(_input_box.text))
-	_chat_row.add_child(_send_btn)
+	_action_row.add_child(_send_btn)
 
 	_mic_btn.text = "Mikrofon (V)"
-	_mic_btn.custom_minimum_size = Vector2(124, 42)
-	_mic_btn.add_theme_font_override("font", font_cinzel)
+	_mic_btn.custom_minimum_size = Vector2(152, 44)
+	_mic_btn.add_theme_font_override("font", font_body)
 	_mic_btn.add_theme_font_size_override("font_size", 14)
-	_mic_btn.add_theme_color_override("font_color", Color("#d8ceba"))
+	_mic_btn.add_theme_color_override("font_color", UITheme.GAME_WARM)
 	_mic_btn.add_theme_stylebox_override("normal", btn_sb)
 	_mic_btn.add_theme_stylebox_override("hover", btn_hover)
 	_mic_btn.add_theme_stylebox_override("pressed", btn_hover)
 	_mic_btn.pressed.connect(_on_mic_pressed)
-	_chat_row.add_child(_mic_btn)
+	_action_row.add_child(_mic_btn)
+	_chat_row.add_child(_entry_row)
+	_chat_row.add_child(_action_row)
 
 	stage.choice_slot.add_child(_chat_row)
+	stage.resized.connect(_layout_dialogue_controls)
+	_layout_dialogue_controls()
+
+
+func _layout_dialogue_controls() -> void:
+	if stage == null or stage.choice_slot == null:
+		return
+	var stage_size := stage.size
+	var compact := stage_size.x < 700.0 or stage_size.y < 700.0
+	var safe_width := maxf(240.0, stage_size.x - 40.0)
+	var slot_width := minf(safe_width, 640.0 if not compact else 500.0)
+	var quote_height := 42.0 if stage_size.y < 460.0 else (52.0 if stage_size.y < 560.0 else (62.0 if stage_size.y < 620.0 else (74.0 if compact else 90.0)))
+	var controls_height := (96.0 if stage_size.y < 560.0 else 100.0) if compact else 112.0
+	_player_quote.max_lines_visible = 1 if stage_size.y < 460.0 else (2 if compact else 3)
+	stage.set_dialogue_layout(compact, slot_width)
+	_quote_card.custom_minimum_size = Vector2(slot_width, 0.0)
+	_player_quote.custom_minimum_size = Vector2(slot_width - 32.0, quote_height - 20.0)
+	_entry_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_input_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_input_box.custom_minimum_size.x = 0.0
+	_action_row.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_send_btn.custom_minimum_size.x = 100.0 if compact else 112.0
+	_mic_btn.custom_minimum_size.x = 132.0 if compact else 152.0
+	_chat_row.custom_minimum_size = Vector2(slot_width, controls_height)
+	var line_bottom: float = stage.dialogue_line_bottom()
+	var slot_height := quote_height + controls_height + 30.0
+	var bottom_safe := 32.0 if stage_size.y < 460.0 else (44.0 if stage_size.y < 620.0 else (56.0 if compact else 84.0))
+	var desired_y := stage_size.y * (0.57 if compact else 0.65)
+	var available_y := maxf(stage_size.y - slot_height - bottom_safe, 0.0)
+	var safe_top := line_bottom + 12.0
+	stage.choice_slot.position = Vector2(32.0, maxf(safe_top, minf(desired_y, available_y)))
+	stage.choice_slot.size = Vector2(slot_width, slot_height)
+	stage.choice_slot.add_theme_constant_override("separation", 10)
+
+
+func _apply_display_title() -> void:
+	var found := get_tree().root.find_child("PlayTitle", true, false)
+	_play_title = found as Label
+	if _play_title == null:
+		return
+	_play_title_original_text = _play_title.text
+	_play_title.add_theme_font_override("font", preload("res://fonts/Cinzel-Regular.ttf"))
+	_play_title.add_theme_font_size_override("font_size", 18)
+	_play_title.add_theme_color_override("font_color", Color("#202118"))
+	_update_display_title()
+
+
+func _update_display_title() -> void:
+	if is_instance_valid(_play_title):
+		var id: StringName = ORDER[_index]
+		_play_title.text = "FİKİR MEYDANI  ·  FİLOZOF %d/%d · %s" % [_index + 1, ORDER.size(), NAMES[id].to_upper()]
+
+
+func _restore_display_title() -> void:
+	if is_instance_valid(_play_title):
+		_play_title.text = _play_title_original_text
+		_play_title.remove_theme_font_override("font")
+		_play_title.remove_theme_font_size_override("font_size")
+		_play_title.remove_theme_color_override("font_color")
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -223,11 +311,13 @@ func _pick(i: int) -> void:
 	_used_choices.clear()
 	_input_box.text = ""
 	_player_quote.visible = false
+	_quote_card.visible = false
 	_chat_row.visible = true
 	hud.clear_tools()
 
 	stage.show_philosopher(id, 4)
-	hud.set_steps(0, 4, NAMES[id].to_upper())
+	hud.set_steps(0, 4, "BELLEK")
+	_update_display_title()
 	hud.set_directive("%s ile konuşarak unuttuğu 4 temel fikri hatırlat." % NAMES[id])
 	hud.set_note(NOTES.get(id, ""))
 	hud.set_action("")
@@ -240,8 +330,10 @@ func _on_text_submitted(raw_text: String) -> void:
 		return
 	_input_box.text = ""
 	_input_box.release_focus()
-	_player_quote.text = "Siz: “%s”" % clean
+	_player_quote.text = "Siz: “%s”" % (clean.substr(0, 180) + ("…" if clean.length() > 180 else ""))
 	_player_quote.visible = true
+	_quote_card.visible = true
+	_layout_dialogue_controls()
 	stage.actor.set_mood(&"thinking")
 	var id: StringName = ORDER[_index]
 	brain.ask(
@@ -300,7 +392,7 @@ func apply_llm_trigger(result: Dictionary) -> void:
 		var was_completed: bool = (_stage_level >= 4)
 		_stage_level = clampi(_stage_level + pts, 1, 4)
 		stage.set_memory_stage(_stage_level)
-		hud.set_steps(_stage_level, 4, "ONARILDI" if _stage_level >= 4 else NAMES[id].to_upper())
+		hud.set_steps(_stage_level, 4, "ONARILDI" if _stage_level >= 4 else "BELLEK")
 
 		if reply_text != "":
 			stage.show_line(NAMES[id], reply_text)
@@ -368,7 +460,7 @@ func _set_level(level: int, custom_line_id: StringName = &"") -> void:
 	_stage_level = clampi(level, 0, 4)
 	var id: StringName = ORDER[_index]
 	stage.set_memory_stage(_stage_level)
-	hud.set_steps(_stage_level, 4, "ONARILDI" if _stage_level >= 4 else NAMES[id].to_upper())
+	hud.set_steps(_stage_level, 4, "ONARILDI" if _stage_level >= 4 else "BELLEK")
 	if _stage_level >= 4:
 		_chat_row.visible = false
 	_speak_stage_line(_stage_level, custom_line_id)

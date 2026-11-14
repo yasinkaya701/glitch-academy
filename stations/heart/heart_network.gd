@@ -10,6 +10,20 @@ const IN_PORTS: Array[StringName] = [&"svc_in", &"lungs_in", &"pv_in", &"body_in
 const CORRECT_LINKS := {&"body_out": &"svc_in", &"pa_out": &"lungs_in", &"lungs_out": &"pv_in", &"aorta_out": &"body_in"}
 
 
+## Bir damarı boş girişe bağlar veya mevcut bağlantısını atomik olarak değiştirir.
+## Dolu girişe ikinci kaynak bağlanmasını reddeder; özgün sözlük değiştirilmez.
+static func replace_link(links: Dictionary, from_port: StringName, to_port: StringName) -> Dictionary:
+	var unchanged := links.duplicate()
+	if not OUT_PORTS.has(from_port) or not IN_PORTS.has(to_port):
+		return {"ok": false, "links": unchanged, "reason": &"invalid_port"}
+	for existing_source in links:
+		if existing_source != from_port and links[existing_source] == to_port:
+			return {"ok": false, "links": unchanged, "reason": &"occupied", "source": existing_source}
+	var updated := links.duplicate()
+	updated[from_port] = to_port
+	return {"ok": true, "links": updated, "reason": &""}
+
+
 ## Bir kapağın bir evredeki durumu.
 ## `slots[slot]` = {piece:int, flipped:bool} ya da boş. `defects[slot]` = &"stuck_open" | &"leaky".
 ## Dönüş: {forward: bool, back: bool}  forward = ileri akışa izin veriyor, back = geri akış var.

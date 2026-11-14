@@ -1,8 +1,9 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scenes/intro/intro.gd" id="1_intro"]
 
 [ext_resource type="Texture2D" path="res://assets/backgrounds/observatory-daylight.png" id="2_bg"]
+[ext_resource type="Texture2D" path="res://assets/characters/meridyen_guide.png" id="3_guide"]
 
 [sub_resource type="Gradient" id="Gradient_top"]
 offsets = PackedFloat32Array(0, 0.36, 1)
@@ -63,6 +64,22 @@ bg_color = Color(0.58, 0.69, 0.71, 0.38)
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_progress_fill"]
 bg_color = Color(0.23, 0.47, 0.40, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_guide"]
+bg_color = Color(1, 1, 1, 0.93)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.74, 0.8, 0.75, 0.92)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 15.0
+content_margin_top = 12.0
+content_margin_right = 15.0
+content_margin_bottom = 12.0
 
 [node name="Intro" type="Control"]
 visible = false
@@ -156,6 +173,46 @@ grow_horizontal = 0
 theme_override_colors/font_color = Color(0.23, 0.47, 0.40, 1)
 theme_override_font_sizes/font_size = 15
 horizontal_alignment = 2
+
+[node name="GuidePortrait" type="TextureRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -350.0
+offset_top = -340.0
+offset_right = -28.0
+offset_bottom = -18.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+texture = ExtResource("3_guide")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="GuideBubble" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -398.0
+offset_top = 100.0
+offset_right = -32.0
+offset_bottom = 192.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBox_guide")
+
+[node name="GuideLine" type="Label" parent="GuideBubble"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.13, 0.20, 0.18, 1)
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
 
 [node name="Cue" type="VBoxContainer" parent="."]
 unique_name_in_owner = true

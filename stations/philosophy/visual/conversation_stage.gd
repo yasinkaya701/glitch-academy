@@ -12,9 +12,9 @@ const VIGNETTE_SHADER = preload("res://stations/philosophy/visual/vignette.gdsha
 const STAGE_DATA := "res://stations/philosophy/data/stage.json"
 const BACKGROUND_DIR := "res://stations/philosophy/assets/backgrounds/"
 
-const ACTOR_HEIGHT_RATIO := 1.08
-const ACTOR_X_RATIO := 0.71
-const FEET_Y_RATIO := 1.22
+const ACTOR_HEIGHT_RATIO := 0.92
+const ACTOR_X_RATIO := 0.73
+const FEET_Y_RATIO := 0.99
 const MAX_LINE_LENGTH := 95
 const ISLAMIC_IDS := [&"kindi", &"farabi", &"ibn_sina", &"ibn_rushd"]
 
@@ -39,10 +39,13 @@ var _current_id: StringName = &"socrates"
 const FONT_CINZEL := preload("res://fonts/Cinzel-Regular.ttf")
 const FONT_CINZEL_BOLD := preload("res://fonts/CinzelDecorative-Bold.ttf")
 const FONT_MARCELLUS := preload("res://fonts/Marcellus-Regular.ttf")
+const FONT_BODY := preload("res://assets/fonts/Inter.ttf")
 
 var _serif_font: Font = FONT_CINZEL
 var _serif_italic: Font = FONT_MARCELLUS
-var _sans_font: Font = FONT_CINZEL
+var _sans_font: Font = FONT_BODY
+var _compact := false
+var _dialogue_width: float = 640.0
 
 
 func _ready() -> void:
@@ -90,9 +93,23 @@ func _ready() -> void:
 
 
 func _init_fonts() -> void:
-	_serif_font = FONT_CINZEL
+	_serif_font = FONT_CINZEL_BOLD
 	_serif_italic = FONT_MARCELLUS
-	_sans_font = FONT_CINZEL
+	_sans_font = FONT_BODY
+
+
+func set_dialogue_layout(compact: bool, width: float) -> void:
+	_compact = compact
+	_dialogue_width = width
+	var compact_size := 17 if size.y < 460.0 else 19
+	_line_label.add_theme_font_size_override("font_size", compact_size if compact else 23)
+	_speaker_label.add_theme_font_size_override("font_size", 19 if compact else 22)
+	_line_label.max_lines_visible = (2 if size.y < 460.0 else 3) if compact else 4
+	_layout()
+
+
+func dialogue_line_bottom() -> float:
+	return _line_group.position.y + _line_group.size.y
 
 
 func show_philosopher(id: StringName, star_count: int = 4) -> bool:
@@ -158,6 +175,7 @@ func set_anger(value: float, animate: bool = true) -> void:
 func _build_line_ui() -> void:
 	_line_group.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_line_group.add_theme_constant_override("separation", 8)
+	_line_group.clip_contents = true
 
 	_speaker_label.add_theme_font_override("font", _serif_font)
 	_speaker_label.add_theme_font_size_override("font_size", 22)
@@ -171,9 +189,10 @@ func _build_line_ui() -> void:
 	_rule_line.color = Color(0.85, 0.72, 0.48, 0.55)
 
 	_line_label.add_theme_font_override("font", _serif_italic)
-	_line_label.add_theme_font_size_override("font_size", 24)
+	_line_label.add_theme_font_size_override("font_size", 23)
 	_line_label.add_theme_color_override("font_color", Color("#f3eee2"))
 	_line_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_line_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_line_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.92))
 	_line_label.add_theme_constant_override("shadow_offset_x", 0)
 	_line_label.add_theme_constant_override("shadow_offset_y", 2)
@@ -204,12 +223,25 @@ func _layout() -> void:
 
 	var feet := Vector2(w * ACTOR_X_RATIO, h * FEET_Y_RATIO)
 	actor.position = feet
-	actor.fit_to_height(h * ACTOR_HEIGHT_RATIO * _cam_zoom)
+	var actor_height := h * ACTOR_HEIGHT_RATIO
+	if _compact:
+		actor_height = minf(actor_height, w * 0.58)
+	actor.fit_to_height(actor_height * _cam_zoom)
 
-	_line_group.position = Vector2(48.0, h * 0.46)
-	_line_group.size = Vector2(w * 0.43, h * 0.18)
-	choice_slot.position = Vector2(48.0, h * 0.65)
-	choice_slot.size = Vector2(w * 0.45, h * 0.18)
+	var safe_left := minf(32.0, w * 0.045)
+	var line_width := minf(w * 0.47, 760.0)
+	var line_y := clampf(h * 0.40, 190.0, h * 0.48)
+	var line_height := clampf(h * 0.20, 118.0, 210.0)
+	if _compact:
+		line_width = minf(maxf(w - safe_left * 2.0, 220.0), 560.0)
+		line_y = clampf(h * 0.28, 112.0, 180.0)
+		line_height = clampf(h * 0.20, 76.0, 142.0)
+	_line_group.position = Vector2(safe_left, line_y)
+	_line_group.size = Vector2(line_width, line_height)
+	if choice_slot.size.x <= 0.0:
+		choice_slot.position = Vector2(safe_left, h * 0.64)
+		choice_slot.size = Vector2(_dialogue_width, minf(h * 0.22, 220.0))
+	choice_slot.position.x = safe_left
 	_floor_shadow.queue_redraw()
 
 
@@ -230,7 +262,10 @@ func _process(delta: float) -> void:
 	var target_zoom: float = 1.045 if (actor != null and actor.speaking) else 1.0 + 0.008 * sin(_clock * 0.40)
 	_cam_zoom = lerpf(_cam_zoom, target_zoom, 1.0 - exp(-delta * 2.6))
 	if actor != null and size.y > 0.0:
-		actor.fit_to_height(size.y * ACTOR_HEIGHT_RATIO * _cam_zoom)
+		var actor_height := size.y * ACTOR_HEIGHT_RATIO
+		if _compact:
+			actor_height = minf(actor_height, size.x * 0.58)
+		actor.fit_to_height(actor_height * _cam_zoom)
 
 	if _backdrop_tex.visible:
 		var z: float = 1.02 + 0.015 * (_cam_zoom - 1.0)

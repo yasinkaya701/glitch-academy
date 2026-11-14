@@ -5,9 +5,9 @@ extends "res://scripts/mission.gd"
 const BoxPlot = preload("res://stations/derivative/box_plot.gd")
 const Workshop = preload("res://stations/derivative/workshop.gd")
 const Hud = preload("res://scripts/mission_hud.gd")
-const GOOD := Color("#39735b")
-const BAD := Color("#b04e45")
-const MUTED := Color("#66766d")
+const GOOD := Color("#8fbea0")
+const BAD := Color("#df9a83")
+const MUTED := Color("#b1ac9e")
 const KEEP_SIDE := 12.0
 const NEW_SIDE := 18.0
 const MIN_MEASURES := 6
@@ -119,7 +119,7 @@ func _build_ui() -> void:
 	body = Label.new()
 	feedback = Label.new()
 	readout = Label.new()
-	readout.add_theme_color_override("font_color", Color("#a46535"))
+	readout.add_theme_color_override("font_color", Color("#dfae63"))
 	readout.position = Vector2(28, 80)
 	readout.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(readout)
@@ -187,7 +187,7 @@ func _enter_intro() -> void:
 	workshop.cut_amount = 0.0
 	workshop.fold_amount = 0.0
 	_set_ui("ARIZA", "Depo tahminle kesiyor",
-		"Depo her levhada köşe karesini tahminle seçiyor. Kutular olabileceğinden küçük çıkıyor, malzeme boşa gidiyor.", "")
+		"Depo, aynı levhadan daha çok malzeme sığdıracak kutuyu arıyor. Kesik büyürken kutu tabanı daralıyor; gerçek tepe noktasını ölçümle bul.", "")
 	action.hide()
 	intro_tween = create_tween()
 	intro_tween.tween_property(workshop, "cut_amount", 1.0, 1.1).set_trans(Tween.TRANS_SINE)
@@ -195,7 +195,7 @@ func _enter_intro() -> void:
 	intro_tween.tween_method(_set_fold, 0.0, 1.0, 1.4).set_trans(Tween.TRANS_SINE)
 	intro_tween.tween_callback(func() -> void:
 		_pour(BoxPlot.volume(KEEP_SIDE, 3.0), 1.2)
-		_say("Seçilen x = 3 dm. Silindir 108 L gösteriyor. Daha büyük bir kutu mümkün mü?", BAD))
+		_say("x = 3 dm kesildiğinde 108 L çıktı. Aynı levhadan 128 L'lik kutu üretmek mümkün mü?", BAD))
 	intro_tween.tween_interval(2.6)
 	intro_tween.tween_callback(_skip_intro)
 
@@ -235,7 +235,7 @@ func _enter_explore() -> void:
 	workshop.fold_amount = 1.0
 	workshop.level = 0.0
 	_set_ui("1 · DENE", "Kutuyu kes, kat, ölç",
-		"Kenarı 12 dm olan kare levhanın dört köşesinden x kadar kare kesilip katlanıyor. x'i ayarla, kutuyu ölçü silindirine boşaltarak hacmini ölç. Her ölçüm grafiğe bir nokta ekler.", "Eğimi incele")
+		"Kenar uzunluğu 12 dm olan levhanın köşelerinden x dm kare kes. Kutuyu katla, kapasiteyi ölç ve grafiğe kaydet. Hedef: malzemeyi artırmadan en yüksek hacmi bulmak.", "Eğimi incele")
 	action.disabled = true
 	_update_measure_gate()
 	slider.set_value_no_signal(1.0)

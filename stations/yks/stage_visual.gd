@@ -12,27 +12,104 @@ var _phase := 0.0
 var _result := 0
 var _caption_font_size := 18
 var life_protocol := false
+var evidence_text := ""
+var _opening_active := false
+var _opening_progress := 0.0
+var _evidence_reveal := 0.0
+var _opening_tween: Tween
+var _result_progress := 1.0
+var _result_animating := false
+var _result_tween: Tween
+var _stage_model_3d: Node3D
 
 
 func _ready() -> void:
+	_stage_model_3d = get_node_or_null("Experiment3D/Viewport/World/Model/YksStageVisual3D") as Node3D
+	if _stage_model_3d != null:
+		_stage_model_3d.call("build", diagram_id)
+		_sync_3d_model()
 	set_process(true)
 
 
 func _process(delta: float) -> void:
 	_phase += delta
-	if diagram_id == &"biology" and life_protocol:
+	_sync_3d_model()
+	if _opening_active or _result_animating or (diagram_id == &"biology" and life_protocol):
 		queue_redraw()
+
+
+func _sync_3d_model() -> void:
+	if _stage_model_3d == null:
+		return
+	_stage_model_3d.call("update_stage", {
+		"phase": _phase,
+		"result": _result,
+		"progress": _result_progress,
+		"opening_progress": _opening_progress if _opening_active else 1.0,
+		"evidence_reveal": _evidence_reveal,
+		"life_protocol": life_protocol,
+		"evidence_text": evidence_text,
+	})
+
+
+func play_opening_animation() -> void:
+	_opening_active = true
+	_opening_progress = 0.0
+	if diagram_id == &"reading":
+		_evidence_reveal = 0.0
+	if _opening_tween != null and _opening_tween.is_valid():
+		_opening_tween.kill()
+	_opening_tween = create_tween()
+	_opening_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_opening_tween.tween_property(self, "_opening_progress", 1.0, 0.82)
+	if diagram_id == &"reading":
+		_opening_tween.parallel().tween_property(self, "_evidence_reveal", 1.0, 0.9)
+	_opening_tween.tween_callback(_finish_opening_animation)
+
+
+func skip_opening_animation() -> void:
+	if not _opening_active:
+		return
+	if _opening_tween != null and _opening_tween.is_valid():
+		_opening_tween.kill()
+	_opening_progress = 1.0
+	_evidence_reveal = 1.0
+	_finish_opening_animation()
+
+
+func is_opening_animation_active() -> bool:
+	return _opening_active
+
+
+func _finish_opening_animation() -> void:
+	_opening_active = false
+	_sync_3d_model()
+	queue_redraw()
 
 
 func mark_result(correct: bool) -> void:
 	_result = 1 if correct else -1
+	_result_progress = 0.0
+	_result_animating = true
+	if _result_tween != null and _result_tween.is_valid():
+		_result_tween.kill()
+	_result_tween = create_tween()
+	_result_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_result_tween.tween_property(self, "_result_progress", 1.0, 0.32)
+	_result_tween.tween_callback(func() -> void: _result_animating = false)
 	if correct:
 		life_protocol = false
+	_sync_3d_model()
 	queue_redraw()
 
 
 func clear_result() -> void:
 	_result = 0
+	_result_progress = 1.0
+	_result_animating = false
+	if _result_tween != null and _result_tween.is_valid():
+		_result_tween.kill()
+	_sync_3d_model()
 	queue_redraw()
 
 
@@ -57,27 +134,46 @@ func _draw() -> void:
 		&"sociology": _draw_sociology()
 		&"logic": _draw_logic()
 		&"english": _draw_english()
+	if _opening_active and _opening_progress < 1.0:
+		_draw_malfunction_scan()
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if _result != 0:
 		var result_color := MINT if _result > 0 else CORAL
-		draw_rect(Rect2(Vector2(1, 1), size - Vector2(2, 2)), result_color, false, 2.0)
+		result_color.a = _result_progress
+		draw_rect(Rect2(Vector2(1, 1), size - Vector2(2, 2)), result_color, false, 1.0 + _result_progress * 1.5)
 		var badge := Rect2(Vector2(size.x - 156, 12), Vector2(142, 34))
-		draw_rect(badge, Color("#0c1721"), true)
+		draw_rect(badge, Color("#0c1721", _result_progress), true)
 		draw_rect(badge, result_color, false, 1.0)
-		draw_string(get_theme_default_font(), badge.position + Vector2(12, 23), "ONARILDI" if _result > 0 else "TEKRAR DENE", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, result_color)
+		draw_string(get_theme_default_font(), badge.position + Vector2(12, 23), "ONARILDI  ✓" if _result > 0 else "TEKRAR DENE  ↻", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, result_color)
 
 
 func _draw_reading() -> void:
-	_caption("YENİ KANIT / İLK ÇIKARIM", Vector2(23, 30))
-	for index in range(7):
-		var y := 95 + index * 31
-		var width: float = [390.0, 430.0, 372.0, 410.0, 350.0, 425.0, 275.0][index]
-		draw_line(Vector2(35, y), Vector2(35 + width, y), PAPER.darkened(0.24), 5.0)
-	draw_line(Vector2(35, 188), Vector2(428, 188), MINT, 7.0)
-	draw_circle(Vector2(449, 188), 7.0 + sin(_phase * 2.4) * 1.2, MINT)
-	_caption("kanıt cümlesi", Vector2(37, 318), MINT)
-	_caption("çıkarım", Vector2(431, 318), AMBER)
-	_arrow(Vector2(169, 302), Vector2(419, 302), AMBER)
+	_caption("GÖZLEM KAYDI", Vector2(23, 30))
+	var sentences := evidence_text.split(". ", false)
+	var first_record := sentences[0] if not sentences.is_empty() else "İlk gözlem kaydedildi."
+	var second_record := sentences[1] if sentences.size() > 1 else "Yeni ölçüm bekleniyor."
+	if not first_record.ends_with("."):
+		first_record += "."
+	if not second_record.ends_with("."):
+		second_record += "."
+	draw_rect(Rect2(Vector2(34, 76), Vector2(506, 104)), Color("#101f2a"), true)
+	draw_rect(Rect2(Vector2(34, 76), Vector2(506, 104)), Color("#41627f"), false, 1.5)
+	draw_rect(Rect2(Vector2(34, 76), Vector2(4, 104)), FAINT, true)
+	_caption("İLK YORUM", Vector2(52, 102), FAINT)
+	draw_multiline_string(get_theme_default_font(), Vector2(52, 132), first_record,
+		HORIZONTAL_ALIGNMENT_LEFT, 462.0, 17, -1, PAPER)
+	var reveal_color := Color(MINT, _evidence_reveal)
+	draw_rect(Rect2(Vector2(34, 194), Vector2(506, 112)), Color("#10252d", 0.55 + _evidence_reveal * 0.45), true)
+	draw_rect(Rect2(Vector2(34, 194), Vector2(506, 112)), reveal_color, false, 1.5)
+	draw_rect(Rect2(Vector2(34, 194), Vector2(4, 112)), reveal_color, true)
+	_caption("YENİ ÖLÇÜM", Vector2(52, 220), reveal_color)
+	draw_multiline_string(get_theme_default_font(), Vector2(52, 250), second_record,
+		HORIZONTAL_ALIGNMENT_LEFT, 462.0, 17, -1, Color(PAPER, _evidence_reveal))
+	var marker_x := lerpf(36.0, 536.0, _evidence_reveal)
+	draw_line(Vector2(marker_x, 194), Vector2(marker_x, 306), reveal_color, 2.0)
+	_arrow(Vector2(215, 348), Vector2(358, 348), AMBER)
+	_caption("kanıt", Vector2(165, 376), MINT)
+	_caption("çıkarım", Vector2(363, 376), AMBER)
 
 
 func _draw_literature() -> void:
@@ -285,6 +381,17 @@ func _draw_english() -> void:
 	_caption("move higher", Vector2(339, 158), AMBER)
 	_caption("retry transmitter", Vector2(227, 356), PAPER)
 	_caption("text clue → supported inference", Vector2(151, 390), MINT)
+
+
+func _draw_malfunction_scan() -> void:
+	var scan_x := lerpf(30.0, 545.0, _opening_progress)
+	var alpha := 0.82 * (1.0 - _opening_progress * 0.72)
+	var fault_color := Color(CORAL, alpha)
+	draw_line(Vector2(scan_x, 56), Vector2(scan_x, 354), fault_color, 2.0)
+	draw_line(Vector2(scan_x + 4.0, 56), Vector2(scan_x + 4.0, 354), Color(CORAL, alpha * 0.24), 1.0)
+	draw_rect(Rect2(Vector2(411, 9), Vector2(137, 30)), Color("#201617", alpha * 0.74), true)
+	draw_rect(Rect2(Vector2(411, 9), Vector2(137, 30)), Color(CORAL, alpha), false, 1.0)
+	_caption("!  ARIZA KAYDI", Vector2(421, 30), fault_color)
 
 
 func _triangle(a: Vector2, b: Vector2, c: Vector2, color: Color) -> void:

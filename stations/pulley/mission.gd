@@ -1,5 +1,5 @@
 extends "res://scripts/mission.gd"
-## LGS Fen Bilimleri · F.8.5.1.1 basit makinelerin avantajları.
+## TYT Fizik · İdeal basit makinelerde kuvvet, yol ve iş ilişkisi.
 
 const EXPERIMENT_3D := preload("res://scenes/experiment_3d.tscn")
 const MAX_RESCUE_TRIES := 3
@@ -56,6 +56,7 @@ var _pull_buttons: Array[Button] = []
 
 
 func _ready() -> void:
+	theme = UITheme.build_gameplay()
 	_build_interface()
 	_build_world()
 	_enter_crisis()
@@ -79,7 +80,7 @@ func _process(delta: float) -> void:
 
 func _build_interface() -> void:
 	var background := ColorRect.new()
-	background.color = UITheme.BG
+	background.color = UITheme.GAME_BG
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
@@ -99,7 +100,7 @@ func _build_interface() -> void:
 	var identity := VBoxContainer.new()
 	identity.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(identity)
-	var kicker := _label("LGS FEN BİLİMLERİ  ·  F.8.5.1.1", 14)
+	var kicker := _label("TYT FİZİK  ·  KUVVET / İŞ / ENERJİ", 14)
 	kicker.theme_type_variation = &"SectionLabel"
 	identity.add_child(kicker)
 	var title := _label("Palanga Atölyesi", 30)
@@ -119,10 +120,18 @@ func _build_interface() -> void:
 	visual.add_theme_constant_override("separation", 8)
 	content.add_child(visual)
 	var mode_row := HBoxContainer.new()
+	mode_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mode_row.add_theme_constant_override("separation", 8)
 	visual.add_child(mode_row)
 	_mode_buttons = [_button("Sabit makara", true), _button("Hareketli makara", true)]
 	for i in _mode_buttons.size():
+		# These are compact mode tabs, not stretch panels. With wrapped text and no
+		# width minimum Godot can squeeze them to a few pixels, then expand their
+		# height to fit one character per line (the two tall blank columns in the UI).
+		_mode_buttons[i].custom_minimum_size = Vector2(168, 48)
+		_mode_buttons[i].size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_mode_buttons[i].size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		_mode_buttons[i].autowrap_mode = TextServer.AUTOWRAP_OFF
 		_mode_buttons[i].pressed.connect(_select_mode.bind(i))
 		mode_row.add_child(_mode_buttons[i])
 	var frame := PanelContainer.new()
@@ -418,12 +427,12 @@ func _primary_text() -> String:
 
 func _phase_directive() -> String:
 	match _phase:
-		Phase.CRISIS: return "Yük emniyet çizgisinin altında kaldı. MERİDYEN'in ayarını incele."
-		Phase.TEST: return "İki düzeneği çalıştır; ip ve yük yolunu kaydet."
-		Phase.DIAGNOSE: return "Bozuk ayarı çürüten ölçüm kaydını plakaya taşı."
-		Phase.CALIBRATE: return "Yükü taşıyan ip kollarına göre ayarı düzelt."
-		Phase.RESCUE: return "40 N yükü emniyet çizgisinin üstüne çıkarıp kilidi aç."
-		Phase.SEAL: return "Son hareketi izle; doğru düzenek arşiv kilidini açtı."
+		Phase.CRISIS: return "40 N yük neden yükselmiyor? İdeal düzeneğin hangi ölçümleri kuvvet kazancını gösterir?"
+		Phase.TEST: return "Sabit makara ve palangayı dene. Aynı yük için çekme kuvvetiyle ip ve yük yollarını karşılaştır."
+		Phase.DIAGNOSE: return "Palangada yükü taşıyan ip kolları sayısı hangi kaydı açıklar? Kanıtı seç."
+		Phase.CALIBRATE: return "İki taşıyıcı ip kolu için kuvvet ve çekilen yol oranlarını kalibre et."
+		Phase.RESCUE: return "40 N yükü kaldır: ideal palangada gereken çekme kuvveti kaç N olmalı?"
+		Phase.SEAL: return "İş korunuyor mu? Daha az kuvvet uyguladığında ipi daha uzun çektiğini ölçümle doğrula."
 		_: return "Kurtarma hakkı bitti. Merkeze dönüp yeni deneme başlat."
 
 
@@ -459,13 +468,13 @@ func _build_world() -> void:
 	var environment := _world.get_node("WorldEnvironment") as WorldEnvironment
 	var env := environment.environment.duplicate(true) as Environment
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = UITheme.BG
+	env.background_color = UITheme.GAME_BG
 	var sky := Sky.new()
 	var sky_material := ProceduralSkyMaterial.new()
-	sky_material.sky_top_color = UITheme.BG
-	sky_material.sky_horizon_color = UITheme.PANEL
-	sky_material.ground_bottom_color = UITheme.BG
-	sky_material.ground_horizon_color = UITheme.PANEL
+	sky_material.sky_top_color = UITheme.GAME_BG
+	sky_material.sky_horizon_color = UITheme.GAME_PANEL
+	sky_material.ground_bottom_color = UITheme.GAME_BG
+	sky_material.ground_horizon_color = UITheme.GAME_PANEL
 	sky_material.sun_angle_max = 8.0
 	sky.sky_material = sky_material
 	env.sky = sky
@@ -490,17 +499,17 @@ func _build_world() -> void:
 
 
 func _build_workshop_environment() -> void:
-	var wall := _material(UITheme.PANEL, 0.02, 0.92)
-	var wall_panel := _material(UITheme.PANEL_RAISED, 0.04, 0.78)
-	var dark_panel := _material(UITheme.BG, 0.16, 0.66)
-	var warm_trim := _material(UITheme.WARM, 0.62, 0.36)
-	var bench_top := _material(UITheme.PANEL, 0.08, 0.72)
-	var bench_edge := _material(UITheme.EDGE, 0.48, 0.48)
-	var soft_light := _material(UITheme.WARM, 0.0, 0.4)
+	var wall := _material(UITheme.GAME_PANEL, 0.02, 0.92)
+	var wall_panel := _material(UITheme.GAME_RAISED, 0.04, 0.78)
+	var dark_panel := _material(UITheme.GAME_BG, 0.16, 0.66)
+	var warm_trim := _material(UITheme.GAME_WARM, 0.62, 0.36)
+	var bench_top := _material(UITheme.GAME_PANEL, 0.08, 0.72)
+	var bench_edge := _material(UITheme.GAME_EDGE, 0.48, 0.48)
+	var soft_light := _material(UITheme.GAME_WARM, 0.0, 0.4)
 	soft_light.emission_enabled = true
-	soft_light.emission = UITheme.WARM
+	soft_light.emission = UITheme.GAME_WARM
 	soft_light.emission_energy_multiplier = 1.35
-	var ground := _material(UITheme.BG, 0.08, 0.9)
+	var ground := _material(UITheme.GAME_BG, 0.08, 0.9)
 
 	# A continuous work surface carries the model plinth; the legs and drawer fronts
 	# extend below it so the apparatus reads as part of a real laboratory bench.
@@ -537,13 +546,13 @@ func _build_workshop_environment() -> void:
 	_add_box(_world, Vector3(0.0, 4.58, -3.25), Vector3(4.8, 0.055, 0.075), soft_light)
 	var task_light := OmniLight3D.new()
 	task_light.position = Vector3(0.0, 4.45, -2.85)
-	task_light.light_color = UITheme.WARM
+	task_light.light_color = UITheme.GAME_WARM
 	task_light.light_energy = 1.3
 	task_light.omni_range = 9.0
 	_world.add_child(task_light)
 	var key := SpotLight3D.new()
 	key.position = Vector3(-0.5, 5.8, 3.6)
-	key.light_color = UITheme.INK
+	key.light_color = UITheme.GAME_TEXT
 	key.light_energy = 2.2
 	key.spot_range = 11.0
 	key.spot_angle = 48.0
@@ -556,12 +565,12 @@ func _build_rig() -> void:
 	for child in _rig.get_children():
 		child.queue_free()
 	_rope_segments.clear()
-	var steel := _material(Color("#81939d"), 0.82, 0.26)
-	var dark_steel := _material(Color("#293b49"), 0.86, 0.31)
-	var blue := _material(Color("#2c7890"), 0.78, 0.24)
+	var steel := _material(Color("#a49e8e"), 0.82, 0.26)
+	var dark_steel := _material(Color("#34352f"), 0.86, 0.31)
+	var blue := _material(Color("#57745b"), 0.78, 0.24)
 	var brass := _material(Color("#d2a256"), 0.8, 0.23)
 	var rope_mat := _material(Color("#d6d2c2"), 0.86, 0.12)
-	var rubber := _material(Color("#17222b"), 0.15, 0.58)
+	var rubber := _material(Color("#1c1d19"), 0.15, 0.58)
 	_add_box(_rig, Vector3(0, 3.92, 0), Vector3(3.25, 0.16, 0.28), steel)
 	_add_box(_rig, Vector3(-1.48, 2.0, 0), Vector3(0.16, 4.0, 0.28), dark_steel)
 	_add_box(_rig, Vector3(1.48, 2.0, 0), Vector3(0.16, 4.0, 0.28), dark_steel)
@@ -812,7 +821,7 @@ func _add_measurement_marks(steel: Material, brass: Material) -> void:
 	ring.ring_segments = 96
 	floor_ring.mesh = ring
 	floor_ring.position = Vector3(0, 0.05, 0)
-	floor_ring.material_override = _material(Color("#315263"), 0.48, 0.4)
+	floor_ring.material_override = _material(Color("#425743"), 0.48, 0.4)
 	_rig.add_child(floor_ring)
 
 

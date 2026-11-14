@@ -16,7 +16,7 @@ Gece gözlemevi: koyu lacivert uzay zemini, tek sıcak ışık kaynağı (amber)
 | Sıcak ışık (uyarı, odak) | `#F2A65A` |
 | Hata, arıza | `#E5645A` |
 | Büyüklük A / B / bileşke | `#7FB6F5` / `#6FE3C1` / `#F2A65A` |
-| Oksijenli / oksijensiz kan | `#D8352F` / `#4A5FA8` |
+| Oksijenli / oksijensiz kan | `#D8352F` / `#6D2C3D` |
 
 Durum asla yalnızca renkle verilmez, yanına simge veya yazı gelir.
 

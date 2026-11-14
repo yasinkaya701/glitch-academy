@@ -6,11 +6,11 @@
 [resource]
 script = ExtResource("1")
 id = &"pulley"
-title = "Palanga Atölyesi"
-subject = "Fen Bilimleri"
-grade = 8
-routes = PackedStringArray("class", "lgs")
-description = "Sabit ve hareketli makarada kuvvet ile yol değişimini ölç; MERİDYEN'in eksik ip kolu kaydını düzelt."
-curriculum = "F.8.5.1.1 · Basit makinelerin sağladığı avantajlar (2018 programı)"
-source_url = "https://mufredat.meb.gov.tr/Dosyalar/201812312311937-FEN%20B%C4%B0L%C4%B0MLER%C4%B0%20%C3%96%C4%9ERET%C4%B0M%20PROGRAMI2018.pdf"
+title = "Palanga: Kuvvet ve İş"
+subject = "Fizik"
+grade = 12
+routes = PackedStringArray("class", "tyt")
+description = "40 N yükte sabit makara ile palangayı deneyle karşılaştır. İdeal düzende kuvvet kazancı, ip yolu ve iş korunumu arasındaki ilişkiyi açıkla."
+curriculum = "YKS TYT Fizik · Kuvvet, iş ve enerji · İdeal basit makinelerde kuvvet-yol ilişkisi"
+source_url = ""
 scene = ExtResource("2")

@@ -1,9 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/control_center.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/world/observatory.tscn" id="2"]
 
 [ext_resource type="Texture2D" path="res://assets/backgrounds/observatory-daylight.png" id="3_bg"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/lesson.svg" id="4_lesson"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/experiment.svg" id="5_experiment"]
 
 [sub_resource type="Gradient" id="Gradient_scrim"]
 offsets = PackedFloat32Array(0, 0.42, 0.72, 1)
@@ -85,7 +87,7 @@ theme_override_constants/separation = 12
 layout_mode = 2
 theme_override_colors/font_color = Color(0.23, 0.47, 0.40, 1)
 theme_override_font_sizes/font_size = 15
-text = "Meridyen Gözlemevi"
+text = "YKS HAZIRLIK · TYT / AYT"
 theme_type_variation = "SectionLabel"
 
 [node name="Title" type="Label" parent="Margin/Hub"]
@@ -98,7 +100,7 @@ text = "Yanlış Dünya"
 [node name="Welcome" type="Label" parent="Margin/Hub"]
 layout_mode = 2
 theme_type_variation = "MutedLabel"
-text = "Ölçümler değişti. Nedenini deneylerle bul."
+text = "YKS konularını deneyerek öğren; her rotada adım adım ilerle."
 autowrap_mode = 3
 
 [node name="Routes" type="HBoxContainer" parent="Margin/Hub"]
@@ -117,7 +119,6 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = "RouteTab"
 toggle_mode = true
-button_pressed = true
 text = "LGS"
 
 [node name="TYT" type="Button" parent="Margin/Hub/Routes"]
@@ -125,6 +126,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = "RouteTab"
 toggle_mode = true
+button_pressed = true
 text = "TYT"
 
 [node name="AYT" type="Button" parent="Margin/Hub/Routes"]
@@ -139,7 +141,8 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 0
 
-[node name="Missions" type="HBoxContainer" parent="Margin/Hub"]
+[node name="Missions" type="BoxContainer" parent="Margin/Hub"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 18
@@ -157,6 +160,7 @@ fixed_column_width = 0
 theme_override_constants/v_separation = 18
 
 [node name="DetailCard" type="PanelContainer" parent="Margin/Hub/Missions"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(350, 0)
@@ -186,6 +190,44 @@ layout_mode = 2
 theme_type_variation = "MutedLabel"
 autowrap_mode = 3
 
+[node name="MissionModes" type="HBoxContainer" parent="Margin/Hub/Missions/DetailCard/Details"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LessonMode" type="HBoxContainer" parent="Margin/Hub/Missions/DetailCard/Details/MissionModes"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LessonIcon" type="TextureRect" parent="Margin/Hub/Missions/DetailCard/Details/MissionModes/LessonMode"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+texture = ExtResource("4_lesson")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LessonText" type="Label" parent="Margin/Hub/Missions/DetailCard/Details/MissionModes/LessonMode"]
+layout_mode = 2
+theme_type_variation = "KickerLabel"
+text = "DERS"
+
+[node name="ExperimentMode" type="HBoxContainer" parent="Margin/Hub/Missions/DetailCard/Details/MissionModes"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ExperimentIcon" type="TextureRect" parent="Margin/Hub/Missions/DetailCard/Details/MissionModes/ExperimentMode"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+texture = ExtResource("5_experiment")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ExperimentText" type="Label" parent="Margin/Hub/Missions/DetailCard/Details/MissionModes/ExperimentMode"]
+layout_mode = 2
+theme_type_variation = "KickerLabel"
+text = "DENEY"
+
 [node name="DetailSpace" type="Control" parent="Margin/Hub/Missions/DetailCard/Details"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -197,6 +239,15 @@ size_flags_horizontal = 3
 theme_type_variation = "PrimaryButton"
 custom_minimum_size = Vector2(0, 48)
 text = "Düzeneği aç"
+
+[node name="RouteProgress" type="ProgressBar" parent="Margin/Hub"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 8)
+mouse_filter = 2
+max_value = 1.0
+step = 0.0
+show_percentage = false
 
 [node name="Progress" type="Label" parent="Margin/Hub"]
 unique_name_in_owner = true

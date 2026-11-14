@@ -17,6 +17,10 @@ var light: DirectionalLight3D
 var _globe_material: StandardMaterial3D
 var _glass: MeshInstance3D
 var _vent: Node3D
+var _rays: Node3D
+var _june_label: Label3D
+var _december_label: Label3D
+var _globe_mesh: MeshInstance3D
 
 
 func _ready() -> void:
@@ -45,6 +49,9 @@ func _apply_state() -> void:
 	earth.visible = not greenhouse
 	axis.visible = not greenhouse
 	sun.visible = not greenhouse
+	_rays.visible = not greenhouse
+	_june_label.visible = not greenhouse
+	_december_label.visible = not greenhouse
 	if greenhouse:
 		var recovery := smoothstep(0.0, 2.0, incident_time) if repaired else 0.0
 		var heat := 1.0 - recovery if repaired else 1.0 - exp(-incident_time * 0.55)
@@ -57,31 +64,42 @@ func _apply_state() -> void:
 	earth.position = Vector3(cos(orbit_angle) * 2.65, 0.0, sin(orbit_angle) * 1.45)
 	# The axle points in one fixed world direction at both orbital positions.
 	var axis_dir := Vector3(sin(deg_to_rad(tilt_degrees)), cos(deg_to_rad(tilt_degrees)), 0.0).normalized()
-	axis.position = earth.position
-	axis.quaternion = Quaternion(Vector3.UP, axis_dir)
+	# Keep the pole fixed in world space: rotate the globe and all its surface marks,
+	# then draw the pole through the globe's local origin exactly once.
+	earth.quaternion = Quaternion(Vector3.UP, axis_dir)
+	axis.position = Vector3.ZERO
+	axis.quaternion = Quaternion.IDENTITY
 	# Light arrives from the sun at the selected Earth position; opposite the
 	# Earth's radial position means the illuminated side faces the star.
 	var toward_sun := -earth.position.normalized()
 	light.rotation = Vector3.ZERO
 	light.look_at(toward_sun, Vector3.UP)
-	_globe_material.albedo_color = Color("2d7192") if (december and tilt_degrees > 0.01) else Color("286987")
+	_globe_material.albedo_color = Color("567d6b")
+	_june_label.modulate = Color("dfae63") if not december else Color("b1ac9e")
+	_december_label.modulate = Color("dfae63") if december else Color("b1ac9e")
+	_rays.rotation.y = 0.0
 
 
 func _build_scene() -> void:
 	var star := SphereMesh.new()
-	star.radius = 0.48
-	star.height = 0.96
-	sun = _mesh(star, Color("ffc66b"), "Sun")
+	star.radius = 0.45
+	star.height = 0.90
+	sun = _mesh(star, Color("dfae63"), "Sun")
 	sun.position = Vector3.ZERO
+	var corona := _torus(0.66, 0.018, Color("b77c3f"))
+	corona.name = "SolarCorona"
+	corona.rotation.x = PI / 2.0
+	sun.add_child(corona)
 	var glow := OmniLight3D.new()
-	glow.light_color = Color("ffbe62")
-	glow.light_energy = 2.0
-	glow.omni_range = 12.0
+	glow.light_color = Color("dfae63")
+	glow.light_energy = 1.2
+	glow.omni_range = 10.0
 	sun.add_child(glow)
 	light = DirectionalLight3D.new()
 	light.light_energy = 1.5
 	light.rotation_degrees = Vector3(-30, -45, 0)
 	add_child(light)
+	_build_observatory()
 	earth = Node3D.new()
 	earth.name = "Earth"
 	add_child(earth)
@@ -91,17 +109,17 @@ func _build_scene() -> void:
 	_globe_material = StandardMaterial3D.new()
 	_globe_material.albedo_color = Color("286987")
 	_globe_material.roughness = 0.8
-	var globe_mesh := MeshInstance3D.new()
-	globe_mesh.name = "Globe"
-	globe_mesh.mesh = globe
-	globe_mesh.material_override = _globe_material
-	earth.add_child(globe_mesh)
-	var equator := _torus(0.84, 0.012, Color("a5c9be"))
+	_globe_mesh = MeshInstance3D.new()
+	_globe_mesh.name = "Globe"
+	_globe_mesh.mesh = globe
+	_globe_mesh.material_override = _globe_material
+	earth.add_child(_globe_mesh)
+	var equator := _torus(0.84, 0.012, Color("e9e5db"))
 	equator.name = "Equator"
 	equator.rotation_degrees.x = 90
 	earth.add_child(equator)
 	for sign in [-1.0, 1.0]:
-		var latitude := _torus(0.72, 0.014, Color("77d2bd") if sign > 0 else Color("f0aa70"))
+		var latitude := _torus(0.72, 0.014, Color("8fbea0") if sign > 0 else Color("dfae63"))
 		latitude.name = "Latitude_%s" % str(sign)
 		latitude.position.y = sign * 0.39
 		latitude.scale = Vector3(0.83, 1.0, 0.83)
@@ -109,22 +127,86 @@ func _build_scene() -> void:
 	axis = Node3D.new()
 	axis.name = "TiltAxis"
 	earth.add_child(axis)
-	var pole_line := _cylinder(0.018, 2.55, Color("edf3e5"))
+	var pole_line := _cylinder(0.018, 2.55, Color("e9e5db"))
 	pole_line.position.y = 0.0
 	axis.add_child(pole_line)
 	for sign in [-1.0, 1.0]:
-		var pole := _sphere(0.075, Color("edf3e5"))
+		var pole := _sphere(0.075, Color("e9e5db"))
 		pole.position.y = sign * 1.28
 		axis.add_child(pole)
 	# Two half-orbit rails retain the visible seasonal pair as the active date changes.
-	var orbit := _torus(3.0, 0.012, Color("354e60"))
+	var orbit := _torus(3.0, 0.018, Color("3b3d35"))
 	orbit.name = "Orbit"
 	orbit.scale = Vector3(1.0, 1.0, 0.57)
 	add_child(orbit)
+	_rays = Node3D.new()
+	_rays.name = "SolarRays"
+	add_child(_rays)
+	_build_solar_rays()
+	_june_label = _date_label("21 HAZİRAN  ·  KUZEY YAZI", Color("dfae63"))
+	_june_label.position = Vector3(-2.65, -1.17, 0)
+	add_child(_june_label)
+	_december_label = _date_label("21 ARALIK  ·  KUZEY KIŞI", Color("b1ac9e"))
+	_december_label.position = Vector3(2.65, -1.17, 0)
+	add_child(_december_label)
 	greenhouse_node = Node3D.new()
 	greenhouse_node.name = "Greenhouse"
 	add_child(greenhouse_node)
 	_build_greenhouse()
+	_apply_state()
+
+
+func _build_observatory() -> void:
+	var plinth := _cylinder(3.65, 0.16, Color("191a17"))
+	plinth.name = "ObservatoryPlinth"
+	plinth.position.y = -1.48
+	add_child(plinth)
+	var trim := _torus(3.56, 0.025, Color("8fbea0"))
+	trim.name = "PlinthInlay"
+	trim.rotation.x = PI / 2.0
+	trim.position.y = -1.38
+	add_child(trim)
+	for index in range(24):
+		var angle := TAU * float(index) / 24.0
+		var marker := _sphere(0.035, Color("b1ac9e"))
+		marker.name = "OrbitMarker_%02d" % index
+		marker.position = Vector3(cos(angle) * 3.0, -1.30, sin(angle) * 1.72)
+		add_child(marker)
+	for index in range(28):
+		var azimuth := fposmod(float(index) * 2.39996, TAU)
+		var elevation := 0.3 + float((index * 17) % 13) * 0.105
+		var radius := 6.0 + float((index * 7) % 11) * 0.34
+		var star := _sphere(0.018 + float(index % 3) * 0.009, Color("e9e5db"))
+		star.name = "Star_%02d" % index
+		star.position = Vector3(cos(azimuth) * radius, elevation * 2.4, sin(azimuth) * radius)
+		add_child(star)
+	var axis_tag := _date_label("EKEN YÖNÜ SABİT", Color("8fbea0"))
+	axis_tag.position = Vector3(0, 2.05, -0.4)
+	axis_tag.font_size = 32
+	add_child(axis_tag)
+
+
+func _build_solar_rays() -> void:
+	for side in [-1.0, 1.0]:
+		for index in range(3):
+			var z := (float(index) - 1.0) * 0.34
+			var ray := _cylinder(0.012, 1.85, Color("dfae63"))
+			ray.name = "SunRay_%s_%d" % [str(side), index]
+			ray.rotation.z = PI / 2.0
+			ray.position = Vector3(side * 1.38, 0.0, z)
+			_rays.add_child(ray)
+
+
+func _date_label(value: String, tint: Color) -> Label3D:
+	var label := Label3D.new()
+	label.text = value
+	label.font_size = 40
+	label.pixel_size = 0.0035
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.modulate = tint
+	label.outline_size = 8
+	label.outline_modulate = Color("10110f")
+	return label
 
 
 func _build_greenhouse() -> void:

@@ -8,10 +8,13 @@ const EXPLORE := 1
 const APPLY := 2
 const EXPECTED := Vector2(5, -12)
 const MAGNITUDE := 13.0
-const TEXT := Color("#e8efeb")
-const MUTED := Color("#a3b4bc")
-const ACCENT := Color("#83dcb8")
-const WARNING := Color("#ffc082")
+const TEXT := Color("#eeeae0")
+const MUTED := Color("#b1ac9e")
+const ACCENT := Color("#8fbea0")
+const WARNING := Color("#dfae63")
+const SURFACE := Color("#191a17")
+const SURFACE_RAISED := Color("#242520")
+const EDGE := Color("#3b3d35")
 
 var _stage := INTRO
 var _plot: Plot
@@ -46,7 +49,7 @@ func _ready() -> void:
 
 func _build_interface() -> void:
 	var backdrop := ColorRect.new()
-	backdrop.color = Color("#0b1521")
+	backdrop.color = Color("#10110f")
 	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(backdrop)
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -335,14 +338,36 @@ func _button(parent: Control, title: String) -> Button:
 	var button := Button.new()
 	button.text = title
 	button.custom_minimum_size.y = 36
+	button.add_theme_color_override("font_color", TEXT)
+	button.add_theme_color_override("font_hover_color", TEXT)
+	button.add_theme_color_override("font_pressed_color", TEXT)
+	button.add_theme_color_override("font_disabled_color", MUTED.darkened(0.28))
+	button.add_theme_stylebox_override("normal", _button_box(SURFACE_RAISED, EDGE))
+	button.add_theme_stylebox_override("hover", _button_box(Color("#30312b"), Color("#8fbea0")))
+	button.add_theme_stylebox_override("pressed", _button_box(Color("#34483a"), Color("#8fbea0")))
+	button.add_theme_stylebox_override("disabled", _button_box(Color("#20211e"), Color("#34352f")))
+	button.add_theme_stylebox_override("focus", _button_box(SURFACE_RAISED, WARNING, 2))
 	parent.add_child(button)
 	return button
 
 
+func _button_box(fill: Color, edge: Color, border_width: int = 1) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.border_color = edge
+	style.set_border_width_all(border_width)
+	style.set_corner_radius_all(7)
+	style.content_margin_left = 14.0
+	style.content_margin_right = 14.0
+	style.content_margin_top = 8.0
+	style.content_margin_bottom = 8.0
+	return style
+
+
 func _panel_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("#132232")
-	style.border_color = Color("#2c4553")
+	style.bg_color = SURFACE
+	style.border_color = EDGE
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(6)
 	style.content_margin_left = 18

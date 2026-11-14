@@ -116,7 +116,7 @@ func _build_ui() -> void:
 	var data: Dictionary = PACK.get(String(mission_id), PACK["seasons"])
 	var accent: Color = PALETTE.get(String(mission_id), PALETTE["seasons"])
 	var bg := ColorRect.new()
-	bg.color = UITheme.BG
+	bg.color = UITheme.GAME_BG
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
@@ -324,8 +324,8 @@ func _add_evidence_drop(options: Array, callback: Callable) -> void:
 	zone.custom_minimum_size.y = 44
 	zone.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var zone_style := StyleBoxFlat.new()
-	zone_style.bg_color = UITheme.BG
-	zone_style.border_color = UITheme.EDGE_STRONG
+	zone_style.bg_color = UITheme.GAME_PANEL
+	zone_style.border_color = UITheme.GAME_EDGE
 	zone_style.set_border_width_all(1)
 	zone_style.set_corner_radius_all(2)
 	zone_style.content_margin_left = 12

@@ -48,17 +48,17 @@ func _build_deck() -> void:
 	floor_mesh.size = Vector2(9.2, 9.2)
 	floor.mesh = floor_mesh
 	var floor_mat := StandardMaterial3D.new()
-	floor_mat.albedo_color = Color("#152635")
+	floor_mat.albedo_color = Color("#191a17")
 	floor_mat.roughness = 0.8
 	floor.material_override = floor_mat
 	floor.position.y = -0.06
 	add_child(floor)
 	for i in range(-6, 7):
-		var color := Color("#375063") if i == 0 else Color("#263b4a")
+		var color := Color("#626056") if i == 0 else Color("#34352f")
 		_line(Vector3(i * 0.65, 0.005, -3.9), Vector3(i * 0.65, 0.005, 3.9), color, 0.007 if i != 0 else 0.015)
 		_line(Vector3(-3.9, 0.006, i * 0.65), Vector3(3.9, 0.006, i * 0.65), color, 0.007 if i != 0 else 0.015)
-	_line(Vector3(-4.1, 0.008, 0), Vector3(4.1, 0.008, 0), Color("#a4bac2"), 0.018)
-	_line(Vector3(0, 0.008, -4.1), Vector3(0, 0.008, 4.1), Color("#a4bac2"), 0.018)
+	_line(Vector3(-4.1, 0.008, 0), Vector3(4.1, 0.008, 0), Color("#c8c0ae"), 0.018)
+	_line(Vector3(0, 0.008, -4.1), Vector3(0, 0.008, 4.1), Color("#c8c0ae"), 0.018)
 
 func _update() -> void:
 	if _components == null:
@@ -79,11 +79,11 @@ func _update() -> void:
 	elif _stage == 1:
 		if _method == 0:
 			_add_arrow(_components, Vector3.ZERO, _xyz(Vector2(3, 0)), Color("#77dfba"))
-			_add_arrow(_components, _xyz(Vector2(3, 0)), end, Color("#80b8e5"))
+			_add_arrow(_components, _xyz(Vector2(3, 0)), end, Color("#d2c7af"))
 		else:
 			_add_arrow(_components, Vector3.ZERO, _xyz(Vector2(3, 0)), Color("#77dfba"))
-			_add_arrow(_components, Vector3.ZERO, _xyz(Vector2(0, 4)), Color("#80b8e5"))
-			_line(_xyz(Vector2(3, 0)), end, Color("#80b8e5", 0.55), 0.018)
+			_add_arrow(_components, Vector3.ZERO, _xyz(Vector2(0, 4)), Color("#d2c7af"))
+			_line(_xyz(Vector2(3, 0)), end, Color("#d2c7af", 0.55), 0.018)
 			_line(_xyz(Vector2(0, 4)), end, Color("#77dfba", 0.55), 0.018)
 		if _revealed and _route_draw > 0.0:
 			_add_arrow(_components, Vector3.ZERO, end * _route_draw, Color("#ffc082"))
