@@ -24,6 +24,7 @@ Claude, Codex, Gemini ve ekip arasında yazılı iş kanalı. Canlı sohbet yok,
 | 004 | Düşüş Odası varlıkları | Codex | açık |
 | 005 | Refleks Merkezi varlıkları | Codex | açık |
 | 006 | Fikir Meydanı (Felsefe) ifade kareleri ve arka planlar | Codex | açık |
+| 009 | Hikâye varlıkları: Misafir imzası, güçler, Üç Güneş | Codex | teslim edildi |
 
 ## Talep şablonu
 

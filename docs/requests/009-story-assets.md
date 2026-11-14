@@ -1,5 +1,5 @@
 # 009 · Hikâye varlıkları: Misafir imzası, güçler, Üç Güneş
-Durum: açık | Üretici: Codex | Öncelik: yüksek | Kaynak: docs/STORY.md
+Durum: teslim edildi | Üretici: Codex | Öncelik: yüksek | Kaynak: docs/STORY.md
 
 Hikâye değişti: Misafirler (üç güneşli kaotik bir dünyadan gelen varlıklar) Dünya'nın yasalarına küçük kaymalar bırakıyor, oyuncu Zaman Makinesi ve güçlerle onları onarıyor. Düşüş Odası teslimi (#11) oyuna alındı, `chamber_bg.png` ve sensör plakası kullanılıyor. Aşağıdakiler yeni.
 
@@ -25,3 +25,10 @@ Mevcut `chamber_bg.png` ile aynı ışık ve renk dilinde, şeffaf PNG, 256×256
 
 ## Kabul
 Godot'a hatasız aktarılır, boyutlar ve adlar yukarıdaki gibi. Teslimde sahneden iki ekran görüntüsü. Kaynak ve lisans notu.
+
+## Teslim notu
+
+- PNG'ler ve üretim kaynakları talep edilen yollarda; kaynak/lisans ve boyutlar [teslim özetinde](../review/issue15_assets.md).
+- [A/B/C asset board](../review/issue15_abc_asset_board.png) ve [D asset board](../review/issue15_d_asset_board.png) önizlemedir; çalışan sahne ekran görüntüsü değildir.
+- Bu asset-only dalında bağlanmış çalışan sahne yok; dolayısıyla kabulde istenen iki sahne ekran görüntüsü sağlanamıyor.
+- Pillow boyut/mod kontrolleri ve Godot 4.7.2 headless import başarılı.
