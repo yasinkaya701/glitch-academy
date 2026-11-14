@@ -4,10 +4,10 @@ Bu belge, `stations/philosophy/` altındaki filozofların görsel dilini, kare �
 
 ---
 
-## 1. Karakter Görsel Dili (Bannerlord Diyalog Estetiği)
+## 1. Karakter Görsel Dili (Retro Baskı Portreleri)
 
 1. **Tür ve Duruş:**
-   - Tam boy (`head-to-toe`), ayakta duran gerçekçi-boyamsı (realistic dark-painterly PBR) karakter.
+   - Tam boy (`head-to-toe`), ayakta duran; elle çizilmiş orta yüzyıl seyahat afişi ve litografi hissinde karakter.
    - Karşıdan **3/4 cephe** açısı (`frontal 3/4 view`), gözler doğrudan kameraya (oyuncuya) bakar.
    - Bir el hafifçe açık, konuşmanın ortasında doğal bir anlatım jestinde; diğer el yanda rahat veya döneme uygun tek bir nesne (parşömen rulosu, deri ciltli yazma) tutar.
 2. **Tarihsel ve Kültürel Doğruluk (AI Slop Yasakları):**
@@ -16,8 +16,8 @@ Bu belge, `stations/philosophy/` altındaki filozofların görsel dilini, kare �
    - **İslam dünyası filozofları (9.–12. yy, Bağdat / Halep / Buhara-Hemedan / Kurtuba):** Dönem ve coğrafyaya uygun *imâme* (sarık) veya bilgin başlığı, keten/yün *cübbe*, *kaba* veya *taylasan/burnus*; yüz hatları coğrafyaya uygun (Kindî: Abbâsî Bağdat; Fârâbî: Orta Asya Türkistan / Otrar; İbn Sînâ: Buhara-Horasan; İbn Rüşd: Endülüs-Muvahhidî Kurtuba kadısı).
    - **Kesin Yasaklar:** Kumaş veya kitap üzerinde okunur ya da uydurma yazı/kaligrafi, modern kıyafet dikişi, fantezi/büyücü parlaması, bozuk el/parmak anatomisi, karikatür abartısı.
 3. **Işık ve Renk:**
-   - **Sol üstten tek sıcak amber ana ışık** (`#F2A65A`), **sağdan soğuk camgöbeği/mavi kenar dolgusu** (`#7FB6F5` / `#0F1824`).
-   - Deri, sakal teli ve kumaş dokusu net PBR gerçekçiliğinde; aşırı kontrastlı siyah gölge veya neon parlama yok.
+   - Soluk krem kâğıt, oksitlenmiş teal, tuğla kırmızısı ve tütün amberinden oluşan sınırlı baskı paleti.
+   - Mat guaj ve mürekkep dokusu; seyrek tram noktaları, sade gölge kütleleri ve hafif kâğıt greni. Fotoğraf gerçekçiliği, parlak 3D, HDR, neon ve aşırı detay yok.
 4. **Kadraj ve Yeşil Perde (Chroma Key):**
    - Tuval oranı **2:3 dikey** (`848×1264` veya `1024×1536`).
    - Karakterin başının tepesinden ayak tabanına kadar tamamı görünür; üstte ve altta en az `%4` boşluk kalır, hiçbir uzuv kadrajdan kesilmez.
