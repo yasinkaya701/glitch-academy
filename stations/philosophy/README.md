@@ -1,6 +1,6 @@
-# Felsefe İstasyonu · Görsel ve Animasyon Katmanı
+# Felsefe İstasyonu · Retro Baskı Görsel ve Animasyon Katmanı
 
-Kapsam: 8 filozofun (Sokrates, Platon, Aristoteles, Epiküros, el-Kindî, el-Fârâbî, İbn Sînâ, İbn Rüşd) ayakta tam boy görünümü, doğal yüz/mimik/duruş animasyonu ve Bannerlord tarzı konuşma sahnesi. Diyalog akışı, kart mantığı, ses ve `mission.tscn`/`mission.tres` entegrasyonu bu kapsamın dışındadır.
+Kapsam: 8 filozofun (Sokrates, Platon, Aristoteles, Epiküros, el-Kindî, el-Fârâbî, İbn Sînâ, İbn Rüşd) ayakta tam boy görünümü, doğal yüz/mimik/duruş animasyonu ve retro seyahat afişi estetiğinde konuşma sahnesi. Mekânlar ve karakterler soluk krem, oksit teal, tuğla kırmızısı ve amber litografi paletini paylaşır. Diyalog akışı, kart mantığı, ses ve `mission.tscn`/`mission.tres` entegrasyonu bu kapsamın dışındadır.
 
 - **Sonraki ajanlar için karakter görsel dili ve kare sözleşmesi:** [CHARACTER_STYLE.md](CHARACTER_STYLE.md)
 - **Codex varlık tamamlama talebi:** [docs/requests/006-philosophy.md](../../docs/requests/006-philosophy.md)
