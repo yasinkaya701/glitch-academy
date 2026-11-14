@@ -124,6 +124,15 @@ const PORT_NAMES := {
 }
 const PORT_RICH := {&"body_out": false, &"pa_out": false, &"lungs_out": true, &"aorta_out": true}
 
+## Hedef halkaları, port işaretleri ve uyarılar 3B görünümün üstünde çizilir (üst Control'ün _draw'ı kabın altında kalır).
+class Overlay extends Control:
+	var stage
+
+	func _draw() -> void:
+		if stage != null:
+			stage._paint(self)
+
+var _overlay: Overlay
 var heart_root: Node3D
 var body_node: Node3D
 var lungs_node: Node3D
@@ -142,6 +151,9 @@ var highlight: StringName = &"":
 		highlight = value
 		highlight_id = value if value != &"" else null
 var show_flow := true
+## Kapak arızası sonucu: kan biriken odacıklar (spot kimliği → true) ve sonucun pompa durduktan sonra görünür kalma süresi.
+var pooled: Dictionary = {}
+var consequence_hold := 0.0
 var beat := 0.0
 var flow_speed := 1.0
 var body_oxygen := 1.0
@@ -182,6 +194,11 @@ var _chamber_blood: Dictionary = {}
 
 
 func _build() -> void:
+	_overlay = Overlay.new()
+	_overlay.stage = self
+	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_overlay)
+	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_tune_heart_palette()
 	spots_active = active_pickables
 	default_target = Vector3(0.0, 0.2, 0.0)
@@ -515,10 +532,10 @@ func _setup_oxygen_visuals() -> void:
 	bar_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	bar_material.albedo_color = SAGE
 	_oxygen_bar.material_override = bar_material
-	_oxygen_bar.position = BODY_POS + Vector3(0, 0.66, 0.1)
+	_oxygen_bar.position = BODY_POS + Vector3(0, -0.62, 0.28)
 	world.add_child(_oxygen_bar)
 	_oxygen_label = make_label("Doku oksijeni", INK, 13)
-	_oxygen_label.position = BODY_POS + Vector3(0, 0.74, 0.1)
+	_oxygen_label.position = BODY_POS + Vector3(0, -0.45, 0.28)
 	world.add_child(_oxygen_label)
 
 
@@ -579,6 +596,7 @@ func _build_flow_particles() -> void:
 # --- Her kare -----------------------------------------------------------
 
 func _update(delta: float) -> void:
+	consequence_hold = maxf(consequence_hold - delta, 0.0)
 	for valve in valve_amount:
 		valve_amount[valve] = move_toward(valve_amount[valve], valve_target[valve], delta * 5.0)
 	var s := 1.0 + 0.02 * beat
@@ -592,10 +610,11 @@ func _update(delta: float) -> void:
 	_update_oxygen()
 	_sync_tubes()
 	_wave_step(delta)
-	queue_redraw()
+	if _overlay != null:
+		_overlay.queue_redraw()
 
 
-func _draw() -> void:
+func _paint(canvas: Control) -> void:
 	## Keep active hit targets legible over the detailed 3D model.
 	if rig == null or rig.camera == null:
 		return
@@ -607,18 +626,80 @@ func _draw() -> void:
 		if camera.is_position_behind(point):
 			continue
 		var screen := camera.unproject_position(point)
-		if not Rect2(Vector2.ZERO, size).has_point(screen):
+		if not Rect2(Vector2.ZERO, canvas.size).has_point(screen):
 			continue
 		var is_target: bool = id == highlight_id
 		var color := AMBER if is_target else SAGE
 		var pulse := 1.0 + 0.08 * sin(_time * 4.0)
-		var radius := (31.0 if is_target else 25.0) * pulse
+		var radius := (23.0 if is_target else 15.0) * pulse
+		var is_valve := String(id).begins_with("valve_")
 		# Açık ve ayrıntılı model üstünde kaybolmaması için koyu zemin, beyaz ayraç ve renkli halo.
-		draw_circle(screen, radius + 6.0, Color("#ffffff", 0.88))
-		draw_circle(screen, radius, Color("#191a17", 0.92))
-		draw_circle(screen, radius - 5.0, Color(color, 0.28))
-		draw_arc(screen, radius - 2.0, 0.0, TAU, 48, color, 4.5 if is_target else 3.5, true)
-		draw_circle(screen, 5.0 if is_target else 4.0, color)
+		# Şekil de anlam taşır: kapak yuvaları kare, odacık ve damar bölgeleri daire.
+		if is_valve:
+			var half := maxf(radius * 0.62, 12.0)
+			canvas.draw_rect(Rect2(screen - Vector2.ONE * (half + 5.0), Vector2.ONE * (half + 5.0) * 2.0), Color("#ffffff", 0.88))
+			canvas.draw_rect(Rect2(screen - Vector2.ONE * half, Vector2.ONE * half * 2.0), Color("#191a17", 0.92))
+			canvas.draw_rect(Rect2(screen - Vector2.ONE * half, Vector2.ONE * half * 2.0), color, false, 4.0 if is_target else 3.0)
+			canvas.draw_line(screen - Vector2(half * 0.55, 0.0), screen + Vector2(half * 0.55, 0.0), color, 3.0)
+			canvas.draw_colored_polygon(PackedVector2Array([screen + Vector2(half * 0.55, 0.0), screen + Vector2(half * 0.15, -half * 0.3), screen + Vector2(half * 0.15, half * 0.3)]), color)
+		else:
+			canvas.draw_circle(screen, radius + 3.0, Color("#ffffff", 0.85))
+			canvas.draw_circle(screen, radius, Color("#191a17", 0.92))
+			canvas.draw_circle(screen, radius - 5.0, Color(color, 0.28))
+			canvas.draw_arc(screen, radius - 1.5, 0.0, TAU, 48, color, 3.5 if is_target else 2.5, true)
+			canvas.draw_circle(screen, 4.0 if is_target else 3.0, color)
+	_draw_pooled_warnings(canvas, camera)
+	_draw_port_targets(canvas, camera)
+
+
+func _draw_pooled_warnings(canvas: Control, camera: Camera3D) -> void:
+	var font := canvas.get_theme_default_font()
+	for spot in pooled:
+		if not pooled[spot] or not SPOT_POS.has(spot):
+			continue
+		var point: Vector3 = heart_root.to_global(SPOT_POS[spot])
+		if camera.is_position_behind(point):
+			continue
+		var screen := camera.unproject_position(point)
+		var pulse := 0.5 + 0.5 * sin(_time * 5.0)
+		var radius := 34.0 + 6.0 * pulse
+		canvas.draw_arc(screen, radius, 0.0, TAU, 40, Color(RED, 0.55 + 0.4 * pulse), 4.0, true)
+		canvas.draw_arc(screen, radius + 8.0, -0.6, 0.6, 12, Color(RED, 0.8), 3.0, true)
+		var text := "Kan birikti"
+		var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
+		# Sağ odacıklar ekranın solundadır: etiket odacığın dış yanına konur, kapak işaretlerine binmez.
+		var outward := -1.0 if spot in [&"right_atrium", &"right_ventricle"] else 1.0
+		var box_x := screen.x - radius - width - 28.0 if outward < 0.0 else screen.x + radius + 8.0
+		var box := Rect2(Vector2(box_x, screen.y - 12.0), Vector2(width + 16.0, 24.0))
+		canvas.draw_rect(box, Color("#191a17", 0.92))
+		canvas.draw_rect(box, RED, false, 2.0)
+		canvas.draw_string(font, box.position + Vector2(8.0, 17.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#f1ede3"))
+
+
+## Damar uçları: çıkışlar baklava, girişler çerçeve + nokta. Şekil, yönü renkten bağımsız anlatır.
+func _draw_port_targets(canvas: Control, camera: Camera3D) -> void:
+	if not ports_active:
+		return
+	var pulse := 1.0 + 0.1 * sin(_time * 4.0)
+	for id in _port_markers:
+		var marker: MeshInstance3D = _port_markers[id]
+		var point := marker.global_position
+		if camera.is_position_behind(point):
+			continue
+		var screen := camera.unproject_position(point)
+		var taken: bool = connections.values().has(id) or connections.has(id)
+		var warned: bool = port_warning.get(id, false)
+		var color: Color = AMBER if warned else (SAGE if taken else Color("#f1ede3"))
+		var r := (9.0 if taken else 13.0) * pulse
+		if OUT_PORTS.has(id):
+			var diamond := PackedVector2Array([screen + Vector2(0, -r), screen + Vector2(r, 0), screen + Vector2(0, r), screen + Vector2(-r, 0)])
+			canvas.draw_colored_polygon(diamond, Color("#191a17", 0.9))
+			diamond.append(diamond[0])
+			canvas.draw_polyline(diamond, color, 3.0, true)
+		else:
+			canvas.draw_rect(Rect2(screen - Vector2.ONE * r, Vector2.ONE * r * 2.0), Color("#191a17", 0.9))
+			canvas.draw_rect(Rect2(screen - Vector2.ONE * r, Vector2.ONE * r * 2.0), color, false, 3.0)
+			canvas.draw_circle(screen, 3.5, color)
 
 
 func _update_slots_and_valves() -> void:
@@ -711,12 +792,16 @@ func _build_chamber_blood() -> void:
 func _update_chamber_blood() -> void:
 	for spot in _chamber_blood:
 		var node: MeshInstance3D = _chamber_blood[spot]
-		node.visible = circ != null and sim_active
+		node.visible = circ != null and (sim_active or consequence_hold > 0.0 or pooled.has(spot))
 		if not node.visible:
 			continue
 		var data: Array = CHAMBER_BLOOD[spot]
 		var fill := circ.fullness(data[0])
-		node.scale = Vector3.ONE * lerpf(data[1], data[2], fill)
+		var scale_amount := lerpf(data[1], data[2], fill)
+		if pooled.get(spot, false):
+			# Biriken kan: odacık şişer ve nabız gibi atar.
+			scale_amount = data[2] * (1.12 + 0.05 * sin(_time * 5.0))
+		node.scale = Vector3.ONE * scale_amount
 		var color := _blood_color(circ.oxygen(data[0]))
 		var material := node.material_override as StandardMaterial3D
 		material.albedo_color = Color(color, 0.72)

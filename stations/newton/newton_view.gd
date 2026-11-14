@@ -246,7 +246,7 @@ func _draw_screen(canvas: Control, size: Vector2) -> void:
 		Kit.readout(canvas, Rect2(Vector2(40.0 + 300.0 * (k % 5), 80.0) * s, Vector2(280.0, 140.0) * s), card[0], card[1], card[2], FONT_REGULAR, s * 1.7, card[3])
 	# Grafik
 	var graph := Rect2(Vector2(130.0, 290.0) * s, Vector2(1380.0, 450.0) * s)
-	canvas.draw_rect(graph, Color("#0a111b"))
+	canvas.draw_rect(graph, Color("#141510"))
 	canvas.draw_rect(graph, Color(MUTED, 0.35), false, 2.0)
 	var t_max := 8.0
 	var v_max := 50.0

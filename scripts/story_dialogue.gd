@@ -45,11 +45,11 @@ const NEWS_REPORTS := {
 	"bridge": {"region": NEWS_FRAMES.bridge, "place": "GÖZLEMEVİ · KÖPRÜ ŞANTİYESİ", "headline": "KÖPRÜNÜN İKİ YARISI ORTADA BİRLEŞMEDİ", "report": "Taşıyıcılar ölçümde eşit görünüyordu; kayıtta bir açıklığın uzunluğu eksikti. Montaj ekibi, eksik parçayı fark edince köprüyü güvenli biçimde durdurdu."},
 	"prism": {"region": NEWS_FRAMES.box, "place": "GÖZLEMEVİ · PRİZMA DEPOSU", "headline": "EKSİK HACİM HESABI, KARGO KASASINI TAŞIRDI", "report": "Taban alanı ile katman yüksekliği ayrı ayrı kaydedildi; toplam hacim hesaba katılmayınca kargo kutusu platforma sığmadı. Ekip katmanları yeniden ölçtü."},
 	"free_fall": {"region": NEWS_FRAMES.fall, "place": "GÖZLEMEVİ · DÜŞME TESTİ KUYUSU", "headline": "İKİ CİSİMİN DÜŞÜŞ SÜRESİ TEK DEĞER OLARAK KAYDEDİLDİ", "report": "Hava direnci ayrı ölçülmeyince iki farklı cismin iniş süreleri aynı kayda sıkıştırıldı. Test düzeneği sonuçları tekrar edemedi ve güvenlik ağı erken açıldı."},
-	"newton": {"region": NEWS_FRAMES.lift, "place": "GÖZLEMEVİ · HAREKET HATTI", "headline": "AYNI İTİŞ, AĞIR KIZAKTA AYNI İVMEYİ ÜRETMEDİ", "report": "Yük iki katına çıktığında hız değişimi kayıttaki kadar olmadı. İtme kuvveti sabit kalmıştı; MERİDYEN'in çizelgesinde kütle farkı görünmüyordu."},
+	"newton": {"region": NEWS_FRAMES.lift, "place": "GÖZLEMEVİ · HAREKET HATTI", "headline": "AYNI İTİŞ, AĞIR KIZAKTA AYNI İVMEYİ ÜRETMEDİ", "report": "Yük iki katına çıktığında hız değişimi kayıttaki kadar olmadı. İtme kuvveti sabit kalmıştı; kayıt çizelgesinde kütle farkı görünmüyordu."},
 	"projectile": {"region": NEWS_FRAMES.fall, "place": "GÖZLEMEVİ · ATIŞ SAHASI", "headline": "YATAY ROTA DEĞİŞİNCE DÜŞME SÜRESİ DE KAYITTA DEĞİŞTİ", "report": "İki fırlatma aynı yükseklikten başladı; yatay hızları farklıydı. Gerçek düşüş süreleri eşit kalırken kayıt tek bir eğriyi izledi ve hedefler kaçırıldı."},
 	"collision": {"region": NEWS_FRAMES.lift, "place": "GÖZLEMEVİ · ÇARPIŞMA PİSTİ", "headline": "ÇARPIŞMA SONRASI YÖN KAYDI KAYBOLDU", "report": "Arabaların çarpışma öncesi hızları ölçüldü; yön işaretleri kayıttan silindi. Son toplam hız beklenenin iki katı çıktı ve deney tekrarlanamaz hale geldi."},
 	"indicator": {"atlas": "supplemental", "region": SUPPLEMENTAL_FRAMES.indicator, "place": "GÖZLEMEVİ · ÇÖZELTİ LABORATUVARI", "headline": "GÖSTERGE AYNI RENKTE KALDI, İKİ ÇÖZELTİ FARKLI TEPKİ VERDİ", "report": "Renk kaydı çözelti ölçümünden ayrıştı. pH sensörü iki numuneyi aynı gösterince laboratuvar ekibi hangi kabın daha asidik olduğunu belirleyemedi."},
-	"heart": {"region": NEWS_FRAMES.heart, "place": "GÖZLEMEVİ · YAŞAM PROTOKOLÜ", "headline": "OKSİJENSİZ KAN AKCİĞER YERİNE VÜCUDA YÖNLENDİRİLDİ", "report": "Ana toplardamardan gelen oksijence fakir kanın akış kaydı ters yöne döndü. Dokulara ulaşan oksijen azaldı; kalp ve damar ölçümleri MERİDYEN'in çizelgesiyle uyuşmadı."},
+	"heart": {"region": NEWS_FRAMES.heart, "place": "GÖZLEMEVİ · YAŞAM PROTOKOLÜ", "headline": "OKSİJENSİZ KAN AKCİĞER YERİNE VÜCUDA YÖNLENDİRİLDİ", "report": "Ana toplardamardan gelen oksijence fakir kanın akış kaydı ters yöne döndü. Dokulara ulaşan oksijen azaldı; kalp ve damar ölçümleri kayıt çizelgesiyle uyuşmadı."},
 	"pressure": {"region": NEWS_FRAMES.lift, "place": "GÖZLEMEVİ · BASINÇ ODASI", "headline": "DERİNE İNEN SENSÖR, SU BASINCINDA ARTIŞ GÖRMEDİ", "report": "Aynı sıvıda derinlik arttıkça ölçülen basınç yükselmeliydi. Sensör sabit kaldı; su tankının kapak kilidi güvenlik nedeniyle devreye girdi."},
 	"philosophy": {"region": NEWS_FRAMES.archive, "place": "GÖZLEMEVİ · FİKİR MEYDANI", "headline": "AYNI SÖZ, İKİ AYRI DÜŞÜNÜRE ATFEDİLDİ", "report": "Arşiv kayıtları bir alıntıyı farklı filozoflara bağladı. Sözün bağlamı ve dayanağı kaybolunca öğrenciler çelişkili kaynaklarla karşılaştı."},
 	"history": {"region": NEWS_FRAMES.archive, "place": "GÖZLEMEVİ · TARİH ARŞİVİ", "headline": "BELGELERİN TARİHİ YER DEĞİŞTİRDİ, KRONOLOJİ BOZULDU", "report": "Aynı olayı anlatan iki belgenin tarihleri birbirini tutmadı. Arşiv sırası kayınca bir anlaşma, onu hazırlayan olaydan önce gerçekleşmiş göründü."},
@@ -57,13 +57,16 @@ const NEWS_REPORTS := {
 	"turkish": {"region": NEWS_FRAMES.archive, "place": "GÖZLEMEVİ · UYARI İSTASYONU", "headline": "TEK BİR EKSİK EK, GÜVENLİK UYARISINI TERSİNE ÇEVİRDİ", "report": "Talimatın olumsuzluk eki kayıt satırından silinince kapalı çıkış açık, güvenli rota tehlikeli göründü. Ekip, levhadaki metinle sensör kaydını karşılaştırdı."},
 	"english": {"region": NEWS_FRAMES.archive, "place": "GÖZLEMEVİ · İLETİŞİM AĞI", "headline": "YARDIM ÇAĞRISI, UYARI MESAJI OLARAK YANLIŞ EKİBE GİTTİ", "report": "İstek cümlesindeki amaç kaydıyla uyarı işareti karıştı. Acil yardım çağrısı yanlış kanala yöneldi; ekipler özgün mesajı yeniden okumak zorunda kaldı."},
 	"religion": {"region": NEWS_FRAMES.archive, "place": "GÖZLEMEVİ · TOPLUMSAL DESTEK AĞI", "headline": "YARDIM KAYDI İHTİYAÇ YERİNE GÖSTERİŞİ İŞARET ETTİ", "report": "Destek kaynakları yanlış ölçüte göre dağıtılınca gerçek ihtiyaç noktası boş kaldı. Gözlem ekibi kayıtları başvuru ve sonuçlarla karşılaştırdı."},
-	"genetics": {"atlas": "supplemental", "region": SUPPLEMENTAL_FRAMES.genetics, "place": "GÖZLEMEVİ · YAŞAM PROTOKOLÜ", "headline": "GÖRÜNMEYEN ÇEKİNİK ALEL, KAYITTA TAMAMEN SİLİNDİ", "report": "Ebeveynlerde görünmeyen bir alel sonraki kuşakta ortaya çıktı. MERİDYEN'in kayıt tablosu çekinik bilgiyi yok saydığı için kalıtım olasılıkları tutmadı."},
+	"genetics": {"atlas": "supplemental", "region": SUPPLEMENTAL_FRAMES.genetics, "place": "GÖZLEMEVİ · YAŞAM PROTOKOLÜ", "headline": "GÖRÜNMEYEN ÇEKİNİK ALEL, KAYITTA TAMAMEN SİLİNDİ", "report": "Ebeveynlerde görünmeyen bir alel sonraki kuşakta ortaya çıktı. Kayıt tablosu çekinik bilgiyi yok saydığı için kalıtım olasılıkları tutmadı."},
 	"spin": {"region": NEWS_FRAMES.atom, "place": "GÖZLEMEVİ · MODERN ATOM LABORATUVARI", "headline": "ATOM DEMETİ İKİ AYRI ÖLÇÜM İZİ BIRAKTI", "report": "Dedektör kaydı atom demetini tek, sürekli bir iz olarak öngördü. Ölçüm ekranında ise iki ayrık sonuç belirdi; cihazın kaydı ile gözlenen dağılım ayrıştı."}
 }
 
 var _continue_action: Callable
 var _return_action: Callable
 var _card: PanelContainer
+var _scroll: ScrollContainer
+var _content: VBoxContainer
+var _outer: VBoxContainer
 var _news_image: TextureRect
 var _news_place: Label
 var _news_headline: Label
@@ -101,7 +104,15 @@ func _ready() -> void:
 	center.add_child(_card)
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 10)
-	_card.add_child(content)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content = content
+	_outer = VBoxContainer.new()
+	_outer.add_theme_constant_override("separation", 12)
+	_card.add_child(_outer)
+	_scroll = ScrollContainer.new()
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_outer.add_child(_scroll)
+	_scroll.add_child(content)
 	_news_image = TextureRect.new()
 	_news_image.custom_minimum_size = Vector2(0, 250)
 	_news_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -110,11 +121,11 @@ func _ready() -> void:
 	content.add_child(_news_image)
 	_news_place = Label.new()
 	_news_place.theme_type_variation = "KickerLabel"
-	_news_place.add_theme_color_override("font_color", Color("#dbae62"))
+	_news_place.add_theme_color_override("font_color", Color("#a8683a"))
 	content.add_child(_news_place)
 	_news_headline = Label.new()
 	_news_headline.add_theme_font_size_override("font_size", 22)
-	_news_headline.add_theme_color_override("font_color", Color("#eeeae0"))
+	_news_headline.add_theme_color_override("font_color", UITheme.INK)
 	_news_headline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(_news_headline)
 	var header := HBoxContainer.new()
@@ -147,13 +158,13 @@ func _ready() -> void:
 	content.add_child(message)
 	_news_report = Label.new()
 	_news_report.add_theme_font_size_override("font_size", 16)
-	_news_report.add_theme_color_override("font_color", Color("#b1ac9e"))
+	_news_report.add_theme_color_override("font_color", UITheme.MUTED)
 	_news_report.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(_news_report)
 	_actions = GridContainer.new()
 	_actions.add_theme_constant_override("h_separation", 12)
 	_actions.add_theme_constant_override("v_separation", 10)
-	content.add_child(_actions)
+	_outer.add_child(_actions)
 	_continue_button = Button.new()
 	_continue_button.theme_type_variation = "PrimaryButton"
 	_continue_button.custom_minimum_size.y = 48
@@ -173,16 +184,35 @@ func _ready() -> void:
 func _layout_dialogue() -> void:
 	if _card == null or not is_instance_valid(_card):
 		return
-	var usable_width := maxf(get_viewport_rect().size.x - 64.0, 280.0)
+	var host_width := size.x if size.x > 0.0 else get_viewport_rect().size.x
+	var usable_width := maxf(host_width - 64.0, 280.0)
 	_card.custom_minimum_size.x = minf(760.0, usable_width)
 	var compact := usable_width < 520.0
-	_news_image.custom_minimum_size.y = 148.0 if compact else 250.0
+	var host_height := size.y if size.y > 0.0 else get_viewport_rect().size.y
+	var available_height := maxf(host_height - 48.0 - 40.0, 240.0)
+	_news_image.custom_minimum_size.y = 250.0 if available_height > 640.0 else 148.0 if available_height > 470.0 else 84.0
+	if compact:
+		_news_image.custom_minimum_size.y = minf(_news_image.custom_minimum_size.y, 148.0)
+	if available_height < 400.0:
+		_news_image.hide()
 	_portrait.custom_minimum_size = Vector2(64, 64) if compact else Vector2(88, 88)
 	heading.add_theme_font_size_override("font_size", 23 if compact else 29)
 	message.add_theme_font_size_override("font_size", 16 if compact else 19)
 	_news_headline.add_theme_font_size_override("font_size", 18 if compact else 22)
 	_news_report.add_theme_font_size_override("font_size", 14 if compact else 16)
 	_actions.columns = 1 if compact or not _return_button.visible else 2
+	# Uzun kayıtlar küçük pencerede taşmasın: içerik kaydırılabilir, kart ekranı aşmaz.
+	_fit_scroll.call_deferred(available_height)
+
+
+func _fit_scroll(available_height: float) -> void:
+	if _scroll == null or not is_instance_valid(_scroll):
+		return
+	_scroll.custom_minimum_size.y = 0.0
+	await get_tree().process_frame
+	if not is_instance_valid(_scroll):
+		return
+	_scroll.custom_minimum_size.y = minf(_content.get_combined_minimum_size().y + 2.0, maxf(available_height - _actions.get_combined_minimum_size().y - 12.0, 120.0))
 
 
 func present(title: String, text: String, action_text: String, on_continue: Callable, on_return: Callable = Callable(), news_id: StringName = &"") -> void:

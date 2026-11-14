@@ -2,9 +2,14 @@ extends Control
 
 const Mission = preload("res://scripts/mission.gd")
 const MissionDefinition = preload("res://scripts/mission_definition.gd")
+const MissionPath = preload("res://scripts/mission_path.gd")
 const StoryDialogue = preload("res://scripts/story_dialogue.gd")
 const FINALE = preload("res://stations/yks/three_suns.tscn")
 const INTRO = preload("res://scenes/intro/intro.tscn")
+## Seviye listesi durum renkleri: açık zeminde okunur; durum ayrıca simge ve yazıyla da verilir.
+const LEVEL_DONE := Color("#2f6b5a")
+const LEVEL_NEXT := Color("#9a5a14")
+const LEVEL_LOCKED := Color("#7d8782")
 const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/seasons/mission.tres"),
 	preload("res://stations/measurement/mission.tres"),
@@ -54,14 +59,16 @@ var visible_missions: Array[MissionDefinition] = []
 var completed_ids: Dictionary[StringName, bool] = {}
 var story_dialogue: StoryDialogue
 var finale_button: Button
+var mission_path: MissionPath
+var _path_scroll: ScrollContainer
 var _playing_finale := false
 var _completion_pending := false
 var _last_campaign_mission: StringName
 
 const RECORDS := {
-	"seasons": "Işık açısı değişince seranın tepkisi de değişti. Uzaklık kaydım aynı şeyi açıklamıyordu.",
+	"seasons": "Işık açısı değişince seranın tepkisi de değişti. Kayıttaki uzaklık verisi aynı şeyi açıklamıyordu.",
 	"measurement": "Sayı aynıydı; birimi farklıydı. Arşiv taşıyıcısı şimdi doğru parçayı kabul ediyor.",
-	"vectors": "Yönü kayıttan silmiştim. Kapsülün yanaşması için uzunluk tek başına yetmiyor.",
+	"vectors": "Kayıtta yön bilgisi eksikti. Kapsülün yanaşması için uzunluk tek başına yetmiyor.",
 	"derivative": "Kutunun hacmi, kesik büyüdükçe hep artmıyor. Tepe noktasını ölçümle buldun.",
 	"bridge": "Eksik uzunluk tamamlandı. Köprünün kapanması, hesabın sahnedeki karşılığı oldu.",
 	"prism": "Katmanları tek tek hesaba kattın. Kasa artık ne eksik ne fazla doluyor.",
@@ -74,11 +81,11 @@ const RECORDS := {
 	"pressure": "Derinliği ve sıvıyı ayrı değiştirdin. Hedef basınca hangi koşulda ulaşıldığı belli.",
 	"philosophy": "Kaydı, düşüncenin gerekçesiyle eşleştirdin. Bir iddia tekrar edildiği için doğru olmuyor.",
 	"history": "Belgeleri tarihleri ve bağlamlarıyla doğruladın. Arşivin sırası yeniden kuruluyor.",
-	"pulley": "Kuvvet azalırken çekilen yol arttı. Kaydımdan sildiğim ip kolunu geri koydun.",
+	"pulley": "Kuvvet azalırken çekilen yol arttı. Kayıtta eksik kalan ip kolunu geri koydun.",
 	"turkish": "Tek bir olumsuzluk eki güvenlik talimatını tersine çevirmişti. Çıkış yolu yeniden açık.",
 	"english": "İsteği ve uyarıyı ayırdın. Yardım mesajı şimdi doğru ekibe ulaşıyor.",
 	"religion": "Yardım kaydını gösterişe değil açık ihtiyaca bağladın. Destek doğru yere gidiyor.",
-	"genetics": "Çekinik özellik görünmese de alel kaybolmuyor. Sildiğim kayıt çaprazlamada yeniden ortaya çıktı."
+	"genetics": "Çekinik özellik görünmese de alel kaybolmuyor. Kayıtta eksik görünen alel çaprazlamada yeniden ortaya çıktı."
 }
 
 
@@ -93,6 +100,7 @@ func _ready() -> void:
 	grade_filter.item_selected.connect(_on_grade_selected)
 	mission_list.item_selected.connect(_select_mission)
 	mission_list.item_activated.connect(_activate_mission)
+	_build_path()
 	start_mission.pressed.connect(_start_mission)
 	%Back.pressed.connect(_return_to_hub)
 	%Reset.pressed.connect(_retry_current)
@@ -147,6 +155,7 @@ func _refresh_list() -> void:
 	var selected_id: StringName = selected_mission.id if selected_mission != null else &""
 	mission_list.clear()
 	visible_missions.clear()
+	var path_items: Array[Dictionary] = []
 	var selected_grade := grade_filter.get_selected_id()
 	for mission in CATALOG:
 		if not mission.routes.has(String(active_route)):
@@ -159,18 +168,39 @@ func _refresh_list() -> void:
 				subject = "Fen Bilimleri"
 			elif mission.subject == "Tarih":
 				subject = "İnkılap Tarihi"
-		var prefix := ""
-		if active_route != &"class":
-			prefix = "%02d  " % (visible_missions.size() + 1)
-		var suffix := "  ✓" if _is_completed(mission.id) else ""
-		var index := mission_list.add_item("%s%s · %s%s" % [prefix, mission.title, subject, suffix])
-		if not _is_unlocked(mission.id):
-			mission_list.set_item_custom_fg_color(index, UITheme.MUTED)
-			mission_list.set_item_tooltip(index, "Önce önceki düzeneğin onarımını tamamla.")
+		var numbered := active_route != &"class"
+		var done := _is_completed(mission.id)
+		var unlocked := _is_unlocked(mission.id)
+		var is_next := numbered and not done and unlocked
+		var glyph := "✓" if done else "▶" if is_next else "▣" if numbered else "·"
+		var state_word := "Onarıldı" if done else "Sıradaki" if is_next else "Kilitli"
+		var number := "%02d  " % (visible_missions.size() + 1) if numbered else ""
+		var row := "%s  %s%s · %s" % [glyph, number, mission.title, subject]
+		if numbered:
+			row += "   —   %s" % state_word
+		var index := mission_list.add_item(row)
+		if done:
+			mission_list.set_item_custom_fg_color(index, LEVEL_DONE)
+		elif is_next:
+			mission_list.set_item_custom_fg_color(index, LEVEL_NEXT)
+		elif numbered:
+			mission_list.set_item_custom_fg_color(index, LEVEL_LOCKED)
+			mission_list.set_item_tooltip(index, "Kilitli: önce “%s” düzeneğini onar." % _next_route_mission().title)
 		mission_list.set_item_metadata(index, mission.id)
 		visible_missions.append(mission)
+		path_items.append({
+			"title": mission.title,
+			"subject": subject,
+			"state": &"done" if done else &"next" if is_next else &"locked",
+			"tooltip": "Kilitli: önce “%s” düzeneğini onar." % _next_route_mission().title if numbered and not done and not unlocked else "",
+		})
 		if mission.id == selected_id:
 			mission_list.select(index)
+			mission_path.select(index)
+	var numbered_route := active_route != &"class"
+	mission_path.set_items(path_items)
+	_path_scroll.visible = numbered_route
+	mission_list.visible = not numbered_route
 	var selected_items := mission_list.get_selected_items()
 	if selected_items.is_empty():
 		if not visible_missions.is_empty():
@@ -180,10 +210,12 @@ func _refresh_list() -> void:
 					next_index = index
 					break
 			mission_list.select(next_index)
+			mission_path.select(next_index)
 			_select_mission(next_index)
 		else:
 			_clear_selection()
 	else:
+		mission_path.select(selected_items[0])
 		_select_mission(selected_items[0])
 	var route_missions := _route_missions()
 	var route_total := route_missions.size()
@@ -196,13 +228,32 @@ func _refresh_list() -> void:
 		progress.text = "ROTA TAMAMLANDI   ·   %d / %d   ·   Üç Güneş son ölçüm" % [repaired, route_total]
 	else:
 		var next_step := route_missions[repaired].title if repaired < route_missions.size() else "Üç Güneş"
-		progress.text = "ADIM %d / %d   ·   SIRADAKİ: %s" % [repaired + 1, route_total, next_step]
+		progress.text = "%d / %d düzenek onarıldı   ·   Sıradaki: %s" % [repaired, route_total, next_step]
 	if Campaign.has_story_flag(_story_key("won")) and active_route != &"class":
 		progress.text = "ROTA TAMAMLANDI   ·   %d / %d   ·   Hikâye tamamlandı" % [repaired, route_total]
 	finale_button.visible = active_route != &"class"
 	finale_button.disabled = not _route_ready_for_finale()
-	finale_button.text = "Finali yeniden oyna · Üç Güneş" if Campaign.has_story_flag(_story_key("won")) else "Final · Üç Güneş"
+	var remaining := maxi(route_total - repaired, 0)
+	finale_button.text = "Finali yeniden oyna · Üç Güneş" if Campaign.has_story_flag(_story_key("won")) else ("Final · Üç Güneş" if remaining == 0 else "Final · Üç Güneş  ·  %d düzenek kaldı" % remaining)
 	finale_button.tooltip_text = "Rotadaki tüm düzenekleri onararak finali aç." if finale_button.disabled else "Son ölçümü yap ve merkezi yetkiyi kaldır."
+
+
+## Numaralı rotalarda liste yerine yol görünümü gösterilir; ItemList veri ve klavye için arkada kalır.
+func _build_path() -> void:
+	mission_path = MissionPath.new()
+	mission_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mission_path.selected.connect(func(index: int) -> void:
+		mission_list.select(index)
+		_select_mission(index))
+	mission_path.activated.connect(_activate_mission)
+	_path_scroll = ScrollContainer.new()
+	_path_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_path_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_path_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_path_scroll.custom_minimum_size = Vector2(380, 200)
+	_path_scroll.add_child(mission_path)
+	mission_columns.add_child(_path_scroll)
+	mission_columns.move_child(_path_scroll, mission_list.get_index())
 
 
 func _clear_selection() -> void:
@@ -222,13 +273,18 @@ func _select_mission(index: int) -> void:
 	mission_title.text = selected_mission.title
 	mission_description.text = selected_mission.description
 	start_mission.disabled = selected_mission.scene == null or not _is_unlocked(selected_mission.id)
+	var pending := _next_route_mission()
 	if _is_completed(selected_mission.id):
-		mission_status.text = "Onarıldı"
+		mission_status.text = "✓ Onarıldı"
 	elif selected_mission.scene == null:
 		mission_status.text = "Hazırlanıyor"
+	elif not _is_unlocked(selected_mission.id) and pending != null:
+		mission_status.text = "▣ Kilitli · önce “%s” düzeneğini onar" % pending.title
+	elif active_route != &"class" and pending != null and pending.id == selected_mission.id:
+		mission_status.text = "▶ Sıradaki düzenek"
 	else:
-		mission_status.text = "Deneye hazır" if _is_unlocked(selected_mission.id) else "Önce önceki düzeneği onar"
-	start_mission.text = "Yeniden dene" if _is_completed(selected_mission.id) else "Düzeneğe gir"
+		mission_status.text = "Deneye hazır"
+	start_mission.text = "Yeniden dene" if _is_completed(selected_mission.id) else "Düzeneğe gir" if start_mission.disabled == false else "Kilitli"
 
 
 func _activate_mission(index: int) -> void:
@@ -308,6 +364,8 @@ func _show_completion_story(mission_id: StringName) -> void:
 		Campaign.set_story_flag(_story_key("reveal"))
 		_set_world_alarm(1.0)
 		text += "\n\nMERİDYEN: “Doğa yasalarını değiştirdim. Şimdi yaşamın kurallarını değiştireceğim.” Gözlemevi kararır; kırmızı kalibrasyon ışığı atımla yanar."
+	elif Campaign.has_story_flag(_story_key("reveal")):
+		text += "\n\nMERİDYEN: “Bu kaydı ben değiştirmiştim. Ölçümün onu düzeltti.”"
 	if _route_ready_for_finale():
 		text += "\n\nRotadaki tüm kayıtlar doğrulandı. Son bir ölçüm kaldı: Üç Güneş. Merkezi yetkimi yalnız o karşılaştırmadan sonra kaldırabilirsin."
 		story_dialogue.present("Son kayıt", text, "Üç Güneş'e geç", _start_finale, _return_to_hub)
@@ -349,6 +407,7 @@ func _layout() -> void:
 	var compact_missions := size.x < 820.0
 	mission_columns.vertical = compact_missions
 	mission_list.custom_minimum_size.x = 0.0 if compact_missions else 380.0
+	_path_scroll.custom_minimum_size.x = 0.0 if compact_missions else 380.0
 	%DetailCard.custom_minimum_size.x = 0.0 if compact_missions else 350.0
 	play_title.clip_text = true
 	play_title.custom_minimum_size.x = 0
@@ -435,6 +494,7 @@ func _advance_campaign() -> void:
 	for index in visible_missions.size():
 		if visible_missions[index].id == next.id:
 			mission_list.select(index)
+			mission_path.select(index)
 			_select_mission(index)
 			_start_mission()
 			return

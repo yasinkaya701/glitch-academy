@@ -11,6 +11,8 @@ const TARGET_REACH := 0.125       ## fırından çıkanların dedektöre ulaşma
 ## Süzgeç seçenekleri: yok → Z↑ → Z↓ → X↑ → X↓
 const CHOICES := [{}, {"axis": &"z", "sign": 1}, {"axis": &"z", "sign": -1}, {"axis": &"x", "sign": 1}, {"axis": &"x", "sign": -1}]
 
+const BOTTOM_BAND := 88.0
+
 enum Step { CRISIS, TEST, REASON, MEASURE, RESCUE, DONE }
 
 var step := Step.CRISIS
@@ -31,7 +33,29 @@ func screen(index: int, label: String, directive: String, action_text: String = 
 		_detector_knob = null
 
 
+## Sahne alttaki bildirim ve eylem şeridinin üstünde biter: bildirim konsol etiketlerini örtmesin.
+func _fit_stage() -> void:
+	if hud == null or stage == null:
+		return
+	var knobs_shown := tools.get_child_count() == 0
+	stage.offset_bottom = -maxf(BOTTOM_BAND, tools.size.y + 40.0)
+	if not knobs_shown:
+		return
+	# Düğmeler görünürken bildirim eylem düğmesinin solunda, şeridin içinde durur; konsol etiketlerini örtmez.
+	var toast: Control = hud.toast
+	var edge := 18.0
+	var action_width: float = hud.action.size.x + 16.0 if hud.action.visible else 0.0
+	toast.size.x = minf(size.x - edge * 2.0 - action_width, 720.0)
+	toast.size.y = toast.get_minimum_size().y
+	toast.position = Vector2(edge, size.y - edge - toast.size.y)
+
+
+func _process(delta: float) -> void:
+	_fit_stage()
+
+
 func _begin() -> void:
+	process_priority = 10  # HUD yerleşimini her karede kendi yapar; bildirim konumu ondan sonra verilir
 	step_total = 5
 	_enter_crisis()
 
@@ -182,15 +206,19 @@ func _enter_reason() -> void:
 	screen(2, "NEDEN", "Ekranda neden tek leke yok, iki iz var?", "",
 		"Her eksende iki sonuç çıktı. Bir eksende belirlenmiş sonuç, dik eksende belirsiz kaldı.")
 	var options := {
-		&"spread": "Atomlar her yöne dönüyor, yayılmış bir leke vermeli",
-		&"two": "Spin, ölçülen eksende iki sonuçtan biridir; dik eksen ölçümü öncekini siler",
-		&"uniform": "Alan düzgün de olsa atomlar iki ize ayrılır",
+		&"spread": "Atomlar her yöne döner, yayılmış bir leke vermeli",
+		&"two": "Spin ölçülen eksende iki sonuçtan biridir; dik ölçüm öncekini siler",
+		&"uniform": "Alan düzgün olsa da atomlar iki ize ayrılır",
 	}
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 6)
+	tools.add_child(list)
 	for choice in options:
 		var button := Button.new()
 		button.text = options[choice]
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.pressed.connect(_on_reason.bind(choice))
-		tools.add_child(button)
+		list.add_child(button)
 
 
 func _on_reason(choice: StringName) -> void:

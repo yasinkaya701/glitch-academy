@@ -6,6 +6,7 @@ signal action_pressed
 signal skip_pressed
 signal pause_pressed
 signal back_pressed
+signal view_pressed
 
 const INK := Color("#eeeae0")
 const MUTED := Color("#b1ac9e")
@@ -24,6 +25,9 @@ var skip: Button
 var pause: Button
 var back: Button
 var info_button: Button
+var view_button: Button
+## Yönergenin hemen altına dizilen istasyon okumaları (ölçüm satırı gibi); yönergenin üstüne binmez.
+var below_directive: Array[Control] = []
 var info_card: PanelContainer
 var info_label: Label
 
@@ -117,6 +121,11 @@ func _ready() -> void:
 	info_button.custom_minimum_size = Vector2(36, 36)
 	info_button.pressed.connect(_toggle_info)
 	add_child(info_button)
+	view_button = Button.new()
+	view_button.text = "Geniş görünüm"
+	view_button.tooltip_text = "Tüm sahneyi göster (Home)"
+	view_button.pressed.connect(func() -> void: view_pressed.emit())
+	add_child(view_button)
 	info_card = PanelContainer.new()
 	info_card.theme_type_variation = "GlassPanel"
 	info_label = Label.new()
@@ -136,7 +145,7 @@ func _process(_delta: float) -> void:
 func _layout_hud() -> void:
 	var edge := 24.0
 	var right := size.x - edge
-	for button in [back, skip, pause, info_button]:
+	for button in [back, skip, pause, view_button, info_button]:
 		if button.visible:
 			button.size = button.get_combined_minimum_size().max(Vector2(44, 40))
 			button.position = Vector2(right - button.size.x, 18)
@@ -145,8 +154,13 @@ func _layout_hud() -> void:
 	counter.size = Vector2(maxf(right - edge - 12, 120), 24)
 	var directive_top := 64.0 if right - edge < 300.0 else 56.0
 	directive.position = Vector2(edge, directive_top)
-	directive.size = Vector2(maxf(right - edge, minf(size.x - edge * 2, 260)), 0)
+	# Yönerge sahnenin sağındaki grafik ve panelleri örtmesin: en fazla 620 px.
+	directive.size = Vector2(minf(maxf(right - edge, minf(size.x - edge * 2, 260)), minf(620.0, size.x * 0.55)), 0)
 	directive.size.y = maxf(directive.get_combined_minimum_size().y, 30.0)
+	var below_y := directive.position.y + directive.size.y + 10.0
+	for item in below_directive:
+		item.position = Vector2(edge + 2.0, below_y)
+		below_y += item.get_combined_minimum_size().y + 4.0
 	var action_width := action.get_combined_minimum_size().x if action.visible else 0.0
 	var tool_width := maxf(size.x - edge * 2 - action_width - (16 if action.visible else 0), 0)
 	var tool_height := maxf(tools.get_combined_minimum_size().y, 46)
@@ -178,21 +192,50 @@ func _draw() -> void:
 	_draw_step_track()
 
 
+const PHASES: Array[String] = ["Tanı", "Tahmin", "Dene", "Gözle", "Çıkarım"]
+
+
+## Her deneyde aynı beş aşama: istasyonun adım sayısı bu beş aşamaya orantılanır.
+func current_phase() -> int:
+	if _steps_total <= 0:
+		return 0
+	if _steps_current >= _steps_total:
+		return PHASES.size()
+	return clampi(int(float(_steps_current) * PHASES.size() / _steps_total), 0, PHASES.size() - 1)
+
+
 func _draw_step_track() -> void:
 	if _steps_total <= 1 or size.x <= 0.0:
 		return
-	var track_y := _progress_track_y()
-	var track_width := minf(size.x - 48.0, 420.0)
-	var segment_gap := 5.0
-	var segment_width := (track_width - segment_gap * (_steps_total - 1)) / _steps_total
-	var track_left := 24.0
-	for index in _steps_total:
-		var color := Color("#3b3d35")
-		if index < _steps_current:
-			color = Color("#8fbea0")
-		elif index == _steps_current:
-			color = Color("#dfae63")
-		draw_rect(Rect2(track_left + index * (segment_width + segment_gap), track_y, segment_width, 6.0), color, true)
+	var font := get_theme_default_font()
+	var font_size := 13
+	var phase := current_phase()
+	# Şerit sayaçla aynı satırda durur; yönerge ve istasyon içeriği yerinde kalır.
+	var start_x := counter.position.x + counter.get_combined_minimum_size().x + 22.0
+	var baseline := counter.position.y + 17.0
+	var limit := size.x - 24.0
+	for button in [back, skip, pause, view_button, info_button]:
+		if button.visible:
+			limit = minf(limit, button.position.x - 12.0)
+	var marks: Array[String] = []
+	var total := 0.0
+	for index in PHASES.size():
+		var mark: String = "✓ " if index < phase else ("▸ " if index == phase else "")
+		var text: String = mark + String(PHASES[index])
+		marks.append(text)
+		total += font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + 16.0
+	var compact := start_x + total > limit
+	var x := start_x
+	for index in PHASES.size():
+		var done := index < phase
+		var now := index == phase
+		if compact and not now:
+			continue
+		var color := Color("#8fbea0") if done else Color("#dfae63") if now else Color("#b1ac9e")
+		draw_string(font, Vector2(x, baseline), marks[index], HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+		var width: float = font.get_string_size(marks[index], HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		draw_line(Vector2(x, baseline + 5.0), Vector2(x + width, baseline + 5.0), color, 2.0 if now else 1.0)
+		x += width + 16.0
 
 
 func _progress_track_y() -> float:
@@ -216,6 +259,7 @@ func hide_all_buttons() -> void:
 	pause.hide()
 	back.visible = _standalone()
 	info_button.hide()
+	view_button.hide()
 	info_card.hide()
 
 

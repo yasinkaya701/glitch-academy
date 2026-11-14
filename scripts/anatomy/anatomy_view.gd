@@ -255,6 +255,21 @@ func pickable_position(id: Variant) -> Vector3:
 # --- Girdi ----------------------------------------------------------------
 
 func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMagnifyGesture:
+		rig.zoom(1.0 / maxf((event as InputEventMagnifyGesture).factor, 0.2))
+		return
+	if event is InputEventPanGesture:
+		rig.orbit((event as InputEventPanGesture).delta * 6.0)
+		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		match (event as InputEventKey).keycode:
+			KEY_HOME:
+				wide_view()
+			KEY_EQUAL, KEY_KP_ADD:
+				rig.zoom(0.8)
+			KEY_MINUS, KEY_KP_SUBTRACT:
+				rig.zoom(1.25)
+		return
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
 		if button.button_index == MOUSE_BUTTON_WHEEL_UP and button.pressed:
@@ -317,6 +332,11 @@ func on_double_click(position: Vector2) -> void:
 
 func focus_on(id: Variant, distance: float = 0.3) -> void:
 	rig.focus(pickable_position(id), distance)
+
+
+## Tüm organların ve sahnenin göründüğü geniş kadraj.
+func wide_view() -> void:
+	rig.focus(default_target, default_distance * 1.45, 0.0, default_pitch)
 
 
 func reset_view() -> void:

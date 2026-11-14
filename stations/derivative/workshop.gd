@@ -246,7 +246,7 @@ func _add_box(parent: Node3D, dimensions: Vector3, position: Vector3, material: 
 func frame() -> void:
 	var k := side / 12.0
 	_camera.position = Vector3(2.0 * k, 12.0 * k, 19.5 * k)
-	_camera.look_at(Vector3(2.0 * k, 2.4 * k, 0.0), Vector3.UP)
+	_camera.look_at(Vector3(2.0 * k, 3.7 * k, 0.0), Vector3.UP)
 
 
 func set_cut(value: float) -> void:

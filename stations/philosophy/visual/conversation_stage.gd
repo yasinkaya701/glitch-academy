@@ -41,6 +41,7 @@ const FONT_CINZEL_BOLD := preload("res://fonts/CinzelDecorative-Bold.ttf")
 const FONT_MARCELLUS := preload("res://fonts/Marcellus-Regular.ttf")
 const FONT_BODY := preload("res://assets/fonts/Inter.ttf")
 
+var _top_inset := 0.0
 var _serif_font: Font = FONT_CINZEL
 var _serif_italic: Font = FONT_MARCELLUS
 var _sans_font: Font = FONT_BODY
@@ -106,6 +107,15 @@ func set_dialogue_layout(compact: bool, width: float) -> void:
 	_speaker_label.add_theme_font_size_override("font_size", 19 if compact else 22)
 	_line_label.max_lines_visible = (2 if size.y < 460.0 else 3) if compact else 4
 	_layout()
+
+
+## HUD yönergesinin alt kenarı: diyalog satırı bunun altından başlar, filozof adının üstüne binmez.
+func set_top_inset(value: float) -> bool:
+	if absf(value - _top_inset) < 1.0:
+		return false
+	_top_inset = value
+	_layout()
+	return true
 
 
 func dialogue_line_bottom() -> float:
@@ -233,9 +243,10 @@ func _layout() -> void:
 	var line_y := clampf(h * 0.40, 190.0, h * 0.48)
 	var line_height := clampf(h * 0.20, 118.0, 210.0)
 	if _compact:
-		line_width = minf(maxf(w - safe_left * 2.0, 220.0), 560.0)
+		line_width = minf(maxf(w * 0.6, 220.0), 560.0)
 		line_y = clampf(h * 0.28, 112.0, 180.0)
 		line_height = clampf(h * 0.20, 76.0, 142.0)
+	line_y = maxf(line_y, _top_inset)
 	_line_group.position = Vector2(safe_left, line_y)
 	_line_group.size = Vector2(line_width, line_height)
 	if choice_slot.size.x <= 0.0:

@@ -34,4 +34,7 @@ Gerçekçi kalp görseli hazır modelden gelir (`stations/heart/assets/model/hea
 - Akciğer GLB'sinin renk atlası kalp sahnesinde mozaik yamalara dönüştüğü için yalnız bu sahne örneğinde metalik olmayan, mat akciğer dokusu malzemesi kullanılır.
 - Kalp görevinin özel HUD'si aşama ve yönergeyi üstte, kontrolleri üst sağda, araçları alt dock'ta toplar; diğer görevlerin ortak HUD düzeni değişmez.
 - HUD 640×480, 800×600, 1024×720 ve 1280×720 görünümlerinde sınanır. Dar ekranda tanı yönergesi kontrollerin altına alınır; araç ve soru satırları yatay kaydırılır.
+- Tıklanabilir hedefler 3B görünümün üstündeki ayrı bir üst katmanda çizilir (üst Control'ün çizimi SubViewport'un altında kalır). Şekil anlam taşır: odacık ve damar bölgesi daire, kapak yuvası ok işaretli kare, damar çıkışı baklava, damar girişi çerçeveli nokta.
+- Kapak ters, yanlış yuvada ya da kusurluysa kan o kapağın önündeki odacıkta birikir: odacık şişer, nabız gibi atar, kırmızı halka ve "Kan birikti" etiketi çıkar. Sonuç pompa durduktan sonra da 6 sn görünür kalır; yeni pompa denemesinde silinir. Doku oksijeni göstergesi, görünüm örtülmesin diye başın üstü yerine ayak hizasındadır.
+- Başlık paneli 700 px altı dar ekranda kontrollerin altına yığılır; daha geniş ekranda (%130 yazı boyutu dahil) kontrollerin soluna oturur. Uyarı satırı panele binmez.
 - Model koordinatı: boyut yaklaşık 0,083 × 0,13 × 0,07 birim, merkez (0, 0,065, 0).

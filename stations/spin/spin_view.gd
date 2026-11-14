@@ -23,6 +23,7 @@ const CHANNEL := 62.0              ## kanalların eksenden sapması
 const SPOT := 95.0                 ## ekranda iz sapması
 const INTRO_LEN := 4.6
 const TUBE_Y := 0.36
+const BASE_FOV := 32.0
 
 var stages: Array = [{}, {}, {}]
 var detector_axis: StringName = &"z"
@@ -274,8 +275,21 @@ func play_repair() -> void:
 	repair_t = 0.0
 
 
+## Dar kutuda (900×600 gibi) sahne iki yandan kesilmesin: 16:9'dan dar olunca görüş genişliği sabit tutulur.
+func _fit_camera() -> void:
+	if stage == null or stage.size.y < 1.0:
+		return
+	var wide := stage.size.x / stage.size.y >= 16.0 / 9.0
+	var camera := stage.camera
+	# Dar kutuda üstteki yönerge ve Bilgi düğmesi ölçü ekranını örtmesin: sahne biraz aşağı iner.
+	camera.look_at_from_position(_camera_position(), _camera_target() + (Vector3.ZERO if wide else Vector3(0.0, 0.3, 0.0)))
+	camera.keep_aspect = Camera3D.KEEP_HEIGHT if wide else Camera3D.KEEP_WIDTH
+	camera.fov = BASE_FOV if wide else rad_to_deg(2.0 * atan(tan(deg_to_rad(BASE_FOV * 0.5)) * 16.0 / 9.0))
+
+
 func _process(delta: float) -> void:
 	super._process(delta)
+	_fit_camera()
 	if _magnets.is_empty():
 		return
 	_clock += delta
@@ -376,7 +390,7 @@ func _draw_screen(canvas: Control, size_px: Vector2) -> void:
 	canvas.draw_string(FONT, Vector2(50, 70) * s, "EKRAN  ·  ATOM İZLERİ", HORIZONTAL_ALIGNMENT_LEFT, -1, int(40 * s), MUTED)
 	# Plaka: iki kanal çizgisi, biriken izler, (kriz) cihazın beklediği tek leke
 	var plate := Rect2(Vector2(50, 100) * s, Vector2(660, 740) * s)
-	canvas.draw_rect(plate, Color("#0a111b"))
+	canvas.draw_rect(plate, Color("#141510"))
 	canvas.draw_rect(plate, Color(MUTED, 0.4), false, 3.0)
 	var centre_y := plate.position.y + plate.size.y * 0.5
 	canvas.draw_line(Vector2(plate.position.x, centre_y), Vector2(plate.end.x, centre_y), Color(MUTED, 0.25), 2.0)
@@ -413,7 +427,7 @@ func _draw_screen(canvas: Control, size_px: Vector2) -> void:
 
 func _draw_plate(canvas: Control, size_px: Vector2) -> void:
 	## Çıkarılmış soğuk cam plaka: mikroskop altında okunan gümüş çizgileri.
-	canvas.draw_rect(Rect2(Vector2.ZERO, size_px), Color("#141a22"))
+	canvas.draw_rect(Rect2(Vector2.ZERO, size_px), Color("#1a1b17"))
 	canvas.draw_rect(Rect2(Vector2.ZERO, size_px), Color(1, 1, 1, 0.12), false, 4.0)
 	var centre_y := size_px.y * 0.5
 	canvas.draw_string(FONT_REGULAR, Vector2(14, 34), "SOĞUK PLAKA", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, MUTED)

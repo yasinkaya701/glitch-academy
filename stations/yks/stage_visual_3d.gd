@@ -12,6 +12,13 @@ var _model: Node3D
 
 
 func _ready() -> void:
+	# Ortak deney sahnesinin mavi sisi dioramayı düz maviye boyuyordu: bu görev için özel, sissiz ortam.
+	var world := get_parent().get_parent() if get_parent() != null else null
+	var world_environment := world.get_node_or_null("WorldEnvironment") as WorldEnvironment if world != null else null
+	if world_environment != null and world_environment.environment != null:
+		world_environment.environment = world_environment.environment.duplicate()
+		world_environment.environment.fog_enabled = false
+		world_environment.environment.background_color = Color("0b0e14")
 	var camera := get_viewport().get_camera_3d()
 	if camera != null:
 		camera.projection = Camera3D.PROJECTION_ORTHOGONAL
