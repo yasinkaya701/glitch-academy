@@ -1,377 +1,328 @@
-extends "res://scripts/mission.gd"
+extends "res://scripts/physics/experiment_mission.gd"
+## AYT Fizik · Vektörler (11.1.1.3). KRİZ: Liman otopilotu iki itişi büyüklük olarak toplayıp (3 + 4 = 7) kapsülü yanaşma
+## noktasının ötesine fırlatıyor. Gerçekte bileşke iki vektörün uç uca eklenmesiyle bulunur ve yön de hesaba girer (|R| = 5).
+## Hesap burada, çizim harbor_stage.gd'de. İki itiş arasındaki açı yalnızca TEST adımında seçilir.
 
-const Plot = preload("res://stations/vectors/route_plot.gd")
-const Experiment3D = preload("res://scenes/experiment_3d.tscn")
-const VectorModel = preload("res://stations/vectors/vector_model_3d.gd")
-const INTRO := 0
-const EXPLORE := 1
-const APPLY := 2
-const EXPECTED := Vector2(5, -12)
-const MAGNITUDE := 13.0
-const TEXT := Color("#eeeae0")
-const MUTED := Color("#b1ac9e")
-const ACCENT := Color("#8fbea0")
-const WARNING := Color("#dfae63")
-const SURFACE := Color("#191a17")
-const SURFACE_RAISED := Color("#242520")
-const EDGE := Color("#3b3d35")
+const Harbor = preload("res://stations/vectors/harbor_stage.gd")
 
-var _stage := INTRO
-var _plot: Plot
-var _world_view: SubViewportContainer
-var _vector_model: Node3D
-var _view_toggle: Button
-var _plot_caption: Label
-var _heading: Label
-var _stage_title: Label
-var _explanation: Label
-var _feedback: Label
-var _skip: Button
-var _explore: VBoxContainer
-var _reveal: Button
-var _methods: Array[Button] = []
-var _next: Button
-var _apply: VBoxContainer
-var _inputs: Array[LineEdit] = []
-var _launch: Button
-var _animation: Tween
-var _intro_timer: SceneTreeTimer
+const BOTTOM_BAND := 88.0
+const CRISIS_DOCK := Vector2(3, 4)
+const RESCUE_DOCK := Vector2(8, 6)
+const OFF_QUAY := Vector2(-20, -20)
+const DOCK_TOLERANCE := 0.5
+
+enum Step { CRISIS, TEST, REASON, MEASURE, RESCUE }
+
+var step := Step.CRISIS
+var _a := 3.0
+var _b := 4.0
+var _angle := 90.0
+var _seen_same := false
+var _seen_opposite := false
+var _seen_perpendicular := false
+var _east := 0.0
+var _north := 0.0
+var _readout: Label
+var _flying := false
 
 
-func _ready() -> void:
-	_build_interface()
-	_show_stage(INTRO)
-	_animation = create_tween()
-	_animation.tween_method(_set_capsule, Vector2.ZERO, Vector2(7, 0), 1.4).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_intro_timer = get_tree().create_timer(2.9)
-	_intro_timer.timeout.connect(_skip_intro)
+func _begin() -> void:
+	process_priority = 10
+	step_total = 5
+	_readout = Label.new()
+	_readout.add_theme_font_size_override("font_size", 15)
+	_readout.add_theme_color_override("font_color", UITheme.GAME_TEXT)
+	hud.add_child(_readout)
+	hud.below_directive.append(_readout)
+	_readout.hide()
+	view().flight_finished.connect(_on_flight_finished)
+	_enter_crisis()
 
 
-func _build_interface() -> void:
-	var backdrop := ColorRect.new()
-	backdrop.color = Color("#10110f")
-	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(backdrop)
-	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
-	var inset := MarginContainer.new()
-	add_child(inset)
-	inset.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	for side in ["left", "right"]:
-		inset.add_theme_constant_override("margin_" + side, 24)
-	for side in ["top", "bottom"]:
-		inset.add_theme_constant_override("margin_" + side, 18)
-
-	var page := VBoxContainer.new()
-	page.add_theme_constant_override("separation", 13)
-	inset.add_child(page)
-
-	var mast := HBoxContainer.new()
-	mast.add_theme_constant_override("separation", 12)
-	page.add_child(mast)
-	_heading = _label(mast, "Vektör Limanı", 28)
-	_heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_skip = _button(mast, "Açılışı geç")
-	_skip.pressed.connect(_skip_intro)
-
-	var columns := HBoxContainer.new()
-	columns.add_theme_constant_override("separation", 22)
-	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	page.add_child(columns)
-
-	var left := VBoxContainer.new()
-	left.add_theme_constant_override("separation", 7)
-	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	columns.add_child(left)
-	var display := VBoxContainer.new()
-	display.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	display.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	left.add_child(display)
-	var display_bar := HBoxContainer.new()
-	display_bar.add_theme_constant_override("separation", 6)
-	display.add_child(display_bar)
-	_view_toggle = _button(display_bar, "3B deney")
-	_view_toggle.toggle_mode = true
-	_view_toggle.button_pressed = true
-	_view_toggle.pressed.connect(_toggle_view)
-	var graph_toggle := _button(display_bar, "2B grafik")
-	graph_toggle.toggle_mode = true
-	graph_toggle.pressed.connect(func() -> void:
-		_view_toggle.set_pressed_no_signal(false)
-		_toggle_view())
-	_world_view = Experiment3D.instantiate() as SubViewportContainer
-	_world_view.custom_minimum_size = Vector2(410, 270)
-	_world_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	display.add_child(_world_view)
-	_vector_model = VectorModel.new()
-	_world_view.get_node("Viewport/World/Model").add_child(_vector_model)
-	_plot = Plot.new()
-	_plot.custom_minimum_size = Vector2(410, 295)
-	_plot.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	display.add_child(_plot)
-	_plot.visible = false
-	_plot_caption = _label(display, "", 13, MUTED)
-	_plot_caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-
-	var side := PanelContainer.new()
-	side.custom_minimum_size.x = 340
-	side.add_theme_stylebox_override("panel", _panel_style())
-	columns.add_child(side)
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	side.add_child(scroll)
-	var steps := VBoxContainer.new()
-	steps.add_theme_constant_override("separation", 12)
-	steps.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(steps)
-	_stage_title = _label(steps, "", 21, ACCENT)
-	_stage_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_explanation = _label(steps, "", 16, TEXT)
-	_explanation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-
-	_explore = VBoxContainer.new()
-	_explore.add_theme_constant_override("separation", 10)
-	steps.add_child(_explore)
-	var methods := HBoxContainer.new()
-	methods.add_theme_constant_override("separation", 8)
-	_explore.add_child(methods)
-	var group := ButtonGroup.new()
-	for index in 2:
-		var mode := _button(methods, "Uç uca" if index == 0 else "Paralelkenar")
-		mode.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		mode.toggle_mode = true
-		mode.button_group = group
-		mode.button_pressed = index == 0
-		mode.pressed.connect(_set_method.bind(index))
-		_methods.append(mode)
-	_reveal = _button(_explore, "Bileşkeyi çiz")
-	_reveal.pressed.connect(_reveal_result)
-	_next = _button(_explore, "Yeni rotayı hesapla")
-	_next.disabled = true
-	_next.pressed.connect(_show_stage.bind(APPLY))
-
-	_apply = VBoxContainer.new()
-	_apply.add_theme_constant_override("separation", 8)
-	steps.add_child(_apply)
-	_add_input("Doğu–batı bileşeni", "Örn. 3")
-	_add_input("Kuzey–güney bileşeni", "Örn. −4")
-	_add_input("Bileşke büyüklüğü", "Örn. 5")
-	_launch = _button(_apply, "Kapsülü gönder")
-	_launch.pressed.connect(_launch_capsule)
-
-	_feedback = _label(steps, "", 15, MUTED)
-	_feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+func _make_stage() -> Control:
+	return Harbor.new()
 
 
-func _show_stage(stage: int) -> void:
-	_stop_animation()
-	_stage = stage
-	_plot.route_stage = stage
-	_plot.capsule = Vector2.ZERO
-	_plot.route_draw = 0.0
-	_plot.attempted = false
-	_plot.queue_redraw()
-	_sync_3d()
-	_explore.visible = stage == EXPLORE
-	_apply.visible = stage == APPLY
-	_skip.visible = stage == INTRO
-	_heading.visible = get_parent() == get_tree().root
-	_skip.get_parent().visible = _skip.visible or _heading.visible
-	_feedback.text = ""
-	_feedback.modulate = Color.WHITE
-
-	match stage:
-		INTRO:
-			_stage_title.text = "Kapsül hedefi kaçırdı"
-			_explanation.text = "Yön bilgisi silindi. Cihaz 3 birim doğu ile 4 birim kuzeyi toplayıp kapsülü 7 birim doğuya gönderdi."
-			_plot_caption.text = "Turuncu ok cihazın hatalı komutunu gösterir."
-		EXPLORE:
-			_stage_title.text = "İki oku birleştir"
-			_explanation.text = "3 birim doğu ve 4 birim kuzey. İki çizim yöntemini dene ve başlangıçtan son noktaya uzanan oku incele."
-			_plot_caption.text = "Yatay eksende doğu, dikey eksende kuzey pozitif."
-		APPLY:
-			_stage_title.text = "Yeni yanaşma rotası"
-			_explanation.text = "Yanaşma noktası 5 birim doğuda ve 12 birim güneyde. İşaretli bileşenleri ve büyüklüğü gir."
-			_plot_caption.text = "Kapsül, girdiğin bileşenlerin belirlediği noktaya hareket eder."
-			_inputs[0].grab_focus()
+func view() -> Harbor:
+	return stage as Harbor
 
 
-func _skip_intro() -> void:
-	if _stage == INTRO:
-		_show_stage(EXPLORE)
-
-
-func _set_method(method: int) -> void:
-	_plot.method = method
-	_methods[method].set_pressed_no_signal(true)
-	_plot.queue_redraw()
-	_sync_3d()
-	if _plot.revealed:
-		_update_result_feedback()
-
-
-func _reveal_result() -> void:
-	_stop_animation()
-	_plot.revealed = true
-	_next.disabled = false
-	_update_result_feedback()
-	_animation = create_tween()
-	_animation.tween_method(_set_route_draw, 0.0, 1.0, 0.48).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-
-
-func _update_result_feedback() -> void:
-	var explanation := "Uç uca çizimde ikinci ok, ilk okun ucundan başlar." if _plot.method == 0 else "Paralelkenarın köşegeni başlangıçtan aynı noktaya gider."
-	_feedback.text = explanation + "\n\nBileşenler (3, 4)\nBüyüklük √(3² + 4²) = 5 birim\nAlınan yol 3 + 4 = 7 birim"
-
-
-func _launch_capsule() -> void:
-	if _launch.disabled:
+func _process(_delta: float) -> void:
+	if hud == null or stage == null:
 		return
-	var x_text := _number_text(_inputs[0].text)
-	var y_text := _number_text(_inputs[1].text)
-	var length_text := _number_text(_inputs[2].text)
-	if not x_text.is_valid_float() or not y_text.is_valid_float() or not length_text.is_valid_float():
-		_feedback.text = "Üç alana da birer sayı gir. Virgül veya nokta kullanabilirsin."
+	stage.offset_bottom = -maxf(BOTTOM_BAND, tools.size.y + 40.0)
+	# Dar kutuda yönerge ve ölçü satırı sahnenin üstünü örtmesin: sahne onların altından başlar.
+	var top := 0.0
+	if size.x < 700.0:
+		top = hud.directive.position.y + hud.directive.size.y + 8.0
+		if _readout.visible:
+			top = _readout.position.y + _readout.size.y + 6.0
+	stage.offset_top = top
+
+
+func screen(index: int, label: String, directive: String, action_text: String = "", note: String = "") -> void:
+	super.screen(index, label, directive, action_text, note)
+	_readout.hide()
+
+
+func _vector_b() -> Vector2:
+	return Vector2.from_angle(deg_to_rad(_angle)) * _b
+
+
+func _show_vectors(a_vec: Vector2, b_vec: Vector2, resultant: bool) -> void:
+	view().set_arrow("A", Vector2.ZERO, a_vec)
+	view().set_arrow("B", a_vec, a_vec + b_vec)
+	view().set_arrow("R", Vector2.ZERO, a_vec + b_vec, resultant)
+
+
+func _num(value: float) -> String:
+	return str(snappedf(value, 0.1)).replace(".0", "").replace(".", ",")
+
+
+# --- KRİZ ---
+
+func _enter_crisis() -> void:
+	step = Step.CRISIS
+	_flying = true
+	view().reset_capsule()
+	view().place_dock(CRISIS_DOCK)
+	_a = 3.0
+	_b = 4.0
+	_angle = 90.0
+	_show_vectors(Vector2(3, 0), Vector2(0, 4), false)
+	screen(0, "KRİZ", "Otopilot 3 + 4 = 7 birim topladı, kapsül yanaşma noktasını geçti.", "Nedenini bul",
+		"Rıhtımda iki itici çalışıyor: biri 3 birim doğuya, diğeri 4 birim kuzeye. Otopilot kapsülü yanaşma noktasına doğru 7 birim sürüyor.")
+	hud.set_action("Nedenini bul", false)
+	hud.skip.show()
+	view().fly([CRISIS_DOCK * (7.0 / 5.0)], 2.4)
+
+
+func _on_flight_finished() -> void:
+	_flying = false
+	match step:
+		Step.CRISIS:
+			view().set_dock_state(&"miss")
+			hud.skip.hide()
+			hud.set_action("Nedenini bul", true)
+		Step.TEST:
+			_after_test_flight()
+		Step.MEASURE:
+			_enter_rescue()
+		Step.RESCUE:
+			_judge_rescue()
+
+
+func _on_skip() -> void:
+	if step == Step.CRISIS:
+		view().reset_capsule()
+		view().place_dock(CRISIS_DOCK)
+		var end := CRISIS_DOCK * (7.0 / 5.0)
+		view().fly([end], 0.01)
+
+
+# --- SINA ---
+
+func _enter_test() -> void:
+	step = Step.TEST
+	_seen_same = false
+	_seen_opposite = false
+	_seen_perpendicular = false
+	_a = 3.0
+	_b = 4.0
+	_angle = 90.0
+	view().reset_capsule()
+	view().place_dock(OFF_QUAY)
+	screen(1, "SINA", "İtişleri ve açıyı değiştir, kapsülü uçur. Bileşke nereye varıyor?", "",
+		"Üç duruma bak: iki itiş aynı yöne (0°), zıt yöne (180°) ve birbirine dik (90°) olunca bileşke ne kadar?")
+	_make_sliders()
+	add_power("Uçur", "Kapsül önce A, sonra B boyunca gider", _fly_test)
+	_refresh_test()
+
+
+func _make_sliders() -> void:
+	add_slider("İtiş A (birim)", 0.0, 8.0, _a, 1.0, func(v: float) -> void:
+		_a = v
+		_refresh_test(), 170.0)
+	add_slider("İtiş B (birim)", 0.0, 8.0, _b, 1.0, func(v: float) -> void:
+		_b = v
+		_refresh_test(), 170.0)
+	add_slider("A ile B arası açı (°)", 0.0, 180.0, _angle, 30.0, func(v: float) -> void:
+		_angle = v
+		_refresh_test(), 190.0)
+
+
+func _refresh_test() -> void:
+	var b_vec := _vector_b()
+	_show_vectors(Vector2(_a, 0), b_vec, true)
+	var resultant := Vector2(_a, 0) + b_vec
+	_readout.text = "|A| = %s   |B| = %s   |A| + |B| = %s   Bileşke |R| = %s" % [_num(_a), _num(_b), _num(_a + _b), _num(resultant.length())]
+	_readout.show()
+
+
+func _fly_test() -> void:
+	if _flying or step != Step.TEST:
 		return
+	view().reset_capsule()
+	var a_vec := Vector2(_a, 0)
+	_flying = true
+	view().fly([a_vec, a_vec + _vector_b()], 1.8)
 
-	var submitted := Vector2(x_text.to_float(), y_text.to_float())
-	var magnitude := length_text.to_float()
-	if not submitted.is_finite() or not is_finite(magnitude):
-		_feedback.text = "Sonlu sayılar gir."
+
+func _after_test_flight() -> void:
+	if _a <= 0.0 or _b <= 0.0:
+		say("İki itişi de sıfırdan büyük seç; tek itişte bileşke o itişin kendisi.", BAD)
 		return
-	var correct := submitted.is_equal_approx(EXPECTED) and is_equal_approx(magnitude, MAGNITUDE)
-	_plot.attempt = submitted.clamp(Vector2(-20, -13), Vector2(20, 13))
-	_plot.attempted = true
-	_plot.docked = false
-	_set_capsule(Vector2.ZERO)
-	_launch.disabled = true
-	_feedback.text = "Kapsül hareket ediyor…" if correct else "Girdiğin rotayı deniyoruz…"
-	_stop_animation()
-	_animation = create_tween()
-	_animation.tween_method(_set_capsule, Vector2.ZERO, _plot.attempt, 0.85).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
-	_animation.tween_callback(_landing_result.bind(correct, submitted))
+	var resultant := (Vector2(_a, 0) + _vector_b()).length()
+	if is_equal_approx(_angle, 0.0) and not _seen_same:
+		_seen_same = true
+		say("Aynı yön: |R| = %s = %s + %s. Aynı doğrultuda büyüklükler toplanır." % [_num(resultant), _num(_a), _num(_b)], GOOD)
+	elif is_equal_approx(_angle, 180.0) and not _seen_opposite and not is_equal_approx(_a, _b):
+		_seen_opposite = true
+		say("Zıt yön: |R| = %s = |%s − %s|. Zıt doğrultuda büyüklükler çıkarılır." % [_num(resultant), _num(_a), _num(_b)], GOOD)
+	elif is_equal_approx(_angle, 90.0) and not _seen_perpendicular:
+		_seen_perpendicular = true
+		say("Dik: |R| = %s, oysa |A| + |B| = %s. Bileşke toplamdan kısa, çünkü iki itiş farklı yönlerde." % [_num(resultant), _num(_a + _b)], GOOD)
+	if _seen_same and _seen_opposite and _seen_perpendicular:
+		hud.set_action("Nedeni seç", true)
 
 
-func _landing_result(correct: bool, submitted: Vector2) -> void:
-	_plot.docked = correct
-	_plot.queue_redraw()
-	_sync_3d()
-	if correct:
-		_feedback.text = "Yanaşma tamamlandı.\n(5, −12) · 13 birim"
-		_feedback.modulate = ACCENT
-		for input in _inputs:
-			input.editable = false
-		completed.emit()
+# --- NEDEN ---
+
+func _enter_reason() -> void:
+	step = Step.REASON
+	view().hide_arrows()
+	view().reset_capsule()
+	view().place_dock(CRISIS_DOCK)
+	screen(2, "NEDEN", "Otopilot kapsülü neden yanaşma noktasının ötesine gönderdi?", "",
+		"Üç durumda gördüğün şey: bileşke bazen toplam, bazen fark, dik olunca ikisinden de farklı.")
+	var options := {
+		&"scalar": "Vektörlerin büyüklüğü yön hesaba katılmadan toplanır",
+		&"vector": "Bileşke, vektörler uç uca eklenerek bulunur; açı büyüklüğü değiştirir",
+		&"longer": "Bileşke her zaman iki vektörden uzundur",
+	}
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 6)
+	tools.add_child(list)
+	for choice in options:
+		var button := Button.new()
+		button.text = options[choice]
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.pressed.connect(_on_reason.bind(choice))
+		list.add_child(button)
+
+
+func _on_reason(choice: StringName) -> void:
+	match choice:
+		&"vector":
+			say("Doğru. 3 birim doğu ve 4 birim kuzey uç uca eklenince bileşke 5 birim; otopilot 7 diye toplayıp 2 birim fazla gitti.", GOOD)
+			clear_tools()
+			hud.set_action("Bileşkeyi hesapla", true)
+		&"scalar":
+			say("Büyüklükleri düz toplamak yalnızca aynı yönde doğru. Dik duruma bak: |R| toplam kadar çıkmadı.", BAD)
+		_:
+			say("Zıt yönde bileşke iki vektörden de kısa kalabiliyor. Bileşke her zaman uzun değil.", BAD)
+
+
+# --- ÖLÇ ---
+
+func _enter_measure() -> void:
+	step = Step.MEASURE
+	_a = 3.0
+	_b = 4.0
+	_angle = 90.0
+	view().reset_capsule()
+	view().place_dock(OFF_QUAY)
+	_show_vectors(Vector2(3, 0), Vector2(0, 4), false)
+	screen(3, "ÖLÇ", "A = 3 doğu, B = 4 kuzey. Bileşke |R| kaç birim?", "Onayla",
+		"Rıhtımdaki iki oku uç uca düşün: bir dik üçgenin iki kenarı.")
+	add_entry("|R|  (birim)")
+
+
+func _check_measure() -> void:
+	var value := read_number()
+	if is_nan(value):
+		say("Birim cinsinden bir sayı gir. Örnek: 5", BAD)
 		return
-
-	_launch.disabled = false
-	if submitted.is_equal_approx(EXPECTED):
-		_feedback.text = "Kapsül doğru konuma geldi. Yanaşma için büyüklüğü de doğrula."
-	elif submitted.y > 0:
-		_feedback.text = "Kapsül kuzeye gitti. Güney bileşeninin işaretini kontrol et."
+	if absf(value - 5.0) <= 0.1:
+		say("|R| = √(3² + 4²) = 5 birim. Kapsül bu bileşke boyunca yanaşır.", GOOD)
+		_show_vectors(Vector2(3, 0), Vector2(0, 4), true)
+		view().place_dock(CRISIS_DOCK)
+		_flying = true
+		hud.set_action("Onayla", false)
+		view().fly([Vector2(3, 0), Vector2(3, 4)], 1.6)
+	elif absf(value - 7.0) <= 0.1:
+		say("7, iki büyüklüğün düz toplamı: otopilotun hatası. Dik iki kenarın bileşkesi daha kısa.", BAD)
+	elif absf(value - 1.0) <= 0.1:
+		say("Fark yalnızca zıt yönde alınır. Burada iki itiş birbirine dik.", BAD)
 	else:
-		_feedback.text = "Kapsül hedefe ulaşmadı. İki bileşeni yeniden kontrol et."
+		say("Dik iki itiş: bileşke, 3 ve 4 kenarlı dik üçgenin hipotenüsü.", BAD)
 
 
-func _set_capsule(value: Vector2) -> void:
-	_plot.in_motion = (value != Vector2.ZERO and not _plot.docked)
-	_plot.capsule = value
-	_plot.queue_redraw()
-	_sync_3d()
+# --- KURTAR ---
+
+func _enter_rescue() -> void:
+	step = Step.RESCUE
+	_east = 0.0
+	_north = 0.0
+	_flying = false
+	view().reset_capsule()
+	view().place_dock(RESCUE_DOCK)
+	_show_vectors(Vector2.ZERO, Vector2.ZERO, false)
+	screen(4, "KURTAR", "Hedef 10 birim uzakta, doğudan 37° kuzeyde. Doğu ve kuzey itişlerini seç.", "Yanaş",
+		"Yedek iticiler yalnızca doğuya ve kuzeye çalışıyor. cos 37° ≈ 0,8 ve sin 37° ≈ 0,6 al.")
+	add_slider("Doğu itişi (birim)", 0.0, 12.0, _east, 1.0, func(v: float) -> void:
+		_east = v
+		_refresh_rescue(), 190.0)
+	add_slider("Kuzey itişi (birim)", 0.0, 12.0, _north, 1.0, func(v: float) -> void:
+		_north = v
+		_refresh_rescue(), 190.0)
 
 
-func _set_route_draw(value: float) -> void:
-	_plot.route_draw = value
-	_plot.queue_redraw()
-	_sync_3d()
+func _refresh_rescue() -> void:
+	view().reset_capsule()
+	view().place_dock(RESCUE_DOCK)
+	_show_vectors(Vector2(_east, 0), Vector2(0, _north), true)
 
 
-func _toggle_view() -> void:
-	var show_3d := _view_toggle.button_pressed
-	_world_view.visible = show_3d
-	_plot.visible = not show_3d
-	_sync_3d()
-
-
-func _sync_3d() -> void:
-	if _vector_model == null:
+func _run_rescue() -> void:
+	if _flying:
 		return
-	_vector_model.set_state(_stage, _plot.method, _plot.revealed, _plot.route_draw, _plot.attempted, _plot.attempt, _plot.capsule, _plot.docked)
+	if _east <= 0.0 and _north <= 0.0:
+		say("İki itişi de sıfır bırakma: kapsül yerinden kıpırdamaz.", BAD)
+		return
+	view().reset_capsule()
+	_show_vectors(Vector2(_east, 0), Vector2(0, _north), true)
+	_flying = true
+	hud.set_action("Yanaş", false)
+	view().fly([Vector2(_east, 0), Vector2(_east, _north)], 1.8)
 
 
-func _stop_animation() -> void:
-	if _animation != null and _animation.is_valid():
-		_animation.kill()
-	if _plot != null:
-		_plot.in_motion = false
+func _judge_rescue() -> void:
+	hud.set_action("Yanaş", true)
+	var landing := Vector2(_east, _north)
+	if landing.distance_to(RESCUE_DOCK) <= DOCK_TOLERANCE:
+		view().set_dock_state(&"ok")
+		seal("Bileşke, vektörlerin uç uca eklenmesidir; büyüklükler yön hesaba katılmadan toplanamaz.", "Otopilot vektörlerle yeniden kuruldu.")
+		return
+	view().set_dock_state(&"miss")
+	if is_equal_approx(_east + _north, 10.0):
+		say("Büyüklüklerin toplamı 10 ama bileşke 10 değil: %s + %s dik duruyor, |R| = %s." % [_num(_east), _num(_north), _num(landing.length())], BAD)
+	elif absf(landing.length() - 10.0) <= 0.6:
+		say("Uzaklık doğru (|R| = %s) ama yön yanlış: kapsül doğudan %s° kuzeye gitti, hedef 37°." % [_num(landing.length()), _num(rad_to_deg(landing.angle()))], BAD)
+	else:
+		say("Kapsül (%s, %s) noktasına vardı. Hedefe %s birim kaldı. Doğu ve kuzey bileşenlerini 10 birimlik bileşkeden çıkar." % [_num(_east), _num(_north), _num(landing.distance_to(RESCUE_DOCK))], BAD)
+	view().set_dock_state(&"miss")
 
 
-func _number_text(value: String) -> String:
-	return value.strip_edges().replace(",", ".").replace("−", "-")
-
-
-func _add_input(title: String, example: String) -> void:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	_apply.add_child(row)
-	var caption := _label(row, title, 14, MUTED)
-	caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var input := LineEdit.new()
-	input.custom_minimum_size = Vector2(106, 35)
-	input.placeholder_text = example
-	input.max_length = 16
-	input.text_submitted.connect(func(_value: String) -> void: _launch_capsule())
-	row.add_child(input)
-	_inputs.append(input)
-
-
-func _label(parent: Control, value: String, font_size: int, color: Color = TEXT) -> Label:
-	var label := Label.new()
-	label.text = value
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", color)
-	parent.add_child(label)
-	return label
-
-
-func _button(parent: Control, title: String) -> Button:
-	var button := Button.new()
-	button.text = title
-	button.custom_minimum_size.y = 36
-	button.add_theme_color_override("font_color", TEXT)
-	button.add_theme_color_override("font_hover_color", TEXT)
-	button.add_theme_color_override("font_pressed_color", TEXT)
-	button.add_theme_color_override("font_disabled_color", MUTED.darkened(0.28))
-	button.add_theme_stylebox_override("normal", _button_box(SURFACE_RAISED, EDGE))
-	button.add_theme_stylebox_override("hover", _button_box(Color("#30312b"), Color("#8fbea0")))
-	button.add_theme_stylebox_override("pressed", _button_box(Color("#34483a"), Color("#8fbea0")))
-	button.add_theme_stylebox_override("disabled", _button_box(Color("#20211e"), Color("#34352f")))
-	button.add_theme_stylebox_override("focus", _button_box(SURFACE_RAISED, WARNING, 2))
-	parent.add_child(button)
-	return button
-
-
-func _button_box(fill: Color, edge: Color, border_width: int = 1) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = fill
-	style.border_color = edge
-	style.set_border_width_all(border_width)
-	style.set_corner_radius_all(7)
-	style.content_margin_left = 14.0
-	style.content_margin_right = 14.0
-	style.content_margin_top = 8.0
-	style.content_margin_bottom = 8.0
-	return style
-
-
-func _panel_style() -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = SURFACE
-	style.border_color = EDGE
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(6)
-	style.content_margin_left = 18
-	style.content_margin_right = 18
-	style.content_margin_top = 17
-	style.content_margin_bottom = 17
-	return style
+func _on_action() -> void:
+	match step:
+		Step.CRISIS:
+			_enter_test()
+		Step.TEST:
+			_enter_reason()
+		Step.REASON:
+			_enter_measure()
+		Step.MEASURE:
+			_check_measure()
+		Step.RESCUE:
+			_run_rescue()

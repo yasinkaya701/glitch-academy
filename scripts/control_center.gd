@@ -20,8 +20,8 @@ const CATALOG: Array[MissionDefinition] = [
 	# Düşüş Odası şimdilik oyundan çıkarıldı (stations/free_fall/ yerinde duruyor).
 	# YKS düzeyinde fizik; sınav sırası korunur, Sınıflar keşfinde oynanır.
 	preload("res://stations/newton/mission.tres"),
-	preload("res://stations/projectile/mission.tres"),
-	preload("res://stations/collision/mission.tres"),
+	# Atış Alanı şimdilik oyundan çıkarıldı (stations/projectile/ yerinde duruyor).
+	# Çarpışma Hattı şimdilik oyundan çıkarıldı (stations/collision/ yerinde duruyor).
 	preload("res://stations/indicator/mission.tres"),
 	preload("res://stations/heart/mission.tres"),
 	preload("res://stations/spin/mission.tres"),
