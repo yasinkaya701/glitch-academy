@@ -1,4 +1,4 @@
-# Yanlış Dünya · Glitch Academy
+# 3 Cisim 1 Dünya · Glitch Academy
 
 Türkçe, masaüstü bir eğitim oyunu. Oyuncu bozulan bir dünya kuralını deneyle keşfeder, ölçüm veya modelden çıkardığı kuralı yeni bir durumda kullanır ve istasyonu onarır. 3D deney sahneleri, 2D grafik ve formül panelleriyle aynı arayüzde çalışır.
 
