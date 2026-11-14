@@ -27,6 +27,8 @@ var _floor_shadow := Control.new()
 var _speaker_label := Label.new()
 var _rule_line := ColorRect.new()
 var _line_label := Label.new()
+## Yönerge kutusunun altı: HUD yönergesi söz alanını örtmesin (görev tarafından verilir).
+var top_inset := 0.0
 var _line_group := VBoxContainer.new()
 var _line_tween: Tween
 var _clock: float = 0.0
@@ -210,10 +212,14 @@ func _layout() -> void:
 	actor.position = feet
 	actor.fit_to_height(h * ACTOR_HEIGHT_RATIO * _cam_zoom)
 
-	_line_group.position = Vector2(48.0, h * 0.18)
-	_line_group.size = Vector2(w * 0.46, h * 0.26)
-	choice_slot.position = Vector2(48.0, h * 0.48)
-	choice_slot.size = Vector2(w * 0.46, h * 0.48)
+	# Söz yönergenin altından başlar; seçenekler sözün bittiği yerden sonra gelir (üst üste binmez).
+	var top: float = maxf(h * 0.18, top_inset)
+	_line_group.position = Vector2(48.0, top)
+	_line_group.size = Vector2(w * 0.46, 0.0)
+	_line_group.size.y = _line_group.get_combined_minimum_size().y
+	var choice_top: float = maxf(h * 0.48, top + _line_group.size.y + 16.0)
+	choice_slot.position = Vector2(48.0, choice_top)
+	choice_slot.size = Vector2(w * 0.46, maxf(h - choice_top - 24.0, 80.0))
 	_floor_shadow.queue_redraw()
 
 
@@ -231,6 +237,7 @@ func _draw_floor_shadow() -> void:
 
 func _process(delta: float) -> void:
 	_clock += delta
+	_layout()
 	_cam_zoom = 1.0
 	if actor != null and size.y > 0.0:
 		actor.fit_to_height(size.y * ACTOR_HEIGHT_RATIO)

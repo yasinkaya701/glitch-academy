@@ -11,13 +11,13 @@ const LEVEL_DONE := Color("#2f6b5a")
 const LEVEL_NEXT := Color("#9a5a14")
 const LEVEL_LOCKED := Color("#7d8782")
 const CATALOG: Array[MissionDefinition] = [
-	# Sıra: en olgun ve en iyi görünen görevler başta; kilit açma sırası da buradan gelir.
+	# Sıra: Vektör ve Matematik ilk, sonra en güçlü görevler; kilit açma sırası da buradan gelir.
+	preload("res://stations/vectors/mission.tres"),
+	preload("res://stations/derivative/mission.tres"),
 	preload("res://stations/philosophy/mission.tres"),
 	preload("res://stations/heart/mission.tres"),
-	preload("res://stations/seasons/mission.tres"),
 	preload("res://stations/history/mission.tres"),
-	preload("res://stations/derivative/mission.tres"),
-	preload("res://stations/vectors/mission.tres"),
+	preload("res://stations/seasons/mission.tres"),
 	preload("res://stations/newton/mission.tres"),
 	preload("res://stations/spin/mission.tres"),
 	preload("res://stations/measurement/mission.tres"),
@@ -29,7 +29,6 @@ const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/turkish/mission.tres"),
 	preload("res://stations/english/mission.tres"),
 	preload("res://stations/religion/mission.tres"),
-	# Kalıtım AYT yolundan çıkarıldı (kalite yetersiz): stations/genetics/ yerinde duruyor.
 ]
 
 @onready var hub: Control = %Hub

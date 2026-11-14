@@ -52,6 +52,11 @@ var _failed: bool = false
 var _is_lgs: bool = false
 
 
+func _process(_delta: float) -> void:
+	if hud != null and stage != null:
+		stage.top_inset = hud.directive.position.y + hud.directive.size.y + 14.0
+
+
 func _ready() -> void:
 	var shared_theme: Theme = UITheme.build()
 	theme = shared_theme
