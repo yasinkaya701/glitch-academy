@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c4ejw3dsdh6gg"
-path="res://.godot/imported/ball_foam.png-523a90b9a1e6a599ebc3b21c63b73b2a.ctex"
+uid="uid://6jlsld5v8nuk"
+path="res://.godot/imported/chamber_bg.png-f2c6352da7e4014a3f68c0fadb6c6fb8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://stations/free_fall/assets/ball_foam.png"
-dest_files=["res://.godot/imported/ball_foam.png-523a90b9a1e6a599ebc3b21c63b73b2a.ctex"]
+source_file="res://stations/shared_assets/lab/chamber_bg.png"
+dest_files=["res://.godot/imported/chamber_bg.png-f2c6352da7e4014a3f68c0fadb6c6fb8.ctex"]
 
 [params]
 

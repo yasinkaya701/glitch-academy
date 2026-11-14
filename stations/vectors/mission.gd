@@ -1,27 +1,22 @@
 extends "res://scripts/physics/experiment_mission.gd"
-## AYT Fizik · Vektörler (11.1.1.3). KRİZ: Liman otopilotu iki itişi büyüklük olarak toplayıp (3 + 4 = 7) kapsülü yanaşma
-## noktasının ötesine fırlatıyor. Gerçekte bileşke iki vektörün uç uca eklenmesiyle bulunur ve yön de hesaba girer (|R| = 5).
-## Hesap burada, çizim harbor_stage.gd'de. İki itiş arasındaki açı yalnızca TEST adımında seçilir.
+## AYT Fizik · Vektörler (11.1.1.3), üç boyutta. KRİZ: Liman otopilotu üç itişi büyüklük olarak toplayıp (2 + 3 + 6 = 11)
+## drone'u yanaşma halkasının ötesine sürüyor. Gerçekte bileşke uç uca eklenir ve dik bileşenlerde |R| = √(x² + y² + z²) = 7.
+## Hesap burada, çizim harbor_stage.gd'de.
 
 const Harbor = preload("res://stations/vectors/harbor_stage.gd")
 
-const BOTTOM_BAND := 88.0
-const CRISIS_DOCK := Vector2(3, 4)
-const RESCUE_DOCK := Vector2(8, 6)
-const OFF_QUAY := Vector2(-20, -20)
+const CRISIS_DOCK := Vector3(2, 3, 6)
+const RESCUE_DOCK := Vector3(4, 4, 7)
+const OFF_SCENE := Vector3(-20, -20, 0)
 const DOCK_TOLERANCE := 0.5
 
 enum Step { CRISIS, TEST, REASON, MEASURE, RESCUE }
 
 var step := Step.CRISIS
-var _a := 3.0
-var _b := 4.0
-var _angle := 90.0
-var _seen_same := false
-var _seen_opposite := false
-var _seen_perpendicular := false
-var _east := 0.0
-var _north := 0.0
+var _vec := Vector3(2, 3, 6)
+var _seen_single := false
+var _seen_plane := false
+var _seen_space := false
 var _readout: Label
 var _flying := false
 
@@ -50,14 +45,12 @@ func view() -> Harbor:
 func _process(_delta: float) -> void:
 	if hud == null or stage == null:
 		return
-	stage.offset_bottom = -maxf(BOTTOM_BAND, tools.size.y + 40.0)
-	# Dar kutuda yönerge ve ölçü satırı sahnenin üstünü örtmesin: sahne onların altından başlar.
-	var top := 0.0
-	if size.x < 700.0:
-		top = hud.directive.position.y + hud.directive.size.y + 8.0
-		if _readout.visible:
-			top = _readout.position.y + _readout.size.y + 6.0
-	stage.offset_top = top
+	# Alt şerit: araçlar + üstlerinde bildirimin sığacağı yer. Bildirim sahneyi örtmez.
+	stage.offset_bottom = -(tools.size.y + 40.0 + 64.0)
+	# Dar kutuda sahne tüm yüksekliği kullanır; yönerge solda kaldığı için kafes sağa kaydırılır.
+	var compact := size.x < 760.0
+	stage.offset_top = 0.0
+	view().view_shift = Vector3(-1.5, 0.15, 0.0) if compact else Vector3.ZERO
 
 
 func screen(index: int, label: String, directive: String, action_text: String = "", note: String = "") -> void:
@@ -65,18 +58,28 @@ func screen(index: int, label: String, directive: String, action_text: String = 
 	_readout.hide()
 
 
-func _vector_b() -> Vector2:
-	return Vector2.from_angle(deg_to_rad(_angle)) * _b
-
-
-func _show_vectors(a_vec: Vector2, b_vec: Vector2, resultant: bool) -> void:
-	view().set_arrow("A", Vector2.ZERO, a_vec)
-	view().set_arrow("B", a_vec, a_vec + b_vec)
-	view().set_arrow("R", Vector2.ZERO, a_vec + b_vec, resultant)
+## Üç kaydırıcı ve eylem düğmesi dar kutuda da yan yana sığsın.
+func _slider_width() -> float:
+	var action_room := 190.0 + 16.0
+	return clampf((size.x - 36.0 - action_room - 24.0) / 3.0, 90.0, 190.0)
 
 
 func _num(value: float) -> String:
 	return str(snappedf(value, 0.1)).replace(".0", "").replace(".", ",")
+
+
+## x, y, z bileşenlerini uç uca eklenmiş üç ok olarak çizer; `resultant` bileşke okunu da gösterir.
+func _show_vectors(vec: Vector3, resultant: bool) -> void:
+	var a := Vector3(vec.x, 0, 0)
+	var b := Vector3(vec.x, vec.y, 0)
+	view().set_arrow("A", Vector3.ZERO, a)
+	view().set_arrow("B", a, b)
+	view().set_arrow("C", b, vec)
+	view().set_arrow("R", Vector3.ZERO, vec, resultant)
+
+
+func _path_of(vec: Vector3) -> Array:
+	return [Vector3(vec.x, 0, 0), Vector3(vec.x, vec.y, 0), vec]
 
 
 # --- KRİZ ---
@@ -86,15 +89,12 @@ func _enter_crisis() -> void:
 	_flying = true
 	view().reset_capsule()
 	view().place_dock(CRISIS_DOCK)
-	_a = 3.0
-	_b = 4.0
-	_angle = 90.0
-	_show_vectors(Vector2(3, 0), Vector2(0, 4), false)
-	screen(0, "KRİZ", "Otopilot 3 + 4 = 7 birim topladı, kapsül yanaşma noktasını geçti.", "Nedenini bul",
-		"Rıhtımda iki itici çalışıyor: biri 3 birim doğuya, diğeri 4 birim kuzeye. Otopilot kapsülü yanaşma noktasına doğru 7 birim sürüyor.")
+	_show_vectors(CRISIS_DOCK, false)
+	screen(0, "KRİZ", "Otopilot 2 + 3 + 6 = 11 topladı; drone halkayı geçti.", "Nedenini bul",
+		"Üç itici çalışıyor: 2 birim doğuya, 3 birim kuzeye, 6 birim yukarı. Otopilot drone'u halkaya doğru 11 birim sürdü.")
 	hud.set_action("Nedenini bul", false)
 	hud.skip.show()
-	view().fly([CRISIS_DOCK * (7.0 / 5.0)], 2.4)
+	view().fly([CRISIS_DOCK * (11.0 / CRISIS_DOCK.length())], 2.6)
 
 
 func _on_flight_finished() -> void:
@@ -115,47 +115,37 @@ func _on_flight_finished() -> void:
 func _on_skip() -> void:
 	if step == Step.CRISIS:
 		view().reset_capsule()
-		view().place_dock(CRISIS_DOCK)
-		var end := CRISIS_DOCK * (7.0 / 5.0)
-		view().fly([end], 0.01)
+		view().fly([CRISIS_DOCK * (11.0 / CRISIS_DOCK.length())], 0.01)
 
 
 # --- SINA ---
 
 func _enter_test() -> void:
 	step = Step.TEST
-	_seen_same = false
-	_seen_opposite = false
-	_seen_perpendicular = false
-	_a = 3.0
-	_b = 4.0
-	_angle = 90.0
+	_seen_single = false
+	_seen_plane = false
+	_seen_space = false
+	_vec = Vector3(2, 3, 6)
 	view().reset_capsule()
-	view().place_dock(OFF_QUAY)
-	screen(1, "SINA", "İtişleri ve açıyı değiştir, kapsülü uçur. Bileşke nereye varıyor?", "",
-		"Üç duruma bak: iki itiş aynı yöne (0°), zıt yöne (180°) ve birbirine dik (90°) olunca bileşke ne kadar?")
-	_make_sliders()
-	add_power("Uçur", "Kapsül önce A, sonra B boyunca gider", _fly_test)
+	view().place_dock(OFF_SCENE)
+	screen(1, "SINA", "Üç itişi ayarla, drone'u uçur; bileşkeye bak.", "",
+		"Üç duruma bak: yalnız bir eksende, iki eksende ve üç eksende itiş verince bileşke ne kadar? Kamerayı fareyle sürükleyerek çevirebilirsin.")
+	add_slider("Doğu itişi (birim)", 0.0, 8.0, _vec.x, 1.0, func(v: float) -> void:
+		_vec.x = v
+		_refresh_test(), _slider_width())
+	add_slider("Kuzey itişi (birim)", 0.0, 8.0, _vec.y, 1.0, func(v: float) -> void:
+		_vec.y = v
+		_refresh_test(), _slider_width())
+	add_slider("Yukarı itişi (birim)", 0.0, 8.0, _vec.z, 1.0, func(v: float) -> void:
+		_vec.z = v
+		_refresh_test(), _slider_width())
+	add_power("Uçur", "Drone önce doğuya, sonra kuzeye, sonra yukarı gider", _fly_test)
 	_refresh_test()
 
 
-func _make_sliders() -> void:
-	add_slider("İtiş A (birim)", 0.0, 8.0, _a, 1.0, func(v: float) -> void:
-		_a = v
-		_refresh_test(), 170.0)
-	add_slider("İtiş B (birim)", 0.0, 8.0, _b, 1.0, func(v: float) -> void:
-		_b = v
-		_refresh_test(), 170.0)
-	add_slider("A ile B arası açı (°)", 0.0, 180.0, _angle, 30.0, func(v: float) -> void:
-		_angle = v
-		_refresh_test(), 190.0)
-
-
 func _refresh_test() -> void:
-	var b_vec := _vector_b()
-	_show_vectors(Vector2(_a, 0), b_vec, true)
-	var resultant := Vector2(_a, 0) + b_vec
-	_readout.text = "|A| = %s   |B| = %s   |A| + |B| = %s   Bileşke |R| = %s" % [_num(_a), _num(_b), _num(_a + _b), _num(resultant.length())]
+	_show_vectors(_vec, true)
+	_readout.text = "x = %s   y = %s   z = %s   toplam = %s   Bileşke |R| = %s" % [_num(_vec.x), _num(_vec.y), _num(_vec.z), _num(_vec.x + _vec.y + _vec.z), _num(_vec.length())]
 	_readout.show()
 
 
@@ -163,26 +153,29 @@ func _fly_test() -> void:
 	if _flying or step != Step.TEST:
 		return
 	view().reset_capsule()
-	var a_vec := Vector2(_a, 0)
 	_flying = true
-	view().fly([a_vec, a_vec + _vector_b()], 1.8)
+	view().fly(_path_of(_vec), 2.2)
+
+
+func _nonzero_axes(vec: Vector3) -> int:
+	return int(vec.x > 0.0) + int(vec.y > 0.0) + int(vec.z > 0.0)
 
 
 func _after_test_flight() -> void:
-	if _a <= 0.0 or _b <= 0.0:
-		say("İki itişi de sıfırdan büyük seç; tek itişte bileşke o itişin kendisi.", BAD)
+	var axes := _nonzero_axes(_vec)
+	if axes == 0:
+		say("En az bir itişi sıfırdan büyük seç.", BAD)
 		return
-	var resultant := (Vector2(_a, 0) + _vector_b()).length()
-	if is_equal_approx(_angle, 0.0) and not _seen_same:
-		_seen_same = true
-		say("Aynı yön: |R| = %s = %s + %s. Aynı doğrultuda büyüklükler toplanır." % [_num(resultant), _num(_a), _num(_b)], GOOD)
-	elif is_equal_approx(_angle, 180.0) and not _seen_opposite and not is_equal_approx(_a, _b):
-		_seen_opposite = true
-		say("Zıt yön: |R| = %s = |%s − %s|. Zıt doğrultuda büyüklükler çıkarılır." % [_num(resultant), _num(_a), _num(_b)], GOOD)
-	elif is_equal_approx(_angle, 90.0) and not _seen_perpendicular:
-		_seen_perpendicular = true
-		say("Dik: |R| = %s, oysa |A| + |B| = %s. Bileşke toplamdan kısa, çünkü iki itiş farklı yönlerde." % [_num(resultant), _num(_a + _b)], GOOD)
-	if _seen_same and _seen_opposite and _seen_perpendicular:
+	if axes == 1 and not _seen_single:
+		_seen_single = true
+		say("Tek eksen: |R| = %s, itişin kendisi. Tek doğrultuda toplam ile bileşke aynı." % _num(_vec.length()), GOOD)
+	elif axes == 2 and not _seen_plane:
+		_seen_plane = true
+		say("İki dik eksen: |R| = √(x² + y²) = %s, toplam %s. Bileşke toplamdan kısa." % [_num(_vec.length()), _num(_vec.x + _vec.y + _vec.z)], GOOD)
+	elif axes == 3 and not _seen_space:
+		_seen_space = true
+		say("Üç eksen: |R| = √(x² + y² + z²) = %s, toplam %s. Yükseklik de bileşkeye girer." % [_num(_vec.length()), _num(_vec.x + _vec.y + _vec.z)], GOOD)
+	if _seen_single and _seen_plane and _seen_space:
 		hud.set_action("Nedeni seç", true)
 
 
@@ -193,12 +186,12 @@ func _enter_reason() -> void:
 	view().hide_arrows()
 	view().reset_capsule()
 	view().place_dock(CRISIS_DOCK)
-	screen(2, "NEDEN", "Otopilot kapsülü neden yanaşma noktasının ötesine gönderdi?", "",
-		"Üç durumda gördüğün şey: bileşke bazen toplam, bazen fark, dik olunca ikisinden de farklı.")
+	screen(2, "NEDEN", "Otopilot drone'u neden halkanın ötesine sürdü?", "",
+		"Üç durumda gördüğün şey: bileşke ancak tek eksende toplam kadar, çok eksende toplamdan kısa.")
 	var options := {
-		&"scalar": "Vektörlerin büyüklüğü yön hesaba katılmadan toplanır",
-		&"vector": "Bileşke, vektörler uç uca eklenerek bulunur; açı büyüklüğü değiştirir",
-		&"longer": "Bileşke her zaman iki vektörden uzundur",
+		&"scalar": "Vektörlerin büyüklükleri yön hesaba katılmadan toplanır",
+		&"vector": "Bileşke uç uca eklenerek bulunur: dik bileşenlerde karelerin toplamının kökü alınır",
+		&"height": "Yukarı itiş uzunluğa katılmaz, yalnız yatay itişler sayılır",
 	}
 	var list := VBoxContainer.new()
 	list.add_theme_constant_override("separation", 6)
@@ -214,104 +207,100 @@ func _enter_reason() -> void:
 func _on_reason(choice: StringName) -> void:
 	match choice:
 		&"vector":
-			say("Doğru. 3 birim doğu ve 4 birim kuzey uç uca eklenince bileşke 5 birim; otopilot 7 diye toplayıp 2 birim fazla gitti.", GOOD)
+			say("Doğru. 2, 3 ve 6 dik bileşenler: |R| = √(4 + 9 + 36) = 7. Otopilot 11 diye toplayıp 4 birim fazla gitti.", GOOD)
 			clear_tools()
 			hud.set_action("Bileşkeyi hesapla", true)
 		&"scalar":
-			say("Büyüklükleri düz toplamak yalnızca aynı yönde doğru. Dik duruma bak: |R| toplam kadar çıkmadı.", BAD)
+			say("Düz toplam yalnızca tek doğrultuda doğru. İki ve üç eksende bileşke toplamdan kısa çıktı.", BAD)
 		_:
-			say("Zıt yönde bileşke iki vektörden de kısa kalabiliyor. Bileşke her zaman uzun değil.", BAD)
+			say("Yukarı itiş de bileşkenin bir parçası: üç eksende |R| üç bileşenin hepsinden hesaplandı.", BAD)
 
 
 # --- ÖLÇ ---
 
 func _enter_measure() -> void:
 	step = Step.MEASURE
-	_a = 3.0
-	_b = 4.0
-	_angle = 90.0
+	_vec = CRISIS_DOCK
 	view().reset_capsule()
-	view().place_dock(OFF_QUAY)
-	_show_vectors(Vector2(3, 0), Vector2(0, 4), false)
-	screen(3, "ÖLÇ", "A = 3 doğu, B = 4 kuzey. Bileşke |R| kaç birim?", "Onayla",
-		"Rıhtımdaki iki oku uç uca düşün: bir dik üçgenin iki kenarı.")
+	view().place_dock(OFF_SCENE)
+	_show_vectors(_vec, false)
+	screen(3, "ÖLÇ", "x = 2 doğu, y = 3 kuzey, z = 6 yukarı. Bileşke |R| kaç birim?", "Onayla",
+		"Üç dik bileşen: önce yatay düzlemdeki bileşkeyi, sonra yükseklikle birleştir.")
 	add_entry("|R|  (birim)")
 
 
 func _check_measure() -> void:
 	var value := read_number()
 	if is_nan(value):
-		say("Birim cinsinden bir sayı gir. Örnek: 5", BAD)
+		say("Birim cinsinden bir sayı gir. Örnek: 7", BAD)
 		return
-	if absf(value - 5.0) <= 0.1:
-		say("|R| = √(3² + 4²) = 5 birim. Kapsül bu bileşke boyunca yanaşır.", GOOD)
-		_show_vectors(Vector2(3, 0), Vector2(0, 4), true)
+	if absf(value - 7.0) <= 0.1:
+		say("|R| = √(2² + 3² + 6²) = 7 birim. Drone bu bileşke boyunca yanaşır.", GOOD)
+		_show_vectors(_vec, true)
 		view().place_dock(CRISIS_DOCK)
 		_flying = true
 		hud.set_action("Onayla", false)
-		view().fly([Vector2(3, 0), Vector2(3, 4)], 1.6)
-	elif absf(value - 7.0) <= 0.1:
-		say("7, iki büyüklüğün düz toplamı: otopilotun hatası. Dik iki kenarın bileşkesi daha kısa.", BAD)
-	elif absf(value - 1.0) <= 0.1:
-		say("Fark yalnızca zıt yönde alınır. Burada iki itiş birbirine dik.", BAD)
+		view().fly(_path_of(_vec), 2.0)
+	elif absf(value - 11.0) <= 0.1:
+		say("11, üç büyüklüğün düz toplamı: otopilotun hatası. Dik bileşenlerin bileşkesi daha kısa.", BAD)
+	elif absf(value - sqrt(13.0)) <= 0.15:
+		say("Bu yalnız yatay düzlemdeki bileşke (√13). Yükseklik z = 6'yı da kat.", BAD)
 	else:
-		say("Dik iki itiş: bileşke, 3 ve 4 kenarlı dik üçgenin hipotenüsü.", BAD)
+		say("Üç dik bileşen: |R|² = x² + y² + z². Önce karelerin toplamını bul, sonra kökünü al.", BAD)
 
 
 # --- KURTAR ---
 
 func _enter_rescue() -> void:
 	step = Step.RESCUE
-	_east = 0.0
-	_north = 0.0
+	_vec = Vector3.ZERO
 	_flying = false
 	view().reset_capsule()
 	view().place_dock(RESCUE_DOCK)
-	_show_vectors(Vector2.ZERO, Vector2.ZERO, false)
-	screen(4, "KURTAR", "Hedef 10 birim uzakta, doğudan 37° kuzeyde. Doğu ve kuzey itişlerini seç.", "Yanaş",
-		"Yedek iticiler yalnızca doğuya ve kuzeye çalışıyor. cos 37° ≈ 0,8 ve sin 37° ≈ 0,6 al.")
-	add_slider("Doğu itişi (birim)", 0.0, 12.0, _east, 1.0, func(v: float) -> void:
-		_east = v
-		_refresh_rescue(), 190.0)
-	add_slider("Kuzey itişi (birim)", 0.0, 12.0, _north, 1.0, func(v: float) -> void:
-		_north = v
-		_refresh_rescue(), 190.0)
+	_show_vectors(_vec, false)
+	screen(4, "KURTAR", "Halkanın x, y, z konumunu eksenlerden oku; drone'u yanaştır.", "Yanaş",
+		"Kesikli çizgiler halkanın zeminde ve eksenlerdeki izdüşümünü gösterir: x, y ve z değerlerini oradan oku.")
+	add_slider("Doğu itişi (birim)", 0.0, 8.0, 0.0, 1.0, func(v: float) -> void:
+		_vec.x = v
+		_refresh_rescue(), _slider_width())
+	add_slider("Kuzey itişi (birim)", 0.0, 8.0, 0.0, 1.0, func(v: float) -> void:
+		_vec.y = v
+		_refresh_rescue(), _slider_width())
+	add_slider("Yukarı itişi (birim)", 0.0, 8.0, 0.0, 1.0, func(v: float) -> void:
+		_vec.z = v
+		_refresh_rescue(), _slider_width())
 
 
 func _refresh_rescue() -> void:
 	view().reset_capsule()
 	view().place_dock(RESCUE_DOCK)
-	_show_vectors(Vector2(_east, 0), Vector2(0, _north), true)
+	_show_vectors(_vec, true)
 
 
 func _run_rescue() -> void:
 	if _flying:
 		return
-	if _east <= 0.0 and _north <= 0.0:
-		say("İki itişi de sıfır bırakma: kapsül yerinden kıpırdamaz.", BAD)
+	if _vec == Vector3.ZERO:
+		say("Üç itişi de sıfır bırakma: drone yerinden kıpırdamaz.", BAD)
 		return
 	view().reset_capsule()
-	_show_vectors(Vector2(_east, 0), Vector2(0, _north), true)
+	_show_vectors(_vec, true)
 	_flying = true
 	hud.set_action("Yanaş", false)
-	view().fly([Vector2(_east, 0), Vector2(_east, _north)], 1.8)
+	view().fly(_path_of(_vec), 2.2)
 
 
 func _judge_rescue() -> void:
 	hud.set_action("Yanaş", true)
-	var landing := Vector2(_east, _north)
-	if landing.distance_to(RESCUE_DOCK) <= DOCK_TOLERANCE:
+	if _vec.distance_to(RESCUE_DOCK) <= DOCK_TOLERANCE:
 		view().set_dock_state(&"ok")
 		seal("Bileşke, vektörlerin uç uca eklenmesidir; büyüklükler yön hesaba katılmadan toplanamaz.", "Otopilot vektörlerle yeniden kuruldu.")
 		return
 	view().set_dock_state(&"miss")
-	if is_equal_approx(_east + _north, 10.0):
-		say("Büyüklüklerin toplamı 10 ama bileşke 10 değil: %s + %s dik duruyor, |R| = %s." % [_num(_east), _num(_north), _num(landing.length())], BAD)
-	elif absf(landing.length() - 10.0) <= 0.6:
-		say("Uzaklık doğru (|R| = %s) ama yön yanlış: kapsül doğudan %s° kuzeye gitti, hedef 37°." % [_num(landing.length()), _num(rad_to_deg(landing.angle()))], BAD)
+	if is_equal_approx(_vec.x + _vec.y + _vec.z, RESCUE_DOCK.length()) or absf(_vec.length() - RESCUE_DOCK.length()) <= 0.6:
+		say("Uzaklık doğru (|R| = %s) ama yön yanlış: drone halkanın yanından geçti. Her bileşeni halkanın izdüşümünden oku." % _num(_vec.length()), BAD)
 	else:
-		say("Kapsül (%s, %s) noktasına vardı. Hedefe %s birim kaldı. Doğu ve kuzey bileşenlerini 10 birimlik bileşkeden çıkar." % [_num(_east), _num(_north), _num(landing.distance_to(RESCUE_DOCK))], BAD)
-	view().set_dock_state(&"miss")
+		say("Drone (%s, %s, %s) noktasına vardı, halkaya %s birim kaldı. Kesikli çizgilerden x, y ve z'yi yeniden oku." % [_num(_vec.x), _num(_vec.y), _num(_vec.z), _num(_vec.distance_to(RESCUE_DOCK))], BAD)
 
 
 func _on_action() -> void:

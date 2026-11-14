@@ -20,8 +20,7 @@ func _ready() -> void:
 	await get_tree().create_timer(2.3).timeout
 	get_viewport().get_texture().get_image().save_png(out + "/test_900.png")
 	scene._enter_rescue()
-	scene._east = 6.0
-	scene._north = 8.0
+	scene._vec = Vector3(4, 6, 5)
 	scene._refresh_rescue()
 	await get_tree().create_timer(0.8).timeout
 	get_viewport().get_texture().get_image().save_png(out + "/rescue_900.png")

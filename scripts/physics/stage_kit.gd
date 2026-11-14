@@ -11,7 +11,7 @@ const BG := Color("#10110f")
 const PANEL := Color("#191a17")
 const EDGE := Color("#3b3d35")
 const PANEL_TEX = preload("res://assets/ui/panel_glass.png")
-const PHOTO_BG = preload("res://stations/free_fall/assets/chamber_bg.png")
+const PHOTO_BG = preload("res://stations/shared_assets/lab/chamber_bg.png")
 const METAL = preload("res://assets/materials/Metal009/Metal009_2K-JPG_Color.jpg")
 
 

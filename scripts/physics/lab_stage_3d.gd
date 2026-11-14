@@ -270,7 +270,7 @@ func build_glider(parent: Node3D, length: float, colour: Color, weights: int, co
 		if thruster:
 			x += 0.04
 		var z := (float(row) - 0.5 * float(rows - 1)) * 0.056
-		var load := model("res://stations/free_fall/assets/mass_heavy.glb", 0.05, parent)
+		var load := model("res://stations/shared_assets/lab/mass_heavy.glb", 0.05, parent)
 		load.position = Vector3(x, 0.073 + 0.025, z)
 
 
@@ -288,5 +288,5 @@ func build_car(parent: Node3D, colour: Color, weights: int, facing: float = 1.0,
 	paint.roughness = 0.4
 	box(Vector3(0.005, 0.07, 0.05), paint, Vector3(-0.1 * facing, base + 0.1, 0.0), parent)
 	for n in weights:
-		var load := model("res://stations/free_fall/assets/mass_heavy.glb", 0.04, parent)
+		var load := model("res://stations/shared_assets/lab/mass_heavy.glb", 0.04, parent)
 		load.position = Vector3(((n % 3) - 1) * 0.05 * 1.0, base + 0.078 + (n / 6) * 0.04, (float((n / 3) % 2) - 0.5) * 0.045)

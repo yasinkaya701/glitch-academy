@@ -5,7 +5,7 @@ func _initialize() -> void:
 func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(output)
 	root.size = Vector2i(1280, 720)
-	for kind in ["newton", "projectile", "collision", "free_fall", "waves", "photoelectric", "turkish", "bridge"]:
+	for kind in ["newton", "waves", "photoelectric", "turkish", "bridge"]:
 		var mission = load("res://stations/%s/mission.tscn" % kind).instantiate()
 		mission.theme = root.theme
 		root.add_child(mission)

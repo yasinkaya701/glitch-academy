@@ -9,7 +9,7 @@ id = &"projectile"
 title = "Atış Alanı"
 subject = "Fizik"
 grade = 12
-routes = PackedStringArray("class", "ayt")
+routes = PackedStringArray("class")
 description = "Bırak ve fırlat: iki hareketi ayır, kapsülü 60 m'deki hedef halkasına indir."
 curriculum = "AYT Fizik · Atışlar, yatay atış"
 source_url = "https://ttkb.meb.gov.tr/www/icerik_goruntule.php?DIL=tr&KNO=831"

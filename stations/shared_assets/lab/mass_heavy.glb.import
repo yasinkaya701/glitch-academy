@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://c5g2r0nxdwqfn"
-path="res://.godot/imported/mass_heavy.glb-459f6de64dc5679de198f5d3ccab402e.scn"
+path="res://.godot/imported/mass_heavy.glb-9bc3031ff8a54ccb8bd0e1b9a63a0a53.scn"
 
 [deps]
 
-source_file="res://stations/free_fall/assets/mass_heavy.glb"
-dest_files=["res://.godot/imported/mass_heavy.glb-459f6de64dc5679de198f5d3ccab402e.scn"]
+source_file="res://stations/shared_assets/lab/mass_heavy.glb"
+dest_files=["res://.godot/imported/mass_heavy.glb-9bc3031ff8a54ccb8bd0e1b9a63a0a53.scn"]
 
 [params]
 

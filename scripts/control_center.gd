@@ -29,7 +29,7 @@ const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/turkish/mission.tres"),
 	preload("res://stations/english/mission.tres"),
 	preload("res://stations/religion/mission.tres"),
-	preload("res://stations/genetics/mission.tres"),
+	# Kalıtım AYT yolundan çıkarıldı (kalite yetersiz): stations/genetics/ yerinde duruyor.
 ]
 
 @onready var hub: Control = %Hub
