@@ -12,5 +12,5 @@ grade = 8
 routes = PackedStringArray("lgs")
 description = "Düzeye uygun mesajları anlayıp yardım istasyonuyla iletişim dizisini yeniden kur."
 curriculum = "E8 · Friendship, On the Phone, Adventures"
-source_url = "https://odsgm.meb.gov.tr/www/8-sinif-ingilizce-unitelendirilmis-ornek-sorular/icerik/673"
+source_url = "https://mufredat.meb.gov.tr/ProgramDetay.aspx?PID=326"
 scene = ExtResource("2")

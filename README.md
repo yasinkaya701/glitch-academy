@@ -14,7 +14,9 @@ Terminalden açmak için repo kökünde şunu çalıştır.
 godot --path .
 ```
 
-Atlanabilir açılış, 3D kontrol merkezi, 5–12. sınıf filtresi ve LGS/TYT/AYT rotaları hazır. İlk konu sırası Mevsim Gözlemevi, Ölçüm Atölyesi ve Vektör Limanı ile başlar. İstasyonlar sahneleri bağlandıkça oynanabilir olur.
+Sekiz saniyelik atlanabilir açılış, 3D gözlemevi ve Space Grotesk başlıklar ile IBM Plex Sans metinleri kullanan ortak arayüz teması hazır. Oyun LGS kampanyasını doğrudan açar. Yedi istasyonluk akışta Mevsim Gözlemevi, İspat Laboratuvarı, Palanga Atölyesi, Bozuk Talimat, Kayıp Kronoloji, Son Mesaj ve Dayanışma Arşivi oynanabilir; ilerleme yerel olarak kaydedilir. Matematik istasyonunda yapay zekânın özdeşlik ispatındaki hatalı satır bulunur ve 3D alan modeliyle düzeltilir. Her görevden sonra kısa bir hikâye geçişi sonraki sinyali açar ve yedi onarım bağımsız bir finale ulaşır. Sınıf keşfi, TYT ve AYT rotaları da kontrol merkezinde kalır.
+
+Fontlar Google Fonts deposundan OFL lisanslarıyla alınmıştır. [LGS akış testi](tests/lgs_campaign_flow_test.gd) mevsim deneyini, yanlış/doğru cevapları, kilitleri, hikâye geçişlerini, yerel kayıtları ve final protokolünü baştan sona oynatır.
 
 `scenes/experiment_3d.tscn` her istasyonda kullanılabilen bir 3D sahne alanı sunar. Kamera ve ışık hazır gelir. Godot mesh'lerini veya Blender'dan dışa aktardığın `.glb` modellerini istasyonun kendi klasöründe tut.
 

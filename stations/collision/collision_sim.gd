@@ -34,3 +34,9 @@ static func speed_to_stop(m1: float, v1: float, m2: float) -> float:
 ## Kinetik enerji (J).
 static func kinetic(m: float, v: float) -> float:
 	return 0.5 * m * v * v
+
+
+## Yapışan çarpışmada ısıya giden enerji: çarpışma öncesi toplam kinetik enerji eksi sonrası.
+static func heat_stick(m1: float, v1: float, m2: float, v2: float) -> float:
+	var v := stick_speed(m1, v1, m2, v2)
+	return kinetic(m1, v1) + kinetic(m2, v2) - kinetic(m1 + m2, v)

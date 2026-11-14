@@ -1,15 +1,15 @@
 # GLITCH ACADEMY — LGS ÜRETİM PLANI
 ## Kampanya: Dünyanın Kırılması
 
-**Sorumlu:** Geliştirici A  
+**Sorumlu:** Geliştirici A
 **Temel hedef:** Altı LGS dersinin tamamını oynanabilir biçimde temsil eden, kendi hikâyesi ve finali bulunan bağımsız kampanya.
 
 ### 1. LGS'de zorunlu ders kapsamı
 
 | Ders | Bölüm | Oyuncunun yaptığı | Hikâyedeki işlev |
 |---|---|---|---|
-| Fen Bilimleri | **Mevsim Gözlemevi** | Eksen eğikliği ve ışınların gelişini inceler | MERİDYEN'in ilk doğa yasası sabotajını onarır |
-| Matematik | **Köprü Atölyesi** | Pisagor bağıntısıyla doğru kirişi üretir | Yerleşimin ulaşım hattını kurtarır |
+| Fen Bilimleri | **Mevsim Gözlemevi**, **Palanga Atölyesi** | Eksen eğikliği ve ışınların gelişini inceler; sabit ve hareketli makaralarda yük/ip ivmesini karşılaştırır | Mevsim sabotajını ve MERİDYEN'in bozduğu vinç kayıtlarını onarır |
+| Matematik | **İspat Laboratuvarı** | Yapay zekânın özdeşlik ispatındaki hatalı satırı bulup 3D alan modeliyle düzeltir | MERİDYEN'in matematik kayıtlarındaki sabotajı açığa çıkarır |
 | Türkçe | **Bozuk Talimat** | Cümlelerdeki anlam, olumsuzluk ve bağlam değişikliklerini bulur | MERİDYEN'in değiştirdiği güvenlik komutunu düzeltir |
 | T.C. İnkılap Tarihi ve Atatürkçülük | **Kayıp Kronoloji** | Gerçek tarihî olayları ve belgeleri karşılaştırır | Geçmiş kayıtlarının tahrif edildiğini kanıtlar |
 | İngilizce | **Son Mesaj** | Düzeye uygun İngilizce mesajları anlayarak iletişim dizisini kurar | Yardım istasyonunun bağlantısını geri getirir |
@@ -72,11 +72,12 @@ Kamera üç yıldızlı gökyüzüne döner. Büyük gizem korunur ama LGS hikâ
 **P0 — Hikâyeyi tamamlayan zorunlu içerik**
 
 1. Mevcut Mevsimler deneyini koru ve test et.
-2. Köprü Atölyesi'ni oynanabilir hâle getir.
-3. Ortak Arşiv etkileşim şablonunu geliştir.
-4. Türkçe, İnkılap Tarihi, İngilizce ve Din Kültürü görevlerini bu şablonun uygun varyantlarıyla hazırla.
-5. Dört ana ara sahneyi görev tamamlanma olaylarına bağla.
-6. LGS finalini ve onarım göstergesini tamamla.
+2. İspat Laboratuvarı'nı oynanabilir hâle getir.
+3. Palanga Atölyesi'nde sabit makara için `a = a`, hareketli palanga için `a_ip = 2a_yük` ilişkisini oyuncuya gözlemlet; MERİDYEN'in ters çevirdiği ivme etiketlerini düzelttir.
+4. Ortak Arşiv etkileşim şablonunu geliştir.
+5. Türkçe, İnkılap Tarihi, İngilizce ve Din Kültürü görevlerini bu şablonun uygun varyantlarıyla hazırla.
+6. Ara sahneleri görev tamamlama olaylarına bağla.
+7. LGS finalini ve onarım göstergesini tamamla.
 
 **P1 — Omurga bittikten sonra**
 

@@ -30,4 +30,4 @@ window/stretch/mode="canvas_items"
 
 renderer/rendering_method.mobile="gl_compatibility"
 textures/default_filters/anisotropic_filtering_level=3
-environment/defaults/default_clear_color=Color(0.957, 0.965, 0.949, 1)
+environment/defaults/default_clear_color=Color(0.043, 0.067, 0.11, 1)

@@ -1,3 +1,5 @@
+> **Geçersiz.** Arayüz kuralları artık [docs/DESIGN.md](../../docs/DESIGN.md), oyun tasarımı [docs/GAME_DESIGN.md](../../docs/GAME_DESIGN.md) içinde. Bu dosya yalnızca geçmiş için duruyor.
+
 # Yanlış Dünya interface language
 
 The interface is a repaired observatory instrument, not a stack of floating windows. Its signature is the **meridian index**: a split cyan crown datum, short amber bearing mark, matched edge scales, and clipped steel cuts modeled after the observatory calibration ring. The same index returns on the panel, selection rail, route markers, station dock, and logo. Repeated marks should explain alignment, selection, route, or state; remove them when they do not carry information.

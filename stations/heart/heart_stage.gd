@@ -13,6 +13,7 @@ const Network = preload("res://stations/heart/heart_network.gd")
 const Prosthesis = preload("res://stations/heart/valve_prosthesis.gd")
 const Waveform = preload("res://scripts/anatomy/waveform_monitor.gd")
 const Circ = preload("res://scripts/physio/circulation.gd")
+const PerfusionStage = preload("res://stations/heart/perfusion_stage.gd")
 const HEART = preload("res://stations/heart/assets/model/heart_cutaway.glb")
 const LUNGS = preload("res://assets/models/human-lungs.glb")
 const BODY = preload("res://assets/models/human-muscles.glb")
@@ -361,6 +362,41 @@ func _build_equipment() -> void:
 	screen.material_override = screen_material
 	screen.position = Vector3(0.0, 1.35, -1.565)
 	world.add_child(screen)
+	# Give the waveform a readable instrument housing and physical control details.
+	var bezel := MeshInstance3D.new()
+	var bezel_mesh := BoxMesh.new()
+	bezel_mesh.size = Vector3(2.78, 0.96, 0.12)
+	bezel.mesh = bezel_mesh
+	bezel.material_override = dark
+	bezel.position = Vector3(0.0, 1.35, -1.64)
+	world.add_child(bezel)
+	# Keep the screen surface in front of its case.
+	screen.position.z = -1.565
+	var trim := StandardMaterial3D.new()
+	trim.albedo_color = Color("#6fe3c1")
+	trim.metallic = 0.42
+	trim.roughness = 0.28
+	for side in [-1.0, 1.0]:
+		var rail := MeshInstance3D.new()
+		var rail_mesh := BoxMesh.new()
+		rail_mesh.size = Vector3(0.025, 0.84, 0.02)
+		rail.mesh = rail_mesh
+		rail.material_override = trim
+		rail.position = Vector3(side * 1.38, 1.35, -1.56)
+		world.add_child(rail)
+	for index in 4:
+		var led := MeshInstance3D.new()
+		var led_mesh := SphereMesh.new()
+		led_mesh.radius = 0.018
+		led_mesh.height = 0.036
+		led.mesh = led_mesh
+		var led_material := _glow_material(Color("#6fe3c1") if index < 3 else Color("#f2a65a"), 1.4)
+		led.material_override = led_material
+		led.position = Vector3(-0.95 + index * 0.12, 1.84, -1.55)
+		world.add_child(led)
+	# A dedicated gantry frames the specimen and makes the circulation workbench read as one instrument.
+	var perfusion_stage := PerfusionStage.new()
+	world.add_child(perfusion_stage)
 
 
 func _wave_step(delta: float) -> void:

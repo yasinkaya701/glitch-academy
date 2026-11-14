@@ -1,22 +1,33 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="1024" viewBox="0 0 2048 1024">
-<defs>
-  <linearGradient id="tissue" x1="0" y1="0" x2="0.85" y2="1"><stop stop-color="#E7A4A0"/><stop offset=".5" stop-color="#C97978"/><stop offset="1" stop-color="#8D555E"/></linearGradient>
-  <linearGradient id="nerve" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#C8FFF2"/><stop offset=".45" stop-color="#70D5D0"/><stop offset="1" stop-color="#399B9D"/></linearGradient>
-  <linearGradient id="myelin" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F2E9D6"/><stop offset=".45" stop-color="#D7C8A6"/><stop offset="1" stop-color="#8B8E83"/></linearGradient>
-  <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#657786"/><stop offset=".5" stop-color="#394957"/><stop offset="1" stop-color="#192937"/></linearGradient>
-  <radialGradient id="glow"><stop stop-color="#F5B75F" stop-opacity=".8"/><stop offset="1" stop-color="#F5B75F" stop-opacity="0"/></radialGradient>
-  <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-  <filter id="smallGlow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-
-</defs>
-<path d="M 190 165 C 360 55 665 70 820 190 C 905 255 935 375 912 475 L 912 555 C 940 700 875 855 740 920 C 565 1005 310 930 190 810 Z" fill="url(#tissue)" stroke="#F0B9A8" stroke-width="22"/>
-<path d="M 912 365 C 1020 390 1080 405 1136 414 L 1136 612 C 1070 620 1010 644 912 675 Z" fill="#111F2B" stroke="#59D1D0" stroke-width="10"/>
-<path d="M 1136 185 C 1310 88 1605 112 1825 205 L 1825 825 C 1620 918 1318 937 1136 820 Z" fill="url(#tissue)" stroke="#F0B9A8" stroke-width="22"/>
-<path d="M 895 360 Q 1020 360 1138 401 M 894 680 Q 1012 670 1138 624" fill="none" stroke="#A2F2E5" stroke-width="12" opacity=".8"/>
-<path d="M 900 498 C 1030 495 1050 495 1138 495" fill="none" stroke="#D5F6E7" stroke-width="13" stroke-linecap="round"/>
-<path d="M 900 526 C 1020 525 1060 525 1138 525" fill="none" stroke="#60D7CE" stroke-width="6" opacity=".8"/>
-<g fill="#F4C873" stroke="#FFF1C8" stroke-width="7"><path d="M 1110 330 l 40 18 -4 48 -39 15 -31 -30 6 -39 Z"/><path d="M 1110 640 l 42 -18 -4 -48 -39 -15 -31 30 6 39 Z"/></g>
-<g fill="#76D6D0" opacity=".25"><ellipse cx="1030" cy="325" rx="48" ry="14"/><ellipse cx="1028" cy="695" rx="48" ry="14"/></g>
-<path d="M 1220 340 Q 1280 365 1220 395 M 1220 460 Q 1280 485 1220 510 M 1220 570 Q 1280 595 1220 620 M 1220 690 Q 1280 715 1220 740" fill="none" stroke="#EBD4BC" stroke-width="16" stroke-linecap="round"/>
-<g fill="#9F696E" opacity=".7"><circle cx="500" cy="230" r="14"/><circle cx="680" cy="820" r="12"/><circle cx="1600" cy="275" r="13"/></g><circle cx="420" cy="300" r="24" fill="#F0BC66" stroke="#FFEAC3" stroke-width="8"/><circle cx="414" cy="293" r="6" fill="#FFF2C8" opacity=".76"/><circle cx="510" cy="360" r="22" fill="#F0BC66" stroke="#FFEAC3" stroke-width="8"/><circle cx="504" cy="353" r="5" fill="#FFF2C8" opacity=".76"/><circle cx="625" cy="275" r="26" fill="#F0BC66" stroke="#FFEAC3" stroke-width="8"/><circle cx="619" cy="268" r="6" fill="#FFF2C8" opacity=".76"/><circle cx="735" cy="355" r="23" fill="#F0BC66" stroke="#FFEAC3" stroke-width="8"/><circle cx="729" cy="348" r="5" fill="#FFF2C8" opacity=".76"/><circle cx="370" cy="470" r="21" fill="#F0BC66" stroke="#FFEAC3" stroke-width="8"/><circle cx="364" cy="463" r="5" fill="#FFF2C8" opacity=".76"/><circle cx="570" cy="460" r="28" fill="#F0BC66" stroke="#FFEAC3" stroke-width="8"/><circle cx="564" cy="453" r="7" fill="#FFF2C8" opacity=".76"/><circle cx="700" cy="520" r="22" fill="#F0BC66" stroke="#FFEAC3" stroke-width="8"/><circle cx="694" cy="513" r="5" fill="#FFF2C8" opacity=".76"/><circle cx="460" cy="620" r="25" fill="#F0BC66" stroke="#FFEAC3" stroke-width="8"/><circle cx="454" cy="613" r="6" fill="#FFF2C8" opacity=".76"/><circle cx="640" cy="680" r="24" fill="#F0BC66" stroke="#FFEAC3" stroke-width="8"/><circle cx="634" cy="673" r="6" fill="#FFF2C8" opacity=".76"/><circle cx="760" cy="600" r="20" fill="#F0BC66" stroke="#FFEAC3" stroke-width="8"/><circle cx="754" cy="593" r="5" fill="#FFF2C8" opacity=".76"/><circle cx="380" cy="750" r="20" fill="#F0BC66" stroke="#FFEAC3" stroke-width="8"/><circle cx="374" cy="743" r="5" fill="#FFF2C8" opacity=".76"/><circle cx="540" cy="780" r="27" fill="#F0BC66" stroke="#FFEAC3" stroke-width="8"/><circle cx="534" cy="773" r="6" fill="#FFF2C8" opacity=".76"/><circle cx="700" cy="750" r="22" fill="#F0BC66" stroke="#FFEAC3" stroke-width="8"/><circle cx="694" cy="743" r="5" fill="#FFF2C8" opacity=".76"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="1024" viewBox="0 0 2048 1024"><defs>
+<linearGradient id="flesh" x1="0" y1="0" x2=".2" y2="1"><stop stop-color="#f0c9a5"/><stop offset=".28" stop-color="#c7866d"/><stop offset=".68" stop-color="#96605b"/><stop offset="1" stop-color="#51424b"/></linearGradient>
+<linearGradient id="fiber" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#e9c499"/><stop offset=".35" stop-color="#bd8065"/><stop offset="1" stop-color="#58464d"/></linearGradient>
+<linearGradient id="sheath" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f3e1c1"/><stop offset=".18" stop-color="#dac5a2"/><stop offset=".58" stop-color="#988879"/><stop offset=".88" stop-color="#71636b"/><stop offset="1" stop-color="#d7c4a6"/></linearGradient>
+<radialGradient id="cyto" cx="28%" cy="20%" r="90%"><stop stop-color="#f0c6a4"/><stop offset=".33" stop-color="#c98970"/><stop offset=".74" stop-color="#86595a"/><stop offset="1" stop-color="#493f4c"/></radialGradient>
+<radialGradient id="nucleus" cx="30%" cy="25%"><stop stop-color="#dab08c"/><stop offset=".62" stop-color="#886772"/><stop offset="1" stop-color="#4c4352"/></radialGradient>
+<linearGradient id="white" x1=".1" y1="0" x2=".9" y2="1"><stop stop-color="#f2dfbf"/><stop offset=".48" stop-color="#c9ad90"/><stop offset="1" stop-color="#776168"/></linearGradient>
+<linearGradient id="gray" x1=".1" y1="0" x2=".9" y2="1"><stop stop-color="#bd9180"/><stop offset=".5" stop-color="#896a6e"/><stop offset="1" stop-color="#514956"/></linearGradient>
+<pattern id="grain" width="39" height="33" patternUnits="userSpaceOnUse"><circle cx="7" cy="9" r="1.2" fill="#f5ddbd" opacity=".30"/><circle cx="26" cy="23" r=".9" fill="#483c49" opacity=".24"/><path d="M12 29l5-1" stroke="#f2d6b4" opacity=".23"/></pattern>
+<filter id="depth" x="-.2" y="-.2" width="1.4" height="1.5"><feGaussianBlur in="SourceAlpha" stdDeviation="9" result="b"/><feOffset dy="8"/><feComponentTransfer><feFuncA type="linear" slope=".28"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs><path d="M160 174C363 138 691 147 838 235Q916 280 916 386V637Q913 744 829 790C663 870 357 858 164 817Q113 805 113 747V245Q116 185 160 174Z" fill="url(#cyto)" stroke="#e7c1a1" stroke-width="12" filter="url(#depth)"/><path d="M139 239C335 203 667 208 832 284Q874 304 875 382V636Q870 710 804 741C630 808 338 798 150 760" fill="none" stroke="#f1d3b1" stroke-width="5" opacity=".7"/><path d="M1110 214C1294 174 1690 178 1890 226Q1940 239 1940 300V716Q1937 775 1877 790C1645 842 1266 831 1114 783Q1075 769 1075 704V301Q1077 232 1110 214Z" fill="url(#cyto)" stroke="#e7c1a1" stroke-width="12"/><path d="M1128 265C1327 225 1688 229 1886 275M1128 753C1340 806 1687 805 1885 757" fill="none" stroke="#f2d7b7" stroke-width="6" opacity=".66"/><path d="M916 302V721M1076 302V724" stroke="#e5c09f" stroke-width="8" opacity=".82"/><path d="M925 322Q997 345 1067 321M925 702Q997 681 1067 704" fill="none" stroke="#58434e" stroke-width="8"/><path d="M937 330Q998 345 1056 331M937 694Q998 680 1056 693" fill="none" stroke="#efcfad" stroke-width="3" opacity=".78"/><g fill="#d8b598" stroke="#57454f" stroke-width="4"><path d="M1139 372q-24 2-28 25v43q4 21 28 24h23V372Z"/><path d="M1139 524q-24 2-28 25v43q4 21 28 24h23V524Z"/><path d="M1139 676q-24 2-28 24v30q13 4 28 7h23V676Z"/></g><g fill="none" stroke="#f3d8ba" stroke-width="4" opacity=".65"><path d="M303 249q119-35 239-15m-389 385q117 44 228 27m824-380q176-34 364-14m-336 479q159 20 306-4"/></g><g id="axon-entry">
+<path d="M0 468C47 465 78 478 127 483L128 545C78 540 46 557 0 556Z" fill="#51414c" stroke="#e5c09f" stroke-width="7"/>
+<path d="M0 481C45 481 77 491 126 495M0 544C47 540 81 531 126 532" fill="none" stroke="#f0d1ae" stroke-width="3" opacity=".62"/>
+<path d="M0 500C45 500 76 503 126 508M0 528C45 528 76 522 126 520" fill="none" stroke="#a16b64" stroke-width="5" opacity=".6"/>
+</g>
+<g id="active-zone" fill="none" stroke="#efd1b0" stroke-width="4" opacity=".7">
+<path d="M891 315q-12 10-11 30v27q0 16 12 25M892 423q-12 9-12 27v26q0 18 12 27M893 542q-12 8-12 27v28q0 16 12 24M891 659q-12 8-11 27v25q0 16 12 25"/>
+</g>
+<g id="postsynaptic-receptors" fill="#c69b84" stroke="#56434c" stroke-width="4" stroke-linejoin="round">
+<path d="M1077 321h-15q-19 0-24 17l-4 11 22 14-22 15 4 11q5 16 24 16h15Z"/>
+<path d="M1077 414h-15q-19 0-24 17l-4 11 22 14-22 15 4 11q5 16 24 16h15Z"/>
+<path d="M1077 507h-15q-19 0-24 17l-4 11 22 14-22 15 4 11q5 16 24 16h15Z"/>
+<path d="M1077 600h-15q-19 0-24 17l-4 11 22 14-22 15 4 11q5 16 24 16h15Z"/>
+<path d="M1077 693h-15q-19 0-24 17l-4 11 22 14-22 15 4 11q5 16 24 16h15Z"/>
+</g>
+<g fill="none" stroke="#f0d2b1" stroke-width="3" opacity=".55">
+<path d="M1091 308v116m0-23v116m0-23v116m0-23v116m0-23v116"/>
+<path d="M1103 315v100m0-8v100m0-8v100m0-8v100m0-8v100" opacity=".6"/>
+</g>
+<g id="postsynaptic-density" fill="#493d49" opacity=".72">
+<rect x="1082" y="306" width="17" height="428" rx="8"/>
+<path d="M1105 328h13v24h-13zm0 95h13v24h-13zm0 95h13v24h-13zm0 95h13v24h-13zm0 95h13v24h-13z"/>
+</g></svg>

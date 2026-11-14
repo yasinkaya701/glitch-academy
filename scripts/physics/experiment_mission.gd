@@ -108,6 +108,8 @@ func add_power(title: String, hint: String, callback: Callable, toggle: bool = f
 	button.text = title
 	button.tooltip_text = hint
 	button.toggle_mode = toggle
+	button.custom_minimum_size = Vector2(118, 46)
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	if toggle:
 		button.toggled.connect(callback)
 	else:
@@ -116,20 +118,44 @@ func add_power(title: String, hint: String, callback: Callable, toggle: bool = f
 	return button
 
 
+## Etiket + canlı değer + birim üstte, kaydırıcı altta. Başlıkta "(birim)" varsa birim olarak ayrılır.
 func add_slider(title: String, low: float, high: float, value: float, step: float, on_change: Callable, width: float = 240.0) -> HSlider:
+	var name_text := title
+	var unit := ""
+	var open := title.find("(")
+	if open > 0 and title.ends_with(")"):
+		name_text = title.substr(0, open).strip_edges()
+		unit = title.substr(open + 1, title.length() - open - 2)
+	var group := VBoxContainer.new()
+	group.add_theme_constant_override("separation", 3)
+	var head := HBoxContainer.new()
 	var label := Label.new()
-	label.text = title
+	label.text = name_text
 	label.add_theme_color_override("font_color", MUTED)
-	tools.add_child(label)
+	label.add_theme_font_size_override("font_size", 13)
+	head.add_child(label)
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(spacer)
+	var readout := Label.new()
+	readout.add_theme_color_override("font_color", Color("#6fe3c1"))
+	readout.add_theme_font_size_override("font_size", 15)
+	head.add_child(readout)
+	group.add_child(head)
 	var slider := HSlider.new()
 	slider.min_value = low
 	slider.max_value = high
 	slider.step = step
 	slider.value = value
-	slider.custom_minimum_size = Vector2(width, 0)
-	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	slider.custom_minimum_size = Vector2(width, 22)
+	var show := func(v: float) -> void:
+		var text := str(int(v)) if step >= 1.0 else str(snappedf(v, step)).replace(".", ",")
+		readout.text = ("%s %s" % [text, unit]).strip_edges()
+	show.call(value)
+	slider.value_changed.connect(show)
 	slider.value_changed.connect(on_change)
-	tools.add_child(slider)
+	group.add_child(slider)
+	tools.add_child(group)
 	return slider
 
 
@@ -144,6 +170,8 @@ func seal(record: String, directive: String) -> void:
 	if _sealed:
 		return
 	_sealed = true
+	if stage != null and stage.has_method("play_repair"):
+		stage.play_repair()
 	screen(step_total, "MÜHÜR", directive, "", "Kayıt: %s" % record)
 	hud.set_steps(step_total, step_total, "MÜHÜR")
 	say("Mühürlendi. " + record, GOOD)

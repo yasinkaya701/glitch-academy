@@ -1,3 +1,5 @@
+> **Geçersiz.** Arayüz kuralları artık [docs/DESIGN.md](DESIGN.md), oyun tasarımı [docs/GAME_DESIGN.md](GAME_DESIGN.md) içinde. Bu dosya yalnızca geçmiş için duruyor.
+
 # Yanlış Dünya · Görsel yön
 
 Tüm görsel üretimin tek kaynağı. Her talep bu dosyaya referans verir, stili tekrar yazmaz.

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/integral/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"integral"
+title = "Akış Laboratuvarı"
+subject = "Matematik"
+grade = 12
+routes = PackedStringArray("class", "ayt")
+description = "Bir tanktaki değişen debinin grafiği altındaki alanı toplam su hacmine dönüştür, arızalı sayaç yerine doğru zamanı bul."
+curriculum = "12.6.2.1 / 12.6.2.4 · Belirli integral ve alan (kaynak program)"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/beceri_temelli/12/matematik/files/basic-html/page110.html"
+scene = ExtResource("2")

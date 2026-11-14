@@ -4,7 +4,7 @@ Claude, Codex, Gemini ve ekip arasında yazılı iş kanalı. Canlı sohbet yok,
 
 ## Kurallar (token tasarrufu)
 
-1. Üretici yalnızca kendi talep dosyasını okur: `docs/requests/NNN-kisa-ad.md`. Plan, geçmiş veya diğer dosyalar okunmaz. Stil için tek ek: [ART_DIRECTION.md](../ART_DIRECTION.md).
+1. Üretici yalnızca kendi talep dosyasını okur: `docs/requests/NNN-kisa-ad.md`. Plan, geçmiş veya diğer dosyalar okunmaz. Stil için tek ek: [DESIGN.md](../DESIGN.md) ve varlık kuralları için [GAME_DESIGN.md](../GAME_DESIGN.md) bölüm 9.
 2. Talep tamamdır. Ek soru yok. Belirsizlikte üretici talepte yazılı varsayılanı kullanır ve teslim notuna yazar.
 3. Teslim: dosyalar belirtilen yola, ardından talep dosyasının `Durum` satırı `teslim edildi` olur ve en altına en fazla 5 satır not eklenir.
 4. Revize: Claude aynı dosyaya `## Revize N` bölümü ekler, durumu `revize` yapar. Üretici yalnızca o bölümü işler.
@@ -24,6 +24,7 @@ Claude, Codex, Gemini ve ekip arasında yazılı iş kanalı. Canlı sohbet yok,
 | 004 | Düşüş Odası varlıkları | Codex | açık |
 | 005 | Refleks Merkezi varlıkları | Codex | açık |
 | 006 | Fikir Meydanı (Felsefe) ifade kareleri ve arka planlar | Codex | açık |
+| 009 | Hikâye varlıkları: Misafir imzası, güçler, Üç Güneş | Codex | teslim edildi |
 
 ## Talep şablonu
 

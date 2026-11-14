@@ -8,8 +8,9 @@ script = ExtResource("1")
 id = &"projectile"
 title = "Atış Alanı"
 subject = "Fizik"
-grade = 11
-routes = PackedStringArray("class")
-description = "Kapsül hedefi kaçırıyor. Yatay ve düşey hareket kaydını onar."
-curriculum = "Yatay atış ve hareketlerin bağımsızlığı"
+grade = 12
+routes = PackedStringArray("class", "ayt")
+description = "Bırak ve fırlat: iki hareketi ayır, kapsülü 60 m'deki hedef halkasına indir."
+curriculum = "AYT Fizik · Atışlar, yatay atış"
+source_url = "https://ttkb.meb.gov.tr/www/icerik_goruntule.php?DIL=tr&KNO=831"
 scene = ExtResource("2")

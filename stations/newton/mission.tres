@@ -8,8 +8,9 @@ script = ExtResource("1")
 id = &"newton"
 title = "Newton Kızağı"
 subject = "Fizik"
-grade = 11
-routes = PackedStringArray("class")
-description = "Kargo kapıyı kaçırıyor. Kütleyi hesaba katmayan ayarı onar."
-curriculum = "Kuvvet, kütle ve ivme ilişkisi"
+grade = 12
+routes = PackedStringArray("class", "ayt")
+description = "Aynı itiş, farklı yük: ivmeyi kuvvet ve kütleyle yönet, kızağı kapı kapanmadan vardır."
+curriculum = "AYT Fizik · Newton'un hareket yasaları, F = m·a"
+source_url = "https://ttkb.meb.gov.tr/www/icerik_goruntule.php?DIL=tr&KNO=831"
 scene = ExtResource("2")

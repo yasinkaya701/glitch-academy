@@ -1,3 +1,5 @@
+> **Geçersiz.** Arayüz kuralları artık [docs/DESIGN.md](DESIGN.md), oyun tasarımı [docs/GAME_DESIGN.md](GAME_DESIGN.md) içinde. Bu dosya yalnızca geçmiş için duruyor.
+
 # Arayüz ilkeleri · yazı paneli yok
 
 Yasin'in kararı: uzun başlık, paragraf ve açıklama panelleri "AI slop". Bilgi nesneler, göstergeler ve oyuncunun yaptığı işle verilir.
