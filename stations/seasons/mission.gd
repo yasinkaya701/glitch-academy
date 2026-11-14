@@ -25,7 +25,7 @@ var axial_tilt := Model.AXIAL_TILT
 var model_3d: Node3D
 var viewport: SubViewportContainer
 var controls: VBoxContainer
-var row: HBoxContainer
+var row: BoxContainer
 var panel: PanelContainer
 var tilt_toggle: CheckButton
 
@@ -44,7 +44,7 @@ func _build_interface() -> void:
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
-	row = HBoxContainer.new()
+	row = BoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
 	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	row.offset_left = 18
@@ -100,6 +100,7 @@ func _process(delta: float) -> void:
 
 
 func _show_incident() -> void:
+	december = false
 	_reset_controls()
 	_heading("Güney serası", "21 Haziran ölçümü yanlış istasyona bağlandı. Güney serası kış uyarısıyla havalandırmayı kapattı.", "1 / 4   GÖZLEM")
 	_metric("ARIZA", "Güney yarımkürede kış uyarısı", AMBER)
@@ -109,10 +110,9 @@ func _show_incident() -> void:
 
 func _show_experiment() -> void:
 	phase = Phase.EXPERIMENT
-	december = false
 	_sync_model()
 	_reset_controls()
-	_heading("21 Haziran · Güneş açısı", "Dünya’nın ekseni yörünge boyunca aynı yöne bakar. Tarihi değiştir; 40° kuzey ve güneydeki öğle ışınlarını karşılaştır.", "2 / 4   3B DENEY")
+	_heading("%s · Güneş açısı" % ("21 Aralık" if december else "21 Haziran"), "Dünya’nın ekseni yörünge boyunca aynı yöne bakar. Tarihi değiştir; 40° kuzey ve güneydeki öğle ışınlarını karşılaştır.", "2 / 4   3B DENEY")
 	var dates := HBoxContainer.new()
 	dates.add_theme_constant_override("separation", 8)
 	controls.add_child(dates)
