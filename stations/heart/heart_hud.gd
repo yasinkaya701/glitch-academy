@@ -13,6 +13,8 @@ var _header_panel: PanelContainer
 var _controls_panel: PanelContainer
 var _dock_panel: PanelContainer
 var _status_label: Label
+var _directive_compact := false
+var _stacked := false
 
 
 func _ready() -> void:
@@ -53,6 +55,16 @@ func _make_panel() -> PanelContainer:
 func hide_all_buttons() -> void:
 	super.hide_all_buttons()
 	view_button.show()
+
+
+## Dar ekranda panellerin arasında kalan boş alan: 3B görünüm yalnızca burada çizilir, kalp panelin arkasında kalmaz.
+## Geniş ekranda tüm alan döner.
+func free_rect() -> Rect2:
+	if not _stacked or _header_panel == null:
+		return Rect2(Vector2.ZERO, size)
+	var top := _header_panel.position.y + _header_panel.size.y + 6.0
+	var bottom := _dock_panel.position.y - 6.0 if _dock_panel.visible else size.y - 8.0
+	return Rect2(Vector2(0.0, top), Vector2(size.x, maxf(bottom - top, 140.0)))
 
 
 func bind_status(label: Label) -> void:
@@ -109,21 +121,33 @@ func _layout_heart_hud() -> void:
 	var w := size.x
 	var h := size.y
 	var compact := w < 900.0 or h < 620.0
-	var header_top := 70.0 if compact else 18.0
-	var header_width := w - margin * 2.0 if compact else minf(440.0, maxf(360.0, w * 0.32))
-	var header_height := 142.0 if compact else 154.0
+	## Yalnızca gerçekten dar ekranda (<700 px) başlık panelini kontrollerin altına yığ; aksi halde yan yana.
+	var stacked := w < 700.0
+	_stacked = stacked
+	var header_top := 70.0 if stacked else 18.0
+	var header_width := w - margin * 2.0 if stacked else minf(440.0, maxf(340.0, w * 0.32))
+	var has_status := _status_label != null and _status_label.text != ""
+	var header_height := (150.0 if compact else 146.0) if has_status else (108.0 if compact else 112.0)
+	if stacked:
+		header_height = 128.0 if has_status else 104.0
 	var inner_left := margin + 16.0
 	var inner_width := maxf(header_width - 32.0, 160.0)
 	_header_panel.position = Vector2(margin, header_top)
 	_header_panel.size = Vector2(header_width, header_height)
-	counter.position = Vector2(inner_left, header_top + 12.0)
+	counter.position = Vector2(inner_left, header_top + (9.0 if stacked else 12.0))
 	counter.size = Vector2(inner_width, 24.0)
 	counter.add_theme_font_size_override("font_size", 12 if compact else 13)
-	directive.position = Vector2(inner_left, header_top + 42.0)
-	directive.size = Vector2(inner_width, 62.0 if compact else 56.0)
-	directive.add_theme_font_size_override("font_size", 16)
+	if stacked != _directive_compact:
+		_directive_compact = stacked
+		var style := _surface_style(RAISED, HEART_EDGE, 8)
+		style.set_content_margin_all(7 if stacked else 12)
+		directive.add_theme_stylebox_override("normal", style)
+	directive.position = Vector2(inner_left, header_top + (34.0 if stacked else 42.0))
+	directive.size = Vector2(inner_width, 50.0 if stacked else (62.0 if compact else 56.0))
+	directive.add_theme_font_size_override("font_size", 15 if stacked else 16)
 	if _status_label != null:
-		_status_label.position = Vector2(inner_left, header_top + (108.0 if compact else 116.0))
+		_status_label.visible = has_status
+		_status_label.position = Vector2(inner_left, header_top + (92.0 if stacked else (112.0 if compact else 108.0)))
 		_status_label.size = Vector2(inner_width, 28.0)
 		_status_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		_status_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -188,7 +212,16 @@ func _layout_heart_hud() -> void:
 			action.custom_minimum_size.x = 218.0
 			action.size = Vector2(action_width, 48.0)
 			action.position = Vector2(w - margin - action_width - 12.0, dock_y + 16.0)
-	toast.position = Vector2((w - toast.size.x) * 0.5, 130.0)
+	# Uyarı satırı başlık panelinin üstüne binmesin: geniş ekranda panelin sağına, dar ekranda altına.
+	if stacked:
+		toast.size.x = w - margin * 2.0
+		toast.size.y = toast.get_minimum_size().y
+		toast.position = Vector2(margin, _dock_panel.position.y - toast.size.y - 10.0)
+	else:
+		var toast_left := margin + header_width + 14.0
+		toast.size.x = clampf(w - toast_left - margin, 240.0, 600.0)
+		toast.size.y = toast.get_minimum_size().y
+		toast.position = Vector2(toast_left, 76.0)
 
 
 func set_steps(current: int, total: int, label: String = "") -> void:

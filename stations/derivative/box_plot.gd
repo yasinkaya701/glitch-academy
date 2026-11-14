@@ -37,7 +37,7 @@ static func slope(a: float, x: float) -> float:
 
 
 func _draw() -> void:
-	if size.x < 200 or size.y < 200:
+	if size.x < 150 or size.y < 110:
 		return
 	draw_rect(Rect2(Vector2.ZERO, size), BACK)
 	if graph_only:

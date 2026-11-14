@@ -164,7 +164,9 @@ func _build_interface() -> void:
 	overline.size = Vector2(minf(740.0, size.x - 92.0), 22)
 	add_child(overline)
 	_title_label = _label(mission_definition.title, 22, INK)
-	_title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_title_label.clip_text = true
 	add_child(_title_label)
 	_info_button = Button.new()
 	_info_button.text = "ⓘ"
@@ -246,7 +248,7 @@ func _layout_interface() -> void:
 	_evidence_label.position = right_panel.position + Vector2(18, 84)
 	_evidence_label.size = Vector2(right_panel.size.x - 36.0, 18)
 	_title_label.position = right_panel.position + Vector2(18, 18)
-	_title_label.size = Vector2(right_panel.size.x - 36.0, 52)
+	_title_label.size = Vector2(right_panel.size.x - 36.0, 34)
 	_title_label.add_theme_font_size_override("font_size", 19 if right_panel.size.x < 320.0 else 22)
 	var text_width := right_panel.size.x - 36.0
 	_compact_content_flow = right_panel.size.y < 440.0

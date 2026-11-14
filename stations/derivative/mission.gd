@@ -17,6 +17,7 @@ enum Step { INTRO, EXPLORE, SLOPE, APPLY, DONE }
 
 var step := Step.INTRO
 var plot: BoxPlot
+var _graph_frame: PanelContainer
 var workshop: Workshop
 var hud: Hud
 var section: Label
@@ -57,19 +58,17 @@ func _build_ui() -> void:
 	viewport.add_child(workshop)
 
 	# Grafik: sağ üstte, ölçümlerle dolan küçük bir cihaz ekranı.
-	var graph_frame := PanelContainer.new()
-	graph_frame.theme_type_variation = "GlassPanel"
-	graph_frame.anchor_left = 1.0
-	graph_frame.anchor_right = 1.0
-	graph_frame.offset_left = -470.0
-	graph_frame.offset_right = -24.0
-	graph_frame.offset_top = 72.0
-	graph_frame.offset_bottom = 340.0
-	add_child(graph_frame)
+	_graph_frame = PanelContainer.new()
+	_graph_frame.theme_type_variation = "GlassPanel"
+	_graph_frame.anchor_left = 1.0
+	_graph_frame.anchor_right = 1.0
+	add_child(_graph_frame)
 	plot = BoxPlot.new()
 	plot.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	plot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	graph_frame.add_child(plot)
+	_graph_frame.add_child(plot)
+	resized.connect(_fit_graph)
+	_fit_graph()
 
 	hud = Hud.new()
 	add_child(hud)
@@ -123,6 +122,18 @@ func _build_ui() -> void:
 	readout.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(readout)
 	hud.below_directive.append(readout)
+
+
+## Grafik monitörü ekran genişliğine göre ölçeklenir: dar ekranda ölçüm satırını ve 3B düzeneği örtmez.
+func _fit_graph() -> void:
+	if _graph_frame == null:
+		return
+	var width := clampf(size.x * 0.34, 300.0, 446.0)
+	var height := width * 0.68
+	_graph_frame.offset_right = -20.0
+	_graph_frame.offset_left = -20.0 - width
+	_graph_frame.offset_top = 64.0
+	_graph_frame.offset_bottom = 64.0 + height
 
 
 const DIRECTIVES := {
