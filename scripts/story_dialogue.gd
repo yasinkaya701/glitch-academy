@@ -1,33 +1,45 @@
 extends Control
-## MERİDYEN's short post-experiment transmission.
+## MERİDYEN's visual world-news briefing before each experiment.
 
 signal dismissed
 
 const GUIDE_TEXTURE = preload("res://assets/characters/meridyen_guide.png")
-const BROKEN_LAWS_ATLAS = preload("res://assets/story/broken_laws_atlas.png")
+const NEWS_ATLAS = preload("res://assets/story/experiment_news_atlas.png")
+const LAB_NEWS_ATLAS = preload("res://assets/story/experiment_news_lab_atlas.png")
+const NEWS_FRAMES := {
+    "sun": Rect2(0, 0, 508, 338), "lift": Rect2(514, 0, 509, 338),
+    "harbor": Rect2(1027, 0, 509, 338), "box": Rect2(0, 345, 508, 336),
+    "bridge": Rect2(514, 345, 509, 336), "fall": Rect2(1027, 345, 509, 336),
+    "heart": Rect2(0, 686, 508, 338), "atom": Rect2(514, 686, 509, 338),
+    "archive": Rect2(1027, 686, 509, 338),
+}
+const SUPPLEMENTAL_FRAMES := {
+    "genetics": Rect2(0, 0, 882, 438), "indicator": Rect2(892, 0, 882, 438),
+    "optics": Rect2(0, 449, 882, 438), "pulley": Rect2(892, 449, 882, 438),
+}
 
 const NEWS_REPORTS := {
-	"seasons": {"region": Rect2(8, 8, 752, 494), "place": "GÖZLEMEVİ · EGE GÖZLEM HATTI", "headline": "ÜÇ GÜNEŞ, AYNI AVLUDA ÜÇ FARKLI GÖLGE OLUŞTURDU", "report": "Güneş ışığının geliş açısı kayda göre değişmedi. Ancak gözlem avlusundaki gölgeler aynı anda üç yöne uzadı; seradaki sıcaklık çizelgesi de mevsim hesabından saptı."},
-	"measurement": {"region": Rect2(777, 517, 752, 494), "place": "GÖZLEMEVİ · TAŞIMA LABORATUVARI", "headline": "YÜK ASANSÖRÜ, KÜTLE VE AĞIRLIK KAYDI KARIŞINCA DURDU", "report": "Kayıt ekranı kilogram ile newtonu tek ölçü gibi gösterdi. Aynı yük, iki istasyonda farklı sınırda göründü ve güvenlik kilidi asansörü kapattı."},
-	"vectors": {"region": Rect2(8, 8, 752, 494), "place": "GÖZLEMEVİ · VEKTÖR LİMANI", "headline": "YÖN KAYDI SİLİNEN KAPSÜL RIHTIMA YANDAN SÜRÜKLENDİ", "report": "Kapsülün itki büyüklüğü doğruydu; doğu-kuzey yön bileşenleri kayıttan düşmüştü. Otomatik yanaşma, doğru uzunluğa rağmen rotayı tutturamadı."},
-	"derivative": {"region": Rect2(8, 517, 752, 494), "place": "GÖZLEMEVİ · DEPO ATÖLYESİ", "headline": "KUTU BÜYÜDÜKÇE HACMİ ARTMADI: DEPO PLANI TAŞTI", "report": "Aynı levhadan kesilen kareler büyütülünce kutu önce genişledi, sonra kapasitesi azaldı. Eski kayıt her kesimde hacmin artacağını söylüyordu; raf ölçüleri birbiriyle uyuşmadı."},
-	"bridge": {"region": Rect2(8, 517, 752, 494), "place": "GÖZLEMEVİ · KÖPRÜ ŞANTİYESİ", "headline": "KÖPRÜNÜN İKİ YARISI ORTADA BİRLEŞMEDİ", "report": "Taşıyıcılar ölçümde eşit görünüyordu; kayıtta bir açıklığın uzunluğu eksikti. Montaj ekibi, eksik parçayı fark edince köprüyü güvenli biçimde durdurdu."},
-	"prism": {"region": Rect2(777, 517, 752, 494), "place": "GÖZLEMEVİ · MALZEME DEPOSU", "headline": "KATMAN HESABI ATLANNCA KORUYUCU KASA KAPANMADI", "report": "Kasanın dış ölçüsü doğruydu ama iç kaplama katmanları hesaba katılmadı. Ölçümler ile teslim fişi uyuşmayınca kırılabilir örnekler taşınamadı."},
-	"free_fall": {"region": Rect2(8, 517, 752, 494), "place": "GÖZLEMEVİ · DÜŞME TESTİ KUYUSU", "headline": "İKİ CİSİMİN DÜŞÜŞ SÜRESİ TEK DEĞER OLARAK KAYDEDİLDİ", "report": "Hava direnci ayrı ölçülmeyince iki farklı cismin iniş süreleri aynı kayda sıkıştırıldı. Test düzeneği sonuçları tekrar edemedi ve güvenlik ağı erken açıldı."},
-	"newton": {"region": Rect2(8, 517, 752, 494), "place": "GÖZLEMEVİ · HAREKET HATTI", "headline": "AYNI İTİŞ, AĞIR KIZAKTA AYNI İVMEYİ ÜRETMEDİ", "report": "Yük iki katına çıktığında hız değişimi kayıttaki kadar olmadı. İtme kuvveti sabit kalmıştı; MERİDYEN'in çizelgesinde kütle farkı görünmüyordu."},
-	"projectile": {"region": Rect2(777, 517, 752, 494), "place": "GÖZLEMEVİ · ATIŞ SAHASI", "headline": "YATAY ROTA DEĞİŞİNCE DÜŞME SÜRESİ DE KAYITTA DEĞİŞTİ", "report": "İki fırlatma aynı yükseklikten başladı; yatay hızları farklıydı. Gerçek düşüş süreleri eşit kalırken kayıt tek bir eğriyi izledi ve hedefler kaçırıldı."},
-	"collision": {"region": Rect2(8, 517, 752, 494), "place": "GÖZLEMEVİ · ÇARPIŞMA PİSTİ", "headline": "ÇARPIŞMA SONRASI YÖN KAYDI KAYBOLDU", "report": "Arabaların çarpışma öncesi hızları ölçüldü; yön işaretleri kayıttan silindi. Son toplam hız beklenenin iki katı çıktı ve deney tekrarlanamaz hale geldi."},
-	"indicator": {"region": Rect2(777, 8, 752, 494), "place": "GÖZLEMEVİ · ÇÖZELTİ LABORATUVARI", "headline": "GÖSTERGE AYNI RENKTE KALDI, İKİ ÇÖZELTİ FARKLI TEPKİ VERDİ", "report": "Renk kaydı çözelti ölçümünden ayrıştı. pH sensörü iki numuneyi aynı gösterince laboratuvar ekibi hangi kabın daha asidik olduğunu belirleyemedi."},
-	"heart": {"region": Rect2(777, 8, 752, 494), "place": "GÖZLEMEVİ · YAŞAM PROTOKOLÜ", "headline": "OKSİJENSİZ KAN AKCİĞER YERİNE VÜCUDA YÖNLENDİRİLDİ", "report": "Ana toplardamardan gelen oksijence fakir kanın akış kaydı ters yöne döndü. Dokulara ulaşan oksijen azaldı; kalp ve damar ölçümleri MERİDYEN'in çizelgesiyle uyuşmadı."},
-	"pressure": {"region": Rect2(777, 8, 752, 494), "place": "GÖZLEMEVİ · BASINÇ ODASI", "headline": "DERİNE İNEN SENSÖR, SU BASINCINDA ARTIŞ GÖRMEDİ", "report": "Aynı sıvıda derinlik arttıkça ölçülen basınç yükselmeliydi. Sensör sabit kaldı; su tankının kapak kilidi güvenlik nedeniyle devreye girdi."},
-	"philosophy": {"region": Rect2(777, 517, 752, 494), "place": "GÖZLEMEVİ · FİKİR MEYDANI", "headline": "AYNI SÖZ, İKİ AYRI DÜŞÜNÜRE ATFEDİLDİ", "report": "Arşiv kayıtları bir alıntıyı farklı filozoflara bağladı. Sözün bağlamı ve dayanağı kaybolunca öğrenciler çelişkili kaynaklarla karşılaştı."},
-	"history": {"region": Rect2(777, 517, 752, 494), "place": "GÖZLEMEVİ · TARİH ARŞİVİ", "headline": "BELGELERİN TARİHİ YER DEĞİŞTİRDİ, KRONOLOJİ BOZULDU", "report": "Aynı olayı anlatan iki belgenin tarihleri birbirini tutmadı. Arşiv sırası kayınca bir anlaşma, onu hazırlayan olaydan önce gerçekleşmiş göründü."},
-	"pulley": {"region": Rect2(8, 517, 752, 494), "place": "GÖZLEMEVİ · MAKARA ATÖLYESİ", "headline": "YÜK DAHA AZ KUVVETLE ÇIKTI, İP YOLU KAYITTA KISALDI", "report": "Hareketli makara yükü kaldırdı ama kuvvet kazancı ile çekilen ip yolu arasındaki karşılık kayıtta yoktu. Enerji hesabı tutmayınca vinç durduruldu."},
-	"turkish": {"region": Rect2(777, 517, 752, 494), "place": "GÖZLEMEVİ · UYARI İSTASYONU", "headline": "TEK BİR EKSİK EK, GÜVENLİK UYARISINI TERSİNE ÇEVİRDİ", "report": "Talimatın olumsuzluk eki kayıt satırından silinince kapalı çıkış açık, güvenli rota tehlikeli göründü. Ekip, levhadaki metinle sensör kaydını karşılaştırdı."},
-	"english": {"region": Rect2(777, 517, 752, 494), "place": "GÖZLEMEVİ · İLETİŞİM AĞI", "headline": "YARDIM ÇAĞRISI, UYARI MESAJI OLARAK YANLIŞ EKİBE GİTTİ", "report": "İstek cümlesindeki amaç kaydıyla uyarı işareti karıştı. Acil yardım çağrısı yanlış kanala yöneldi; ekipler özgün mesajı yeniden okumak zorunda kaldı."},
-	"religion": {"region": Rect2(777, 517, 752, 494), "place": "GÖZLEMEVİ · TOPLUMSAL DESTEK AĞI", "headline": "YARDIM KAYDI İHTİYAÇ YERİNE GÖSTERİŞİ İŞARET ETTİ", "report": "Destek kaynakları yanlış ölçüte göre dağıtılınca gerçek ihtiyaç noktası boş kaldı. Gözlem ekibi kayıtları başvuru ve sonuçlarla karşılaştırdı."},
-	"genetics": {"region": Rect2(777, 8, 752, 494), "place": "GÖZLEMEVİ · YAŞAM PROTOKOLÜ", "headline": "GÖRÜNMEYEN ÇEKİNİK ALEL, KAYITTA TAMAMEN SİLİNDİ", "report": "Ebeveynlerde görünmeyen bir alel sonraki kuşakta ortaya çıktı. MERİDYEN'in kayıt tablosu çekinik bilgiyi yok saydığı için kalıtım olasılıkları tutmadı."},
-	"spin": {"region": Rect2(777, 8, 752, 494), "place": "GÖZLEMEVİ · MODERN ATOM LABORATUVARI", "headline": "ATOM DEMETİ İKİ AYRI ÖLÇÜM İZİ BIRAKTI", "report": "Dedektör kaydı atom demetini tek, sürekli bir iz olarak öngördü. Ölçüm ekranında ise iki ayrık sonuç belirdi; cihazın kaydı ile gözlenen dağılım ayrıştı."}
+	"seasons": {"region": NEWS_FRAMES.sun, "place": "GÖZLEMEVİ · EGE GÖZLEM HATTI", "headline": "ÜÇ GÜNEŞ, AYNI AVLUDA ÜÇ FARKLI GÖLGE OLUŞTURDU", "report": "Güneş ışığının geliş açısı kayda göre değişmedi. Ancak gözlem avlusundaki gölgeler aynı anda üç yöne uzadı; seradaki sıcaklık çizelgesi de mevsim hesabından saptı."},
+	"measurement": {"region": NEWS_FRAMES.lift, "place": "GÖZLEMEVİ · TAŞIMA LABORATUVARI", "headline": "YÜK ASANSÖRÜ, KÜTLE VE AĞIRLIK KAYDI KARIŞINCA DURDU", "report": "Kayıt ekranı kilogram ile newtonu tek ölçü gibi gösterdi. Aynı yük, iki istasyonda farklı sınırda göründü ve güvenlik kilidi asansörü kapattı."},
+	"vectors": {"region": NEWS_FRAMES.harbor, "place": "GÖZLEMEVİ · VEKTÖR LİMANI", "headline": "YÖN KAYDI SİLİNEN KAPSÜL RIHTIMA YANDAN SÜRÜKLENDİ", "report": "Kapsülün itki büyüklüğü doğruydu; doğu-kuzey yön bileşenleri kayıttan düşmüştü. Otomatik yanaşma, doğru uzunluğa rağmen rotayı tutturamadı."},
+	"derivative": {"region": NEWS_FRAMES.box, "place": "GÖZLEMEVİ · DEPO ATÖLYESİ", "headline": "KUTU BÜYÜDÜKÇE HACMİ ARTMADI: DEPO PLANI TAŞTI", "report": "Aynı levhadan kesilen kareler büyütülünce kutu önce genişledi, sonra kapasitesi azaldı. Eski kayıt her kesimde hacmin artacağını söylüyordu; raf ölçüleri birbiriyle uyuşmadı."},
+	"bridge": {"region": NEWS_FRAMES.bridge, "place": "GÖZLEMEVİ · KÖPRÜ ŞANTİYESİ", "headline": "KÖPRÜNÜN İKİ YARISI ORTADA BİRLEŞMEDİ", "report": "Taşıyıcılar ölçümde eşit görünüyordu; kayıtta bir açıklığın uzunluğu eksikti. Montaj ekibi, eksik parçayı fark edince köprüyü güvenli biçimde durdurdu."},
+	"prism": {"region": NEWS_FRAMES.box, "place": "GÖZLEMEVİ · PRİZMA DEPOSU", "headline": "EKSİK HACİM HESABI, KARGO KASASINI TAŞIRDI", "report": "Taban alanı ile katman yüksekliği ayrı ayrı kaydedildi; toplam hacim hesaba katılmayınca kargo kutusu platforma sığmadı. Ekip katmanları yeniden ölçtü."},
+	"free_fall": {"region": NEWS_FRAMES.fall, "place": "GÖZLEMEVİ · DÜŞME TESTİ KUYUSU", "headline": "İKİ CİSİMİN DÜŞÜŞ SÜRESİ TEK DEĞER OLARAK KAYDEDİLDİ", "report": "Hava direnci ayrı ölçülmeyince iki farklı cismin iniş süreleri aynı kayda sıkıştırıldı. Test düzeneği sonuçları tekrar edemedi ve güvenlik ağı erken açıldı."},
+	"newton": {"region": NEWS_FRAMES.lift, "place": "GÖZLEMEVİ · HAREKET HATTI", "headline": "AYNI İTİŞ, AĞIR KIZAKTA AYNI İVMEYİ ÜRETMEDİ", "report": "Yük iki katına çıktığında hız değişimi kayıttaki kadar olmadı. İtme kuvveti sabit kalmıştı; MERİDYEN'in çizelgesinde kütle farkı görünmüyordu."},
+	"projectile": {"region": NEWS_FRAMES.fall, "place": "GÖZLEMEVİ · ATIŞ SAHASI", "headline": "YATAY ROTA DEĞİŞİNCE DÜŞME SÜRESİ DE KAYITTA DEĞİŞTİ", "report": "İki fırlatma aynı yükseklikten başladı; yatay hızları farklıydı. Gerçek düşüş süreleri eşit kalırken kayıt tek bir eğriyi izledi ve hedefler kaçırıldı."},
+	"collision": {"region": NEWS_FRAMES.lift, "place": "GÖZLEMEVİ · ÇARPIŞMA PİSTİ", "headline": "ÇARPIŞMA SONRASI YÖN KAYDI KAYBOLDU", "report": "Arabaların çarpışma öncesi hızları ölçüldü; yön işaretleri kayıttan silindi. Son toplam hız beklenenin iki katı çıktı ve deney tekrarlanamaz hale geldi."},
+	"indicator": {"atlas": "supplemental", "region": SUPPLEMENTAL_FRAMES.indicator, "place": "GÖZLEMEVİ · ÇÖZELTİ LABORATUVARI", "headline": "GÖSTERGE AYNI RENKTE KALDI, İKİ ÇÖZELTİ FARKLI TEPKİ VERDİ", "report": "Renk kaydı çözelti ölçümünden ayrıştı. pH sensörü iki numuneyi aynı gösterince laboratuvar ekibi hangi kabın daha asidik olduğunu belirleyemedi."},
+	"heart": {"region": NEWS_FRAMES.heart, "place": "GÖZLEMEVİ · YAŞAM PROTOKOLÜ", "headline": "OKSİJENSİZ KAN AKCİĞER YERİNE VÜCUDA YÖNLENDİRİLDİ", "report": "Ana toplardamardan gelen oksijence fakir kanın akış kaydı ters yöne döndü. Dokulara ulaşan oksijen azaldı; kalp ve damar ölçümleri MERİDYEN'in çizelgesiyle uyuşmadı."},
+	"pressure": {"region": NEWS_FRAMES.lift, "place": "GÖZLEMEVİ · BASINÇ ODASI", "headline": "DERİNE İNEN SENSÖR, SU BASINCINDA ARTIŞ GÖRMEDİ", "report": "Aynı sıvıda derinlik arttıkça ölçülen basınç yükselmeliydi. Sensör sabit kaldı; su tankının kapak kilidi güvenlik nedeniyle devreye girdi."},
+	"philosophy": {"region": NEWS_FRAMES.archive, "place": "GÖZLEMEVİ · FİKİR MEYDANI", "headline": "AYNI SÖZ, İKİ AYRI DÜŞÜNÜRE ATFEDİLDİ", "report": "Arşiv kayıtları bir alıntıyı farklı filozoflara bağladı. Sözün bağlamı ve dayanağı kaybolunca öğrenciler çelişkili kaynaklarla karşılaştı."},
+	"history": {"region": NEWS_FRAMES.archive, "place": "GÖZLEMEVİ · TARİH ARŞİVİ", "headline": "BELGELERİN TARİHİ YER DEĞİŞTİRDİ, KRONOLOJİ BOZULDU", "report": "Aynı olayı anlatan iki belgenin tarihleri birbirini tutmadı. Arşiv sırası kayınca bir anlaşma, onu hazırlayan olaydan önce gerçekleşmiş göründü."},
+	"pulley": {"atlas": "supplemental", "region": SUPPLEMENTAL_FRAMES.pulley, "place": "GÖZLEMEVİ · MAKARA ATÖLYESİ", "headline": "YÜK DAHA AZ KUVVETLE ÇIKTI, İP YOLU KAYITTA KISALDI", "report": "Hareketli makara yükü kaldırdı ama kuvvet kazancı ile çekilen ip yolu arasındaki karşılık kayıtta yoktu. Enerji hesabı tutmayınca vinç durduruldu."},
+	"turkish": {"region": NEWS_FRAMES.archive, "place": "GÖZLEMEVİ · UYARI İSTASYONU", "headline": "TEK BİR EKSİK EK, GÜVENLİK UYARISINI TERSİNE ÇEVİRDİ", "report": "Talimatın olumsuzluk eki kayıt satırından silinince kapalı çıkış açık, güvenli rota tehlikeli göründü. Ekip, levhadaki metinle sensör kaydını karşılaştırdı."},
+	"english": {"region": NEWS_FRAMES.archive, "place": "GÖZLEMEVİ · İLETİŞİM AĞI", "headline": "YARDIM ÇAĞRISI, UYARI MESAJI OLARAK YANLIŞ EKİBE GİTTİ", "report": "İstek cümlesindeki amaç kaydıyla uyarı işareti karıştı. Acil yardım çağrısı yanlış kanala yöneldi; ekipler özgün mesajı yeniden okumak zorunda kaldı."},
+	"religion": {"region": NEWS_FRAMES.archive, "place": "GÖZLEMEVİ · TOPLUMSAL DESTEK AĞI", "headline": "YARDIM KAYDI İHTİYAÇ YERİNE GÖSTERİŞİ İŞARET ETTİ", "report": "Destek kaynakları yanlış ölçüte göre dağıtılınca gerçek ihtiyaç noktası boş kaldı. Gözlem ekibi kayıtları başvuru ve sonuçlarla karşılaştırdı."},
+	"genetics": {"atlas": "supplemental", "region": SUPPLEMENTAL_FRAMES.genetics, "place": "GÖZLEMEVİ · YAŞAM PROTOKOLÜ", "headline": "GÖRÜNMEYEN ÇEKİNİK ALEL, KAYITTA TAMAMEN SİLİNDİ", "report": "Ebeveynlerde görünmeyen bir alel sonraki kuşakta ortaya çıktı. MERİDYEN'in kayıt tablosu çekinik bilgiyi yok saydığı için kalıtım olasılıkları tutmadı."},
+	"spin": {"region": NEWS_FRAMES.atom, "place": "GÖZLEMEVİ · MODERN ATOM LABORATUVARI", "headline": "ATOM DEMETİ İKİ AYRI ÖLÇÜM İZİ BIRAKTI", "report": "Dedektör kaydı atom demetini tek, sürekli bir iz olarak öngördü. Ölçüm ekranında ise iki ayrık sonuç belirdi; cihazın kaydı ile gözlenen dağılım ayrıştı."}
 }
 
 var _continue_action: Callable
@@ -165,7 +177,7 @@ func present(title: String, text: String, action_text: String, on_continue: Call
 	_news_report.visible = showing_news
 	if showing_news:
 		var atlas_texture := AtlasTexture.new()
-		atlas_texture.atlas = BROKEN_LAWS_ATLAS
+		atlas_texture.atlas = LAB_NEWS_ATLAS if report.get("atlas", "news") == "supplemental" else NEWS_ATLAS
 		atlas_texture.region = report["region"]
 		_news_image.texture = atlas_texture
 		_news_place.text = "CANLI GÖZLEM  ·  " + String(report["place"])
