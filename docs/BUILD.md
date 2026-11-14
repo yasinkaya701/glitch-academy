@@ -19,3 +19,10 @@ Ses ve mikrofon artık Python ya da dış program çağırmaz; build içinde old
 
 ## Ses önbelleği
 Üretilen her replik `user://voice_cache/gemini_<özet>.wav` olarak saklanır; aynı cümle ikinci kez istenmez. Filozof ve tarih kişilerinin aşama repliklerini ilk konuşmada arka planda önceden üretir.
+
+## Export (Web)
+`export_presets.cfg` içinde "Web" önayarı var; `docs`, `tests`, `tools`, arşiv ve kaynak klasörleri paketten çıkarılır, `llm_key.txt` (varsa) dahil edilir.
+
+    godot --headless --path . --export-release Web build/index.html
+
+Son denemede (2026-11-14) 0 hata ile bitti: `index.pck` ≈ 934 MB, `index.wasm` ≈ 40 MB. Paket boyutu web için büyük; `assets/models` (171 MB), `assets/story`, tarih ve felsefe arka planları sıkıştırılmadan gidiyor. Yayın öncesi kullanılmayan modelleri ve büyük PNG'leri ayıklamak gerekir. Paket `godot --main-pack index.pck` ile açılıp betik hatası olmadan başladı. macOS export şablonu bu makinede kurulu değil (yalnızca Web ve Android): Godot > Editor > Manage Export Templates ile indirilmeli. Tarayıcıda ve gerçek mikrofonla denenmedi.
