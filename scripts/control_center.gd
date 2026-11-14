@@ -5,6 +5,10 @@ const MissionDefinition = preload("res://scripts/mission_definition.gd")
 const StoryDialogue = preload("res://scripts/story_dialogue.gd")
 const FINALE = preload("res://stations/yks/three_suns.tscn")
 const INTRO = preload("res://scenes/intro/intro.tscn")
+## Seviye listesi durum renkleri: açık zeminde okunur; durum ayrıca simge ve yazıyla da verilir.
+const LEVEL_DONE := Color("#2f6b5a")
+const LEVEL_NEXT := Color("#9a5a14")
+const LEVEL_LOCKED := Color("#7d8782")
 const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/seasons/mission.tres"),
 	preload("res://stations/measurement/mission.tres"),
@@ -159,14 +163,24 @@ func _refresh_list() -> void:
 				subject = "Fen Bilimleri"
 			elif mission.subject == "Tarih":
 				subject = "İnkılap Tarihi"
-		var prefix := ""
-		if active_route != &"class":
-			prefix = "%02d  " % (visible_missions.size() + 1)
-		var suffix := "  ✓" if _is_completed(mission.id) else ""
-		var index := mission_list.add_item("%s%s · %s%s" % [prefix, mission.title, subject, suffix])
-		if not _is_unlocked(mission.id):
-			mission_list.set_item_custom_fg_color(index, UITheme.MUTED)
-			mission_list.set_item_tooltip(index, "Önce önceki düzeneğin onarımını tamamla.")
+		var numbered := active_route != &"class"
+		var done := _is_completed(mission.id)
+		var unlocked := _is_unlocked(mission.id)
+		var is_next := numbered and not done and unlocked
+		var glyph := "✓" if done else "▶" if is_next else "▣" if numbered else "·"
+		var state_word := "Onarıldı" if done else "Sıradaki" if is_next else "Kilitli"
+		var number := "%02d  " % (visible_missions.size() + 1) if numbered else ""
+		var row := "%s  %s%s · %s" % [glyph, number, mission.title, subject]
+		if numbered:
+			row += "   —   %s" % state_word
+		var index := mission_list.add_item(row)
+		if done:
+			mission_list.set_item_custom_fg_color(index, LEVEL_DONE)
+		elif is_next:
+			mission_list.set_item_custom_fg_color(index, LEVEL_NEXT)
+		elif numbered:
+			mission_list.set_item_custom_fg_color(index, LEVEL_LOCKED)
+			mission_list.set_item_tooltip(index, "Kilitli: önce “%s” düzeneğini onar." % _next_route_mission().title)
 		mission_list.set_item_metadata(index, mission.id)
 		visible_missions.append(mission)
 		if mission.id == selected_id:
@@ -196,12 +210,13 @@ func _refresh_list() -> void:
 		progress.text = "ROTA TAMAMLANDI   ·   %d / %d   ·   Üç Güneş son ölçüm" % [repaired, route_total]
 	else:
 		var next_step := route_missions[repaired].title if repaired < route_missions.size() else "Üç Güneş"
-		progress.text = "ADIM %d / %d   ·   SIRADAKİ: %s" % [repaired + 1, route_total, next_step]
+		progress.text = "%d / %d düzenek onarıldı   ·   Sıradaki: %s" % [repaired, route_total, next_step]
 	if Campaign.has_story_flag(_story_key("won")) and active_route != &"class":
 		progress.text = "ROTA TAMAMLANDI   ·   %d / %d   ·   Hikâye tamamlandı" % [repaired, route_total]
 	finale_button.visible = active_route != &"class"
 	finale_button.disabled = not _route_ready_for_finale()
-	finale_button.text = "Finali yeniden oyna · Üç Güneş" if Campaign.has_story_flag(_story_key("won")) else "Final · Üç Güneş"
+	var remaining := maxi(route_total - repaired, 0)
+	finale_button.text = "Finali yeniden oyna · Üç Güneş" if Campaign.has_story_flag(_story_key("won")) else ("Final · Üç Güneş" if remaining == 0 else "Final · Üç Güneş  ·  %d düzenek kaldı" % remaining)
 	finale_button.tooltip_text = "Rotadaki tüm düzenekleri onararak finali aç." if finale_button.disabled else "Son ölçümü yap ve merkezi yetkiyi kaldır."
 
 
@@ -222,13 +237,18 @@ func _select_mission(index: int) -> void:
 	mission_title.text = selected_mission.title
 	mission_description.text = selected_mission.description
 	start_mission.disabled = selected_mission.scene == null or not _is_unlocked(selected_mission.id)
+	var pending := _next_route_mission()
 	if _is_completed(selected_mission.id):
-		mission_status.text = "Onarıldı"
+		mission_status.text = "✓ Onarıldı"
 	elif selected_mission.scene == null:
 		mission_status.text = "Hazırlanıyor"
+	elif not _is_unlocked(selected_mission.id) and pending != null:
+		mission_status.text = "▣ Kilitli · önce “%s” düzeneğini onar" % pending.title
+	elif active_route != &"class" and pending != null and pending.id == selected_mission.id:
+		mission_status.text = "▶ Sıradaki düzenek"
 	else:
-		mission_status.text = "Deneye hazır" if _is_unlocked(selected_mission.id) else "Önce önceki düzeneği onar"
-	start_mission.text = "Yeniden dene" if _is_completed(selected_mission.id) else "Düzeneğe gir"
+		mission_status.text = "Deneye hazır"
+	start_mission.text = "Yeniden dene" if _is_completed(selected_mission.id) else "Düzeneğe gir" if start_mission.disabled == false else "Kilitli"
 
 
 func _activate_mission(index: int) -> void:
