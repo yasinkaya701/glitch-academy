@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" path="res://tests/spin_flow_test.gd" id="1"]
 
-[node name="SpinFlowTest" type="Node"]
+[node name="ShotWave" type="Node"]
 script = ExtResource("1")

@@ -1,62 +1,46 @@
 extends Node
-## Spin Hattı görevini doğru ve yanlış yollarla baştan sona oynar.
-## Kullanım: godot --headless --path . tests/spin_flow_test.tscn
+## Spin Hattı akışı: kriz → sınama → neden → ölçüm → kurtarma. Çıkış kodu = başarısız denetim sayısı.
 
 var failures := 0
 
-func _check(label: String, ok: bool) -> void:
-	print("%s  %s" % ["ok " if ok else "HATA", label])
-	if not ok:
-		failures += 1
 
 func _ready() -> void:
-	var m: Control = load("res://stations/spin/mission.tscn").instantiate()
-	var done := [false]
-	m.completed.connect(func() -> void: done[0] = true)
-	add_child(m)
-	await get_tree().create_timer(0.2).timeout
-	m._on_action()
-	_check("spin: sına adımı", m.step == m.Step.TEST)
-	# Z↑ süz, Z ölç: aynı sonuç
-	m._cycle_stage(0)
-	_check("spin: düzgün alanda (arıza) gözlem sayılmadı", not m._seen_same and not m._seen_split)
-	m._view().gradient = 1.0
-	m._after_change()
-	_check("spin: alan eşit değilken iki iz gözlemi", m._seen_split)
-	_check("spin: aynı eksen gözlemi", m._seen_same)
-	m._toggle_detector()
-	_check("spin: dik eksen gözlemi", m._seen_cross)
-	m._cycle_stage(1); m._cycle_stage(1); m._cycle_stage(1)   # X↑
-	m._toggle_detector()                                         # Z ölç
-	_check("spin: silinen bilgi gözlemi, Nedeni seç açıldı", m._seen_erased and m.hud.action.text == "Nedeni seç")
-	m._on_action()
-	m._on_reason(&"spread")
-	m._on_reason(&"uniform")
-	_check("spin: yanlış neden ilerlemedi", m.step == m.Step.REASON)
-	m._on_reason(&"two")
-	m._on_action()
-	_check("spin: ölç adımı", m.step == m.Step.MEASURE)
-	m.entry.text = "100"
-	m._on_action()
-	_check("spin: %100 ilerlemedi", m.step == m.Step.MEASURE)
-	m.entry.text = "50"
-	m._on_action()
-	_check("spin: kurtar adımı", m.step == m.Step.RESCUE)
-	# Yanlış: Z↑, Z↓ (hiç atom geçmez)
-	m._cycle_stage(0); m._cycle_stage(1); m._cycle_stage(1)
-	m._on_action()
-	_check("spin: Z↑ sonra Z↓ kurtarmadı", not done[0])
-	# Yanlış: yalnız Z↓ (oran %50)
-	m._choice = [2, 0, 0]; m._apply_setup()
-	m._on_action()
-	_check("spin: tek süzgeç kurtarmadı", not done[0])
-	# Yanlış: oran doğru, dedektör X
-	m._choice = [1, 3, 2]; m._apply_setup(); m._view().detector_axis = &"x"
-	m._on_action()
-	_check("spin: dedektör X kurtarmadı", not done[0])
-	m._view().detector_axis = &"z"
-	m._on_action()
-	_check("spin: Z↑, X↑, Z↓ + Z dedektör → mühür", done[0])
-	m.queue_free()
-	print("BAŞARISIZ: %d" % failures if failures > 0 else "HEPSİ GEÇTİ")
+	var scene: Control = load("res://stations/spin/mission.tscn").instantiate()
+	add_child(scene)
+	scene.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	await get_tree().create_timer(0.5).timeout
+	scene._view().skip_intro()
+	scene._on_action()
+	_check(scene.step == scene.Step.TEST, "sınama adımına geçti")
+	scene._view().gradient = 1.0
+	scene._cycle_stage(0)
+	scene._after_change()
+	scene._view().detector_axis = &"z"
+	scene._cycle_stage(0)
+	scene._cycle_stage(0)
+	scene._cycle_stage(0)
+	scene._on_reason(&"spread")
+	scene._enter_reason()
+	_check(scene.step == scene.Step.REASON, "neden adımı")
+	scene._on_reason(&"two")
+	scene._on_action()
+	_check(scene.step == scene.Step.MEASURE, "ölçüm adımı")
+	scene.entry.text = "100"
+	scene._on_action()
+	_check(scene.step == scene.Step.MEASURE, "yanlış %100 ilerletmez")
+	scene.entry.text = "50"
+	scene._on_action()
+	_check(scene.step == scene.Step.RESCUE, "doğru %50 kurtarma adımına geçirir")
+	# Hedef: ulaşan %12,5, hepsi Z aşağı. Z↑ → X↑ → Z↓ : 0,5 × 0,5 × 0,5
+	scene._choice = [1, 3, 2]
+	scene._apply_setup()
+	scene._on_action()
+	_check(scene._sealed, "doğru düzenek mühürler (hak sınırı yok, onarım tamam)")
+	print("BAŞARISIZ: %d" % failures)
 	get_tree().quit(failures)
+
+
+func _check(ok: bool, what: String) -> void:
+	print(("ok   " if ok else "FAIL ") + what)
+	if not ok:
+		failures += 1

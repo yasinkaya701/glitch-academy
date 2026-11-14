@@ -23,6 +23,7 @@ const CHANNEL := 62.0              ## kanalların eksenden sapması
 const SPOT := 95.0                 ## ekranda iz sapması
 const INTRO_LEN := 4.6
 const TUBE_Y := 0.36
+const BASE_FOV := 32.0
 
 var stages: Array = [{}, {}, {}]
 var detector_axis: StringName = &"z"
@@ -274,8 +275,21 @@ func play_repair() -> void:
 	repair_t = 0.0
 
 
+## Dar kutuda (900×600 gibi) sahne iki yandan kesilmesin: 16:9'dan dar olunca görüş genişliği sabit tutulur.
+func _fit_camera() -> void:
+	if stage == null or stage.size.y < 1.0:
+		return
+	var wide := stage.size.x / stage.size.y >= 16.0 / 9.0
+	var camera := stage.camera
+	# Dar kutuda üstteki yönerge ve Bilgi düğmesi ölçü ekranını örtmesin: sahne biraz aşağı iner.
+	camera.look_at_from_position(_camera_position(), _camera_target() + (Vector3.ZERO if wide else Vector3(0.0, 0.3, 0.0)))
+	camera.keep_aspect = Camera3D.KEEP_HEIGHT if wide else Camera3D.KEEP_WIDTH
+	camera.fov = BASE_FOV if wide else rad_to_deg(2.0 * atan(tan(deg_to_rad(BASE_FOV * 0.5)) * 16.0 / 9.0))
+
+
 func _process(delta: float) -> void:
 	super._process(delta)
+	_fit_camera()
 	if _magnets.is_empty():
 		return
 	_clock += delta
