@@ -37,3 +37,5 @@ Durum: açık | Üretici: Codex | Sahne: yol
 ## Kabul ölçütü
 ## Varsayılanlar
 ```
+| 013 | Kalp Odası kapakçık ve doku görselleri | Codex | açık |
+| 014 | Üç Güneş (final) 3B varlıkları | Codex | açık |
