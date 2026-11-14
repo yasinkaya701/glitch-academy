@@ -41,12 +41,13 @@ var _info_dialog: AcceptDialog
 var _last_layout_size := Vector2.ZERO
 var _interface_built := false
 var _visual_frame: StyleBoxTexture
-var _control_frame: StyleBoxTexture
+var _control_frame: StyleBox
+var _title_label: Label
 
 
 func _ready() -> void:
 	_visual_frame = _panel_frame("res://assets/ui/panel_glass.png", 24.0, 24.0, 24.0, 24.0)
-	_control_frame = _panel_frame("res://assets/ui/panel_info.png", 24.0, 24.0, 76.0, 24.0)
+	_control_frame = _answer_card()
 	if mission_definition == null and not mission_data_path.is_empty():
 		mission_definition = load(mission_data_path) as Definition
 	if mission_definition == null:
@@ -79,6 +80,18 @@ func _draw() -> void:
 		draw_style_box(_visual_frame, left_panel)
 	if right_panel.size.x > 0.0 and right_panel.size.y > 0.0:
 		draw_style_box(_control_frame, right_panel)
+
+
+## Koyu yazı (INK, MUTED) açık zemin ister; sağ panel açık, düz bir kart olarak çizilir.
+func _answer_card() -> StyleBoxFlat:
+	var card := StyleBoxFlat.new()
+	card.bg_color = Color("#fcfdfb")
+	card.border_color = Color("#c9d4cd")
+	card.set_border_width_all(1)
+	card.set_corner_radius_all(14)
+	card.shadow_color = Color(0.1, 0.18, 0.15, 0.10)
+	card.shadow_size = 6
+	return card
 
 
 func _panel_frame(path: String, left: float, right: float, top: float, bottom: float) -> StyleBoxTexture:
@@ -150,6 +163,9 @@ func _build_interface() -> void:
 	overline.position = Vector2(26, 18)
 	overline.size = Vector2(minf(740.0, size.x - 92.0), 22)
 	add_child(overline)
+	_title_label = _label(mission_definition.title, 22, INK)
+	_title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	add_child(_title_label)
 	_info_button = Button.new()
 	_info_button.text = "ⓘ"
 	_info_button.tooltip_text = "Kazanım ve kaynak"
@@ -229,6 +245,9 @@ func _layout_interface() -> void:
 		_visual.size = left_panel.size - Vector2.ONE * visual_inset * 2.0
 	_evidence_label.position = right_panel.position + Vector2(18, 84)
 	_evidence_label.size = Vector2(right_panel.size.x - 36.0, 18)
+	_title_label.position = right_panel.position + Vector2(18, 18)
+	_title_label.size = Vector2(right_panel.size.x - 36.0, 52)
+	_title_label.add_theme_font_size_override("font_size", 19 if right_panel.size.x < 320.0 else 22)
 	var text_width := right_panel.size.x - 36.0
 	_compact_content_flow = right_panel.size.y < 440.0
 	if not _completed:

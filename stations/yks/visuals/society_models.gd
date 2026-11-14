@@ -73,7 +73,7 @@ func _process(delta: float) -> void:
 
 
 func _build_philosophy() -> void:
-	_title("PHILOSOPHY · CLAIMS AND REASONS")
+	_title("FELSEFE · İDDİA VE GEREKÇE")
 	_floor(6.5, 4.2)
 	# Three premises travel along a shared beam; the counterweight makes support visible.
 	_box("Fulcrum", Vector3(0, 0.72, 0), Vector3(0.48, 1.35, 0.48), MUTED)
@@ -87,13 +87,13 @@ func _build_philosophy() -> void:
 		_link("Reason%d" % i, Vector3(x, 1.33, 0), Vector3(x, 1.0, 0), MUTED, 0.08)
 	_parts["premises"] = premise_nodes
 	_box("Conclusion", Vector3(0, 0.58, -1.3), Vector3(1.5, 0.38, 0.48), MINT)
-	_label("CONCLUSION", Vector3(-0.82, 0.84, -1.3), PAPER, 0.34)
+	_label("SONUÇ", Vector3(-0.82, 0.84, -1.3), PAPER, 0.34)
 	_link("InferencePath", Vector3(0, 1.1, -0.9), Vector3(0, 0.82, -0.9), AMBER, 0.1)
-	_label("PREMISES  →  INFERENCE  →  CLAIM", Vector3(-2.45, 2.65, 0), PAPER, 0.36)
+	_label("ÖNCÜLLER  →  ÇIKARIM  →  İDDİA", Vector3(-2.45, 2.65, 0), PAPER, 0.36)
 
 
 func _build_religion() -> void:
-	_title("RELIGION · COMPARATIVE EXHIBIT")
+	_title("DİN KÜLTÜRÜ · KARŞILAŞTIRMA")
 	_floor(6.7, 4.2)
 	# Neutral exhibit: compare two descriptions against the same evidence rail.
 	_box("ExhibitTable", Vector3(0, 0.46, 0), Vector3(5.4, 0.16, 1.45), MUTED)
@@ -101,17 +101,17 @@ func _build_religion() -> void:
 		var x := -1.45 + float(i) * 2.9
 		_box("ArtifactPanel%d" % i, Vector3(x, 1.55, -0.1), Vector3(1.45, 1.7, 0.16), BLUE if i == 0 else AMBER)
 		_box("PanelInset%d" % i, Vector3(x, 1.55, 0.0), Vector3(1.16, 1.38, 0.08), INK)
-		_label("VIEW A" if i == 0 else "VIEW B", Vector3(x - 0.42, 2.08, 0.06), PAPER, 0.4)
+		_label("GÖRÜŞ A" if i == 0 else "GÖRÜŞ B", Vector3(x - 0.42, 2.08, 0.06), PAPER, 0.4)
 		_link("EvidenceLink%d" % i, Vector3(x, 0.8, 0.55), Vector3(0, 0.8, 0.55), MUTED, 0.07)
 	_box("CommonEvidence", Vector3(0, 0.82, 0.76), Vector3(2.0, 0.15, 0.25), MINT)
-	_label("SHARED TEXT / CONTEXT", Vector3(-1.0, 1.03, 0.92), PAPER, 0.32)
+	_label("ORTAK METİN / BAĞLAM", Vector3(-1.0, 1.03, 0.92), PAPER, 0.32)
 	_parts["comparison_slider"] = _sphere("ComparisonMarker", Vector3(-1.4, 0.96, 1.0), 0.12, AMBER)
 	_link("ScaleRail", Vector3(-1.5, 0.95, 1), Vector3(1.5, 0.95, 1), PAPER, 0.045)
-	_label("COMPARE CLAIMS WITH THE SAME EVIDENCE", Vector3(-2.45, 2.8, 0), PAPER, 0.33)
+	_label("AYNI KANITLA İDDİALARI KARŞILAŞTIR", Vector3(-2.45, 2.8, 0), PAPER, 0.33)
 
 
 func _build_psychology() -> void:
-	_title("PSYCHOLOGY · PERCEPTION MAZE")
+	_title("PSİKOLOJİ · ALGI LABİRENTİ")
 	_floor(6.1, 4.4)
 	# A single path turns the same stimulus into different interpretations at the fork.
 	var walls := [
@@ -129,35 +129,35 @@ func _build_psychology() -> void:
 	for i in walls.size():
 		_box("MazeWall%d" % i, walls[i][0], walls[i][1], MUTED)
 	_sphere("Stimulus", Vector3(-2.45, 0.35, 0), 0.23, AMBER)
-	_label("SAME STIMULUS", Vector3(-2.55, 0.8, 0), PAPER, 0.32)
-	_label("CONTEXT A", Vector3(0.1, 1.0, -1.05), BLUE, 0.34)
-	_label("CONTEXT B", Vector3(0.1, 1.0, 0.9), MINT, 0.34)
+	_label("AYNI UYARAN", Vector3(-2.55, 0.8, 0), PAPER, 0.32)
+	_label("BAĞLAM A", Vector3(0.1, 1.0, -1.05), BLUE, 0.34)
+	_label("BAĞLAM B", Vector3(0.1, 1.0, 0.9), MINT, 0.34)
 	_marker_path = [Vector3(-2.45, 0.3, 0), Vector3(-1.5, 0.3, 0), Vector3(-0.4, 0.3, 0), Vector3(0.65, 0.3, -0.78), Vector3(1.95, 0.3, -0.78)]
 	_parts["perception_marker"] = _sphere("PerceptionMarker", _marker_path[0], 0.15, CORAL)
-	_label("PERCEPTION DEPENDS ON CONTEXT", Vector3(-2.1, 2.0, 0), PAPER, 0.34)
+	_label("ALGI BAĞLAMA BAĞLIDIR", Vector3(-2.1, 2.0, 0), PAPER, 0.34)
 
 
 func _build_sociology() -> void:
-	_title("SOCIOLOGY · GROUPS AND RELATIONS")
+	_title("SOSYOLOJİ · GRUP VE İLİŞKİLER")
 	_floor(6.5, 4.3)
 	# Nodes sit in meaningful groups; one bridge shows how roles connect groups.
 	var centers := [Vector3(-1.55, 0.85, -0.6), Vector3(1.55, 0.85, -0.6), Vector3(-1.55, 0.85, 0.8), Vector3(1.55, 0.85, 0.8)]
 	for group in 2:
 		var z := -0.6 if group == 0 else 0.8
 		_box("GroupFrame%d" % group, Vector3(0, 0.1, z), Vector3(5.4, 0.08, 1.18), INK)
-		_label("GROUP A · SHARED PRACTICE" if group == 0 else "GROUP B · INSTITUTION", Vector3(-2.45, 1.45, z - 0.42), BLUE if group == 0 else AMBER, 0.3)
+		_label("GRUP A · ORTAK UYGULAMA" if group == 0 else "GRUP B · KURUM", Vector3(-2.45, 1.45, z - 0.42), BLUE if group == 0 else AMBER, 0.3)
 	for i in centers.size():
 		_sphere("Member%d" % i, centers[i], 0.22, BLUE if i < 2 else AMBER)
-		_label("ROLE %d" % (i + 1), centers[i] + Vector3(-0.32, 0.35, 0), PAPER, 0.26)
+		_label("ROL %d" % (i + 1), centers[i] + Vector3(-0.32, 0.35, 0), PAPER, 0.26)
 	for i in 2:
 		_link("GroupTie%d" % i, centers[i * 2], centers[i * 2 + 1], MUTED, 0.055)
 	_parts["bridge"] = _link("IntergroupRelation", centers[0], centers[2], MINT, 0.1)
 	_parts["bridge2"] = _link("IntergroupRelation2", centers[1], centers[3], MINT, 0.1)
-	_label("ROLE + POSITION SHAPE INTERACTION", Vector3(-2.0, 2.4, 0), PAPER, 0.34)
+	_label("ROL + KONUM ETKİLEŞİMİ ŞEKİLLENDİRİR", Vector3(-2.0, 2.4, 0), PAPER, 0.34)
 
 
 func _build_logic() -> void:
-	_title("LOGIC · PHYSICAL INFERENCE GATE")
+	_title("MANTIK · ÇIKARIM KAPISI")
 	_floor(6.4, 4.2)
 	# Two premise sliders feed a mechanical AND gate; the output shutter opens only together.
 	for i in 2:
@@ -168,15 +168,15 @@ func _build_logic() -> void:
 		_link("InputRod%d" % i, Vector3(0.08, 0.67, z), Vector3(0.62, 0.67, 0), AMBER, 0.1)
 	_box("GateHousing", Vector3(0.65, 1.0, 0), Vector3(1.0, 0.82, 1.15), INK)
 	_box("GateFace", Vector3(0.65, 1.0, 0.6), Vector3(0.72, 0.6, 0.08), MUTED)
-	_label("AND", Vector3(0.28, 1.12, 0.66), PAPER, 0.42)
+	_label("VE", Vector3(0.28, 1.12, 0.66), PAPER, 0.42)
 	_box("OutputTrack", Vector3(1.82, 0.42, 0), Vector3(1.8, 0.12, 0.28), MUTED)
 	_parts["gate_shutter"] = _box("OutputShutter", Vector3(1.4, 0.75, 0), Vector3(0.16, 0.82, 0.48), CORAL)
 	_parts["output"] = _sphere("InferenceOutput", Vector3(2.65, 0.68, 0), 0.22, CORAL)
-	_label("P ∧ Q  →  CONCLUSION", Vector3(-1.7, 2.1, 0), PAPER, 0.36)
+	_label("P ∧ Q  →  SONUÇ", Vector3(-1.7, 2.1, 0), PAPER, 0.36)
 
 
 func _build_english() -> void:
-	_title("ENGLISH · SPATIAL SYNTAX")
+	_title("İNGİLİZCE · CÜMLE YAPISI")
 	_floor(6.5, 4.2)
 	# Word blocks form a sentence; elevated arcs show grammatical dependency.
 	var xs := [-1.8, 0.0, 1.8]
@@ -189,8 +189,8 @@ func _build_english() -> void:
 	_parts["subject_arc"] = _arch("SubjectVerbArc", Vector3(-1.8, 1.0, 0.08), Vector3(0, 1.0, 0.08), 0.9, BLUE)
 	_parts["object_arc"] = _arch("VerbObjectArc", Vector3(0, 1.0, 0.08), Vector3(1.8, 1.0, 0.08), 0.65, MINT)
 	_link("SentenceBaseline", Vector3(-2.5, 0.18, 0.2), Vector3(2.5, 0.18, 0.2), MUTED, 0.06)
-	_label("WHO  →  DOES WHAT  →  TO WHOM / WHAT", Vector3(-2.35, 2.55, 0), PAPER, 0.32)
-	_label("AGREEMENT + WORD ORDER CARRY MEANING", Vector3(-2.2, 2.2, 0), AMBER, 0.3)
+	_label("KİM  →  NE YAPAR  →  KİME / NEYİ", Vector3(-2.35, 2.55, 0), PAPER, 0.32)
+	_label("UYUM + SÖZCÜK SIRASI ANLAM TAŞIR", Vector3(-2.2, 2.2, 0), AMBER, 0.3)
 
 
 func _apply_state() -> void:
@@ -324,6 +324,7 @@ func _label(text_value: String, at: Vector3, color: Color, font_size: float) -> 
 	label.font_size = roundi(font_size * 64.0)
 	label.pixel_size = 0.006
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	label.modulate = color
 	label.outline_size = 6
 	label.outline_modulate = Color("#0b1720")
