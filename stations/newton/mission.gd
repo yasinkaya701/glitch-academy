@@ -37,7 +37,17 @@ func screen(index: int, label: String, directive: String, action_text: String = 
 func _process(_delta: float) -> void:
 	if hud == null or stage == null:
 		return
+	var knobs_shown := tools.get_child_count() == 0
 	stage.offset_bottom = -maxf(88.0, tools.size.y + 40.0)
+	if not knobs_shown:
+		return
+	# Düğmeler görünürken bildirim eylem düğmesinin solunda, alt şeridin içinde durur; sahneyi ve konsol etiketlerini örtmez.
+	var toast: Control = hud.toast
+	var edge := 18.0
+	var action_width: float = hud.action.size.x + 16.0 if hud.action.visible else 0.0
+	toast.size.x = minf(size.x - edge * 2.0 - action_width, 720.0)
+	toast.size.y = toast.get_minimum_size().y
+	toast.position = Vector2(edge, size.y - edge - toast.size.y)
 
 
 func _begin() -> void:

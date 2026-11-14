@@ -42,8 +42,12 @@ func _camera_target() -> Vector3:
 	return Vector3(0.0, 0.34, 0.25)
 
 
+func _compact_screen_dx() -> float:
+	return 0.35
+
+
 func _narrow_shift() -> float:
-	return 0.55
+	return 0.2
 
 
 func _screen_size() -> Vector2:

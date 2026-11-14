@@ -198,7 +198,12 @@ func _build_line_ui() -> void:
 	_rule_line.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_rule_line.color = Color(0.85, 0.72, 0.48, 0.55)
 
-	_line_label.add_theme_font_override("font", _serif_italic)
+	var bold_serif := FontVariation.new()
+	bold_serif.base_font = _serif_italic
+	bold_serif.variation_embolden = 0.6
+	_line_label.add_theme_font_override("font", bold_serif)
+	_line_label.add_theme_constant_override("outline_size", 5)
+	_line_label.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.03, 0.9))
 	_line_label.add_theme_font_size_override("font_size", 23)
 	_line_label.add_theme_color_override("font_color", Color("#f3eee2"))
 	_line_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

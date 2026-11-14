@@ -78,6 +78,11 @@ func _narrow_shift() -> float:
 	return 0.0
 
 
+## Alt sınıf dar kutuda cihaz ekranını sağa bu kadar (dünya birimi) kaydırır: yönerge kutusu ekranın sol üstünü örtmesin.
+func _compact_screen_dx() -> float:
+	return 0.0
+
+
 ## 16:9'dan dar kutuda (900×600 gibi) sahne iki yandan kesilmesin: görüş genişliği sabit tutulur.
 func _fit_camera() -> void:
 	if stage == null or stage.camera == null or stage.size.y < 1.0:
@@ -85,6 +90,10 @@ func _fit_camera() -> void:
 	var wide := stage.size.x / stage.size.y >= 16.0 / 9.0
 	var compact := stage.size.x < 760.0
 	var camera := stage.camera
+	if screen != null:
+		var base := _screen_transform()
+		base.origin.x += _compact_screen_dx() if compact else 0.0
+		screen.transform = base
 	camera.look_at_from_position(_camera_position(), _camera_target() + Vector3(0.0, _narrow_shift() if compact else 0.0, 0.0))
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT if wide else Camera3D.KEEP_WIDTH
 	camera.fov = BASE_FOV if wide else rad_to_deg(2.0 * atan(tan(deg_to_rad(BASE_FOV * 0.5)) * 16.0 / 9.0))

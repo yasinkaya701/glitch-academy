@@ -55,7 +55,7 @@ func _draw() -> void:
 	var bottom := minf(size.y * 0.24, 170.0)
 	draw_polygon(PackedVector2Array([Vector2(0, size.y), Vector2(size.x, size.y), Vector2(size.x, size.y - bottom), Vector2(0, size.y - bottom)]),
 		PackedColorArray([dark, dark, clear, clear]))
-	_draw_gameplay_steps()
+	# Aşama çizgisi kaldırıldı: filozof ve tarihî kişinin başının üstüne biniyordu; adımlar HUD şeridinde.
 
 
 func _draw_gameplay_steps() -> void:
