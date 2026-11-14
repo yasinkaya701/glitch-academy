@@ -1,0 +1,112 @@
+{
+  "figures": {
+    "mete_han": {
+      "name": "Mete Han",
+      "caption": "Mete Han / Modu Chanyu heykeli",
+      "credit": "KoizumiBS · 4 Ocak 2023",
+      "collection": "Chinggis Khaan Ulusal Müzesi, Ulan Batur",
+      "nature": "Modern temsil · Dönem portresi değildir.",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "view_region": [
+        600,
+        1080,
+        1900,
+        2630
+      ],
+      "body_size": [
+        3024,
+        4032
+      ],
+      "source_url": "https://commons.wikimedia.org/wiki/File:Modu_Chanyu.jpg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/6/68/Modu_Chanyu.jpg?download=1",
+      "sha256": "b5b3aac82ef95f9815696c8d0898f060e4d498cc0429675d9db8504901f0c7c6",
+      "file": "images/mete_han.jpg"
+    },
+    "alparslan": {
+      "name": "Sultan Alparslan",
+      "caption": "Câmiu’t-Tevârîh · Alparslan minyatürü",
+      "credit": "Anonim nakkaş · Osmanlı nüshası",
+      "collection": "Topkapı Sarayı · H.1654, vr.202",
+      "nature": "Sonradan yapılmış tarihî tasvir · Yaşamından bir portre değildir.",
+      "body_size": [
+        1294,
+        1504
+      ],
+      "source_url": "https://commons.wikimedia.org/wiki/File:Sultan_Alp_Arslan_miniature.%28Re%C4%A2%C3%AEd%C3%BC%E2%80%9Fd-d%C3%AEn%2C_Cami%E2%80%9F%C3%BC%E2%80%9Ft-Tev%C3%A2rih%2C_TSMK%2C_Hazine%2C_nr._1654%2C_vr._202%29_Detail.jpg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Sultan_Alp_Arslan_miniature.%28Re%C4%A2%C3%AEd%C3%BC%E2%80%9Fd-d%C3%AEn%2C_Cami%E2%80%9F%C3%BC%E2%80%9Ft-Tev%C3%A2rih%2C_TSMK%2C_Hazine%2C_nr._1654%2C_vr._202%29_Detail.jpg?download=1",
+      "sha256": "9f2c544be709cfce066ec69d37a13bbb7a4daad02b16c28ffc2d10a49a6e3c47",
+      "license": "Public domain (PD-Art)",
+      "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "file": "images/alparslan.jpg"
+    },
+    "fatih": {
+      "name": "Fatih Sultan Mehmed",
+      "caption": "Sultan II. Mehmed · 1480",
+      "credit": "Gentile Bellini’ye atfedilir",
+      "collection": "National Gallery · NG3099",
+      "nature": "Tarihî portre · Eserin özgün dokusu korunmuştur.",
+      "body_size": [
+        3132,
+        4226
+      ],
+      "source_url": "https://commons.wikimedia.org/wiki/File:Bellini%2C_Gentile_-_Sultan_Mehmet_II.jpg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Bellini%2C_Gentile_-_Sultan_Mehmet_II.jpg?download=1",
+      "sha256": "7579c2b9bf09e4084fb42bd4e87d8b6a6b7487aa2d40c48c23267c7938c72d13",
+      "license": "Public domain (PD-Art)",
+      "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "file": "images/fatih.jpg"
+    },
+    "kanuni": {
+      "name": "Kanuni Sultan Süleyman",
+      "caption": "Sultan Süleyman profilden · 1530’lar",
+      "credit": "Tiziano çevresi",
+      "collection": "Kunsthistorisches Museum · GG 2429",
+      "nature": "Tarihî portre · Eserin özgün dokusu korunmuştur.",
+      "body_size": [
+        1810,
+        2117
+      ],
+      "source_url": "https://commons.wikimedia.org/wiki/File:EmperorSuleiman.jpg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/e/e9/EmperorSuleiman.jpg?download=1",
+      "sha256": "b3beec8f5b433981c585081cf9a1d028727b2ff2ffb9af441000684e42353704",
+      "license": "Public domain (PD-Art)",
+      "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "file": "images/kanuni.jpg"
+    },
+    "mimar_sinan": {
+      "name": "Mimar Sinan",
+      "caption": "Târîh-i Sultân Süleymân · y.1579",
+      "credit": "Nakkaş Osman · Seyyid Lokman",
+      "collection": "Chester Beatty · T.413, vr.115v",
+      "nature": "Sinan olduğu düşünülen figür · Minyatür detayı.",
+      "body_size": [
+        381,
+        649
+      ],
+      "source_url": "https://commons.wikimedia.org/wiki/File:Lokman_1579_detail_showing_Sinan_%28cropped%29.jpg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/6/6a/Lokman_1579_detail_showing_Sinan_%28cropped%29.jpg?download=1",
+      "sha256": "e0177e98f09127e300892593dd542abdbd7244b5aa015e9897477c7c5d6c74df",
+      "license": "Public domain (PD-Art)",
+      "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "file": "images/mimar_sinan.jpg"
+    },
+    "ataturk": {
+      "name": "Mustafa Kemal Atatürk",
+      "caption": "Mustafa Kemal · 1921",
+      "credit": "Fotoğrafçı bilinmiyor · Dijital sürüm: TYalaA",
+      "collection": "Wikimedia Commons",
+      "nature": "Dönem fotoğrafı · Dijital kaynakta gama düzeltilmiştir.",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "body_size": [
+        582,
+        787
+      ],
+      "source_url": "https://commons.wikimedia.org/wiki/File:Mustafa_Kemal_Atat%C3%BCrk_1921.jpg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/9/99/Mustafa_Kemal_Atat%C3%BCrk_1921.jpg?download=1",
+      "sha256": "a3980f00b983e3a2585a47a88429cfc10f1c9f49a12717b0bee0cf6eff675edc",
+      "file": "images/ataturk.jpg"
+    }
+  }
+}
