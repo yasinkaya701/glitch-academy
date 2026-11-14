@@ -1,11 +1,13 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/control_center.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/world/observatory.tscn" id="2"]
 
+[ext_resource type="Texture2D" path="res://assets/backgrounds/observatory-daylight.png" id="3_bg"]
+
 [sub_resource type="Gradient" id="Gradient_scrim"]
 offsets = PackedFloat32Array(0, 0.42, 0.72, 1)
-colors = PackedColorArray(0.027, 0.041, 0.064, 0.98, 0.027, 0.041, 0.064, 0.88, 0.027, 0.041, 0.064, 0.06, 0.027, 0.041, 0.064, 0)
+colors = PackedColorArray(0.957, 0.965, 0.949, 0.98, 0.957, 0.965, 0.949, 0.94, 0.957, 0.965, 0.949, 0.46, 0.957, 0.965, 0.949, 0.0)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture_scrim"]
 gradient = SubResource("Gradient_scrim")
@@ -38,6 +40,17 @@ render_target_update_mode = 2
 [node name="Observatory" parent="WorldView/Viewport" instance=ExtResource("2")]
 unique_name_in_owner = true
 
+[node name="Backdrop" type="TextureRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("3_bg")
+expand_mode = 1
+stretch_mode = 6
+
 [node name="HubScrim" type="TextureRect" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
@@ -65,20 +78,28 @@ mouse_filter = 2
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 0
-custom_minimum_size = Vector2(432, 0)
-theme_override_constants/separation = 16
+custom_minimum_size = Vector2(800, 0)
+theme_override_constants/separation = 12
 
 [node name="Subtitle" type="Label" parent="Margin/Hub"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.63, 0.83, 0.78, 1)
+theme_override_colors/font_color = Color(0.23, 0.47, 0.40, 1)
 theme_override_font_sizes/font_size = 15
-text = "KONTROL MERKEZİ"
+text = "Meridyen Gözlemevi"
+theme_type_variation = "SectionLabel"
 
 [node name="Title" type="Label" parent="Margin/Hub"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.95, 0.94, 1)
-theme_override_font_sizes/font_size = 52
+theme_override_colors/font_color = Color(0.13, 0.20, 0.18, 1)
+theme_type_variation = "HeadlineLabel"
+theme_override_font_sizes/font_size = 50
 text = "Yanlış Dünya"
+
+[node name="Welcome" type="Label" parent="Margin/Hub"]
+layout_mode = 2
+theme_type_variation = "MutedLabel"
+text = "Ölçümler değişti. Nedenini deneylerle bul."
+autowrap_mode = 3
 
 [node name="Routes" type="HBoxContainer" parent="Margin/Hub"]
 layout_mode = 2
@@ -87,34 +108,38 @@ theme_override_constants/separation = 8
 [node name="Class" type="Button" parent="Margin/Hub/Routes"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "RouteTab"
 toggle_mode = true
-button_pressed = true
-text = "Sınıfa göre keşfet"
+text = "Serbest keşif"
 
 [node name="LGS" type="Button" parent="Margin/Hub/Routes"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "RouteTab"
 toggle_mode = true
+button_pressed = true
 text = "LGS"
 
 [node name="TYT" type="Button" parent="Margin/Hub/Routes"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "RouteTab"
 toggle_mode = true
-text = "YKS–TYT"
+text = "TYT"
 
 [node name="AYT" type="Button" parent="Margin/Hub/Routes"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "RouteTab"
 toggle_mode = true
-text = "YKS–AYT"
+text = "AYT"
 
 [node name="GradeFilter" type="OptionButton" parent="Margin/Hub"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 0
 
-[node name="Missions" type="VBoxContainer" parent="Margin/Hub"]
+[node name="Missions" type="HBoxContainer" parent="Margin/Hub"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 18
@@ -124,45 +149,66 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_minimum_size = Vector2(0, 170)
-theme_override_constants/v_separation = 10
+custom_minimum_size = Vector2(380, 200)
+theme_override_font_sizes/font_size = 15
+fixed_icon_size = Vector2i(30, 30)
+icon_mode = 1
+fixed_column_width = 0
+theme_override_constants/v_separation = 18
 
-[node name="Details" type="VBoxContainer" parent="Margin/Hub/Missions"]
+[node name="DetailCard" type="PanelContainer" parent="Margin/Hub/Missions"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(350, 0)
+theme_type_variation = "CampaignDock"
+
+[node name="Details" type="VBoxContainer" parent="Margin/Hub/Missions/DetailCard"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 12
 custom_minimum_size = Vector2(0, 130)
 
-[node name="MissionTitle" type="Label" parent="Margin/Hub/Missions/Details"]
+[node name="MissionTitle" type="Label" parent="Margin/Hub/Missions/DetailCard/Details"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
+theme_type_variation = "HeadlineLabel"
+theme_override_font_sizes/font_size = 25
 autowrap_mode = 3
 
-[node name="MissionDescription" type="Label" parent="Margin/Hub/Missions/Details"]
+[node name="MissionDescription" type="Label" parent="Margin/Hub/Missions/DetailCard/Details"]
 unique_name_in_owner = true
 layout_mode = 2
 autowrap_mode = 3
 
-[node name="MissionStatus" type="Label" parent="Margin/Hub/Missions/Details"]
+[node name="MissionStatus" type="Label" parent="Margin/Hub/Missions/DetailCard/Details"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "MutedLabel"
+autowrap_mode = 3
 
-[node name="StartMission" type="Button" parent="Margin/Hub/Missions/Details"]
+[node name="DetailSpace" type="Control" parent="Margin/Hub/Missions/DetailCard/Details"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StartMission" type="Button" parent="Margin/Hub/Missions/DetailCard/Details"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 0
-text = "Görevi aç"
+size_flags_horizontal = 3
+theme_type_variation = "PrimaryButton"
+custom_minimum_size = Vector2(0, 48)
+text = "Düzeneği aç"
 
 [node name="Progress" type="Label" parent="Margin/Hub"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = "MutedLabel"
+autowrap_mode = 3
 
 [node name="PlayScreen" type="VBoxContainer" parent="Margin"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 
 [node name="Toolbar" type="HBoxContainer" parent="Margin/PlayScreen"]
 layout_mode = 2
@@ -171,7 +217,7 @@ theme_override_constants/separation = 10
 [node name="Back" type="Button" parent="Margin/PlayScreen/Toolbar"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Kontrol merkezine dön"
+text = "← Merkeze dön"
 
 [node name="Reset" type="Button" parent="Margin/PlayScreen/Toolbar"]
 unique_name_in_owner = true

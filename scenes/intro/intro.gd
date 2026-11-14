@@ -3,24 +3,24 @@ extends Control
 signal finished
 signal alarm_changed(strength: float)
 
-const DURATION := 14.0
-const CUE_STARTS := [0.0, 3.3, 6.6, 10.0, DURATION]
+const DURATION := 9.0
+const CUE_STARTS := [0.0, 2.2, 4.5, 6.8, DURATION]
 const HEADLINES := [
-	"Gece ölçümü başladı.",
-	"İki kayıt birbirini tutmuyor.",
-	"Arıza tek odada kalmadı.",
+	"MERİDYEN: “Küçük bir sapma.”",
+	"Aynı koşullar. Farklı sonuçlar.",
+	"Dünya’nın ayarı bozuldu.",
 	"Yanlış Dünya",
 ]
 const CAPTIONS := [
-	"Gözlemevi her gece düzenekleri aynı koşullarda sınar.",
+	"MERİDYEN, ölçümlerdeki farkları önemsiz saydı.",
 	"Aynı anda bırakılan iki yük, sensöre farklı zamanlarda ulaştı.",
-	"Dünya’nın ayar paneli yanıt vermiyor.",
-	"Kontrol merkezine dön. İlk düzeneği yeniden kur.",
+	"Bir kaydı değiştirmek, deneyin sonucunu değiştirmez.",
+	"İlk düzeneği incele. MERİDYEN’in atladığı kanıtı bul.",
 ]
-const ACCENT_NORMAL := Color("#87cfc4")
-const ACCENT_ALARM := Color("#ff9d79")
-const CUE_TOP := -210.0
-const CUE_BOTTOM := -67.0
+const ACCENT_NORMAL := Color("#3b7867")
+const ACCENT_ALARM := Color("#b85f56")
+const CUE_TOP := -240.0
+const CUE_BOTTOM := -74.0
 
 @onready var cue: VBoxContainer = %Cue
 @onready var headline: Label = %Headline
@@ -40,6 +40,11 @@ func _ready() -> void:
 	hide()
 	set_process(false)
 	set_process_input(false)
+	var title_font := FontVariation.new()
+	title_font.base_font = UITheme.DISPLAY_FONT
+	title_font.variation_opentype = {"weight": 600}
+	headline.add_theme_font_override("font", title_font)
+	caption.add_theme_font_override("font", UITheme.FONT)
 	skip.pressed.connect(_finish)
 
 
@@ -78,7 +83,7 @@ func _update_frame() -> void:
 		cue_index = next_cue
 		headline.text = HEADLINES[cue_index]
 		caption.text = CAPTIONS[cue_index]
-		headline.add_theme_font_size_override("font_size", 60 if cue_index == 3 else 36)
+		headline.add_theme_font_size_override("font_size", 54 if cue_index == 3 else 34)
 		trace.visible = cue_index == 1
 	var cue_start: float = CUE_STARTS[cue_index]
 	var cue_end: float = CUE_STARTS[cue_index + 1]
@@ -88,7 +93,7 @@ func _update_frame() -> void:
 	var rise := (1.0 - fade_in) * 9.0
 	cue.offset_top = CUE_TOP + rise
 	cue.offset_bottom = CUE_BOTTOM + rise
-	var alarm := smoothstep(5.4, 7.8, elapsed) * (1.0 - smoothstep(8.8, 12.0, elapsed))
+	var alarm := smoothstep(2.4, 4.8, elapsed) * (1.0 - smoothstep(5.5, 7.5, elapsed))
 	location.add_theme_color_override("font_color", ACCENT_NORMAL.lerp(ACCENT_ALARM, alarm))
 	if trace.visible:
 		_update_trace(elapsed - cue_start)

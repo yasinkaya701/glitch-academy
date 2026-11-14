@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="YksMissionDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://stations/yks/yks_mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/yks/play/sociology.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"sociology"
+grade = 11
+routes = PackedStringArray("ayt")
+description = "Toplumsal statü ile rolü ayırt et."
+scene = ExtResource("2")
+title = "Toplum Ağı"
+subject = "Sosyoloji"
+field_tags = PackedStringArray("sozel")
+curriculum = "AYT Felsefe Grubu · Toplumsal statü ve rol"
+source_url = "https://ogmmateryal.eba.gov.tr/panel/upload/etkilesimli/kitap/sosyoloji1/sec/unite2/files/basic-html/page19.html"
+source_note = "MEB OGM · Sosyoloji 1, toplumsal statü ve rol"
+learning_target = "Toplumsal statüyü kişinin konumundan, rolü o konumdan beklenen davranıştan ayır."
+instruction = "Konum örneklerini beklenen davranışlarla eşleştir."
+prompt = "Kayıtlar: öğretmen ve ders anlatma davranışı; klinikte doktor–hasta ilişkisi."
+visual_theme = &"sociology"
+mode = "pair"
+pair_left = PackedStringArray("Öğretmen", "Ders anlatmak", "Hasta")
+pair_right = PackedStringArray("Bir statü/konum", "Doktorla aynı ilişkideki diğer konum", "Öğretmen statüsünden beklenen rol")
+pair_targets = PackedStringArray("Bir statü/konum", "Öğretmen statüsünden beklenen rol", "Doktorla aynı ilişkideki diğer konum")
+feedback_wrong = "Statü konum, rol o konumdan beklenen davranıştır."
+feedback_success = "Öğretmen statüdür, ders anlatmak rol; hasta doktorla ilişkili konumdur."

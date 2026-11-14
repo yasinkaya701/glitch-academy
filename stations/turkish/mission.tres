@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/turkish/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"turkish"
+title = "Bozuk Talimat"
+subject = "Türkçe"
+grade = 8
+routes = PackedStringArray("lgs")
+description = "Olumsuzluk, cümle anlamı ve bağlamı kullanarak değiştirilmiş güvenlik komutunu düzelt."
+curriculum = "T.8 · Cümlede anlam ve bağlam"
+source_url = "https://odsgm.meb.gov.tr/www/8-sinif-turkce-unitelendirilmis-ornek-sorular/icerik/678"
+scene = ExtResource("2")

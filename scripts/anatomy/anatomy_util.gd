@@ -48,7 +48,10 @@ static func tube_mesh(points: PackedVector3Array, color: Color, radius: float, m
 	var vertices := PackedVector3Array()
 	var normals := PackedVector3Array()
 	var indices := PackedInt32Array()
+	var uvs := PackedVector2Array()
 	var sides := 14
+	var total := maxf(path_length(Array(points)), 0.0001)
+	var walked := 0.0
 	for i in points.size():
 		var tangent: Vector3
 		if i == 0:
@@ -61,11 +64,14 @@ static func tube_mesh(points: PackedVector3Array, color: Color, radius: float, m
 		var helper := Vector3.UP if absf(tangent.dot(Vector3.UP)) < 0.95 else Vector3.RIGHT
 		var side := tangent.cross(helper).normalized()
 		var up := side.cross(tangent).normalized()
+		if i > 0:
+			walked += points[i].distance_to(points[i - 1])
 		for j in sides:
 			var angle := TAU * float(j) / float(sides)
 			var normal := side * cos(angle) + up * sin(angle)
 			vertices.append(points[i] + normal * radius)
 			normals.append(normal)
+			uvs.append(Vector2(walked / total, float(j) / float(sides)))
 	for i in points.size() - 1:
 		for j in sides:
 			var a := i * sides + j
@@ -77,6 +83,7 @@ static func tube_mesh(points: PackedVector3Array, color: Color, radius: float, m
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = vertices
 	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	arrays[Mesh.ARRAY_INDEX] = indices
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
@@ -130,6 +137,24 @@ static func flow_particles(holder: MultiMeshInstance3D, points: Array, color: Co
 	multi.visible_instance_count = count
 	for i in count:
 		var t := fposmod(float(i) / count + time * 0.35 * direction * speed, 1.0)
+		var fade := sin(t * PI)
+		multi.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3.ONE * (0.6 + 0.8 * fade)), point_on_path(points, t * length)))
+		multi.set_instance_color(i, Color(color, 0.95))
+
+
+## Debiye bağlı akış: `phase` yol üzerinde biriken konumdur (işaretli debiyle artar, geri akışta azalır).
+## `density` 0–1 görünen parçacık oranı. Debi sıfıra inince parçacıklar yok olur, hız ani sıçramaz.
+static func flow_dots(holder: MultiMeshInstance3D, points: Array, color: Color, phase: float, density: float) -> void:
+	var multi := holder.multimesh
+	var count := multi.instance_count
+	var shown := int(round(float(count) * clampf(density, 0.0, 1.0)))
+	if shown == 0 or points.size() < 2:
+		multi.visible_instance_count = 0
+		return
+	multi.visible_instance_count = shown
+	var length := path_length(points)
+	for i in shown:
+		var t := fposmod(float(i) / float(count) + phase, 1.0)
 		var fade := sin(t * PI)
 		multi.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3.ONE * (0.6 + 0.8 * fade)), point_on_path(points, t * length)))
 		multi.set_instance_color(i, Color(color, 0.95))

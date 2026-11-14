@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://stations/yks/mission.tscn" id="1"]
+
+[node name="TytBiology" instance=ExtResource("1")]
+mission_data_path = "res://stations/yks/definitions/tyt_biology.tres"

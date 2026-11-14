@@ -5,9 +5,9 @@ extends "res://scripts/mission.gd"
 const BoxPlot = preload("res://stations/derivative/box_plot.gd")
 const Workshop = preload("res://stations/derivative/workshop.gd")
 const Hud = preload("res://scripts/mission_hud.gd")
-const GOOD := Color("#a0dfbc")
-const BAD := Color("#ffb093")
-const MUTED := Color("#b0c4bf")
+const GOOD := Color("#39735b")
+const BAD := Color("#b04e45")
+const MUTED := Color("#66766d")
 const KEEP_SIDE := 12.0
 const NEW_SIDE := 18.0
 const MIN_MEASURES := 6
@@ -118,7 +118,7 @@ func _build_ui() -> void:
 	body = Label.new()
 	feedback = Label.new()
 	readout = Label.new()
-	readout.add_theme_color_override("font_color", Color("#ffc082"))
+	readout.add_theme_color_override("font_color", Color("#a46535"))
 	readout.position = Vector2(28, 80)
 	readout.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(readout)

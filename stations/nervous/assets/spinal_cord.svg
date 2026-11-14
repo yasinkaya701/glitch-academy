@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1536" viewBox="0 0 1536 1536">
+<defs>
+  <linearGradient id="tissue" x1="0" y1="0" x2="0.85" y2="1"><stop stop-color="#E7A4A0"/><stop offset=".5" stop-color="#C97978"/><stop offset="1" stop-color="#8D555E"/></linearGradient>
+  <linearGradient id="nerve" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#C8FFF2"/><stop offset=".45" stop-color="#70D5D0"/><stop offset="1" stop-color="#399B9D"/></linearGradient>
+  <linearGradient id="myelin" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F2E9D6"/><stop offset=".45" stop-color="#D7C8A6"/><stop offset="1" stop-color="#8B8E83"/></linearGradient>
+  <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#657786"/><stop offset=".5" stop-color="#394957"/><stop offset="1" stop-color="#192937"/></linearGradient>
+  <radialGradient id="glow"><stop stop-color="#F5B75F" stop-opacity=".8"/><stop offset="1" stop-color="#F5B75F" stop-opacity="0"/></radialGradient>
+  <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="smallGlow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+
+</defs>
+<ellipse cx="768" cy="768" rx="570" ry="570" fill="#E4E7E1" stroke="#F8F5EA" stroke-width="24"/>
+<ellipse cx="768" cy="768" rx="465" ry="465" fill="#BBC7C6" stroke="#EEF2ED" stroke-width="18"/>
+<path d="M 730 420 C 635 468 568 538 585 650 C 600 742 684 772 768 810 C 852 772 936 742 951 650 C 968 538 901 468 806 420 C 822 520 858 584 851 654 C 844 728 808 770 768 786 C 728 770 692 728 685 654 C 678 584 714 520 730 420 Z" fill="#8B6977" stroke="#D9ADB0" stroke-width="18"/>
+<path d="M 768 382 L 768 566 M 768 958 L 768 803" fill="none" stroke="#D2B8B6" stroke-width="35" stroke-linecap="round"/>
+<circle cx="768" cy="768" r="26" fill="#F3D49B" stroke="#FFF2D4" stroke-width="9"/>
+<path d="M 255 520 C 360 475 450 492 565 545 M 255 1016 C 380 1058 470 1018 594 945" fill="none" stroke="#68C9D4" stroke-width="34" stroke-linecap="round"/>
+<path d="M 1280 520 C 1175 475 1085 492 970 545 M 1280 1016 C 1156 1058 1066 1018 942 945" fill="none" stroke="#E39D86" stroke-width="34" stroke-linecap="round"/>
+<path d="M 190 472 Q 235 520 255 580 M 190 1064 Q 228 1016 255 958 M 1346 472 Q 1301 520 1280 580 M 1346 1064 Q 1308 1016 1280 958" fill="none" stroke="#C9D5D3" stroke-width="22" stroke-linecap="round"/>
+</svg>
