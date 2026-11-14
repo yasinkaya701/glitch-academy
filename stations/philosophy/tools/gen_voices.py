@@ -91,7 +91,7 @@ def resolve_api_key(cli_key: str | None = None) -> str:
     return ""
 
 
-def envelope_from_mp3(mp3_path: Path) -> tuple[float, list[float]]:
+def envelope_from_mp3(mp3_path: Path) -> tuple[float, list[float], float]:
     """MP3 dosyasını afconvert ile geçici WAV'a çevirip 50 Hz RMS ağız açıklığı eğrisi çıkarır."""
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
         wav_path = Path(tmp.name)
@@ -114,14 +114,17 @@ def envelope_from_mp3(mp3_path: Path) -> tuple[float, list[float]]:
             rms = float(np.sqrt(np.mean(chunk * chunk) + 1e-9))
             levels.append(rms)
         if not levels:
-            return 0.0, [0.0]
+            return 0.0, [0.0], 0.0
         arr = np.array(levels, dtype=np.float32)
         p95 = float(np.percentile(arr, 95)) if len(arr) > 4 else float(arr.max())
         norm = np.clip((arr - 0.012) / max(p95 - 0.012, 0.05), 0.0, 1.0)
         # Hafif yumuşatma: çene titremesini önler
         kernel = np.array([0.2, 0.6, 0.2], dtype=np.float32)
         smooth = np.convolve(norm, kernel, mode="same")
-        return round(duration, 3), [round(float(x), 3) for x in smooth]
+        peak_db = 20.0 * np.log10(max(float(np.abs(samples).max()), 1e-9))
+        rms_db = 20.0 * np.log10(max(float(np.sqrt(np.mean(samples * samples))), 1e-9))
+        gain_db = round(float(max(0.0, min(-19.0 - rms_db, -1.5 - peak_db, 6.0))), 2)
+        return round(duration, 3), [round(float(x), 3) for x in smooth], gain_db
     finally:
         wav_path.unlink(missing_ok=True)
 
@@ -159,10 +162,10 @@ def generate_elevenlabs(text: str, voice_id: str, api_key: str, mp3_out: Path) -
     body = r.json()
     mp3_bytes = base64.b64decode(body["audio_base64"])
     mp3_out.write_bytes(mp3_bytes)
-    duration, levels = envelope_from_mp3(mp3_out)
+    duration, levels, gain_db = envelope_from_mp3(mp3_out)
     alignment = body.get("alignment") or {}
     levels = blend_alignment_curve(levels, alignment)
-    return {"engine": "elevenlabs", "duration": duration, "fps": FPS, "levels": levels}
+    return {"engine": "elevenlabs", "duration": duration, "fps": FPS, "levels": levels, "gain_db": gain_db}
 
 
 async def generate_edge(text: str, voice_cfg: dict, mp3_out: Path) -> dict:
@@ -175,8 +178,8 @@ async def generate_edge(text: str, voice_cfg: dict, mp3_out: Path) -> dict:
         rate=voice_cfg.get("edge_rate", "-6%"),
     )
     await comm.save(str(mp3_out))
-    duration, levels = envelope_from_mp3(mp3_out)
-    return {"engine": "edge_tts", "duration": duration, "fps": FPS, "levels": levels}
+    duration, levels, gain_db = envelope_from_mp3(mp3_out)
+    return {"engine": "edge_tts", "duration": duration, "fps": FPS, "levels": levels, "gain_db": gain_db}
 
 
 def build_character(

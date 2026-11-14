@@ -44,6 +44,9 @@ var _action_row := HBoxContainer.new()
 var _input_box := LineEdit.new()
 var _send_btn := Button.new()
 var _mic_btn := Button.new()
+var _replay_btn := Button.new()
+var _volume_slider := HSlider.new()
+var _volume_readout := Label.new()
 var _play_title: Label
 var _play_title_original_text := ""
 
@@ -205,6 +208,26 @@ func _build_dialogue_controls() -> void:
 	_mic_btn.add_theme_stylebox_override("pressed", btn_hover)
 	_mic_btn.pressed.connect(_on_mic_pressed)
 	_action_row.add_child(_mic_btn)
+
+	_replay_btn.text = "Tekrar dinle"
+	_replay_btn.pressed.connect(func() -> void: stage.voice.replay_last_line())
+	_replay_btn.add_theme_font_override("font", font_body)
+	_replay_btn.add_theme_font_size_override("font_size", 12)
+	_action_row.add_child(_replay_btn)
+	_volume_readout.text = "Ses 100%"
+	_volume_readout.add_theme_font_override("font", font_body)
+	_volume_readout.add_theme_font_size_override("font_size", 12)
+	_action_row.add_child(_volume_readout)
+	_volume_slider.min_value = 0
+	_volume_slider.max_value = 100
+	_volume_slider.step = 5
+	_volume_slider.value = 100
+	_volume_slider.custom_minimum_size.x = 110
+	_volume_slider.value_changed.connect(func(value: float) -> void:
+		stage.voice.set_voice_volume(value / 100.0)
+		_volume_readout.text = "Ses %d%%" % int(value)
+	)
+	_action_row.add_child(_volume_slider)
 	_chat_row.add_child(_entry_row)
 	_chat_row.add_child(_action_row)
 

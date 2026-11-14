@@ -37,6 +37,10 @@ var _pending_live_text: String = ""
 var _tts_thread: Thread
 var _stt_thread: Thread
 var _listening: bool = false
+var _first_output: bool = true
+var _track_gain_db: float = 0.0
+var _voice_volume: float = 1.0
+var _last_spoken: Dictionary = {}
 
 
 func _ready() -> void:
@@ -63,6 +67,20 @@ func is_listening() -> bool:
 	return _listening
 
 
+func set_voice_volume(value: float) -> void:
+	_voice_volume = clampf(value, 0.0, 1.0)
+	_player.volume_db = _track_gain_db + linear_to_db(maxf(_voice_volume, 0.0001))
+
+
+func replay_last_line() -> void:
+	if _player.playing or _last_spoken.is_empty():
+		return
+	if _last_spoken.has("text"):
+		speak_live(_last_spoken["who"], _last_spoken["text"], _last_spoken["id"])
+	else:
+		play_line(_last_spoken["who"], _last_spoken["id"])
+
+
 func get_line_text(philosopher_id: StringName, line_id: StringName) -> String:
 	var p: Dictionary = _db.get("philosophers", {}).get(String(philosopher_id), {})
 	return String(p.get("lines", {}).get(String(line_id), ""))
@@ -81,6 +99,7 @@ func get_choices(philosopher_id: StringName) -> Array:
 ## Önceden üretilmiş satırı çalar; yoksa canlı ElevenLabs API'yi veya yerel TTS'i dener.
 func play_line(philosopher_id: StringName, line_id: StringName) -> String:
 	stop()
+	_last_spoken = {"who": philosopher_id, "id": line_id}
 	var text: String = get_line_text(philosopher_id, line_id)
 	_active_id = line_id
 	var base_path: String = AUDIO_DIR + String(philosopher_id) + "/" + String(line_id)
@@ -102,6 +121,7 @@ func play_line(philosopher_id: StringName, line_id: StringName) -> String:
 ## Serbest metni canlı ElevenLabs API veya yerel gen_voices.py ile seslendirir.
 func speak_live(philosopher_id: StringName, text: String, tag_id: StringName = &"live") -> void:
 	stop()
+	_last_spoken = {"who": philosopher_id, "id": tag_id, "text": text}
 	_active_id = tag_id
 	var voice_id: String = _get_voice_id(philosopher_id)
 	var sig: String = (String(philosopher_id) + ":" + voice_id + ":" + text).sha256_text().substr(0, 16)
@@ -269,6 +289,16 @@ func _process(delta: float) -> void:
 func _start_stream(stream: AudioStreamMP3, text: String) -> void:
 	_using_fallback = false
 	_player.stream = stream
+	_player.volume_db = _track_gain_db + linear_to_db(maxf(_voice_volume, 0.0001))
+	if _first_output:
+		# Let the portrait and opening subtitle render before the first audio buffer plays.
+		var generation_id: StringName = _active_id
+		if DisplayServer.get_name() != "headless":
+			await RenderingServer.frame_post_draw
+		await get_tree().create_timer(0.15).timeout
+		if not is_inside_tree() or generation_id != _active_id:
+			return
+		_first_output = false
 	_player.play()
 	if _actor != null:
 		_actor.set_speaking(true, 0.0)
@@ -356,6 +386,7 @@ func _load_mp3(path: String) -> AudioStreamMP3:
 func _load_track_json(path: String) -> void:
 	_levels.clear()
 	_fps = 50.0
+	_track_gain_db = 0.0
 	if not FileAccess.file_exists(path):
 		return
 	var f := FileAccess.open(path, FileAccess.READ)
@@ -365,6 +396,7 @@ func _load_track_json(path: String) -> void:
 	if parsed is Dictionary:
 		_levels = (parsed as Dictionary).get("levels", [])
 		_fps = float((parsed as Dictionary).get("fps", 50.0))
+		_track_gain_db = clampf(float((parsed as Dictionary).get("gain_db", 0.0)), 0.0, 6.0)
 
 
 func _get_voice_id(philosopher_id: StringName) -> String:
