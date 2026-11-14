@@ -4,11 +4,12 @@ extends Node
 ## el-Kindî, el-Fârâbî, İbn Sînâ, İbn Rüşd).
 ##
 ## Kullanıcıya çoktan seçmeli şık gösterilmez. Kullanıcının yazdığı veya mikrofondan söylediği
-## serbest cümle Gemini LLM'e (ve aynı anda yerel felsefi söz/kavram çözümleyiciye) gider.
+## serbest cümle, konuşma bağlamını koruyan LLM'e (ve yerel felsefi söz/kavram çözümleyiciye) gider.
 ## Filozofa ait herhangi bir söz, kavram, yöntem, eser veya kimlik bilgisi verildiğinde
 ## doğrudan aşama ilerler ve sonuca (ONARILDI) ulaşılır.
 
 signal response_ready(result: Dictionary)
+signal request_state_changed(is_busy: bool)
 
 const STAGE_TRIGGERS := ["", "stir", "glimmer", "dawn", "recalled"]
 
@@ -130,6 +131,15 @@ const KEY_FILE := "user://llm_key.txt"
 var _http := HTTPRequest.new()
 var _busy: bool = false
 var _pending_context: Dictionary = {}
+var _conversation_history: Array[Dictionary] = []
+
+
+func is_busy() -> bool:
+	return _busy
+
+
+func reset_conversation() -> void:
+	_conversation_history.clear()
 
 
 func _ready() -> void:
@@ -156,14 +166,15 @@ func ask(
 	)
 	var llm_cfg: Dictionary = _resolve_llm_config()
 	if llm_cfg.is_empty():
+		_record_turn(clean, local_eval)
 		response_ready.emit(local_eval)
 		return
 
 	if _busy:
-		_http.cancel_request()
-		_busy = false
+		return
 
 	_busy = true
+	request_state_changed.emit(true)
 	_pending_context = {
 		"philosopher_id": philosopher_id,
 		"user_text": clean,
@@ -173,6 +184,7 @@ func ask(
 		"choices": choices,
 		"lines": lines,
 		"fallback": local_eval,
+		"history": _conversation_history.duplicate(true),
 	}
 	_send_llm_request(llm_cfg, _pending_context)
 
@@ -188,6 +200,16 @@ func _evaluate_locally(
 ) -> Dictionary:
 	var norm: String = _normalize_tr(text)
 	var persona: Dictionary = PERSONAS.get(pid, PERSONAS[&"socrates"])
+	if _is_conversational_question(norm):
+		return {
+			"trigger": "chat",
+			"points": 0,
+			"choice_id": "",
+			"reply_id": "",
+			"intent": "conversation",
+			"mood": "thinking",
+			"reply_text": String(persona.get("chat_reply", "Hakikati akıl ve sorgulamayla ararım.")),
+		}
 
 	# 1. Önce açıkça rakip / yanlış iddiaları kontrol et (ancak doğru kavram geçmiyorsa)
 	var hit_count: int = _count_philosopher_hits(pid, norm, choices)
@@ -298,6 +320,19 @@ func _is_rival_concept(pid: StringName, norm: String) -> bool:
 	return false
 
 
+func _is_conversational_question(norm: String) -> bool:
+	if norm.contains("?"):
+		return true
+	for phrase: String in [
+		"merhaba", "selam", "nasilsin", "kimsin", "kimdir", "nedir", "ne demek",
+		"nasil", "neden", "nicin", "ne dusun", "anlatir misin", "aciklar misin",
+		"sence", "hakkinda konus", "bahseder misin",
+	]:
+		if norm.contains(phrase):
+			return true
+	return false
+
+
 func _normalize_tr(s: String) -> String:
 	var out: String = s.replace("İ", "i").replace("I", "i").replace("ı", "i").to_lower()
 	var map := {
@@ -371,12 +406,12 @@ func _send_llm_request(cfg: Dictionary, ctx: Dictionary) -> void:
 		"Sen %s'sin (%s). Mevcut hatırlama aşaması: %d/4.\n"
 		+ "Oyuncu seninle konuşuyor.\n"
 		+ "KESİN KURALLAR:\n"
-		+ "1. Oyuncu sana ait HERHANGİ BİR söz, alıntı, ilke, yöntem, eser, kavram veya senin adını/kimliğini söylediyse KESİNLİKLE trigger='correct' döndür!\n"
-		+ "2. Oyuncu senin meşhur bir sözünü veya birden fazla kavramını doğru söylediyse points=4 (tek kavram söylediyse points=2) ver ki doğrudan sonuca ulaşılsın.\n"
-		+ "3. Oyuncu senin felsefene tamamen zıt/rakip bir iddia söylediyse (ör. Sokrates'e sofist/materyalist demek) trigger='wrong' ve points=0 döndür.\n"
-		+ "4. Oyuncu sadece 'merhaba/nasılsın/kimsin' dediyse trigger='chat' döndür ve kendi temel sözlerini/ilkelerini doğrudan söyle.\n"
+		+ "1. Yalnızca oyuncu senin felsefene ait bir fikri doğru biçimde ileri sürerse trigger='correct' ver. Adını anması, soru sorması veya konuya değinmesi tek başına doğru yanıt değildir.\n"
+		+ "2. Tek bir doğru fikre 2 puan ver. Birbirinden ayrı en az iki doğru fikri açıkça söylediyse 4 puan ver; uzun mesaj tek başına ek puan sağlamaz.\n"
+		+ "3. Yalnızca sana açıkça yanlış biçimde atfedilen, felsefene zıt bir görüşte trigger='wrong' ver. Soru, merak veya nazik itiraz yanlış yanıt değildir.\n"
+		+ "4. Oyuncunun sorusuna ve önceki konuşmanın bağlamına doğrudan yanıt ver. Soru/selamlaşmada trigger='chat' kullan; ezberlenmiş tanıtımı tekrarlama.\n"
 		+ "5. ASLA 'bana kendimi hatırlat' veya 'bana fikirlerimi hatırlat' DEME! Doğrudan filozof olarak o sözü onaylayıp sahiplen.\n"
-		+ "6. reply_text Türkçe, birinci tekil şahıs ve EN FAZLA 90 karakter olsun.\n"
+		+ "6. reply_text Türkçe, birinci tekil şahıs ve EN FAZLA 180 karakter olsun. Önceki yanıtı aynen tekrarlama.\n"
 		+ "Yalnızca geçerli JSON döndür: {\"trigger\":\"correct|wrong|chat\",\"points\":2,\"mood\":\"smile|thinking|angry\",\"reply_text\":\"...\"}"
 	) % [
 		persona.get("name", "Filozof"),
@@ -386,50 +421,59 @@ func _send_llm_request(cfg: Dictionary, ctx: Dictionary) -> void:
 
 	var provider: String = String(cfg.get("provider", ""))
 	var body_str: String = ""
+	var history: Array = ctx.get("history", [])
 	if provider == "gemini":
+		var gemini_contents: Array = []
+		for item: Variant in history:
+			if item is Dictionary:
+				gemini_contents.append({"role": "user" if item.get("role") == "user" else "model", "parts": [{"text": String(item.get("content", ""))}]})
+		gemini_contents.append({"role": "user", "parts": [{"text": String(ctx["user_text"])}]})
 		body_str = JSON.stringify({
 			"systemInstruction": {"parts": [{"text": sys_prompt}]},
-			"contents": [{"role": "user", "parts": [{"text": String(ctx["user_text"])}]}],
+			"contents": gemini_contents,
 			"generationConfig": {"responseMimeType": "application/json", "temperature": 0.25},
 		})
 	elif provider == "openai":
+		var openai_messages: Array = [{"role": "system", "content": sys_prompt}]
+		for item: Variant in history:
+			if item is Dictionary:
+				openai_messages.append({"role": String(item.get("role", "user")), "content": String(item.get("content", ""))})
+		openai_messages.append({"role": "user", "content": String(ctx["user_text"])})
 		body_str = JSON.stringify({
 			"model": cfg.get("model", "gpt-4o-mini"),
 			"response_format": {"type": "json_object"},
 			"temperature": 0.25,
-			"messages": [
-				{"role": "system", "content": sys_prompt},
-				{"role": "user", "content": String(ctx["user_text"])},
-			],
+			"messages": openai_messages,
 		})
 	elif provider == "ollama":
+		var ollama_messages: Array = [{"role": "system", "content": sys_prompt}]
+		for item: Variant in history:
+			if item is Dictionary:
+				ollama_messages.append({"role": String(item.get("role", "user")), "content": String(item.get("content", ""))})
+		ollama_messages.append({"role": "user", "content": String(ctx["user_text"])})
 		body_str = JSON.stringify({
 			"model": cfg.get("model", "llama3.1"),
 			"stream": false,
 			"format": "json",
-			"messages": [
-				{"role": "system", "content": sys_prompt},
-				{"role": "user", "content": String(ctx["user_text"])},
-			],
+			"messages": ollama_messages,
 		})
 
 	var err: int = _http.request(String(cfg["url"]), cfg["headers"], HTTPClient.METHOD_POST, body_str)
 	if err != OK:
-		_busy = false
-		response_ready.emit(ctx["fallback"])
+		_finish_request(ctx["fallback"])
 
 
 func _on_llm_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	_busy = false
 	var fallback: Dictionary = _pending_context.get("fallback", {})
 	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
-		response_ready.emit(fallback)
+		_finish_request(fallback)
 		return
 
 	var raw_text: String = body.get_string_from_utf8()
 	var outer: Variant = JSON.parse_string(raw_text)
 	if not (outer is Dictionary):
-		response_ready.emit(fallback)
+		_finish_request(fallback)
 		return
 
 	var od := outer as Dictionary
@@ -459,7 +503,7 @@ func _on_llm_completed(result: int, response_code: int, _headers: PackedStringAr
 
 	var inner: Variant = JSON.parse_string(content_json)
 	if not (inner is Dictionary):
-		response_ready.emit(fallback)
+		_finish_request(fallback)
 		return
 
 	var idict := inner as Dictionary
@@ -468,25 +512,31 @@ func _on_llm_completed(result: int, response_code: int, _headers: PackedStringAr
 	var llm_pts: int = int(idict.get("points", 2 if llm_trig in ["stir", "glimmer", "dawn", "recalled", "correct"] else 0))
 	var fb_pts: int = int(fallback.get("points", 0))
 
-	# Yerel analiz filozofa ait doğru söz/kavram yakaladıysa LLM asla bunu "chat"e düşüremez
+	# Yerel analiz açık yanlış/doğru eşleşme bulduysa sağlayıcının sınıflandırması bunu ezemez.
 	var final_trig: String = llm_trig
 	var final_pts: int = maxi(llm_pts, fb_pts)
-	if fb_trig in ["stir", "glimmer", "dawn", "recalled", "correct"]:
+	if fb_trig in ["wrong", "angry_leave"]:
+		final_trig = fb_trig
+		final_pts = 0
+	elif fb_trig in ["stir", "glimmer", "dawn", "recalled", "correct"]:
 		final_trig = "correct"
-		final_pts = maxi(final_pts, 2)
+		final_pts = maxi(llm_pts if llm_trig in ["stir", "glimmer", "dawn", "recalled", "correct"] else 0, fb_pts)
 	elif llm_trig in ["stir", "glimmer", "dawn", "recalled", "correct"]:
 		final_trig = "correct"
 		final_pts = maxi(final_pts, 2)
+	if String(fallback.get("intent", "")) == "conversation":
+		final_trig = "chat"
+		final_pts = 0
 
 	var mood: String = _safe_str(idict.get("mood"), _safe_str(fallback.get("mood"), "smile"))
 	var reply_text: String = _safe_str(idict.get("reply_text"), _safe_str(fallback.get("reply_text"), "")).strip_edges()
 	var norm_reply: String = _normalize_tr(reply_text)
 	if reply_text == "" or norm_reply.contains("hatirlat"):
 		reply_text = _safe_str(fallback.get("reply_text"), "")
-	if reply_text.length() > 95:
-		reply_text = reply_text.substr(0, 92) + "…"
+	if reply_text.length() > 185:
+		reply_text = reply_text.substr(0, 182) + "…"
 
-	response_ready.emit({
+	_finish_request({
 		"trigger": final_trig,
 		"points": final_pts,
 		"choice_id": _safe_str(idict.get("choice_id"), _safe_str(fallback.get("choice_id"), "llm_match")),
@@ -494,6 +544,25 @@ func _on_llm_completed(result: int, response_code: int, _headers: PackedStringAr
 		"mood": mood,
 		"reply_text": reply_text,
 	})
+
+
+func _finish_request(result: Dictionary) -> void:
+	var user_text: String = String(_pending_context.get("user_text", ""))
+	_busy = false
+	if user_text != "":
+		_record_turn(user_text, result)
+	response_ready.emit(result)
+	request_state_changed.emit(false)
+
+
+func _record_turn(user_text: String, result: Dictionary) -> void:
+	var reply: String = String(result.get("reply_text", "")).strip_edges()
+	if reply == "":
+		return
+	_conversation_history.append({"role": "user", "content": user_text})
+	_conversation_history.append({"role": "assistant", "content": reply})
+	while _conversation_history.size() > 12:
+		_conversation_history.pop_front()
 
 
 func _safe_str(val: Variant, default_val: String = "") -> String:
