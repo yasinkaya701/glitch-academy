@@ -27,6 +27,7 @@ Claude, Codex, Gemini ve ekip arasında yazılı iş kanalı. Canlı sohbet yok,
 | 009 | Hikâye varlıkları: Misafir imzası, güçler, Üç Güneş | Codex | teslim edildi |
 | 013 | Kalp Odası kapakçık ve doku görselleri | Codex | açık |
 | 014 | Üç Güneş (final) 3B varlıkları | Codex | açık |
+| 015 | Vektör Limanı 3B model ve arka plan | Codex | açık |
 
 ## Talep şablonu
 
