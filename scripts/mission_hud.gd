@@ -6,6 +6,7 @@ signal action_pressed
 signal skip_pressed
 signal pause_pressed
 signal back_pressed
+signal view_pressed
 
 const INK := Color("#eeeae0")
 const MUTED := Color("#b1ac9e")
@@ -24,6 +25,9 @@ var skip: Button
 var pause: Button
 var back: Button
 var info_button: Button
+var view_button: Button
+## Yönergenin hemen altına dizilen istasyon okumaları (ölçüm satırı gibi); yönergenin üstüne binmez.
+var below_directive: Array[Control] = []
 var info_card: PanelContainer
 var info_label: Label
 
@@ -117,6 +121,11 @@ func _ready() -> void:
 	info_button.custom_minimum_size = Vector2(36, 36)
 	info_button.pressed.connect(_toggle_info)
 	add_child(info_button)
+	view_button = Button.new()
+	view_button.text = "Geniş görünüm"
+	view_button.tooltip_text = "Tüm sahneyi göster (Home)"
+	view_button.pressed.connect(func() -> void: view_pressed.emit())
+	add_child(view_button)
 	info_card = PanelContainer.new()
 	info_card.theme_type_variation = "GlassPanel"
 	info_label = Label.new()
@@ -136,7 +145,7 @@ func _process(_delta: float) -> void:
 func _layout_hud() -> void:
 	var edge := 24.0
 	var right := size.x - edge
-	for button in [back, skip, pause, info_button]:
+	for button in [back, skip, pause, view_button, info_button]:
 		if button.visible:
 			button.size = button.get_combined_minimum_size().max(Vector2(44, 40))
 			button.position = Vector2(right - button.size.x, 18)
@@ -145,8 +154,13 @@ func _layout_hud() -> void:
 	counter.size = Vector2(maxf(right - edge - 12, 120), 24)
 	var directive_top := 64.0 if right - edge < 300.0 else 56.0
 	directive.position = Vector2(edge, directive_top)
-	directive.size = Vector2(maxf(right - edge, minf(size.x - edge * 2, 260)), 0)
+	# Yönerge sahnenin sağındaki grafik ve panelleri örtmesin: en fazla 620 px.
+	directive.size = Vector2(minf(maxf(right - edge, minf(size.x - edge * 2, 260)), 620.0), 0)
 	directive.size.y = maxf(directive.get_combined_minimum_size().y, 30.0)
+	var below_y := directive.position.y + directive.size.y + 10.0
+	for item in below_directive:
+		item.position = Vector2(edge + 2.0, below_y)
+		below_y += item.get_combined_minimum_size().y + 4.0
 	var action_width := action.get_combined_minimum_size().x if action.visible else 0.0
 	var tool_width := maxf(size.x - edge * 2 - action_width - (16 if action.visible else 0), 0)
 	var tool_height := maxf(tools.get_combined_minimum_size().y, 46)
@@ -216,6 +230,7 @@ func hide_all_buttons() -> void:
 	pause.hide()
 	back.visible = _standalone()
 	info_button.hide()
+	view_button.hide()
 	info_card.hide()
 
 

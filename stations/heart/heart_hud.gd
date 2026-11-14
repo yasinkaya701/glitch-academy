@@ -31,7 +31,7 @@ func _ready() -> void:
 	_controls_panel = _make_panel()
 	_dock_panel = _make_panel()
 	_style_button(action, SAGE, CHARCOAL, SAGE)
-	for button in [back, skip, pause, info_button]:
+	for button in [back, skip, pause, view_button, info_button]:
 		_style_button(button, RAISED, PAPER, HEART_EDGE)
 	var toast_style := _surface_style(RAISED, HEART_EDGE, 12)
 	toast.add_theme_stylebox_override("normal", toast_style)
@@ -48,6 +48,11 @@ func _make_panel() -> PanelContainer:
 	add_child(panel)
 	move_child(panel, 0)
 	return panel
+
+
+func hide_all_buttons() -> void:
+	super.hide_all_buttons()
+	view_button.show()
 
 
 func bind_status(label: Label) -> void:
@@ -133,6 +138,10 @@ func _layout_heart_hud() -> void:
 	if pause.visible:
 		pause.position = Vector2(x - pause.size.x, control_y)
 		x = pause.position.x - 8.0
+	if view_button.visible:
+		view_button.size = view_button.get_combined_minimum_size().max(Vector2(44, 40))
+		view_button.position = Vector2(x - view_button.size.x, control_y)
+		x = view_button.position.x - 8.0
 	info_button.position = Vector2(maxf(margin, x - info_button.size.x), control_y)
 	var controls_left := maxf(header_width + margin * 2.0 + 12.0, info_button.position.x - 10.0)
 	_controls_panel.position = Vector2(controls_left, control_y - 4.0)
@@ -200,16 +209,5 @@ func _progress_track_y() -> float:
 
 
 func _draw_step_track() -> void:
-	if _steps_total <= 1 or size.x <= 0.0:
-		return
-	var track_y := _progress_track_y()
-	var track_width := minf(size.x - 48.0, 420.0)
-	var segment_gap := 5.0
-	var segment_width := (track_width - segment_gap * (_steps_total - 1)) / _steps_total
-	for index in _steps_total:
-		var color := Color("#373832")
-		if index < _steps_current:
-			color = SAGE
-		elif index == _steps_current:
-			color = AMBER
-		draw_rect(Rect2(24.0 + index * (segment_width + segment_gap), track_y, segment_width, 6.0), color, true)
+	# Adım noktaları sayaçta zaten var; ortada asılı ikinci bir çubuk sahneyi örtüyordu.
+	pass

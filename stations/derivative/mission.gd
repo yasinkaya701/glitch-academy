@@ -120,9 +120,9 @@ func _build_ui() -> void:
 	feedback = Label.new()
 	readout = Label.new()
 	readout.add_theme_color_override("font_color", Color("#dfae63"))
-	readout.position = Vector2(28, 80)
 	readout.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(readout)
+	hud.below_directive.append(readout)
 
 
 const DIRECTIVES := {

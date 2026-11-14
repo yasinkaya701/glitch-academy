@@ -165,6 +165,7 @@ func _build_ui() -> void:
 	hud.skip_pressed.connect(_finish_intro)
 	hud.pause_pressed.connect(_toggle_run)
 	hud.back_pressed.connect(_go_back)
+	hud.view_pressed.connect(stage.wide_view)
 	action = hud.action
 	skip = hud.skip
 	pause = hud.pause
