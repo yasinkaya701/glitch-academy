@@ -17,7 +17,7 @@ const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/derivative/mission.tres"),
 	preload("res://stations/bridge/mission.tres"),
 	preload("res://stations/prism/mission.tres"),
-	preload("res://stations/free_fall/mission.tres"),
+	# Düşüş Odası şimdilik oyundan çıkarıldı (stations/free_fall/ yerinde duruyor).
 	# YKS düzeyinde fizik; sınav sırası korunur, Sınıflar keşfinde oynanır.
 	preload("res://stations/newton/mission.tres"),
 	preload("res://stations/projectile/mission.tres"),
@@ -43,7 +43,6 @@ const CATALOG: Array[MissionDefinition] = [
 @onready var mission_title: Label = %MissionTitle
 @onready var mission_description: Label = %MissionDescription
 @onready var mission_status: Label = %MissionStatus
-@onready var mission_modes: HBoxContainer = %MissionModes
 @onready var start_mission: Button = %StartMission
 @onready var progress: Label = %Progress
 @onready var route_progress_bar: ProgressBar = %RouteProgress
@@ -263,13 +262,11 @@ func _clear_selection() -> void:
 	if visible_missions.is_empty():
 		mission_description.text = "Bu seçim için henüz görev bulunmuyor."
 	mission_status.text = ""
-	mission_modes.hide()
 	start_mission.disabled = true
 
 
 func _select_mission(index: int) -> void:
 	selected_mission = visible_missions[index]
-	mission_modes.show()
 	mission_title.text = selected_mission.title
 	mission_description.text = selected_mission.description
 	start_mission.disabled = selected_mission.scene == null or not _is_unlocked(selected_mission.id)

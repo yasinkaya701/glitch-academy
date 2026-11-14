@@ -1,11 +1,9 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/control_center.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/world/observatory.tscn" id="2"]
 
 [ext_resource type="Texture2D" path="res://assets/backgrounds/observatory-daylight.png" id="3_bg"]
-[ext_resource type="Texture2D" path="res://assets/ui/icons/lesson.svg" id="4_lesson"]
-[ext_resource type="Texture2D" path="res://assets/ui/icons/experiment.svg" id="5_experiment"]
 
 [sub_resource type="Gradient" id="Gradient_scrim"]
 offsets = PackedFloat32Array(0, 0.42, 0.72, 1)
@@ -189,44 +187,6 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = "MutedLabel"
 autowrap_mode = 3
-
-[node name="MissionModes" type="HBoxContainer" parent="Margin/Hub/Missions/DetailCard/Details"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="LessonMode" type="HBoxContainer" parent="Margin/Hub/Missions/DetailCard/Details/MissionModes"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="LessonIcon" type="TextureRect" parent="Margin/Hub/Missions/DetailCard/Details/MissionModes/LessonMode"]
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-texture = ExtResource("4_lesson")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="LessonText" type="Label" parent="Margin/Hub/Missions/DetailCard/Details/MissionModes/LessonMode"]
-layout_mode = 2
-theme_type_variation = "KickerLabel"
-text = "DERS"
-
-[node name="ExperimentMode" type="HBoxContainer" parent="Margin/Hub/Missions/DetailCard/Details/MissionModes"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="ExperimentIcon" type="TextureRect" parent="Margin/Hub/Missions/DetailCard/Details/MissionModes/ExperimentMode"]
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-texture = ExtResource("5_experiment")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="ExperimentText" type="Label" parent="Margin/Hub/Missions/DetailCard/Details/MissionModes/ExperimentMode"]
-layout_mode = 2
-theme_type_variation = "KickerLabel"
-text = "DENEY"
 
 [node name="DetailSpace" type="Control" parent="Margin/Hub/Missions/DetailCard/Details"]
 layout_mode = 2
