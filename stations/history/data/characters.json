@@ -1,0 +1,100 @@
+{
+  "figures": {
+    "mete_han": {
+      "body_size": [
+        896,
+        1200
+      ],
+      "face_rect": [
+        262,
+        104,
+        410,
+        362
+      ],
+      "faces": [
+        "neutral"
+      ],
+      "uppers": {}
+    },
+    "alparslan": {
+      "body_size": [
+        896,
+        1200
+      ],
+      "face_rect": [
+        250,
+        102,
+        429,
+        362
+      ],
+      "faces": [
+        "neutral"
+      ],
+      "uppers": {}
+    },
+    "fatih": {
+      "body_size": [
+        896,
+        1200
+      ],
+      "face_rect": [
+        225,
+        99,
+        445,
+        363
+      ],
+      "faces": [
+        "neutral"
+      ],
+      "uppers": {}
+    },
+    "kanuni": {
+      "body_size": [
+        896,
+        1200
+      ],
+      "face_rect": [
+        279,
+        29,
+        374,
+        387
+      ],
+      "faces": [
+        "neutral"
+      ],
+      "uppers": {}
+    },
+    "mimar_sinan": {
+      "body_size": [
+        896,
+        1200
+      ],
+      "face_rect": [
+        224,
+        114,
+        446,
+        358
+      ],
+      "faces": [
+        "neutral"
+      ],
+      "uppers": {}
+    },
+    "ataturk": {
+      "body_size": [
+        896,
+        1200
+      ],
+      "face_rect": [
+        224,
+        26,
+        445,
+        388
+      ],
+      "faces": [
+        "neutral"
+      ],
+      "uppers": {}
+    }
+  }
+}

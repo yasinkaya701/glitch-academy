@@ -3,7 +3,7 @@ extends Control
 ## Hesaplar photo_sim.gd'den gelir, çizim süreleri ya da akımı uydurmaz.
 
 const Photo = preload("res://stations/photoelectric/photo_sim.gd")
-const Model3D = preload("res://stations/photoelectric/photo_3d.gd")
+const LabScene = preload("res://stations/photoelectric/photo_lab_3d.tscn")
 
 const INK := Color("#e8f1f2")
 const MUTED := Color("#8fa6b3")
@@ -21,41 +21,23 @@ var door_burned := false
 
 var _clock := 0.0
 var _electrons: Array[Dictionary] = []
-var _photon_phase := 0.0
-var _viewport_container: SubViewportContainer
-var _model: Node3D
+var _lab_viewport: SubViewport
+var _lab
 
 
 func _ready() -> void:
-	_viewport_container = SubViewportContainer.new()
-	_viewport_container.stretch = true
-	_viewport_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_viewport_container.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	var viewport := SubViewport.new()
-	viewport.size = Vector2i(875, 390)
-	viewport.transparent_bg = true
-	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	_viewport_container.add_child(viewport)
-	add_child(_viewport_container)
-	var world := Node3D.new()
-	viewport.add_child(world)
-	world.add_child(Model3D.new())
-	_model = world.get_child(0)
-	var camera := Camera3D.new()
-	camera.position = Vector3(-0.25, 3.1, 8.8)
-	world.add_child(camera)
-	camera.look_at(Vector3(-0.45, 0, 0), Vector3.UP)
-	camera.fov = 43.0
-	camera.current = true
-	var key := DirectionalLight3D.new()
-	key.rotation_degrees = Vector3(-42, -28, 0)
-	key.light_energy = 1.2
-	world.add_child(key)
+	_lab_viewport = SubViewport.new()
+	_lab_viewport.name = "PhotoelectricViewport"
+	_lab_viewport.own_world_3d = true
+	_lab_viewport.size = Vector2i(1000, 500)
+	_lab_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	add_child(_lab_viewport)
+	_lab = LabScene.instantiate()
+	_lab_viewport.add_child(_lab)
 
 
 func _process(delta: float) -> void:
 	_clock += delta
-	_photon_phase += delta
 	var phi: float = Photo.METALS[metal]["phi"]
 	var rate := 14.0 * intensity if Photo.photon_energy(frequency) > phi else 0.0
 	if rate > 0.0 and randf() < rate * delta:
@@ -66,22 +48,10 @@ func _process(delta: float) -> void:
 		e["y"] += e["dy"] * delta
 		e["life"] += delta
 	_electrons = _electrons.filter(func(e: Dictionary) -> bool: return e["x"] < 1.15)
+	var current := Photo.faulty_current(frequency, intensity, phi) if faulty_display else Photo.photocurrent(frequency, intensity, phi)
+	_lab.set_conditions(frequency, intensity, current, Photo.k_max(frequency, phi), metal,
+		faulty_display, door_open, door_burned, _electrons)
 	queue_redraw()
-	if _model != null:
-		_model.frequency = frequency
-		_model.intensity = intensity
-		_model.electric_field = Photo.stopping_potential(frequency, float(Photo.METALS[metal]["phi"]))
-		_model.metal = metal
-		_layout_3d()
-
-
-func _layout_3d() -> void:
-	if _viewport_container == null:
-		return
-	var scale_factor := minf(size.x / 1600.0, size.y / 900.0)
-	var origin := (size - Vector2(1600, 900) * scale_factor) * 0.5
-	_viewport_container.position = origin + Vector2(42, 205) * scale_factor
-	_viewport_container.size = Vector2(875, 395) * scale_factor
 
 
 func _font() -> Font:
@@ -103,10 +73,12 @@ func _draw() -> void:
 		draw_line(o + Vector2(0.0, j * 100.0) * s, o + Vector2(1600.0, j * 100.0) * s, Color(1, 1, 1, 0.025), 1.0)
 	var phi: float = Photo.METALS[metal]["phi"]
 	var k := Photo.k_max(frequency, phi)
-	var colour := Photo.light_color(frequency)
 	var current := Photo.faulty_current(frequency, intensity, phi) if faulty_display else Photo.photocurrent(frequency, intensity, phi)
-	_layout_3d()
-	_t(o + Vector2(350, 194) * s, String(Photo.METALS[metal]["name"]).to_upper() + "   φ = %s eV" % str(phi).replace(".", ","), 18.0 * s, MUTED)
+	# Render the apparatus as a real 3D sub-scene; meter, graph and equations stay crisp in 2D.
+	var lab_rect := Rect2(o + Vector2(42, 212) * s, Vector2(900, 408) * s)
+	draw_texture_rect(_lab_viewport.get_texture(), lab_rect, false)
+	draw_rect(lab_rect, Color("#4d6b7b"), false, 1.5 * s)
+	_t(o + Vector2(70, 198) * s, String(Photo.METALS[metal]["name"]).to_upper() + "   φ = %s eV" % str(phi).replace(".", ","), 18.0 * s, MUTED)
 	_draw_meter(o, s, current)
 	_draw_board(o, s, phi, k, current)
 	_draw_graph(o, s, phi, k)
@@ -114,16 +86,11 @@ func _draw() -> void:
 
 
 func _draw_meter(o: Vector2, s: float, current: float) -> void:
-	var c := o + Vector2(600, 700) * s
-	var r := 105.0 * s
-	draw_arc(c, r, PI * 1.1, PI * 1.9, 48, Color(MUTED, 0.6), 3.0 * s)
-	for i in 9:
-		var a := lerpf(PI * 1.1, PI * 1.9, float(i) / 8.0)
-		draw_line(c + Vector2(cos(a), sin(a)) * r * 0.88, c + Vector2(cos(a), sin(a)) * r, Color(MUTED, 0.8), 2.0 * s)
-	var needle := lerpf(PI * 1.1, PI * 1.9, clampf(current / 8.0, 0.0, 1.0))
-	draw_line(c, c + Vector2(cos(needle), sin(needle)) * r * 0.9, WARM, 3.0 * s)
-	draw_circle(c, 6.0 * s, WARM)
-	_t(c + Vector2(-80, 50) * s, "AKIM  %s µA" % str(snappedf(current, 0.1)).replace(".", ","), 22.0 * s, INK, HORIZONTAL_ALIGNMENT_CENTER, 160.0 * s)
+	var card := Rect2(o + Vector2(470, 690) * s, Vector2(250, 54) * s)
+	draw_rect(card, Color("#10202e"))
+	draw_rect(card, Color("#466373"), false, 1.5 * s)
+	_t(card.position + Vector2(16, 35) * s,
+		"AKIM  %s µA" % str(snappedf(current, 0.1)).replace(".", ","), 23.0 * s, INK)
 
 
 func _draw_board(o: Vector2, s: float, phi: float, k: float, current: float) -> void:

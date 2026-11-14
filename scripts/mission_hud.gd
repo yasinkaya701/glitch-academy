@@ -7,12 +7,12 @@ signal skip_pressed
 signal pause_pressed
 signal back_pressed
 
-const INK := Color("#e8f1f2")
-const MUTED := Color("#8fa6b3")
-const ACCENT := Color("#6fe3c1")
-const WARM := Color("#f2a65a")
-const DANGER := Color("#e5645a")
-const BG := Color("#070b12")
+const INK := Color("#22332f")
+const MUTED := Color("#66766d")
+const ACCENT := Color("#3b7867")
+const WARM := Color("#c88755")
+const DANGER := Color("#b85f56")
+const BG := Color("#f4f6f2")
 
 var directive: Label
 var counter: Label
@@ -37,13 +37,23 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	directive = Label.new()
-	# Yönerge bir talimat cümlesidir: gövde yazı tipi. Display yüz yalnızca kısa başlıklarda (assets/ui/VISUAL_LANGUAGE.md).
-	directive.add_theme_font_size_override("font_size", 22)
-	directive.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	# Yönerge bir talimat cümlesidir: gövde yazı tipi ve yumuşak açık gölge.
+	directive.add_theme_font_size_override("font_size", 20)
+	directive.add_theme_color_override("font_color", INK)
+	var reading_surface := StyleBoxFlat.new()
+	reading_surface.bg_color = Color(1, 1, 1, 0.96)
+	reading_surface.set_corner_radius_all(8)
+	reading_surface.content_margin_left = 14
+	reading_surface.content_margin_right = 14
+	reading_surface.content_margin_top = 10
+	reading_surface.content_margin_bottom = 10
+	directive.add_theme_stylebox_override("normal", reading_surface)
+	directive.add_theme_color_override("font_shadow_color", Color(1, 1, 1, 0))
 	directive.add_theme_constant_override("shadow_offset_x", 0)
-	directive.add_theme_constant_override("shadow_offset_y", 2)
+	directive.add_theme_constant_override("shadow_offset_y", 1)
 	directive.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	directive.position = Vector2(28, 44)
+	directive.position = Vector2(28, 48)
+	directive.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(directive)
 
 	counter = Label.new()
@@ -58,9 +68,10 @@ func _ready() -> void:
 	toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	toast.modulate.a = 0.0
 	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var toast_box := StyleBoxFlat.new()
 	toast_box.bg_color = Color(BG, 0.88)
-	toast_box.border_color = Color("#41627f")
+	toast_box.border_color = Color("#bdccc3")
 	toast_box.set_border_width_all(1)
 	toast_box.set_corner_radius_all(14)
 	toast_box.content_margin_left = 16
@@ -72,7 +83,7 @@ func _ready() -> void:
 
 	tools = HBoxContainer.new()
 	tools.add_theme_constant_override("separation", 10)
-	tools.alignment = BoxContainer.ALIGNMENT_CENTER
+	tools.alignment = BoxContainer.ALIGNMENT_BEGIN
 	add_child(tools)
 
 	action = Button.new()
@@ -92,13 +103,14 @@ func _ready() -> void:
 	add_child(pause)
 
 	back = Button.new()
-	back.text = "← Merkez"
+	back.text = "Merkeze dön"
 	back.tooltip_text = "Kontrol merkezine dön (Esc)"
 	back.pressed.connect(func() -> void: back_pressed.emit())
 	add_child(back)
 
 	info_button = Button.new()
-	info_button.text = "i"
+	info_button.text = "Bilgi"
+	info_button.tooltip_text = "Düzeneğin açıklaması"
 	info_button.custom_minimum_size = Vector2(36, 36)
 	info_button.pressed.connect(_toggle_info)
 	add_child(info_button)
@@ -114,26 +126,38 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	var size_now := size
-	var bottom := size_now.y - 22.0
-	tools.position = Vector2(28, bottom - 52.0)
-	tools.size = Vector2(maxf(size_now.x - 28.0 - 240.0, 200.0), 46.0)
-	action.position = Vector2(size_now.x - action.size.x - 28.0, bottom - 46.0)
-	var right := size_now.x - 28.0
-	back.position = Vector2(right - back.size.x, 22.0)
-	right -= back.size.x + 8.0
-	skip.position = Vector2(right - skip.size.x, 22.0)
-	pause.position = Vector2(right - pause.size.x, 22.0)
-	if skip.visible:
-		pause.position.x = skip.position.x - pause.size.x - 8.0
-	info_button.position = Vector2(right - info_button.size.x - (skip.size.x + 8.0 if skip.visible else 0.0) - (pause.size.x + 8.0 if pause.visible else 0.0) - 8.0, 22.0)
-	info_card.position = Vector2(size_now.x - info_card.size.x - 28.0, 66.0)
-	toast.position = Vector2((size_now.x - toast.size.x) * 0.5, bottom - 120.0)
+	var edge := 24.0
+	var right := size.x - edge
+	for button in [back, skip, pause, info_button]:
+		if button.visible:
+			button.size = button.get_combined_minimum_size().max(Vector2(44, 40))
+			button.position = Vector2(right - button.size.x, 18)
+			right = button.position.x - 8.0
+	counter.position = Vector2(edge, 18)
+	directive.position = Vector2(edge, 52)
+	directive.size = Vector2(maxf(size.x - edge * 2, 200), 0)
+	var action_width := action.get_combined_minimum_size().x if action.visible else 0.0
+	var tool_width := maxf(size.x - edge * 2 - action_width - (16 if action.visible else 0), 0)
+	var tool_height := maxf(tools.get_combined_minimum_size().y, 46)
+	var action_height := maxf(action.get_combined_minimum_size().y, 46)
+	var row_height := maxf(tool_height, action_height)
+	tools.position = Vector2(edge, size.y - edge - row_height)
+	tools.size = Vector2(tool_width, row_height)
+	action.size = Vector2(action_width, row_height)
+	action.position = Vector2(size.x - edge - action_width, tools.position.y)
+	var toast_width := minf(size.x - edge * 2, 720)
+	toast.size.x = toast_width
+	toast.size.y = toast.get_minimum_size().y
+	toast.position = Vector2((size.x - toast_width) * 0.5, tools.position.y - toast.size.y - 16)
+	info_card.size.x = minf(size.x - edge * 2, 380)
+	info_card.size.y = info_card.get_minimum_size().y
+	info_card.position = Vector2(size.x - info_card.size.x - edge, 112)
+	queue_redraw()
 
 
 func _draw() -> void:
-	# Üstte ve altta yumuşak karartma: yönerge ve araçlar okunur kalır, panel yok.
-	var dark := Color(BG, 0.78)
+	# Üstte ve altta açık okuma zemini: yönerge ve araçlar okunur kalır, panel yok.
+	var dark := Color(BG, 0.9)
 	var clear := Color(BG, 0.0)
 	var top := minf(size.y * 0.22, 150.0)
 	draw_polygon(PackedVector2Array([Vector2(0, 0), Vector2(size.x, 0), Vector2(size.x, top), Vector2(0, top)]),
@@ -149,7 +173,7 @@ func _standalone() -> bool:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
+	if back.visible and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		back_pressed.emit()
 		get_viewport().set_input_as_handled()
 
@@ -168,12 +192,9 @@ func set_directive(text: String) -> void:
 
 
 func set_steps(current: int, total: int, label: String = "") -> void:
-	_steps_current = current
-	_steps_total = total
-	var dots := ""
-	for i in total:
-		dots += "●  " if i < current else "○  "
-	counter.text = ("%s  %s" % [dots.strip_edges(), label]).strip_edges()
+	_steps_current = clampi(current, 0, total)
+	_steps_total = maxi(total, 0)
+	counter.text = "%d / %d   %s" % [mini(current + 1, total), total, label.capitalize()]
 
 
 func set_action(text: String, enabled: bool = true) -> void:
@@ -199,7 +220,7 @@ func say(text: String, tone: StringName = &"neutral") -> void:
 	if tone == &"good":
 		color = ACCENT
 	elif tone == &"bad":
-		color = WARM
+		color = DANGER
 	toast.add_theme_color_override("font_color", color)
 	if _toast_tween != null:
 		_toast_tween.kill()

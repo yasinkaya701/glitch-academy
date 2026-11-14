@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/genetics/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"genetics"
+title = "Kalıtım Laboratuvarı"
+subject = "Fen Bilimleri"
+grade = 8
+routes = PackedStringArray("class", "lgs")
+description = "İki ebeveynin alellerinden gametleri ve yavru genotiplerini kur; MERİDYEN'in sildiği çekinik özellikleri geri getir."
+curriculum = "8. sınıf Fen Bilimleri · DNA ve Genetik Kod · Kalıtım"
+source_url = "https://odsgm.meb.gov.tr/www/8-sinif-fen-bilimleri-unitelendirilmis-ornek-sorular/icerik/676"
+scene = ExtResource("2")

@@ -4,9 +4,9 @@ extends "res://scripts/mission.gd"
 ## Hikâye kuralı: docs/STORY.md. Her görev kayma → deney → uygulama → mühür sırasını izler.
 
 const Hud = preload("res://scripts/mission_hud.gd")
-const GOOD := Color("#a0dfbc")
-const BAD := Color("#ffb093")
-const MUTED := Color("#b0c4bf")
+const GOOD: Color = UITheme.GOOD
+const BAD: Color = UITheme.DANGER
+const MUTED: Color = UITheme.MUTED
 
 var stage: Control
 var hud: Hud
@@ -55,7 +55,12 @@ func go_back() -> void:
 
 
 func clear_tools() -> void:
+	if is_instance_valid(_diagnosis_panel):
+		remove_child(_diagnosis_panel)
+		_diagnosis_panel.queue_free()
+		_diagnosis_panel = null
 	for child in tools.get_children():
+		tools.remove_child(child)
 		child.queue_free()
 	entry = null
 
@@ -94,7 +99,8 @@ func read_number() -> float:
 	if entry == null or entry.text.strip_edges() == "":
 		return NAN
 	var text := entry.text.strip_edges().replace(",", ".")
-	return text.to_float() if text.is_valid_float() else NAN
+	var value := text.to_float() if text.is_valid_float() else NAN
+	return value if is_finite(value) else NAN
 
 
 func add_power(title: String, hint: String, callback: Callable, toggle: bool = false) -> Button:
@@ -143,3 +149,81 @@ func seal(record: String, directive: String) -> void:
 	say("Mühürlendi. " + record, GOOD)
 	Sfx.play(&"chime")
 	completed.emit()
+
+## Ayar plakasına kanıt taşıma. Düğmeler sürüklemenin klavye karşılığıdır.
+class EvidenceSlip extends Button:
+	var record_index := -1
+	func _get_drag_data(_position: Vector2) -> Variant:
+		var preview := Label.new()
+		preview.text = text
+		set_drag_preview(preview)
+		return {"experiment_record": record_index}
+
+class SettingTarget extends PanelContainer:
+	signal record_dropped(index: int)
+	func _can_drop_data(_position: Vector2, data: Variant) -> bool:
+		return data is Dictionary and data.has("experiment_record")
+	func _drop_data(_position: Vector2, data: Variant) -> void:
+		record_dropped.emit(int(data.experiment_record))
+
+var evidence_verified := false
+var _diagnosis_panel: PanelContainer
+var _diagnosis_records: Array[String] = []
+var _diagnosis_attached: Array[int] = []
+var _diagnosis_valid_key: StringName
+var _diagnosis_handler: Callable
+var _diagnosis_selected := -1
+
+func show_evidence_diagnosis(records: Array[String], settings: Dictionary, valid_key: StringName, handler: Callable) -> void:
+	evidence_verified = false
+	_diagnosis_records = records.duplicate()
+	_diagnosis_attached.clear()
+	_diagnosis_valid_key = valid_key
+	_diagnosis_handler = handler
+	_diagnosis_selected = -1
+	_diagnosis_panel = PanelContainer.new()
+	_diagnosis_panel.theme_type_variation = "ConsolePanel"
+	_diagnosis_panel.position = Vector2((size.x - 700.0) * 0.5, 130)
+	_diagnosis_panel.size = Vector2(700, 0)
+	add_child(_diagnosis_panel)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 10)
+	_diagnosis_panel.add_child(column)
+	var hint := Label.new()
+	hint.text = "Fişi seç, çeliştiği ayara uygula; ya da sürükleyip bırak."
+	column.add_child(hint)
+	for index in records.size():
+		var slip := EvidenceSlip.new()
+		slip.record_index = index
+		slip.text = records[index]
+		slip.custom_minimum_size.y = 44
+		slip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		slip.pressed.connect(func() -> void:
+			_diagnosis_selected = index
+			say("Kayıt %d seçildi; çeliştiği ayara uygula." % (index + 1)))
+		column.add_child(slip)
+	for key in settings:
+		var target := SettingTarget.new()
+		target.record_dropped.connect(apply_diagnosis_record.bind(key))
+		var button := Button.new()
+		button.text = settings[key]
+		button.custom_minimum_size.y = 44
+		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		button.pressed.connect(func() -> void: apply_diagnosis_record(_diagnosis_selected, key))
+		button.mouse_filter = Control.MOUSE_FILTER_PASS
+		target.add_child(button)
+		column.add_child(target)
+
+func apply_diagnosis_record(index: int, key: StringName) -> void:
+	if index < 0 or index >= _diagnosis_records.size() or evidence_verified:
+		return
+	if key != _diagnosis_valid_key:
+		_diagnosis_handler.call(key)
+		return
+	if not _diagnosis_attached.has(index):
+		_diagnosis_attached.append(index)
+	if _diagnosis_attached.size() == _diagnosis_records.size():
+		evidence_verified = true
+		_diagnosis_handler.call(key)
+	else:
+		say("Bir kayıt bağlandı; ikinci ölçümü de karşılaştır.")

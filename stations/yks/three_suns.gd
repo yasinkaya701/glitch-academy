@@ -3,7 +3,6 @@ extends "res://scripts/mission.gd"
 const ThreeBodyModelScript := preload("res://stations/yks/three_body_model.gd")
 
 @onready var plot: Control = %Plot
-@onready var experiment: SubViewportContainer = %ExperimentView
 @onready var status: Label = %Status
 @onready var delta_slider: HSlider = %DeltaSlider
 @onready var delta_value: Label = %DeltaValue
@@ -31,7 +30,6 @@ func _run_baseline() -> void:
 	baseline_paths = ThreeBodyModelScript.simulate(0.0)
 	_has_baseline = true
 	plot.set_paths(baseline_paths, changed_paths)
-	experiment.get_node("Viewport/World/Model/ThreeBodyVisual").call("set_paths", baseline_paths, changed_paths)
 	status.text = "Başlangıç koşulları kaydedildi."
 	compare_button.disabled = not _has_changed
 
@@ -39,7 +37,6 @@ func _run_changed() -> void:
 	changed_paths = ThreeBodyModelScript.simulate(delta_slider.value)
 	_has_changed = true
 	plot.set_paths(baseline_paths, changed_paths)
-	experiment.get_node("Viewport/World/Model/ThreeBodyVisual").call("set_paths", baseline_paths, changed_paths)
 	status.text = "İlk hız bileşenine küçük bir fark eklendi."
 	compare_button.disabled = not _has_baseline
 

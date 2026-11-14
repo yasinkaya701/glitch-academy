@@ -26,10 +26,13 @@ var _anchor_f := 0.0
 var _anchor_i := 0.0
 var _anchor_k := 0.0
 var _tries := 3
+var _intensity_record := ""
+var _frequency_record := ""
+var _rescue_busy := false
 
 
 func _begin() -> void:
-	step_total = 5
+	step_total = 6
 	_enter_crisis()
 
 
@@ -96,16 +99,18 @@ func _after_change() -> void:
 	var current := Photo.photocurrent(_f, _i, PHI)
 	if not _seen_below and Photo.photon_energy(_f) <= PHI and _i >= 0.9:
 		_seen_below = true
-		say("Eşik altında, şiddet en güçlü: akım %s µA. Şiddet elektron sökmüyor." % str(current).replace(".", ","), GOOD)
+		say("Şiddet %100; ampermetre 0 µA gösteriyor.")
 	elif Photo.photon_energy(_f) > PHI:
 		if not _seen_intensity and absf(_i - _anchor_i) >= 0.3 and absf(_f - _anchor_f) < 1e12 and k > 0.0:
 			_seen_intensity = true
-			say("Şiddet değişti: akım değişti, elektronların en fazla enerjisi %s eV kaldı. Şiddet sayıyı belirliyor." % str(snappedf(k, 0.01)).replace(".", ","), GOOD)
+			_intensity_record = "Frekans sabit; şiddet değişti; enerji %s eV kaldı" % str(snappedf(k, 0.01)).replace(".", ",")
+			say("Şiddet denemesi kaydedildi; enerji aynı kaldı.")
 		if not _seen_frequency and absf(k - _anchor_k) >= 0.5 and absf(_i - _anchor_i) < 0.01:
 			_seen_frequency = true
-			say("Frekans değişti: elektron enerjisi %s eV oldu. Enerjiyi frekans belirliyor." % str(snappedf(k, 0.01)).replace(".", ","), GOOD)
+			_frequency_record = "Şiddet sabit; frekans değişti; enerji %s eV oldu" % str(snappedf(k, 0.01)).replace(".", ",")
+			say("Frekans denemesi kaydedildi; enerji değişti.")
 	if _seen_below and _seen_intensity and _seen_frequency:
-		hud.set_action("Nedeni seç", true)
+		hud.set_action("Kanıtları incele", true)
 	_anchor_if_idle()
 
 
@@ -123,33 +128,36 @@ func _anchor_if_idle() -> void:
 # --- 2 · Neden ---------------------------------------------------------------------
 
 func _enter_reason() -> void:
+	if not (_seen_below and _seen_intensity and _seen_frequency):
+		return
 	step = Step.REASON
-	screen(2, "NEDEN", "Kırmızı ışık en güçlü açıkken neden elektron sökülmedi?", "",
-		"Eşik altında şiddeti ne kadar artırsan da akım sıfır kaldı. Eşik üstünde şiddet akımı, frekans enerjiyi belirledi.")
-	for choice in [&"intensity", &"frequency", &"plate"]:
-		var button := Button.new()
-		button.text = {&"intensity": "Şiddet yetmedi", &"frequency": "Foton enerjisi (frekans) yetmedi", &"plate": "Plaka bozuk"}[choice]
-		button.pressed.connect(_on_reason.bind(choice))
-		tools.add_child(button)
+	screen(2, "TEŞHİS", "İki kaydı çeliştikleri MERİDYEN ayarına taşı.")
+	show_evidence_diagnosis([_intensity_record, _frequency_record], {
+		&"intensity": "Lamba şiddeti ayarlanabilir",
+		&"frequency": "Elektron enerjisi: ışık şiddetine bağlı",
+		&"plate": "Plaka malzemesi: sezyum"
+	}, &"frequency", _on_reason)
 
 
 func _on_reason(choice: StringName) -> void:
+	if choice == &"frequency" and not evidence_verified:
+		return
 	match choice:
 		&"frequency":
-			say("Doğru. Tek bir foton elektronu sökecek enerjiye sahip olmalı: h·f > φ. Şiddet yalnızca foton sayısıdır.", GOOD)
+			say("İki ölçüm yanlış enerji ayarını açtı.", GOOD)
 			clear_tools()
 			hud.set_action("Eşiği hesapla", true)
 		&"intensity":
-			say("Şiddeti sonuna kadar açtık, akım yine sıfırdı. Şiddet neden olamaz.", BAD)
+			say("Şiddet ayarı gerçekten değişti; bu satır kayda uyuyor.", BAD)
 		_:
-			say("Aynı plaka yüksek frekansta elektron saldı. Plaka bozuk değil.", BAD)
+			say("Her iki ölçüm aynı plakadan alındı; kaydı karşılaştır.", BAD)
 
 
 # --- 3 · Ölç -----------------------------------------------------------------------
 
 func _enter_measure() -> void:
 	step = Step.MEASURE
-	screen(3, "ÖLÇ", "Sezyumun iş fonksiyonu 2,07 eV. Eşik frekansı kaç ×10¹⁴ Hz?", "Onayla",
+	screen(3, "DÜZELT", "Sezyumun iş fonksiyonu 2,07 eV. Eşik frekansı kaç ×10¹⁴ Hz?", "Onayla",
 		"Foton enerjisi E = h·f, h = 4,14·10⁻¹⁵ eV·s. Elektron sökülmesi için E ≥ φ. Eşik: f₀ = φ / h.")
 	add_entry("f₀  (×10¹⁴ Hz)")
 
@@ -157,13 +165,13 @@ func _enter_measure() -> void:
 func _check_measure() -> void:
 	var value := read_number()
 	if is_nan(value):
-		say("Sayı gir. Örnek: 5,0", BAD)
+		say("Eşik frekansını kutudaki birimle sayı olarak gir.", BAD)
 		return
 	if absf(value - 5.0) <= 0.1:
 		say("f₀ = 2,07 / 4,14·10⁻¹⁵ = 5,0·10¹⁴ Hz. Kırmızı lamba (4,3·10¹⁴ Hz) eşiğin altındaydı.", GOOD)
 		_enter_rescue()
 	elif absf(value - 0.5) < 0.05 or absf(value - 50.0) < 1.0:
-		say("Üssü kaçırmış olabilirsin: 2,07 / 4,14 = 0,5 ve h'nin üssü 10⁻¹⁵, yani 5·10¹⁴ Hz.", BAD)
+		say("Üs dönüşümünü denetle; kutunun birimi ×10¹⁴ Hz.", BAD)
 	else:
 		say("f₀ = φ / h. Elektron sökmek için gereken en küçük frekans: 2,07 eV bölü 4,14·10⁻¹⁵ eV·s.", BAD)
 
@@ -174,7 +182,7 @@ func _enter_rescue() -> void:
 	step = Step.RESCUE
 	_tries = 3
 	_view().faulty_display = false
-	screen(4, "KURTAR", "Kapı için lambayı kur: akım ≥ 4 µA ve elektron enerjisi 1,0–2,0 eV.", "Lambayı kur",
+	screen(4, "TOPARLA", "Kapı için lambayı kur: akım ≥ 4 µA ve elektron enerjisi 1,0–2,0 eV.", "Lambayı kur",
 		"Üç hakkın var. Akım yetmezse kapı açılmaz. Elektronlar 1,0 eV'tan yavaşsa algılanmaz, 2,0 eV'tan hızlıysa kapı yanar. Frekans ve şiddeti birlikte seç.")
 	add_entry("frekans  (×10¹⁴ Hz)")
 	var intensity_entry := LineEdit.new()
@@ -186,18 +194,22 @@ func _enter_rescue() -> void:
 
 
 func _run_rescue() -> void:
+	if _rescue_busy or _tries <= 0 or _sealed:
+		return
 	var frequency := read_number()
 	var intensity_entry: LineEdit = tools.get_node_or_null("IntensityEntry")
 	var intensity := NAN
 	if intensity_entry != null and intensity_entry.text.strip_edges() != "":
 		var text := intensity_entry.text.strip_edges().replace(",", ".")
 		intensity = text.to_float() if text.is_valid_float() else NAN
-	if is_nan(frequency) or is_nan(intensity):
-		say("Frekansı (×10¹⁴ Hz) ve şiddeti (%) gir. Örnek: 8  ve  70", BAD)
+	if not is_finite(frequency) or not is_finite(intensity):
+		say("Frekans ve şiddet kutularına ayrı ayrı sayı gir.", BAD)
 		return
 	if frequency < 3.0 or frequency > 14.0 or intensity < 0.0 or intensity > 100.0:
 		say("Lamba 3–14 ×10¹⁴ Hz ve 0–100 % aralığında çalışır.", BAD)
 		return
+	_rescue_busy = true
+	hud.set_action("Ölçülüyor", false)
 	_f = frequency * 1e14
 	_i = intensity / 100.0
 	_sync_view()
@@ -220,11 +232,16 @@ func _run_rescue() -> void:
 	else:
 		why = "Akım %s µA, kapı 4 µA ister. Şiddet (foton sayısı) akımı belirler, onu artır." % str(snappedf(current, 0.1)).replace(".", ",")
 	say(why, BAD)
-	if _tries <= 0:
-		_tries = 3
-		say("Kapı kilidi yenilendi. E = h·f ve K_max = h·f − φ ile frekansı, akım için şiddeti seç.")
 	await get_tree().create_timer(2.2).timeout
 	view.door_burned = false
+	_rescue_busy = false
+	if _tries <= 0:
+		step = Step.DONE
+		clear_tools()
+		hud.set_action("Krize sar", true)
+		say("Üç hak bitti; krizi yeniden ölçmen gerekiyor.", BAD)
+	else:
+		hud.set_action("Lambayı kur", true)
 
 
 func _finish() -> void:
@@ -240,7 +257,8 @@ func _on_action() -> void:
 		Step.TEST:
 			_enter_reason()
 		Step.REASON:
-			_enter_measure()
+			if evidence_verified:
+				_enter_measure()
 		Step.MEASURE:
 			if hud.action.text == "Eşiği hesapla":
 				_enter_measure()
@@ -248,3 +266,7 @@ func _on_action() -> void:
 				_check_measure()
 		Step.RESCUE:
 			_run_rescue()
+
+		Step.DONE:
+			if not _sealed:
+				_enter_crisis()

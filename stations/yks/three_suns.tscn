@@ -1,9 +1,7 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://stations/yks/three_suns.gd" id="1"]
 [ext_resource type="Script" path="res://stations/yks/three_body_plot.gd" id="2"]
-[ext_resource type="PackedScene" path="res://scenes/experiment_3d.tscn" id="3"]
-[ext_resource type="Script" path="res://stations/yks/three_suns_view.gd" id="4"]
 
 [node name="ThreeSuns" type="Control"]
 layout_mode = 3
@@ -33,19 +31,11 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 23
 text = "Üçüncü yıldızın etkisini iki başlangıç iziyle ölç."
 
-[node name="ExperimentView" parent="Margin/Layout" instance=ExtResource("3")]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-custom_minimum_size = Vector2(500, 390)
-
-[node name="ThreeBodyVisual" type="Node3D" parent="Margin/Layout/ExperimentView/Viewport/World/Model"]
-script = ExtResource("4")
-
 [node name="Plot" type="Control" parent="Margin/Layout"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(500, 142)
+size_flags_vertical = 3
+custom_minimum_size = Vector2(500, 340)
 script = ExtResource("2")
 
 [node name="Controls" type="HBoxContainer" parent="Margin/Layout"]

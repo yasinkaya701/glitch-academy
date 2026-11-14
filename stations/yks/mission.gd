@@ -4,10 +4,10 @@ extends "res://scripts/mission.gd"
 const Definition = preload("res://stations/yks/yks_mission_definition.gd")
 const Visual = preload("res://stations/yks/stage_visual.tscn")
 
-const INK := Color("#e8f1f2")
-const MUTED := Color("#8fa6b3")
-const ACCENT := Color("#6fe3c1")
-const DANGER := Color("#e5645a")
+const INK := Color("#22332f")
+const MUTED := Color("#66766d")
+const ACCENT := Color("#3b7867")
+const DANGER := Color("#b04e45")
 
 @export var mission_definition: Definition
 @export var mission_data_path := ""
@@ -71,7 +71,7 @@ func _build_interface_after_layout() -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color("#080e16"), true)
+	draw_rect(Rect2(Vector2.ZERO, size), Color("#f4f6f2"), true)
 	var layout := _panel_layout()
 	var left_panel: Rect2 = layout["left"]
 	var right_panel: Rect2 = layout["right"]
@@ -124,12 +124,15 @@ func try_answer(answer: Variant) -> bool:
 	if answer != mission_definition.correct_answer():
 		last_feedback = mission_definition.feedback_wrong
 		_set_feedback("↻  " + last_feedback, DANGER, true)
+		_evidence_label.text = "KAYIT UYUŞMADI  ·  KANITI YENİDEN İNCELE"
 		if _visual != null and _visual.has_method("mark_result"):
 			_visual.call("mark_result", false)
 		return false
 	_completed = true
 	last_feedback = mission_definition.feedback_success
 	_set_feedback("✓  " + last_feedback, ACCENT, true)
+	_evidence_label.text = "MERİDYEN KAYDI  ·  MÜHÜRLENDİ"
+	_evidence_label.add_theme_color_override("font_color", ACCENT)
 	_lock_interaction()
 	_info_button.grab_focus()
 	if _visual != null and _visual.has_method("mark_result"):
@@ -149,7 +152,7 @@ func _build_interface() -> void:
 	add_child(overline)
 	_info_button = Button.new()
 	_info_button.text = "ⓘ"
-	_info_button.tooltip_text = "Bu bölümün kazanımı"
+	_info_button.tooltip_text = "Kazanım ve kaynak"
 	_info_button.theme_type_variation = "CompactButton"
 	_info_button.custom_minimum_size = Vector2(44, 40)
 	_info_button.position = Vector2(size.x - 60.0, 8)
@@ -168,17 +171,16 @@ func _build_interface() -> void:
 			_visual.set("life_protocol", true)
 	add_child(_visual)
 
-	_evidence_label = _label("KAYIT", 11, ACCENT)
+	_evidence_label = _label("MERİDYEN KAYDI  ·  BOZUK", 11, DANGER)
 	_evidence_label.position = right_panel.position + Vector2(18, 84)
 	_evidence_label.size = Vector2(right_panel.size.x - 36.0, 18)
 	add_child(_evidence_label)
 	_prompt_label = _label(mission_definition.prompt, 17, INK)
-	_prompt_label.add_theme_color_override("font_color", MUTED)
 	_prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_prompt_label.position = right_panel.position + Vector2(18, 102)
 	_prompt_label.size = Vector2(right_panel.size.x - 36.0, 102)
 	add_child(_prompt_label)
-	_instruction_label = _label(mission_definition.instruction, 18, INK)
+	_instruction_label = _label(mission_definition.instruction, 16, INK)
 	_instruction_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_instruction_label.position = right_panel.position + Vector2(18, 156)
 	_instruction_label.size = Vector2(right_panel.size.x - 36.0, 58)
@@ -194,7 +196,7 @@ func _build_interface() -> void:
 	_feedback_label = _label("", 15, MUTED)
 	_feedback_label.hide()
 	_feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_verify_button = _button("Yanıtı kontrol et", Vector2(220, 48))
+	_verify_button = _button("Kanıtı kayda uygula", Vector2(220, 48))
 	_verify_button.theme_type_variation = "PrimaryButton"
 	_verify_button.pressed.connect(_submit_answer)
 	add_child(_verify_button)
@@ -229,9 +231,10 @@ func _layout_interface() -> void:
 	_evidence_label.size = Vector2(right_panel.size.x - 36.0, 18)
 	var text_width := right_panel.size.x - 36.0
 	_compact_content_flow = right_panel.size.y < 440.0
-	_evidence_label.text = "KAYIT  ·  YANITLAR ↓" if _compact_content_flow else "KAYIT"
-	_prompt_label.add_theme_font_size_override("font_size", 15 if _compact_content_flow else 16)
-	_instruction_label.add_theme_font_size_override("font_size", 14 if _compact_content_flow else 18)
+	if not _completed:
+		_evidence_label.text = "MERİDYEN KAYDI  ·  YANITLAR ↓" if _compact_content_flow else "MERİDYEN KAYDI  ·  BOZUK"
+	_prompt_label.add_theme_font_size_override("font_size", 15 if _compact_content_flow else 17)
+	_instruction_label.add_theme_font_size_override("font_size", 14 if _compact_content_flow else 16)
 	if _compact_content_flow:
 		if _prompt_label.get_parent() != _answer_area:
 			_prompt_label.reparent(_answer_area)
@@ -254,11 +257,11 @@ func _layout_interface() -> void:
 		if _instruction_label.get_parent() != self:
 			_instruction_label.reparent(self)
 		_instruction_label.text = mission_definition.instruction
-		var prompt_height := _estimated_text_height(mission_definition.prompt, text_width, 16, 42.0)
+		var prompt_height := _estimated_text_height(mission_definition.prompt, text_width, 17, 42.0)
 		_prompt_label.position = right_panel.position + Vector2(18, 102)
 		_prompt_label.size = Vector2(text_width, prompt_height)
 		var instruction_top := maxf(156.0, 102.0 + prompt_height + 10.0)
-		var instruction_height := _estimated_text_height(mission_definition.instruction, text_width, 18, 38.0)
+		var instruction_height := _estimated_text_height(mission_definition.instruction, text_width, 16, 38.0)
 		_instruction_label.position = right_panel.position + Vector2(18, instruction_top)
 		_instruction_label.size = Vector2(text_width, instruction_height)
 		var answers_top := instruction_top + instruction_height + 10.0
@@ -307,19 +310,19 @@ func _rebuild_interaction() -> void:
 func _show_learning_note() -> void:
 	if _info_dialog == null:
 		_info_dialog = AcceptDialog.new()
-		_info_dialog.title = "Kazanım"
-		_info_dialog.dialog_text = mission_definition.learning_target
+		_info_dialog.title = "Öğrenme notu"
+		_info_dialog.dialog_text = "%s\n%s\n%s" % [mission_definition.learning_target, mission_definition.curriculum, mission_definition.source_note]
 		add_child(_info_dialog)
 	var viewport_size := get_viewport_rect().size
-	var dialog_width := mini(420, maxi(180, roundi(viewport_size.x - 32.0)))
-	var dialog_height := mini(190, maxi(150, roundi(viewport_size.y - 48.0)))
+	var dialog_width := mini(560, maxi(180, roundi(viewport_size.x - 32.0)))
+	var dialog_height := mini(280, maxi(180, roundi(viewport_size.y - 48.0)))
 	_info_dialog.popup_centered(Vector2i(dialog_width, dialog_height))
 
 
 func _build_interaction() -> void:
 	_answer_area.position = Vector2.ZERO
 	_answer_area.size = Vector2(_answer_scroll.size.x, 1.0)
-	_verify_button.text = "Yanıtı kontrol et"
+	_verify_button.text = "Kaydı onar"
 	_verify_button.disabled = _completed
 	match mission_definition.mode:
 		"choice":
@@ -343,13 +346,13 @@ func _update_verify_state() -> void:
 		return
 	match mission_definition.mode:
 		"choice":
-			_verify_button.text = "Yanıtı kontrol et"
+			_verify_button.text = "Kanıtı kayda uygula"
 			_verify_button.disabled = _completed or _selected_choice.is_empty()
 		"sequence":
-			_verify_button.text = "Sıralamayı kontrol et"
+			_verify_button.text = "Sıralamayı onar"
 			_verify_button.disabled = _completed
 		"pair":
-			_verify_button.text = "Eşleşmeleri kontrol et  ·  %d/%d" % [_pair_answers.size(), mission_definition.pair_left.size()]
+			_verify_button.text = "Bağlantıları onar  ·  %d/%d" % [_pair_answers.size(), mission_definition.pair_left.size()]
 			var distinct: Dictionary = {}
 			for target in _pair_answers.values():
 				distinct[target] = true

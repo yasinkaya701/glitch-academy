@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/pulley/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"pulley"
+title = "Palanga Atölyesi"
+subject = "Fen Bilimleri"
+grade = 8
+routes = PackedStringArray("class", "lgs")
+description = "Sabit ve hareketli makarada kuvvet ile yol değişimini ölç; MERİDYEN'in eksik ip kolu kaydını düzelt."
+curriculum = "F.8.5.1.1 · Basit makinelerin sağladığı avantajlar (2018 programı)"
+source_url = "https://mufredat.meb.gov.tr/Dosyalar/201812312311937-FEN%20B%C4%B0L%C4%B0MLER%C4%B0%20%C3%96%C4%9ERET%C4%B0M%20PROGRAMI2018.pdf"
+scene = ExtResource("2")

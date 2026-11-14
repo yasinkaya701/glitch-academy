@@ -18,10 +18,12 @@ var _seen_single := false
 var _seen_constructive := false
 var _seen_destructive := false
 var _tries := 3
+var _constructive_record := ""
+var _destructive_record := ""
 
 
 func _begin() -> void:
-	step_total = 5
+	step_total = 6
 	_enter_crisis()
 
 
@@ -58,7 +60,7 @@ func _enter_test() -> void:
 		_view().two_sources = on
 		if not on:
 			_seen_single = true
-			say("Tek kaynak: genlik her yerde 1,0. Sönme yok, yalnızca iki dalga birleşince oluyor.", GOOD)
+			say("Tek kaynak açık; A göstergesi 1,0.")
 		_after_change(), true)
 	second.set_pressed_no_signal(true)
 
@@ -71,45 +73,46 @@ func _after_change() -> void:
 	if view.two_sources:
 		if not _seen_constructive and amp >= 1.95:
 			_seen_constructive = true
-			say("A'da Δ/λ = %s: tam sayı, tepe tepeyle buluştu, genlik 2,0." % str(snappedf(Wave.path_ratio(Wave.SENSOR_A, view.frequency), 0.01)).replace(".", ","), GOOD)
+			_constructive_record = "f = %s Hz; A genliği = %s" % [str(view.frequency), str(snappedf(amp, 0.01))]
+			say("A genliği 2,0 olarak kaydedildi.")
 		if not _seen_destructive and amp <= 0.15:
 			_seen_destructive = true
-			say("A'da Δ/λ = %s: yarımın tek katı, tepe çukurla buluştu, genlik 0." % str(snappedf(Wave.path_ratio(Wave.SENSOR_A, view.frequency), 0.01)).replace(".", ","), GOOD)
+			_destructive_record = "f = %s Hz; A genliği = %s" % [str(view.frequency), str(snappedf(amp, 0.01))]
+			say("A genliği sıfır olarak kaydedildi.")
 	if _seen_single and _seen_constructive and _seen_destructive:
-		hud.set_action("Nedeni seç", true)
+		hud.set_action("Kanıtları incele", true)
 
 
 func _enter_reason() -> void:
+	if not (_seen_single and _seen_constructive and _seen_destructive):
+		return
 	step = Step.REASON
-	screen(2, "NEDEN", "A'daki genliği ne belirliyor?", "",
-		"Tek kaynakta sönme yoktu, iki kaynakta frekansa göre A bazen 2, bazen 0 oldu. Değişen, iki dalganın A'ya ulaşma farkı.")
-	var options := {
-		&"loss": "Dalgalar yol boyunca enerji kaybeder",
-		&"path": "Yol farkı ve dalga boyu: tepe çukurla ya da tepeyle üst üste biner",
-		&"speed": "Frekans dalganın hızını değiştirir",
-	}
-	for choice in options:
-		var button := Button.new()
-		button.text = options[choice]
-		button.pressed.connect(_on_reason.bind(choice))
-		tools.add_child(button)
+	screen(2, "TEŞHİS", "Ölçümleri çeliştikleri MERİDYEN ayarına taşı.")
+	show_evidence_diagnosis([_constructive_record, _destructive_record], {
+		&"path": "Genlik hesabı: iki kaynak her yerde güçlenir",
+		&"loss": "Tek kaynak genliği: 1,0",
+		&"speed": "Ortamın dalga hızı: sabit"
+	}, &"path", _on_reason)
 
 
 func _on_reason(choice: StringName) -> void:
+	if choice == &"path" and not evidence_verified:
+		return
 	match choice:
 		&"path":
-			say("Doğru. Δ = n·λ yapıcı (genlik 2), Δ = (n + ½)·λ yıkıcı (genlik 0). Süperpozisyon: anlık genlikler toplanır.", GOOD)
+			say("İki kayıt aynı ayarla çelişti; mühür açıldı.", GOOD)
 			clear_tools()
 			hud.set_action("Δ/λ hesapla", true)
 		&"loss":
-			say("Tek kaynakta genlik her yerde 1,0 kaldı. Enerji kaybı süreyi açıklamaz.", BAD)
+			say("Bu satır tek kaynak kaydıyla tutarlı.", BAD)
 		_:
-			say("Hız sabit (12 cm/s): λ = v / f. Frekans yalnızca dalga boyunu değiştirir.", BAD)
+			say("Ortam değişmedi; bu satır kayıtla çelişmiyor.", BAD)
 
 
 func _enter_measure() -> void:
 	step = Step.MEASURE
-	screen(3, "ÖLÇ", "A'da yol farkı 3 cm, dalga boyu 2 cm. Δ/λ kaç? A söner mi?", "Onayla",
+	_view().frequency = 4.0
+	screen(3, "DÜZELT", "Cihazdaki yol farkını dalga boyuna böl; kontrol oranını gir.", "Onayla",
 		"Dalga boyu λ = v / f. Yol farkını dalga boyuna böl: tam sayıysa yapıcı, yarımın tek katıysa yıkıcı.")
 	add_entry("Δ / λ")
 
@@ -117,15 +120,15 @@ func _enter_measure() -> void:
 func _check_measure() -> void:
 	var value := read_number()
 	if is_nan(value):
-		say("Sayı gir. Örnek: 1,5", BAD)
+		say("Oranı sayı olarak gir; ondalık virgül kullanabilirsin.", BAD)
 		return
-	if absf(value - 1.5) <= 0.05:
-		say("Δ/λ = 3 / 2 = 1,5: yarımın tek katı, A söner. λ = 2 cm için frekans f = 12 / 2 = 6 Hz.", GOOD)
+	if absf(value - Wave.path_ratio(Wave.SENSOR_A, 4.0)) <= 0.05:
+		say("Kontrol oranı ölçümle eşleşti.", GOOD)
 		_enter_rescue()
 	elif absf(value - 0.667) < 0.03:
-		say("Ters bölmüşsün. Yol farkı payda değil, pay: Δ / λ = 3 / 2.", BAD)
+		say("Bölme sırasını denetle: yol farkı / dalga boyu.", BAD)
 	else:
-		say("Δ / λ = 3 cm / 2 cm. Sonuç tam sayı mı, yarımın tek katı mı?", BAD)
+		say("Cihazdaki yol farkını ve dalga boyunu yeniden oku.", BAD)
 
 
 func _enter_rescue() -> void:
@@ -134,15 +137,17 @@ func _enter_rescue() -> void:
 	var view := _view()
 	view.faulty_display = false
 	view.two_sources = true
-	screen(4, "KURTAR", "A sönmeli (≤ 0,3), B parlamalı (≥ 1,7). Tek bir frekans gir.", "Frekansı kur",
+	screen(4, "TOPARLA", "A sönmeli (≤ 0,3), B parlamalı (≥ 1,7). Tek bir frekans gir.", "Frekansı kur",
 		"Hız 12 cm/s, λ = v / f. A'da Δ = 3 cm, B'de Δ = 2 cm. İki koşulu birlikte sağlayan frekans 1–8 Hz aralığında tek. Üç hakkın var.")
 	add_entry("frekans  (Hz)")
 
 
 func _run_rescue() -> void:
+	if step != Step.RESCUE or _tries <= 0 or _sealed:
+		return
 	var value := read_number()
 	if is_nan(value):
-		say("Frekansı Hz olarak gir. Örnek: 6", BAD)
+		say("Frekansı Hz olarak sayı ile gir.", BAD)
 		return
 	if value < Wave.FREQ_MIN or value > Wave.FREQ_MAX:
 		say("Kaynaklar 1–8 Hz arasında çalışır.", BAD)
@@ -162,8 +167,10 @@ func _run_rescue() -> void:
 	else:
 		say("A söndü ama B zayıf: Δ/λ = %s, tam sayı (1; 2) olmalı." % str(snappedf(ratio_b, 0.01)).replace(".", ","), BAD)
 	if _tries <= 0:
-		_tries = 3
-		say("Üç hakkın bitti, yeniden başla: λ = v / f, A için Δ/λ = n + ½, B için Δ/λ = n.")
+		step = Step.DONE
+		clear_tools()
+		hud.set_action("Krize sar", true)
+		say("Üç hak bitti; krizi yeniden ölçmen gerekiyor.", BAD)
 
 
 func _finish() -> void:
@@ -177,8 +184,13 @@ func _on_action() -> void:
 		Step.TEST:
 			_enter_reason()
 		Step.REASON:
-			_enter_measure()
+			if evidence_verified:
+				_enter_measure()
 		Step.MEASURE:
 			_check_measure()
 		Step.RESCUE:
 			_run_rescue()
+
+		Step.DONE:
+			if not _sealed:
+				_enter_crisis()

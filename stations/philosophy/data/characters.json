@@ -1,0 +1,258 @@
+{
+  "aristotle": {
+    "body_size": [
+      410,
+      1165
+    ],
+    "expressions": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "mouth_mid",
+      "mouth_open",
+      "smile"
+    ],
+    "face_rect": [
+      58,
+      0,
+      289,
+      326
+    ],
+    "mouth_y": 145,
+    "neck": [
+      144.5,
+      215.2
+    ],
+    "poses": {},
+    "upper": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "smile"
+    ]
+  },
+  "epicurus": {
+    "body_size": [
+      423,
+      1193
+    ],
+    "expressions": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "mouth_mid",
+      "mouth_open",
+      "smile"
+    ],
+    "face_rect": [
+      69,
+      0,
+      288,
+      334
+    ],
+    "mouth_y": 154,
+    "neck": [
+      144.0,
+      220.4
+    ],
+    "poses": {},
+    "upper": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "smile"
+    ]
+  },
+  "farabi": {
+    "body_size": [
+      413,
+      1156
+    ],
+    "expressions": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "mouth_mid",
+      "mouth_open",
+      "smile"
+    ],
+    "face_rect": [
+      58,
+      0,
+      285,
+      323
+    ],
+    "mouth_y": 153,
+    "neck": [
+      142.5,
+      213.2
+    ],
+    "poses": {},
+    "upper": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "smile"
+    ]
+  },
+  "ibn_rushd": {
+    "body_size": [
+      487,
+      1205
+    ],
+    "expressions": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "mouth_mid",
+      "mouth_open",
+      "smile"
+    ],
+    "face_rect": [
+      90,
+      0,
+      309,
+      337
+    ],
+    "mouth_y": 154,
+    "neck": [
+      154.5,
+      222.4
+    ],
+    "poses": {},
+    "upper": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "smile"
+    ]
+  },
+  "ibn_sina": {
+    "body_size": [
+      462,
+      1168
+    ],
+    "expressions": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "mouth_mid",
+      "mouth_open",
+      "smile"
+    ],
+    "face_rect": [
+      96,
+      0,
+      283,
+      327
+    ],
+    "mouth_y": 151,
+    "neck": [
+      141.5,
+      215.8
+    ],
+    "poses": {},
+    "upper": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "smile"
+    ]
+  },
+  "kindi": {
+    "body_size": [
+      445,
+      1186
+    ],
+    "expressions": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "mouth_mid",
+      "mouth_open",
+      "smile"
+    ],
+    "face_rect": [
+      61,
+      0,
+      303,
+      332
+    ],
+    "mouth_y": 153,
+    "neck": [
+      151.5,
+      219.1
+    ],
+    "poses": {},
+    "upper": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "smile"
+    ]
+  },
+  "plato": {
+    "body_size": [
+      448,
+      1170
+    ],
+    "expressions": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "mouth_mid",
+      "mouth_open",
+      "smile"
+    ],
+    "face_rect": [
+      22,
+      2,
+      392,
+      333
+    ],
+    "mouth_y": 138,
+    "neck": [
+      196.0,
+      219.8
+    ],
+    "poses": {},
+    "upper": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "smile"
+    ]
+  },
+  "socrates": {
+    "body_size": [
+      494,
+      1177
+    ],
+    "expressions": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "mouth_mid",
+      "mouth_open",
+      "smile"
+    ],
+    "face_rect": [
+      35,
+      0,
+      402,
+      343
+    ],
+    "mouth_y": 140,
+    "neck": [
+      201.0,
+      226.4
+    ],
+    "poses": {},
+    "upper": [
+      "angry",
+      "confused",
+      "eyes_closed",
+      "smile"
+    ]
+  }
+}

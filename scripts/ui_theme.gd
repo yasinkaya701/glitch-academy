@@ -1,22 +1,24 @@
 extends Node
-## Ortak arayüz teması. Tüm oyun bu temayı kullanır, istasyonlar kendi düğme veya panel stilini çizmez.
-## Renkler docs/ART_DIRECTION.md paletinden. Özel türler: PrimaryButton, DangerButton, HeadlineLabel,
-## SectionLabel, MutedLabel, GlassPanel, ConsolePanel.
+## Ortak açık tema: Inter gövde, Space Grotesk başlık, beyaz yüzey ve adaçayı vurgu.
 
 const FONT = preload("res://assets/fonts/Inter.ttf")
-const DISPLAY_FONT = preload("res://assets/fonts/YanlisDunyaMeridian-Display.ttf")
+const FONT_CONDENSED = FONT
+const FAINT := Color("#87958c")
+const ACCENT_DIM := Color("#e0eee6")
+const PANEL_SUNKEN := Color("#edf1ec")
+const DISPLAY_FONT = preload("res://assets/fonts/SpaceGrotesk.ttf")
 
-const BG := Color("#070b12")
-const PANEL := Color("#0f1824")
-const PANEL_RAISED := Color("#162538")
-const EDGE := Color("#2c4560")
-const EDGE_STRONG := Color("#41627f")
-const INK := Color("#e8f1f2")
-const MUTED := Color("#8fa6b3")
-const ACCENT := Color("#6fe3c1")
-const WARM := Color("#f2a65a")
-const DANGER := Color("#e5645a")
-const GOOD := Color("#a0dfbc")
+const BG := Color("#f4f6f2")
+const PANEL := Color("#ffffff")
+const PANEL_RAISED := Color("#e9eee8")
+const EDGE := Color("#d8e0d8")
+const EDGE_STRONG := Color("#bdccc3")
+const INK := Color("#22332f")
+const MUTED := Color("#66766d")
+const ACCENT := Color("#3b7867")
+const WARM := Color("#c88755")
+const DANGER := Color("#b85f56")
+const GOOD := Color("#53826c")
 
 
 func _ready() -> void:
@@ -27,38 +29,41 @@ static func build() -> Theme:
 	var theme := Theme.new()
 	var regular := FontVariation.new()
 	regular.base_font = FONT
-	regular.variation_opentype = {"wght": 450}
+	regular.variation_opentype = {"weight": 400}
 	var semibold := FontVariation.new()
 	semibold.base_font = FONT
-	semibold.variation_opentype = {"wght": 650}
+	semibold.variation_opentype = {"weight": 600}
 	var display := FontVariation.new()
 	display.base_font = DISPLAY_FONT
+	display.variation_opentype = {"weight": 600}
 	theme.default_font = regular
-	theme.default_font_size = 15
+	theme.default_font_size = 16
 
 	# Label
 	theme.set_color("font_color", "Label", INK)
 	theme.set_type_variation("HeadlineLabel", "Label")
 	theme.set_font("font", "HeadlineLabel", display)
-	theme.set_font_size("font_size", "HeadlineLabel", 24)
+	theme.set_font_size("font_size", "HeadlineLabel", 27)
 	theme.set_type_variation("SectionLabel", "Label")
 	theme.set_font("font", "SectionLabel", semibold)
-	theme.set_font_size("font_size", "SectionLabel", 12)
+	theme.set_font_size("font_size", "SectionLabel", 14)
 	theme.set_color("font_color", "SectionLabel", ACCENT)
+	theme.set_type_variation("KickerLabel", "SectionLabel")
+	theme.set_font_size("font_size", "KickerLabel", 13)
+	theme.set_type_variation("StrongLabel", "Label")
+	theme.set_font("font", "StrongLabel", semibold)
 	theme.set_type_variation("MutedLabel", "Label")
 	theme.set_color("font_color", "MutedLabel", MUTED)
 
 	# Düğmeler
-	_button(theme, "Button", PANEL_RAISED, EDGE, INK)
+	_button(theme, "Button", PANEL, EDGE, INK)
 	theme.set_font("font", "Button", semibold)
 	theme.set_type_variation("PrimaryButton", "Button")
-	_button(theme, "PrimaryButton", Color("#c98638"), Color("#f2a65a"), Color("#1a1006"))
+	_button(theme, "PrimaryButton", Color("#285b4d"), Color("#285b4d"), Color("#ffffff"))
 	theme.set_font("font", "PrimaryButton", semibold)
 	theme.set_type_variation("DangerButton", "Button")
-	_button(theme, "DangerButton", Color("#5a2420"), DANGER, INK)
-	# Meridian cihaz düğmeleri (Codex): 9 dilimli, ortası uzar, kesik köşe ve yan ray sabit kalır.
-	_texture_button(theme, "Button", "btn")
-	_texture_button(theme, "PrimaryButton", "btn_primary")
+	_button(theme, "DangerButton", Color("#f5e7e3"), DANGER, DANGER)
+
 	_theme_mode_tabs(theme, semibold)
 	_theme_route_tabs(theme, semibold)
 	_theme_compact_button(theme, semibold)
@@ -74,20 +79,20 @@ static func build() -> Theme:
 		theme.set_stylebox("focus", type_name, _flat(Color(0, 0, 0, 0), ACCENT, 1, 6, 6))
 
 	# Kaydırıcı
-	var track := _flat(Color("#1b2c3f"), Color(0, 0, 0, 0), 0, 3, 0)
+	var track := _flat(Color("#d8e0d8"), Color(0, 0, 0, 0), 0, 3, 0)
 	track.content_margin_top = 3
 	track.content_margin_bottom = 3
 	theme.set_stylebox("slider", "HSlider", track)
 	theme.set_stylebox("grabber_area", "HSlider", _flat(ACCENT, Color(0, 0, 0, 0), 0, 3, 0))
-	theme.set_stylebox("grabber_area_highlight", "HSlider", _flat(Color("#9af1da"), Color(0, 0, 0, 0), 0, 3, 0))
+	theme.set_stylebox("grabber_area_highlight", "HSlider", _flat(Color("#5d9a85"), Color(0, 0, 0, 0), 0, 3, 0))
 	theme.set_icon("grabber", "HSlider", _dot(ACCENT, 11))
 	theme.set_icon("grabber_highlight", "HSlider", _dot(Color("#ffffff"), 12))
 	theme.set_icon("grabber_disabled", "HSlider", _dot(EDGE, 10))
 
 	# Giriş kutusu
-	theme.set_stylebox("normal", "LineEdit", _flat(Color("#0a121d"), EDGE, 1, 6, 10))
-	theme.set_stylebox("focus", "LineEdit", _flat(Color("#0a121d"), ACCENT, 2, 6, 10))
-	theme.set_stylebox("read_only", "LineEdit", _flat(Color("#0d1623"), EDGE, 1, 6, 10))
+	theme.set_stylebox("normal", "LineEdit", _flat(Color("#ffffff"), EDGE, 1, 6, 10))
+	theme.set_stylebox("focus", "LineEdit", _flat(Color("#ffffff"), ACCENT, 2, 6, 10))
+	theme.set_stylebox("read_only", "LineEdit", _flat(Color("#edf1ec"), EDGE, 1, 6, 10))
 	theme.set_color("font_color", "LineEdit", INK)
 	theme.set_color("font_placeholder_color", "LineEdit", MUTED)
 	theme.set_color("caret_color", "LineEdit", ACCENT)
@@ -100,14 +105,14 @@ static func build() -> Theme:
 	theme.set_type_variation("ConsolePanel", "PanelContainer")
 	theme.set_stylebox("panel", "ConsolePanel", _flat(PANEL, EDGE_STRONG, 1, 12, 20))
 	theme.set_type_variation("CampaignDock", "PanelContainer")
-	theme.set_stylebox("panel", "CampaignDock", _texture_box("res://assets/ui/panel_info.png", 24, 24, 76, 24, 24, 48, 92, 28))
+	theme.set_stylebox("panel", "CampaignDock", _flat(PANEL, EDGE, 1, 10, 22))
 
 	# Liste
-	theme.set_stylebox("panel", "ItemList", _flat(Color(PANEL, 0.7), EDGE, 1, 8, 6))
+	theme.set_stylebox("panel", "ItemList", _flat(Color(PANEL, 0.94), EDGE, 1, 8, 6))
 	theme.set_stylebox("focus", "ItemList", _flat(Color(0, 0, 0, 0), ACCENT, 1, 8, 0))
-	theme.set_stylebox("hover", "ItemList", _texture_box("res://assets/ui/list_row_idle.png", 22, 22, 12, 12, 16, 16, 8, 8))
-	theme.set_stylebox("selected", "ItemList", _texture_box("res://assets/ui/list_row_selected.png", 22, 22, 12, 12, 16, 16, 8, 8))
-	theme.set_stylebox("selected_focus", "ItemList", _texture_box("res://assets/ui/list_row_selected.png", 22, 22, 12, 12, 16, 16, 8, 8))
+	theme.set_stylebox("hover", "ItemList", _flat(PANEL_RAISED, Color(0, 0, 0, 0), 0, 5, 14, 10))
+	theme.set_stylebox("selected", "ItemList", _flat(ACCENT_DIM, Color(0, 0, 0, 0), 0, 5, 14, 10))
+	theme.set_stylebox("selected_focus", "ItemList", _flat(ACCENT_DIM, Color(0, 0, 0, 0), 0, 5, 14, 10))
 	theme.set_color("font_color", "ItemList", MUTED)
 	theme.set_color("font_selected_color", "ItemList", INK)
 	theme.set_color("font_hovered_color", "ItemList", INK)
@@ -116,45 +121,28 @@ static func build() -> Theme:
 
 	# OptionButton
 	theme.set_stylebox("normal", "OptionButton", _flat(PANEL_RAISED, EDGE, 1, 8, 12))
-	theme.set_stylebox("hover", "OptionButton", _flat(Color("#1d3149"), EDGE_STRONG, 1, 8, 12))
-	theme.set_stylebox("pressed", "OptionButton", _flat(Color("#122032"), ACCENT, 1, 8, 12))
+	theme.set_stylebox("hover", "OptionButton", _flat(Color("#e9eee8"), EDGE_STRONG, 1, 8, 12))
+	theme.set_stylebox("pressed", "OptionButton", _flat(Color("#e0eee6"), ACCENT, 1, 8, 12))
 	theme.set_color("font_color", "OptionButton", INK)
 
+	# Açılır menüler de açık tema kullanır.
+	theme.set_stylebox("panel", "PopupMenu", _flat(PANEL, EDGE, 1, 10, 8))
+	theme.set_stylebox("hover", "PopupMenu", _flat(ACCENT_DIM, EDGE, 0, 6, 8))
+	theme.set_color("font_color", "PopupMenu", INK)
+	theme.set_color("font_hover_color", "PopupMenu", INK)
+	theme.set_constant("v_separation", "PopupMenu", 12)
+	theme.set_color("default_color", "RichTextLabel", INK)
 	# Kaydırma çubuğu
-	var scroll := _flat(Color("#1b2c3f"), Color(0, 0, 0, 0), 0, 4, 0)
+	var scroll := _flat(Color("#d8e0d8"), Color(0, 0, 0, 0), 0, 4, 0)
 	theme.set_stylebox("scroll", "VScrollBar", scroll)
 	theme.set_stylebox("grabber", "VScrollBar", _flat(EDGE_STRONG, Color(0, 0, 0, 0), 0, 4, 0))
 	theme.set_stylebox("grabber_highlight", "VScrollBar", _flat(ACCENT, Color(0, 0, 0, 0), 0, 4, 0))
 	theme.set_stylebox("grabber_pressed", "VScrollBar", _flat(ACCENT, Color(0, 0, 0, 0), 0, 4, 0))
 
 	# İlerleme
-	theme.set_stylebox("background", "ProgressBar", _flat(Color("#1b2c3f"), Color(0, 0, 0, 0), 0, 4, 0))
+	theme.set_stylebox("background", "ProgressBar", _flat(Color("#d8e0d8"), Color(0, 0, 0, 0), 0, 4, 0))
 	theme.set_stylebox("fill", "ProgressBar", _flat(ACCENT, Color(0, 0, 0, 0), 0, 4, 0))
 	return theme
-
-
-static func _texture_button(theme: Theme, type_name: String, prefix: String) -> void:
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		var path := "res://assets/ui/%s_%s.png" % [prefix, state]
-		if not ResourceLoader.exists(path):
-			return
-		var box := StyleBoxTexture.new()
-		box.texture = load(path)
-		box.texture_margin_left = 26.0
-		box.texture_margin_right = 26.0
-		box.texture_margin_top = 16.0
-		box.texture_margin_bottom = 16.0
-		# Yan ray (sol) ve gösterge noktası (sağ) yazıya binmesin.
-		box.content_margin_left = 36.0
-		box.content_margin_right = 36.0
-		box.content_margin_top = 10.0
-		box.content_margin_bottom = 10.0
-		theme.set_stylebox(state, type_name, box)
-	if prefix == "btn_primary":
-		# Dolgu koyu seramik: yazı açık krem (Codex dolgusu koyu, eski turuncu dolgu için koyu yazı geçersiz).
-		for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-			theme.set_color(color_name, type_name, Color("#ffe2b8"))
-		theme.set_color("font_disabled_color", type_name, Color("#ffe2b8", 0.4))
 
 
 static func _theme_mode_tabs(theme: Theme, font: Font) -> void:
@@ -184,10 +172,9 @@ static func _theme_mode_tabs(theme: Theme, font: Font) -> void:
 
 static func _theme_route_tabs(theme: Theme, font: Font) -> void:
 	theme.set_type_variation("RouteTab", "Button")
-	var idle := _texture_box("res://assets/ui/tab_idle.png", 14, 14, 8, 8, 12, 12, 4, 4)
-	var active := _texture_box("res://assets/ui/tab_active.png", 14, 14, 8, 8, 12, 12, 4, 4)
-	var hover: StyleBoxTexture = idle.duplicate() as StyleBoxTexture
-	hover.modulate_color = Color("#cbd9da")
+	var idle := _flat(Color("#edf1ec"), EDGE, 1, 10, 14, 8)
+	var active := _flat(Color("#e0eee6"), ACCENT, 1, 10, 14, 8)
+	var hover := _flat(Color("#e9eee8"), EDGE_STRONG, 1, 10, 14, 8)
 	theme.set_stylebox("normal", "RouteTab", idle)
 	theme.set_stylebox("disabled", "RouteTab", idle)
 	theme.set_stylebox("hover", "RouteTab", hover)
@@ -205,8 +192,8 @@ static func _theme_route_tabs(theme: Theme, font: Font) -> void:
 static func _theme_compact_button(theme: Theme, font: Font) -> void:
 	theme.set_type_variation("CompactButton", "Button")
 	theme.set_stylebox("normal", "CompactButton", _flat(PANEL_RAISED, EDGE, 1, 5, 8, 6))
-	theme.set_stylebox("hover", "CompactButton", _flat(Color("#1d3149"), EDGE_STRONG, 1, 5, 8, 6))
-	theme.set_stylebox("pressed", "CompactButton", _flat(Color("#122032"), ACCENT, 1, 5, 8, 6))
+	theme.set_stylebox("hover", "CompactButton", _flat(Color("#e9eee8"), EDGE_STRONG, 1, 5, 8, 6))
+	theme.set_stylebox("pressed", "CompactButton", _flat(Color("#e0eee6"), ACCENT, 1, 5, 8, 6))
 	theme.set_stylebox("disabled", "CompactButton", _flat(Color(PANEL_RAISED, 0.4), Color(EDGE, 0.35), 1, 5, 8, 6))
 	theme.set_stylebox("focus", "CompactButton", _flat(Color(0, 0, 0, 0), ACCENT, 2, 5, 8, 6))
 	theme.set_font("font", "CompactButton", font)
@@ -214,20 +201,6 @@ static func _theme_compact_button(theme: Theme, font: Font) -> void:
 	theme.set_color("font_hover_color", "CompactButton", INK)
 	theme.set_color("font_pressed_color", "CompactButton", INK)
 	theme.set_color("font_disabled_color", "CompactButton", Color(INK, 0.42))
-
-
-static func _texture_box(path: String, texture_left: float, texture_right: float, texture_top: float, texture_bottom: float, content_left: float, content_right: float, content_top: float, content_bottom: float) -> StyleBoxTexture:
-	var box := StyleBoxTexture.new()
-	box.texture = load(path)
-	box.texture_margin_left = texture_left
-	box.texture_margin_right = texture_right
-	box.texture_margin_top = texture_top
-	box.texture_margin_bottom = texture_bottom
-	box.content_margin_left = content_left
-	box.content_margin_right = content_right
-	box.content_margin_top = content_top
-	box.content_margin_bottom = content_bottom
-	return box
 
 
 static func _button(theme: Theme, type_name: String, fill: Color, edge: Color, text: Color) -> void:
@@ -239,11 +212,13 @@ static func _button(theme: Theme, type_name: String, fill: Color, edge: Color, t
 	theme.set_color("font_color", type_name, text)
 	theme.set_color("font_hover_color", type_name, text)
 	theme.set_color("font_pressed_color", type_name, text)
-	theme.set_color("font_disabled_color", type_name, Color(text, 0.4))
+	theme.set_color("font_disabled_color", type_name, Color(text, 0.56))
 	theme.set_color("font_focus_color", type_name, text)
 	theme.set_color("icon_normal_color", type_name, text)
-	var pressed_toggle := _flat(Color(ACCENT, 0.22), ACCENT, 2, 8, 16, 9)
+	var pressed_toggle := _flat(Color(ACCENT, 0.14), ACCENT, 2, 8, 16, 9)
 	theme.set_stylebox("hover_pressed", type_name, pressed_toggle)
+	if type_name == "Button":
+		theme.set_stylebox("pressed", type_name, pressed_toggle)
 	if type_name == "Button":
 		theme.set_color("font_hover_pressed_color", type_name, INK)
 
@@ -272,6 +247,6 @@ static func _dot(color: Color, radius: int) -> ImageTexture:
 			var d := Vector2(x + 0.5, y + 0.5).distance_to(center)
 			var edge := clampf(radius - d + 0.5, 0.0, 1.0)
 			var ring := clampf(radius - 3.0 - d + 0.5, 0.0, 1.0)
-			var c := color.lerp(Color("#0a121d"), 1.0 - ring) if d <= radius else color
+			var c := color.lerp(Color("#edf1ec"), 1.0 - ring) if d <= radius else color
 			image.set_pixel(x, y, Color(c, edge))
 	return ImageTexture.create_from_image(image)

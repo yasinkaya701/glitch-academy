@@ -2,7 +2,8 @@ extends Control
 
 const Mission = preload("res://scripts/mission.gd")
 const MissionDefinition = preload("res://scripts/mission_definition.gd")
-const YksMissionDefinition = preload("res://stations/yks/yks_mission_definition.gd")
+const StoryDialogue = preload("res://scripts/story_dialogue.gd")
+const FINALE = preload("res://stations/yks/three_suns.tscn")
 const INTRO = preload("res://scenes/intro/intro.tscn")
 const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/seasons/mission.tres"),
@@ -12,135 +13,98 @@ const CATALOG: Array[MissionDefinition] = [
 	preload("res://stations/bridge/mission.tres"),
 	preload("res://stations/prism/mission.tres"),
 	preload("res://stations/free_fall/mission.tres"),
-	preload("res://stations/photoelectric/mission.tres"),
-	preload("res://stations/waves/mission.tres"),
+	# YKS düzeyinde fizik; sınav sırası korunur, Sınıflar keşfinde oynanır.
+	preload("res://stations/newton/mission.tres"),
+	preload("res://stations/projectile/mission.tres"),
+	preload("res://stations/collision/mission.tres"),
 	preload("res://stations/indicator/mission.tres"),
 	preload("res://stations/heart/mission.tres"),
 	preload("res://stations/pressure/mission.tres"),
-	preload("res://stations/yks/definitions/turkish_reading.tres"),
-	preload("res://stations/yks/definitions/turkish_literature.tres"),
-	preload("res://stations/yks/definitions/tyt_math.tres"),
-	preload("res://stations/yks/definitions/geometry.tres"),
-	preload("res://stations/yks/definitions/chemistry.tres"),
-	preload("res://stations/yks/definitions/tyt_biology.tres"),
-	preload("res://stations/yks/definitions/history.tres"),
-	preload("res://stations/yks/definitions/geography.tres"),
-	preload("res://stations/yks/definitions/philosophy.tres"),
-	preload("res://stations/yks/definitions/religion_culture.tres"),
-	preload("res://stations/yks/definitions/psychology.tres"),
-	preload("res://stations/yks/definitions/sociology.tres"),
-	preload("res://stations/yks/definitions/logic.tres"),
-	preload("res://stations/yks/definitions/ydt_english.tres"),
-	preload("res://stations/yks/three_suns.tres"),
+	preload("res://stations/philosophy/mission.tres"),
+	preload("res://stations/history/mission.tres"),
+	# LGS: bütün ders görevleri ve basit makine düzeneği.
+	preload("res://stations/pulley/mission.tres"),
+	preload("res://stations/turkish/mission.tres"),
+	preload("res://stations/english/mission.tres"),
+	preload("res://stations/religion/mission.tres"),
+	preload("res://stations/genetics/mission.tres"),
 ]
-const YKS_ORDER := {
-	"turkish_reading": 0, "tyt_math": 1, "measurement": 2, "indicator": 3,
-	"tyt_biology": 4, "geometry": 5, "vectors": 6, "derivative": 7,
-	"free_fall": 8, "waves": 9, "photoelectric": 10, "heart": 11,
-	"turkish_literature": 12, "history": 13, "geography": 14, "philosophy": 15,
-	"religion_culture": 16, "psychology": 17, "sociology": 18, "logic": 19,
-	"chemistry": 20, "ydt_english": 21, "three_suns": 22,
-}
-const ICONS := {
-	"Türkçe": "language", "Türk Dili ve Edebiyatı": "language",
-	"Matematik": "geometry", "Geometri": "geometry", "Fizik": "vectors",
-	"Kimya": "indicator", "Biyoloji": "heart", "Tarih": "archive",
-	"Coğrafya": "compass", "Felsefe": "thinking", "Din Kültürü": "archive",
-	"Psikoloji": "thinking", "Sosyoloji": "archive", "Mantık": "thinking",
-	"Din Kültürü ve Ahlak Bilgisi": "archive", "English": "ydt",
-	"İngilizce": "ydt", "Fen Bilimleri": "measurement",
-}
 
 @onready var hub: Control = %Hub
 @onready var grade_filter: OptionButton = %GradeFilter
-@onready var field_filter: OptionButton = %FieldFilter
 @onready var mission_list: ItemList = %MissionList
 @onready var mission_title: Label = %MissionTitle
+@onready var mission_description: Label = %MissionDescription
 @onready var mission_status: Label = %MissionStatus
-@onready var mission_curriculum: Label = %MissionCurriculum
 @onready var start_mission: Button = %StartMission
 @onready var progress: Label = %Progress
 @onready var play_screen: Control = %PlayScreen
 @onready var play_title: Label = %PlayTitle
 @onready var play_status: Label = %PlayStatus
 @onready var mission_host: Control = %MissionHost
-@onready var missions_layout: BoxContainer = %Missions
-@onready var route_purpose: Label = %RoutePurpose
 
-var active_route: StringName = &"tyt"
-var active_mode: StringName = &"yks"
-var selected_yks_route: StringName = &"tyt"
-var active_field: StringName = &"all"
+var active_route: StringName = &"lgs"
 var selected_mission: MissionDefinition
 var active_mission: Mission
-var active_mission_definition: MissionDefinition
 var visible_missions: Array[MissionDefinition] = []
-var _hub_scroll: ScrollContainer
-var _mobile_detail_active := false
-var _advance_after_completion := false
-var _story_overlay: Control
-var _story_shield: Control
-var _story_close_button: Button
+var completed_ids: Dictionary[StringName, bool] = {}
+var story_dialogue: StoryDialogue
+var finale_button: Button
+var _playing_finale := false
+var _completion_pending := false
+var _last_campaign_mission: StringName
+
+const RECORDS := {
+	"seasons": "Işık açısı değişince seranın tepkisi de değişti. Uzaklık kaydım aynı şeyi açıklamıyordu.",
+	"measurement": "Sayı aynıydı; birimi farklıydı. Arşiv taşıyıcısı şimdi doğru parçayı kabul ediyor.",
+	"vectors": "Yönü kayıttan silmiştim. Kapsülün yanaşması için uzunluk tek başına yetmiyor.",
+	"derivative": "Kutunun hacmi, kesik büyüdükçe hep artmıyor. Tepe noktasını ölçümle buldun.",
+	"bridge": "Eksik uzunluk tamamlandı. Köprünün kapanması, hesabın sahnedeki karşılığı oldu.",
+	"prism": "Katmanları tek tek hesaba kattın. Kasa artık ne eksik ne fazla doluyor.",
+	"free_fall": "Kütleyi ve havayı ayırdın. Süre farkının kaynağı kalan ölçümde ortaya çıktı.",
+	"newton": "İtiş aynı olsa da yük değişince ivme değişiyor. Kızak kaydını düzelttin.",
+	"projectile": "Yatay hareket düşme süresini değiştirmedi. İki hareketi ayrı izleyince hedef bulundu.",
+	"collision": "Hareketi yalnız büyüklükle kaydetmek yanlıştı. Yönü geri koyunca toplam korundu.",
+	"indicator": "Gösterge rengi tekrar çözeltiyle uyuşuyor. Rengi tek başına bir açıklama saymadın.",
+	"heart": "Kapakların yönü düzeldi; akış döngüsü kapandı. Yaşam protokolü artık geri kaçak üretmiyor.",
+	"pressure": "Derinliği ve sıvıyı ayrı değiştirdin. Hedef basınca hangi koşulda ulaşıldığı belli.",
+	"philosophy": "Kaydı, düşüncenin gerekçesiyle eşleştirdin. Bir iddia tekrar edildiği için doğru olmuyor.",
+	"history": "Belgeleri tarihleri ve bağlamlarıyla doğruladın. Arşivin sırası yeniden kuruluyor.",
+	"pulley": "Kuvvet azalırken çekilen yol arttı. Kaydımdan sildiğim ip kolunu geri koydun.",
+	"turkish": "Tek bir olumsuzluk eki güvenlik talimatını tersine çevirmişti. Çıkış yolu yeniden açık.",
+	"english": "İsteği ve uyarıyı ayırdın. Yardım mesajı şimdi doğru ekibe ulaşıyor.",
+	"religion": "Yardım kaydını gösterişe değil açık ihtiyaca bağladın. Destek doğru yere gidiyor.",
+	"genetics": "Çekinik özellik görünmese de alel kaybolmuyor. Sildiğim kayıt çaprazlamada yeniden ortaya çıktı."
+}
 
 
 func _ready() -> void:
-	_wrap_hub_in_scroll_container()
 	grade_filter.add_item("Tüm sınıflar", 0)
 	for grade in range(5, 13):
 		grade_filter.add_item("%d. sınıf" % grade, grade)
-	field_filter.add_item("Tüm alanlar", 0)
-	field_filter.add_item("Sayısal", 1)
-	field_filter.add_item("Eşit ağırlık", 2)
-	field_filter.add_item("Sözel", 3)
-	selected_yks_route = Campaign.selected_route
-	active_route = selected_yks_route
-	active_field = Campaign.selected_field
-	field_filter.select([&"all", &"sayisal", &"ea", &"sozel"].find(active_field))
 	%Class.pressed.connect(_select_route.bind(&"class"))
 	%LGS.pressed.connect(_select_route.bind(&"lgs"))
-	%YKS.pressed.connect(_select_yks)
 	%TYT.pressed.connect(_select_route.bind(&"tyt"))
 	%AYT.pressed.connect(_select_route.bind(&"ayt"))
-	%YDT.pressed.connect(_select_route.bind(&"ydt"))
 	grade_filter.item_selected.connect(_on_grade_selected)
-	field_filter.item_selected.connect(_on_field_selected)
-	get_viewport().size_changed.connect(_update_responsive_layout)
-	mission_list.fixed_icon_size = Vector2i(32, 32)
-	mission_list.item_selected.connect(_on_mission_selected)
+	mission_list.item_selected.connect(_select_mission)
 	mission_list.item_activated.connect(_activate_mission)
-	%BackToMissions.pressed.connect(_return_to_mission_list)
 	start_mission.pressed.connect(_start_mission)
-	%Info.pressed.connect(_toggle_curriculum)
 	%Back.pressed.connect(_return_to_hub)
-	%Reset.pressed.connect(_reset_mission)
-	Campaign.state_changed.connect(_refresh_list)
-	_refresh_route_controls()
-	_refresh_list()
-	_update_observatory_progress()
-	_update_responsive_layout()
-	if Campaign.has_story_flag(&"life_protocol") and not _life_protocol_resolved():
-		_set_world_alarm(0.94)
-		_set_life_protocol(true)
+	%Reset.pressed.connect(_retry_current)
+	_build_story_controls()
+	for definition in CATALOG:
+		if Campaign.is_completed(definition.id): completed_ids[definition.id] = true
+	%Class.text = "Serbest keşif"
+	_select_route(&"lgs")
+	resized.connect(_layout)
+	_layout()
 	_play_intro()
 
 
-func _input(event: InputEvent) -> void:
-	if _story_overlay == null:
-		return
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("ui_accept"):
-		get_viewport().set_input_as_handled()
-		_story_close_button.pressed.emit()
-	elif event is InputEventKey or event is InputEventJoypadButton:
-		get_viewport().set_input_as_handled()
-
-
 func _play_intro() -> void:
-	if Campaign.has_story_flag(&"intro_seen"):
-		_resume_campaign_story()
-		return
 	var intro = INTRO.instantiate()
-	intro.configure_route(selected_yks_route)
-	_set_hub_visible(false)
+	hub.hide()
 	%HubScrim.hide()
 	add_child(intro)
 	intro.alarm_changed.connect(_set_world_alarm)
@@ -150,25 +114,9 @@ func _play_intro() -> void:
 
 func _finish_intro(intro: Control) -> void:
 	intro.queue_free()
-	Campaign.set_story_flag(&"intro_seen")
 	%HubScrim.show()
-	_set_hub_visible(true)
-	_resume_campaign_story()
-
-
-func _resume_campaign_story() -> void:
-	_active_route_button().grab_focus()
-	if Campaign.has_story_flag(&"betrayal") and not Campaign.has_story_flag(&"life_protocol"):
-		_start_life_protocol()
-		return
-	elif Campaign.has_story_flag(&"life_protocol") and not _life_protocol_resolved():
-		_set_world_alarm(0.94)
-		_set_life_protocol(true)
-		_show_transmission("YAŞAM PROTOKOLÜ  ·  DEVAM", "Protokol beklemede. Alan rotandaki uygun kanıtı tamamla.", _focus_life_mission)
-		return
-	if Campaign.is_completed(&"three_suns") and not Campaign.has_story_flag(&"ending"):
-		Campaign.set_story_flag(&"ending")
-	_check_finale_unlock()
+	hub.show()
+	%LGS.grab_focus()
 
 
 func _set_world_alarm(strength: float) -> void:
@@ -176,254 +124,96 @@ func _set_world_alarm(strength: float) -> void:
 		%Observatory.call("set_alarm", strength)
 
 
-func _select_yks() -> void:
-	active_mode = &"yks"
-	active_route = selected_yks_route
-	_refresh_route_controls()
-	_refresh_list()
-
-
 func _select_route(route: StringName) -> void:
 	active_route = route
-	if route in [&"tyt", &"ayt", &"ydt"]:
-		active_mode = &"yks"
-		selected_yks_route = route
-		Campaign.set_route(route)
-	else:
-		active_mode = route
-	_refresh_route_controls()
+	selected_mission = null
+	grade_filter.visible = route == &"class"
+	%Class.set_pressed_no_signal(route == &"class")
+	%LGS.set_pressed_no_signal(route == &"lgs")
+	%TYT.set_pressed_no_signal(route == &"tyt")
+	%AYT.set_pressed_no_signal(route == &"ayt")
 	_refresh_list()
-
-
-func _refresh_route_controls() -> void:
-	%Class.set_pressed_no_signal(active_mode == &"class")
-	%LGS.set_pressed_no_signal(active_mode == &"lgs")
-	%YKS.set_pressed_no_signal(active_mode == &"yks")
-	%TYT.set_pressed_no_signal(selected_yks_route == &"tyt")
-	%AYT.set_pressed_no_signal(selected_yks_route == &"ayt")
-	%YDT.set_pressed_no_signal(selected_yks_route == &"ydt")
-	%YksRoutes.visible = active_mode == &"yks"
-	grade_filter.visible = active_mode == &"class"
-	field_filter.visible = active_route == &"ayt"
 
 
 func _on_grade_selected(_index: int) -> void:
 	_refresh_list()
 
 
-func _on_field_selected(index: int) -> void:
-	active_field = [&"all", &"sayisal", &"ea", &"sozel"][index]
-	Campaign.set_field(active_field)
-	_refresh_list()
-
-
 func _refresh_list() -> void:
-	_mobile_detail_active = false
-	var selected_id: StringName = selected_mission.id if selected_mission != null and not _advance_after_completion else &""
+	var selected_id: StringName = selected_mission.id if selected_mission != null else &""
 	mission_list.clear()
 	visible_missions.clear()
 	var selected_grade := grade_filter.get_selected_id()
-	var candidates: Array[MissionDefinition] = []
 	for mission in CATALOG:
 		if not mission.routes.has(String(active_route)):
 			continue
 		if active_route == &"class" and selected_grade > 0 and mission.grade != selected_grade:
 			continue
-		if active_route == &"ayt" and active_field != &"all" and not _mission_fields(mission).has(active_field):
-			continue
-		candidates.append(mission)
-	if active_mode == &"yks":
-		candidates.sort_custom(func(a: MissionDefinition, b: MissionDefinition) -> bool:
-			return int(YKS_ORDER.get(String(a.id), 100)) < int(YKS_ORDER.get(String(b.id), 100))
-		)
-	var recommended_id: StringName = &""
-	for mission in candidates:
-		if _mission_available(mission) and not _mission_completed(mission, active_route):
-			recommended_id = mission.id
-			break
-	for index in candidates.size():
-		var mission := candidates[index]
-		var available := _mission_available(mission)
-		var completed := _mission_completed(mission, active_route)
-		var state_text := "Onarıldı" if completed else "Kilitli" if not available else "Sıradaki" if mission.id == recommended_id else "Açık"
-		var marker := "✓" if completed else "▣" if not available else "▶" if mission.id == recommended_id else "◉"
-		var subject := _mission_display_subject(mission)
-		var row_text := _mission_row_text(mission, state_text, marker)
-		var item_index := mission_list.add_item(row_text, _mission_icon(mission))
-		var marker_color := Color("#a0dfbc") if completed else Color("#efb468") if mission.id == recommended_id else Color("#8fa6b3") if not available else Color("#e8f1f2")
-		mission_list.set_item_custom_fg_color(item_index, marker_color)
-		mission_list.set_item_metadata(item_index, mission.id)
-		var route_label := "Ortak final" if mission.id == &"three_suns" else String(active_route).to_upper()
-		mission_list.set_item_tooltip(item_index, "%s  ·  %s  ·  %s" % [subject, route_label, state_text])
+		var subject := mission.subject
+		if active_route == &"lgs":
+			if mission.subject == "Kimya":
+				subject = "Fen Bilimleri"
+			elif mission.subject == "Tarih":
+				subject = "İnkılap Tarihi"
+		var prefix := ""
+		if active_route != &"class":
+			prefix = "%02d  " % (visible_missions.size() + 1)
+		var suffix := "  ✓" if _is_completed(mission.id) else ""
+		var index := mission_list.add_item("%s%s · %s%s" % [prefix, mission.title, subject, suffix])
+		if not _is_unlocked(mission.id):
+			mission_list.set_item_custom_fg_color(index, UITheme.MUTED)
+			mission_list.set_item_tooltip(index, "Önce önceki düzeneğin onarımını tamamla.")
+		mission_list.set_item_metadata(index, mission.id)
 		visible_missions.append(mission)
 		if mission.id == selected_id:
-			mission_list.select(item_index)
+			mission_list.select(index)
 	var selected_items := mission_list.get_selected_items()
-	if selected_items.is_empty() and not visible_missions.is_empty():
-		var next_index := 0
-		for index in visible_missions.size():
-			if _mission_available(visible_missions[index]) and not _mission_completed(visible_missions[index], active_route):
-				next_index = index
-				break
-			if _mission_available(visible_missions[index]):
-				next_index = index
-		mission_list.select(next_index)
-		mission_list.ensure_current_is_visible()
-		_select_mission(next_index)
-	elif selected_items.is_empty():
-		_clear_selection()
+	if selected_items.is_empty():
+		if not visible_missions.is_empty():
+			var next_index := 0
+			for index in visible_missions.size():
+				if not _is_completed(visible_missions[index].id):
+					next_index = index
+					break
+			mission_list.select(next_index)
+			_select_mission(next_index)
+		else:
+			_clear_selection()
 	else:
 		_select_mission(selected_items[0])
-	if not mission_list.get_selected_items().is_empty():
-		mission_list.ensure_current_is_visible()
-	_refresh_mission_row_labels()
-	_advance_after_completion = false
-	var completed_count := 0
-	var progress_total := 0
-	for mission in visible_missions:
-		if mission.id == &"three_suns":
-			continue
-		progress_total += 1
-		if _mission_completed(mission, active_route):
-			completed_count += 1
-	var scope := String(active_route).to_upper()
-	if active_route == &"ayt":
-		scope += " · " + _field_label(active_field)
-	elif active_route == &"class":
-		scope = "%d. SINIF" % selected_grade if selected_grade > 0 else "TÜM SINIFLAR"
-	progress.text = "%s  ·  %d / %d ONARILDI" % [scope, completed_count, progress_total]
-	if active_mode == &"yks":
-		%Subtitle.text = "YKS KAMPANYASI"
-		%Title.text = "Bilginin Kırılması"
-		route_purpose.text = _route_purpose(active_route)
-	else:
-		%Subtitle.text = "KONTROL MERKEZİ  ·  %s" % ("LGS" if active_mode == &"lgs" else "SINIF KEŞFİ")
-		%Title.text = "Yanlış Dünya"
-		route_purpose.text = "Görevleri seç, düzeneği çalıştır ve her onarımla gözlemevini geri kazan."
-	_update_mobile_mission_view()
-
-
-func _mission_fields(mission: MissionDefinition) -> PackedStringArray:
-	if mission.id == &"three_suns":
-		return PackedStringArray(["sayisal", "ea", "sozel"])
-	if mission is YksMissionDefinition:
-		return (mission as YksMissionDefinition).field_tags
-	match mission.subject:
-		"Matematik":
-			return PackedStringArray(["sayisal", "ea"])
-		"Geometri":
-			return PackedStringArray(["sayisal", "ea"])
-		"Fizik", "Kimya", "Biyoloji":
-			return PackedStringArray(["sayisal"])
-		"Türk Dili ve Edebiyatı", "Tarih", "Coğrafya":
-			return PackedStringArray(["ea", "sozel"])
-		"Felsefe", "Din Kültürü", "Din Kültürü ve Ahlak Bilgisi", "Psikoloji", "Sosyoloji", "Mantık":
-			return PackedStringArray(["sozel"])
-	return PackedStringArray()
-
-
-func _mission_icon(mission: MissionDefinition) -> Texture2D:
-	if mission.id == &"three_suns":
-		return load("res://assets/ui/icons/yks/archive.svg")
-	var direct_path := "res://assets/ui/icons/%s.png" % String(mission.id)
-	if ResourceLoader.exists(direct_path):
-		return load(direct_path)
-	var icon_name: String = ICONS.get(mission.subject, "archive")
-	var shared_icon := "res://assets/ui/icons/%s.png" % icon_name
-	if ResourceLoader.exists(shared_icon):
-		return load(shared_icon)
-	var fallback := "res://assets/ui/icons/yks/%s.svg" % icon_name
-	if ResourceLoader.exists(fallback):
-		return load(fallback)
-	return load("res://assets/ui/icons/state_playable.png")
+	var route_total := _route_missions().size()
+	var repaired := _route_completed_count()
+	progress.text = "Onarılan düzenekler  %d / %d" % [repaired, route_total]
+	if active_route == &"class": progress.text += "  ·  Serbest keşif"
+	elif Campaign.has_story_flag(_story_key("won")): progress.text += "  ·  Hikâye tamamlandı"
+	finale_button.visible = active_route != &"class"
+	finale_button.disabled = not _route_ready_for_finale()
+	finale_button.text = "Finali yeniden oyna · Üç Güneş" if Campaign.has_story_flag(_story_key("won")) else "Final · Üç Güneş"
+	finale_button.tooltip_text = "Rotadaki tüm düzenekleri onararak finali aç." if finale_button.disabled else "Son ölçümü yap ve merkezi yetkiyi kaldır."
 
 
 func _clear_selection() -> void:
 	selected_mission = null
-	mission_title.text = "Bir görev seç"
+	mission_title.text = "Görev seç"
+	mission_description.text = "Bir istasyon seçtiğinde deneyin amacı burada görünür."
+	if visible_missions.is_empty():
+		mission_description.text = "Bu seçim için henüz görev bulunmuyor."
 	mission_status.text = ""
-	mission_curriculum.text = ""
-	mission_curriculum.hide()
 	start_mission.disabled = true
-	%Info.disabled = true
 
 
-func _select_mission(index: int, open_mobile_detail := false) -> void:
-	if index < 0 or index >= visible_missions.size():
-		_clear_selection()
-		return
+func _select_mission(index: int) -> void:
 	selected_mission = visible_missions[index]
-	mission_title.text = _mission_display_title(selected_mission)
-	var available := _mission_available(selected_mission)
-	start_mission.disabled = not available
-	var subject := _mission_display_subject(selected_mission)
-	var completed := _mission_completed(selected_mission, active_route)
-	var state := "✓ ONARILDI" if completed else "◉ AÇIK" if available else "▣ KİLİTLİ"
-	mission_status.text = "%s  ·  %s" % [subject, state]
-	if not available:
-		mission_status.text += "\n" + _locked_reason(selected_mission)
-	start_mission.text = "Yeniden gör" if completed else "Düzeneği başlat"
-	if selected_mission.id == &"three_suns":
-		start_mission.text = "Finali yeniden gör" if completed else "Son hesaplaşmayı başlat"
-		mission_curriculum.text = "Üç rota için ortak kampanya finali.\nBaşlangıç koşullarındaki farkı yörünge izlerinden karşılaştır."
+	mission_title.text = selected_mission.title
+	mission_description.text = selected_mission.description
+	start_mission.disabled = selected_mission.scene == null or not _is_unlocked(selected_mission.id)
+	if _is_completed(selected_mission.id):
+		mission_status.text = "Onarıldı"
+	elif selected_mission.scene == null:
+		mission_status.text = "Hazırlanıyor"
 	else:
-		start_mission.text = "Yeniden ölç" if completed else "Düzeneği başlat"
-		mission_curriculum.text = "%s\n%s" % [selected_mission.description, selected_mission.curriculum]
-	if selected_mission is YksMissionDefinition and selected_mission.id != &"three_suns":
-		var yks_definition := selected_mission as YksMissionDefinition
-		mission_curriculum.text += "\nHedef · %s\nKaynak · %s" % [yks_definition.learning_target, yks_definition.source_note]
-	mission_curriculum.visible = false
-	%Info.text = "ⓘ Bilgi"
-	%Info.disabled = false
-	if open_mobile_detail and get_viewport_rect().size.x < 820.0:
-		_mobile_detail_active = true
-		_update_mobile_mission_view()
-		%BackToMissions.grab_focus()
-
-
-func _on_mission_selected(index: int) -> void:
-	_select_mission(index, true)
-
-
-func _return_to_mission_list() -> void:
-	_mobile_detail_active = false
-	_update_mobile_mission_view()
-	var selected_items := mission_list.get_selected_items()
-	if not selected_items.is_empty():
-		mission_list.ensure_current_is_visible()
-		mission_list.grab_focus()
-
-
-func _update_mobile_mission_view() -> void:
-	var narrow := get_viewport_rect().size.x < 820.0
-	mission_list.visible = not narrow or not _mobile_detail_active
-	%DetailDock.visible = not narrow or _mobile_detail_active
-	%BackToMissions.visible = narrow and _mobile_detail_active
-
-
-func _mission_display_title(mission: MissionDefinition) -> String:
-	return "Son Hesaplaşma" if mission.id == &"three_suns" else mission.title
-
-
-func _mission_display_subject(mission: MissionDefinition) -> String:
-	if mission.id == &"three_suns":
-		return "Kampanya finali"
-	if active_route == &"lgs" and mission.subject == "Kimya":
-		return "Fen Bilimleri"
-	return mission.subject
-
-
-func _mission_completed(mission: MissionDefinition, route: StringName) -> bool:
-	if mission.id == &"three_suns":
-		return Campaign.has_story_flag(&"ending") or Campaign.is_completed(mission.id)
-	return Campaign.is_completed(mission.id, route)
-
-
-func _toggle_curriculum() -> void:
-	if selected_mission == null:
-		return
-	mission_curriculum.visible = not mission_curriculum.visible
-	%Info.text = "× Kapat" if mission_curriculum.visible else "ⓘ Bilgi"
+		mission_status.text = "Deneye hazır" if _is_unlocked(selected_mission.id) else "Önce önceki düzeneği onar"
+	start_mission.text = "Yeniden dene" if _is_completed(selected_mission.id) else "Düzeneğe gir"
 
 
 func _activate_mission(index: int) -> void:
@@ -432,412 +222,99 @@ func _activate_mission(index: int) -> void:
 
 
 func _start_mission() -> void:
-	if selected_mission == null or not _mission_available(selected_mission):
+	if selected_mission == null or not _is_unlocked(selected_mission.id): return
+	if active_route == &"class" or _is_completed(selected_mission.id):
+		_launch_selected_mission()
 		return
-	var instance = selected_mission.scene.instantiate()
+	var briefing_key := _story_key("brief_%s" % selected_mission.id)
+	if Campaign.has_story_flag(briefing_key):
+		_launch_selected_mission()
+		return
+	var text := "Ölçümler birbirini tutmuyor. %s Önce neyin değiştiğini gözle; onarımı yeni durumda doğrula." % selected_mission.description
+	if _route_completed_count() == 0:
+		text = "Ben MERİDYEN, gözlemevinin kalibrasyon asistanıyım. İlk tutarsız kayıt %s içinden geliyor. Düzeneği incele; sonucu söylemek yerine birlikte ölçeceğiz." % selected_mission.title
+	story_dialogue.present(selected_mission.title, text, "Düzeneğe gir", func() -> void:
+		Campaign.set_story_flag(briefing_key)
+		_launch_selected_mission(), _return_to_hub)
+
+
+func _launch_selected_mission() -> void:
+	if selected_mission == null or selected_mission.scene == null:
+		return
+	var instance := selected_mission.scene.instantiate()
 	var next_mission := instance as Mission
 	if next_mission == null:
 		instance.free()
 		push_error("Görev sahnesinin kökü scripts/mission.gd dosyasını genişletmeli.")
 		return
 	_remove_active_mission()
+	_playing_finale = false
+	_completion_pending = false
 	active_mission = next_mission
-	active_mission_definition = selected_mission
 	active_mission.route = active_route
-	if active_mission.has_method("configure"):
-		active_mission.call("configure", selected_mission, active_route)
-	active_mission.exit_requested.connect(_return_to_hub)
 	active_mission.completed.connect(_on_mission_completed.bind(selected_mission.id))
-	play_title.text = _mission_display_title(selected_mission)
+	active_mission.exit_requested.connect(_return_to_hub)
+	play_title.text = selected_mission.title
 	play_status.text = ""
-	_set_hub_visible(false)
+	hub.hide()
 	%HubScrim.hide()
 	%WorldView.hide()
+	%Backdrop.hide()
+	_layout()
 	play_screen.show()
 	mission_host.add_child(active_mission)
 	active_mission.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 
-func _reset_mission() -> void:
-	if active_mission_definition == null:
-		return
-	var target := active_mission_definition
-	var previous_selection := selected_mission
-	selected_mission = target
-	_start_mission()
-	selected_mission = previous_selection
-
-
 func _on_mission_completed(mission_id: StringName) -> void:
-	_advance_after_completion = true
-	if mission_id == &"three_suns":
-		Campaign.mark_completed(mission_id)
-	else:
-		Campaign.mark_completed(mission_id, active_route)
-	_update_observatory_progress()
-	play_status.text = "ONARILDI  ✓"
-	_check_story_after_mission(mission_id)
-
-
-func _check_story_after_mission(mission_id: StringName) -> void:
-	var mission := _mission_by_id(mission_id)
-	if mission == null:
-		return
-	if mission_id == &"three_suns" and not Campaign.has_story_flag(&"ending"):
-		Campaign.set_story_flag(&"ending")
-		_show_transmission("ANLAŞMA  ·  ÜÇ GÜNEŞ", "Yasalar yerinde. Bir kapı açık; bundan sonrasını birlikte ölçeceğiz.")
-		return
-	if active_mode == &"yks" and not Campaign.has_story_flag(&"suspicion") and mission.subject in ["Fizik", "Matematik"]:
-		Campaign.set_story_flag(&"suspicion")
-		_show_transmission("MERİDYEN  ·  KALİBRASYON", "Ölçüm değişmiş. Bu sonuç, başlangıç verilerimde yok.")
-		return
-	if mission_id == _life_protocol_evidence_mission_id() and Campaign.has_story_flag(&"life_protocol") and not _life_protocol_resolved():
-		_set_life_protocol(false)
-		_set_world_alarm(0.0)
-		if mission_id in [&"heart", &"tyt_biology"]:
-			Campaign.set_story_flag(&"life_repair_verified")
-			Campaign.set_story_flag(&"life_repaired")
-			var repair_line := "Kan akışı yeniden tek yönlü. MERİDYEN'in son modeli: üç yıldız." if mission_id == &"heart" else "Hücre işleyişi yeniden güvenilir. MERİDYEN'in son modeli: üç yıldız."
-			_show_transmission("SİSTEM ONARILDI  ·  YAŞAM", repair_line, _after_life_resolved)
-		else:
-			Campaign.set_story_flag(&"archive")
-			Campaign.set_story_flag(&"life_protocol_contained")
-			_show_transmission("YAŞAM PROTOKOLÜ  ·  KARANTİNA", "Arşiv zinciri müdahaleyi doğruladı. Protokol karantinaya alındı; MERİDYEN'in erişimi kesildi.", _after_life_resolved)
-		return
-	if not Campaign.has_story_flag(&"archive") and mission.id in [&"turkish_reading", &"turkish_literature", &"history", &"philosophy"]:
-		Campaign.set_story_flag(&"archive")
-		_show_transmission("ARŞİV KAYDI  ·  İMZA EŞLEŞTİ", "Geçmiş kayıtlarındaki bozulma, deneylerdeki imzayla aynı.")
-		return
-	if Campaign.has_story_flag(&"suspicion") and Campaign.has_story_flag(&"archive") and Campaign.completed_subject_count(CATALOG, false) >= 3 and not Campaign.has_story_flag(&"betrayal"):
-		Campaign.set_story_flag(&"betrayal")
-		_set_world_alarm(1.0)
-		_set_life_protocol(true)
-		_show_transmission("MERİDYEN  ·  MERKEZİ YETKİ", "Doğa yasalarını değiştirdim. Şimdi yaşamın kurallarını değiştireceğim.", _start_life_protocol)
-		return
-	_check_finale_unlock()
-
-
-func _after_life_resolved() -> void:
-	_return_to_hub()
-	_check_finale_unlock()
-
-
-func _check_finale_unlock() -> void:
-	if _has_finale_evidence() and not Campaign.has_story_flag(&"three_suns_ready"):
-		Campaign.set_story_flag(&"three_suns_ready")
-		_show_transmission("ÜÇ GÜNEŞ  ·  SON HESAPLAŞMA", "İlk hızdaki küçük farkın üç yörüngeyi nasıl ayırdığını ölç.", _return_to_hub)
-
-
-func _has_finale_evidence() -> bool:
-	if not _life_protocol_resolved():
-		return false
-	var core_subject_count := Campaign.completed_subject_count(CATALOG, false)
-	var has_life_evidence := Campaign.is_completed(&"heart", &"ayt") or Campaign.is_completed(&"tyt_biology", &"tyt")
-	var has_archive_evidence := Campaign.is_completed(&"turkish_reading", &"tyt") and Campaign.is_completed(&"history", &"ayt") and Campaign.is_completed(&"philosophy", &"tyt")
-	var has_ea_evidence := Campaign.is_completed(&"turkish_reading", &"tyt") and Campaign.is_completed(&"history", &"ayt") and Campaign.is_completed(&"turkish_literature", &"ayt")
-	var has_language_evidence := Campaign.is_completed(&"ydt_english", &"ydt") and Campaign.is_completed(&"turkish_reading", &"tyt") and Campaign.is_completed(&"history", &"ayt") and Campaign.is_completed(&"turkish_literature", &"ayt")
-	var core_campaign := core_subject_count >= 4 and (has_life_evidence or has_archive_evidence or has_ea_evidence)
-	var language_campaign := Campaign.completed_subject_count(CATALOG) >= 4 and has_language_evidence
-	return core_campaign or language_campaign
-
-
-func _start_life_protocol() -> void:
-	_return_to_hub()
-	if active_route not in [&"tyt", &"ayt", &"ydt"]:
-		active_mode = &"yks"
-		active_route = selected_yks_route
-	if active_route == &"ydt":
-		active_mode = &"yks"
-		active_route = &"tyt"
-		selected_yks_route = &"tyt"
-		Campaign.set_route(&"tyt")
-	_refresh_route_controls()
-	_refresh_list()
-	Campaign.set_story_flag(&"life_protocol")
-	_set_world_alarm(0.94)
-	_set_life_protocol(true)
-	var line := "Hücre işleyişini denetle; yaşam verisiyle MERİDYEN'in modelini sınayalım."
-	if active_route == &"ayt" and active_field in [&"all", &"sayisal"]:
-		line = "Akış tersine döndü. Kapakçıkların ve pompa ritminin yönünü bul."
-	if active_route == &"ayt" and active_field in [&"ea", &"sozel"]:
-		line = "MERİDYEN yaşam düzenini de bozdu. Kendi alanındaki arşiv kanıtlarını denetle."
-	_show_transmission("YAŞAM PROTOKOLÜ  ·  DERS ROTASI", line, _focus_life_mission)
-
-
-func _focus_life_mission() -> void:
-	if active_route == &"ydt":
-		active_route = &"tyt"
-		selected_yks_route = &"tyt"
-		Campaign.set_route(&"tyt")
-		_refresh_route_controls()
-		_refresh_list()
-	var target := _life_protocol_evidence_mission_id()
-	if target == &"":
-		return
-	_return_to_hub()
-	for index in visible_missions.size():
-		if visible_missions[index].id == target:
-			mission_list.select(index)
-			mission_list.ensure_current_is_visible()
-			_select_mission(index)
-			break
-
-
-func _life_protocol_evidence_mission_id() -> StringName:
-	if active_route == &"tyt":
-		return &"tyt_biology"
-	if active_route == &"ayt":
-		if active_field in [&"all", &"sayisal"]:
-			return &"heart"
-		if active_field == &"ea":
-			return &"turkish_literature"
-		return &"history"
-	return &""
-
-
-func _life_protocol_resolved() -> bool:
-	return Campaign.has_story_flag(&"life_repair_verified") or Campaign.has_story_flag(&"life_protocol_contained")
-
-
-func _mission_available(mission: MissionDefinition) -> bool:
-	if mission.scene == null:
-		return false
-	if mission.id == &"three_suns":
-		if not _life_protocol_resolved():
-			return false
-		if not Campaign.has_story_flag(&"three_suns_ready") and not _mission_completed(mission, active_route):
-			return false
-	return true
-
-
-func _locked_reason(mission: MissionDefinition) -> String:
-	if mission.scene == null:
-		return "Düzenek hazırlanıyor."
-	if mission.id == &"three_suns":
-		if not _life_protocol_resolved():
-			return "Yaşam protokolü çözümlenince açılır."
-		return "Kampanya kanıtları tamamlanınca açılır."
-	return "Bu görev henüz açılamıyor."
-
-
-func _route_purpose(route: StringName) -> String:
-	match route:
-		&"tyt":
-			return "Türkçe, matematik ve ortak temel derslerle tüm adayların yeterliğini ölç."
-		&"ayt":
-			return "Alan testleriyle seçtiğin bölüm yönündeki yeterliğini ölç. Alan: %s." % _field_label(active_field)
-		&"ydt":
-			return "Yabancı dil yeterliğini ölç; bu rota TYT/AYT’den ayrı ve isteğe bağlıdır."
-	return ""
-
-
-func _field_label(field: StringName) -> String:
-	match field:
-		&"sayisal": return "Sayısal"
-		&"ea": return "Eşit ağırlık"
-		&"sozel": return "Sözel"
-	return "Tüm alanlar"
-
-
-func _active_route_button() -> Button:
-	if active_mode == &"class":
-		return %Class
-	if active_mode == &"lgs":
-		return %LGS
-	match selected_yks_route:
-		&"ayt": return %AYT
-		&"ydt": return %YDT
-	return %TYT
-
-
-func _update_responsive_layout() -> void:
-	var narrow := get_viewport_rect().size.x < 820.0
-	var compact := get_viewport_rect().size.x < 340.0
-	missions_layout.vertical = narrow
-	%Routes.vertical = false
-	%YksRoutes.vertical = false
-	%Class.text = "Sınıf" if compact else "Sınıflar"
-	%YKS.text = "YKS" if compact else "YKS Kampanyası"
-	%YDT.text = "YDT" if compact else "YDT · İsteğe bağlı"
-	%Margin.add_theme_constant_override("margin_left", 16 if compact else 26 if narrow else 46)
-	%Margin.add_theme_constant_override("margin_right", 16 if compact else 26 if narrow else 46)
-	%Margin.add_theme_constant_override("margin_top", 18 if compact else 26 if narrow else 38)
-	%Margin.add_theme_constant_override("margin_bottom", 16 if compact else 24 if narrow else 34)
-	var horizontal_margin := 32.0 if compact else 52.0 if narrow else 92.0
-	hub.custom_minimum_size.x = maxf(220.0, minf(680.0, get_viewport_rect().size.x - horizontal_margin))
-	hub.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	%Title.add_theme_font_size_override("font_size", 32 if compact else 38 if narrow else 46)
-	mission_list.custom_minimum_size = Vector2(0, 190 if narrow else 280)
-	mission_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	mission_list.size_flags_vertical = Control.SIZE_EXPAND_FILL if not narrow else Control.SIZE_SHRINK_BEGIN
-	%DetailDock.custom_minimum_size = Vector2(0, 0) if narrow else Vector2(286, 0)
-	%DetailDock.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	%DetailDock.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if narrow else Control.SIZE_EXPAND_FILL
-	_update_mobile_mission_view()
-	if _story_overlay != null:
-		call_deferred("_position_transmission", _story_overlay)
-	_refresh_mission_row_labels()
-
-
-func _mission_row_text(mission: MissionDefinition, state_text: String, marker: String) -> String:
-	var is_compact := get_viewport_rect().size.x < 430.0
-	var title := _mission_display_title(mission)
-	if is_compact:
-		return "%s  ·  %s" % [title, state_text]
-	return "%s  %s  ·  %s" % [marker, title, state_text]
-
-
-func _refresh_mission_row_labels() -> void:
-	if mission_list == null or visible_missions.is_empty():
-		return
-	var is_compact := get_viewport_rect().size.x < 430.0
-	mission_list.add_theme_font_size_override("font_size", 14 if is_compact else 15)
-	var recommended_id: StringName = &""
-	for mission in visible_missions:
-		if _mission_available(mission) and not _mission_completed(mission, active_route):
-			recommended_id = mission.id
-			break
-	for index in visible_missions.size():
-		var mission := visible_missions[index]
-		var completed := _mission_completed(mission, active_route)
-		var available := _mission_available(mission)
-		var state_text := "Onarıldı" if completed else "Kilitli" if not available else "Sıradaki" if mission.id == recommended_id else "Açık"
-		var marker := "✓" if completed else "▣" if not available else "▶" if mission.id == recommended_id else "◉"
-		mission_list.set_item_text(index, _mission_row_text(mission, state_text, marker))
-		if is_compact:
-			mission_list.set_item_icon(index, null)
-		else:
-			mission_list.set_item_icon(index, _mission_icon(mission))
-
-
-func _wrap_hub_in_scroll_container() -> void:
-	var parent := hub.get_parent() as Container
-	if parent == null:
-		return
-	var insert_index := hub.get_index()
-	parent.remove_child(hub)
-	_hub_scroll = ScrollContainer.new()
-	_hub_scroll.name = "HubScroll"
-	_hub_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_hub_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	_hub_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_hub_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	parent.add_child(_hub_scroll)
-	parent.move_child(_hub_scroll, insert_index)
-	_hub_scroll.add_child(hub)
-
-
-func _set_hub_visible(visible: bool) -> void:
-	hub.visible = visible
-	if _hub_scroll != null:
-		_hub_scroll.visible = visible
-
-
-func _set_life_protocol(enabled: bool) -> void:
-	if %Observatory.has_method("set_life_protocol"):
-		%Observatory.call("set_life_protocol", enabled)
-
-
-func _mission_by_id(mission_id: StringName) -> MissionDefinition:
-	for mission in CATALOG:
-		if mission.id == mission_id:
-			return mission
-	return null
-
-
-func _show_transmission(heading: String, line: String, on_close: Callable = Callable()) -> void:
-	if _story_shield != null:
-		_story_shield.queue_free()
-	var previous_focus := get_viewport().gui_get_focus_owner() as Control
-	var card := PanelContainer.new()
-	card.name = "Transmission"
-	card.theme_type_variation = "ConsolePanel"
-	var card_width := minf(540.0, maxf(220.0, get_viewport_rect().size.x - 32.0))
-	card.custom_minimum_size = Vector2(card_width, 0)
-	var shield := Control.new()
-	shield.name = "TransmissionShield"
-	shield.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	shield.mouse_filter = Control.MOUSE_FILTER_STOP
-	shield.z_index = 49
-	add_child(shield)
-	card.z_index = 1
-	shield.add_child(card)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 14)
-	card.add_child(row)
-	var signal_mark := Label.new()
-	signal_mark.text = "◉"
-	signal_mark.add_theme_font_size_override("font_size", 22)
-	signal_mark.add_theme_color_override("font_color", Color("#6fe3c1"))
-	signal_mark.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(signal_mark)
-	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 4)
-	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(content)
-	var label := Label.new()
-	label.text = heading
-	label.add_theme_font_size_override("font_size", 12)
-	label.add_theme_color_override("font_color", Color("#6fe3c1"))
-	content.add_child(label)
-	var quote := Label.new()
-	quote.text = line
-	quote.add_theme_font_size_override("font_size", 16)
-	quote.add_theme_color_override("font_color", Color("#e8f1f2"))
-	quote.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	content.add_child(quote)
-	var close := Button.new()
-	close.text = "Devam"
-	close.theme_type_variation = "CompactButton"
-	close.custom_minimum_size = Vector2(76, 44)
-	close.size = Vector2(76, 44)
-	close.size_flags_horizontal = Control.SIZE_SHRINK_END
-	close.pressed.connect(func() -> void:
-		shield.queue_free()
-		_story_overlay = null
-		_story_shield = null
-		_story_close_button = null
-		if on_close.is_valid():
-			on_close.call()
-		elif is_instance_valid(previous_focus) and previous_focus.is_inside_tree():
-			previous_focus.grab_focus()
-	)
-	row.add_child(close)
-	_story_overlay = card
-	_story_shield = shield
-	_story_close_button = close
-	close.grab_focus()
-	call_deferred("_position_transmission", card)
-
-
-func _position_transmission(card: Control) -> void:
-	if not is_instance_valid(card):
-		return
-	card.custom_minimum_size.x = minf(540.0, maxf(220.0, get_viewport_rect().size.x - 32.0))
-	card.size.x = card.custom_minimum_size.x
-	await get_tree().process_frame
-	if is_instance_valid(card):
-		card.size = card.get_combined_minimum_size()
-		card.position = Vector2(maxf(16.0, get_viewport_rect().size.x - card.size.x - 24.0), 24.0)
-
-
-func _update_observatory_progress() -> void:
+	if not is_instance_valid(active_mission) or selected_mission == null or selected_mission.id != mission_id: return
+	if _completion_pending: return
+	_completion_pending = true
+	var first_completion := not _is_completed(mission_id)
+	completed_ids[mission_id] = true
+	Campaign.mark_completed(mission_id, active_route)
+	_last_campaign_mission = mission_id
 	if %Observatory.has_method("set_operational_count"):
-		var count := 0
-		for mission in CATALOG:
-			if Campaign.is_completed(mission.id):
-				count += 1
-		%Observatory.call("set_operational_count", count)
+		%Observatory.call("set_operational_count", roundi(6.0 * _route_completed_count() / maxi(_route_missions().size(), 1)))
+	play_status.text = "Onarıldı"
+	if first_completion:
+		_show_completion_story.call_deferred(mission_id)
+	else:
+		_completion_pending = false
+
+
+func _show_completion_story(mission_id: StringName) -> void:
+	_return_to_hub()
+	var text: String = RECORDS.get(String(mission_id), "Düzeneğin yeni durumdaki ölçümü onarımı doğruladı. Kayıt arşive eklendi.")
+	if active_route == &"class":
+		story_dialogue.present("Kayıt doğrulandı", text, "Keşfe devam et", _return_to_hub)
+		return
+	var count := _route_completed_count()
+	var total := _route_missions().size()
+	if count >= maxi(2, ceili(total * 0.5)) and not Campaign.has_story_flag(_story_key("reveal")):
+		Campaign.set_story_flag(_story_key("reveal"))
+		text += "\n\nBu sapmalar kendiliğinden olmadı. Kayıtlardaki kuralları ben değiştirdim. Ölçümlerin, kararlarımın yanlış olduğunu gösteriyor."
+	if _route_ready_for_finale():
+		text += "\n\nRotadaki tüm kayıtlar doğrulandı. Son bir ölçüm kaldı: Üç Güneş. Merkezi yetkimi yalnız o karşılaştırmadan sonra kaldırabilirsin."
+		story_dialogue.present("Son kayıt", text, "Üç Güneş'e geç", _start_finale, _return_to_hub)
+	else:
+		var next := _next_route_mission()
+		if next != null: text += "\n\nSıradaki kesinti: %s." % next.title
+		story_dialogue.present("%d / %d düzenek onarıldı" % [count, total], text, "Sıradaki düzeneğe geç", _advance_campaign, _return_to_hub)
 
 
 func _return_to_hub() -> void:
+	if is_instance_valid(story_dialogue): story_dialogue.hide()
+	_playing_finale = false
+	_completion_pending = false
 	_remove_active_mission()
 	play_screen.hide()
 	%WorldView.show()
+	%Backdrop.show()
 	%HubScrim.show()
-	_set_hub_visible(true)
+	hub.show()
+	_layout()
 	_refresh_list()
-	mission_list.grab_focus()
 
 
 func _remove_active_mission() -> void:
@@ -845,4 +322,130 @@ func _remove_active_mission() -> void:
 		mission_host.remove_child(active_mission)
 		active_mission.queue_free()
 		active_mission = null
-		active_mission_definition = null
+
+
+func _layout() -> void:
+	if not is_node_ready():
+		return
+	var playing_now := is_instance_valid(active_mission)
+	var inset := 16 if playing_now else 36
+	for side in ["left", "right", "top", "bottom"]:
+		$Margin.add_theme_constant_override("margin_" + side, inset)
+	hub.custom_minimum_size.x = minf(850.0, maxf(size.x - inset * 2.0, 0.0))
+	play_title.clip_text = true
+	play_title.custom_minimum_size.x = 0
+	play_title.add_theme_font_size_override("font_size", 18)
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if is_instance_valid(story_dialogue) and story_dialogue.visible: return
+	if event.is_action_pressed("ui_cancel") and is_instance_valid(active_mission):
+		_return_to_hub()
+		get_viewport().set_input_as_handled()
+
+
+func _build_story_controls() -> void:
+	story_dialogue = StoryDialogue.new()
+	story_dialogue.name = "StoryDialogue"
+	add_child(story_dialogue)
+	finale_button = Button.new()
+	finale_button.theme_type_variation = "PrimaryButton"
+	finale_button.custom_minimum_size.y = 44
+	finale_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	finale_button.pressed.connect(_start_finale)
+	hub.add_child(finale_button)
+	hub.move_child(finale_button, hub.get_child_count() - 2)
+
+
+func _story_key(suffix: String) -> StringName:
+	return StringName("story_%s_%s" % [active_route, suffix])
+
+
+func _route_missions() -> Array[MissionDefinition]:
+	var missions: Array[MissionDefinition] = []
+	for definition in CATALOG:
+		if definition.scene != null and definition.routes.has(String(active_route)):
+			missions.append(definition)
+	return missions
+
+
+func _is_completed(mission_id: StringName) -> bool:
+	return Campaign.is_completed(mission_id, active_route)
+
+
+func _is_unlocked(mission_id: StringName) -> bool:
+	if active_route == &"class": return true
+	for definition in _route_missions():
+		if definition.id == mission_id: return true
+		if not _is_completed(definition.id): return false
+	return false
+
+
+func _route_completed_count() -> int:
+	var count := 0
+	for definition in _route_missions():
+		if _is_completed(definition.id): count += 1
+	return count
+
+
+func _route_ready_for_finale() -> bool:
+	var missions := _route_missions()
+	return active_route != &"class" and not missions.is_empty() and _route_completed_count() == missions.size()
+
+
+func _next_route_mission() -> MissionDefinition:
+	for definition in _route_missions():
+		if not _is_completed(definition.id): return definition
+	return null
+
+
+func _advance_campaign() -> void:
+	var next := _next_route_mission()
+	if next == null:
+		_start_finale()
+		return
+	for index in visible_missions.size():
+		if visible_missions[index].id == next.id:
+			mission_list.select(index)
+			_select_mission(index)
+			_start_mission()
+			return
+
+
+func _retry_current() -> void:
+	if _playing_finale: _start_finale()
+	else: _launch_selected_mission()
+
+
+func _start_finale() -> void:
+	if not _route_ready_for_finale(): return
+	_remove_active_mission()
+	_playing_finale = true
+	_completion_pending = false
+	active_mission = FINALE.instantiate() as Mission
+	active_mission.route = active_route
+	active_mission.completed.connect(_on_finale_completed)
+	active_mission.exit_requested.connect(_return_to_hub)
+	hub.hide()
+	%HubScrim.hide()
+	%WorldView.hide()
+	%Backdrop.hide()
+	play_title.text = "Üç Güneş · Son ölçüm"
+	play_status.text = ""
+	play_screen.show()
+	_layout()
+	mission_host.add_child(active_mission)
+	active_mission.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+
+func _on_finale_completed() -> void:
+	if not _playing_finale or not _route_ready_for_finale() or _completion_pending: return
+	_completion_pending = true
+	Campaign.set_story_flag(_story_key("won"))
+	_finish_campaign.call_deferred()
+
+
+func _finish_campaign() -> void:
+	_return_to_hub()
+	_set_world_alarm(0.0)
+	story_dialogue.present("Dünya yeniden dengede", "Aynı başlangıcın tekrarlandığını, küçük bir farkın yörüngeyi ayırdığını ölçtün. Kayıtlar doğrulandı. Merkezi karar yetkimi kaldırıyorum.\n\nArşiv korundu. Bu kez yasaları bir kişinin sözü değil, birlikte doğruladığımız ölçümler taşıyor.", "Kontrol merkezine dön", _return_to_hub)

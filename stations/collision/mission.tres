@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mission_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://stations/collision/mission.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"collision"
+title = "Çarpışma Hattı"
+subject = "Fizik"
+grade = 11
+routes = PackedStringArray("class")
+description = "Yakalayıcı ters yöne gidiyor. Momentumun yön kaydını onar."
+curriculum = "Bir boyutta momentumun korunumu"
+scene = ExtResource("2")

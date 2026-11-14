@@ -9,6 +9,12 @@ const GRID := Color("#182a39")
 const GRID_MAJOR := Color("#27404f")
 const BACK := Color("#101f30")
 
+var HARBOR_TEX: Texture2D = load("res://stations/vectors/assets/harbor_top.png")
+var CAPSULE_TEX: Texture2D = load("res://stations/vectors/assets/capsule_top.png")
+var CAPSULE_THRUST_TEX: Texture2D = load("res://stations/vectors/assets/capsule_thrust.png")
+var DOCK_OFF_TEX: Texture2D = load("res://stations/vectors/assets/dock_ring_off.png")
+var DOCK_ON_TEX: Texture2D = load("res://stations/vectors/assets/dock_ring_on.png")
+
 var route_stage := 0
 var method := 0
 var capsule := Vector2.ZERO
@@ -17,6 +23,7 @@ var revealed := false
 var attempted := false
 var attempt := Vector2.ZERO
 var docked := false
+var in_motion := false
 
 var _origin: Vector2
 var _unit: float
@@ -26,6 +33,8 @@ func _draw() -> void:
 	if size.x < 100 or size.y < 100:
 		return
 	draw_rect(Rect2(Vector2.ZERO, size), BACK)
+	if HARBOR_TEX != null:
+		draw_texture_rect(HARBOR_TEX, Rect2(Vector2.ZERO, size), false)
 	_draw_deck_outline()
 
 	var inspecting := route_stage == 1
@@ -113,42 +122,53 @@ func _draw_grid(x_extent: int, y_extent: int, label_step: int) -> void:
 
 
 func _draw_dock(center: Vector2, active: bool) -> void:
-	var color := JADE if active else MUTED
-	draw_circle(center, 20.0, color.darkened(0.86), true, -1.0, true)
-	draw_arc(center, 18.0, 0.0, TAU, 32, color.darkened(0.23), 1.2, true)
-	for quarter in 4:
-		var start := float(quarter) * TAU / 4.0 + 0.13
-		draw_arc(center, 23.5, start, start + 0.39, 8, color, 1.5, true)
-	_label(center + Vector2(28, 6), "Yanaşma", color, 12)
+	var tex: Texture2D = DOCK_ON_TEX if active else DOCK_OFF_TEX
+	if tex != null:
+		var d_size := Vector2(56, 56)
+		draw_texture_rect(tex, Rect2(center - d_size * 0.5, d_size), false)
+	else:
+		var color := JADE if active else MUTED
+		draw_circle(center, 20.0, color.darkened(0.86), true, -1.0, true)
+		draw_arc(center, 18.0, 0.0, TAU, 32, color.darkened(0.23), 1.2, true)
+		for quarter in 4:
+			var start := float(quarter) * TAU / 4.0 + 0.13
+			draw_arc(center, 23.5, start, start + 0.39, 8, color, 1.5, true)
+	var label_color: Color = JADE if active else MUTED
+	_label(center + Vector2(32, 6), "Yanaşma", label_color, 12)
 
 
 func _draw_capsule(center: Vector2, active: bool) -> void:
-	var color := JADE if active else INK
-	var k := 1.9
-	var body := PackedVector2Array([
-		center + Vector2(14, 0) * k, center + Vector2(4, -7) * k, center + Vector2(-9, -7) * k,
-		center + Vector2(-13, -3) * k, center + Vector2(-13, 3) * k, center + Vector2(-9, 7) * k,
-		center + Vector2(4, 7) * k
-	])
-	draw_circle(center, 22.0 * k, Color(color, 0.08), true, -1.0, true)
-	draw_colored_polygon(body, Color("#4a6477"))
-	# Üst yarı aydınlık, alt yarı gölge: gövdeye hacim verir.
-	draw_colored_polygon(PackedVector2Array([
-		center + Vector2(14, 0) * k, center + Vector2(4, -7) * k, center + Vector2(-9, -7) * k,
-		center + Vector2(-13, -3) * k, center + Vector2(-13, 0) * k,
-	]), Color("#6f8ba0"))
-	draw_colored_polygon(PackedVector2Array([
-		center + Vector2(-13, 0) * k, center + Vector2(-13, 3) * k, center + Vector2(-9, 7) * k,
-		center + Vector2(4, 7) * k, center + Vector2(14, 0) * k,
-	]), Color("#2b3f4f"))
-	body.append(body[0])
-	draw_polyline(body, color, 1.8, true)
-	draw_line(center + Vector2(-3, -7) * k, center + Vector2(-3, 7) * k, Color("#1b2a36"), 1.4, true)
-	draw_circle(center + Vector2(5, 0) * k, 2.6 * k, Color("#0c1520"), true, -1.0, true)
-	draw_circle(center + Vector2(5, 0) * k, 1.5 * k, color, true, -1.0, true)
-	for side in [-1.0, 1.0]:
-		draw_line(center + Vector2(-16, 3.2 * side) * k, center + Vector2(-26, 3.2 * side) * k, Color(GOLD, 0.35), 5.0, true)
-		draw_line(center + Vector2(-16, 3.2 * side) * k, center + Vector2(-26, 3.2 * side) * k, GOLD, 1.8, true)
+	var tex: Texture2D = CAPSULE_THRUST_TEX if in_motion else CAPSULE_TEX
+	if tex != null:
+		var c_size := Vector2(64, 64)
+		draw_texture_rect(tex, Rect2(center - c_size * 0.5, c_size), false)
+	else:
+		var color := JADE if active else INK
+		var k := 1.9
+		var body := PackedVector2Array([
+			center + Vector2(14, 0) * k, center + Vector2(4, -7) * k, center + Vector2(-9, -7) * k,
+			center + Vector2(-13, -3) * k, center + Vector2(-13, 3) * k, center + Vector2(-9, 7) * k,
+			center + Vector2(4, 7) * k
+		])
+		draw_circle(center, 22.0 * k, Color(color, 0.08), true, -1.0, true)
+		draw_colored_polygon(body, Color("#4a6477"))
+		# Üst yarı aydınlık, alt yarı gölge: gövdeye hacim verir.
+		draw_colored_polygon(PackedVector2Array([
+			center + Vector2(14, 0) * k, center + Vector2(4, -7) * k, center + Vector2(-9, -7) * k,
+			center + Vector2(-13, -3) * k, center + Vector2(-13, 0) * k,
+		]), Color("#6f8ba0"))
+		draw_colored_polygon(PackedVector2Array([
+			center + Vector2(-13, 0) * k, center + Vector2(-13, 3) * k, center + Vector2(-9, 7) * k,
+			center + Vector2(4, 7) * k, center + Vector2(14, 0) * k,
+		]), Color("#2b3f4f"))
+		body.append(body[0])
+		draw_polyline(body, color, 1.8, true)
+		draw_line(center + Vector2(-3, -7) * k, center + Vector2(-3, 7) * k, Color("#1b2a36"), 1.4, true)
+		draw_circle(center + Vector2(5, 0) * k, 2.6 * k, Color("#0c1520"), true, -1.0, true)
+		draw_circle(center + Vector2(5, 0) * k, 1.5 * k, color, true, -1.0, true)
+		for side in [-1.0, 1.0]:
+			draw_line(center + Vector2(-16, 3.2 * side) * k, center + Vector2(-26, 3.2 * side) * k, Color(GOLD, 0.35), 5.0, true)
+			draw_line(center + Vector2(-16, 3.2 * side) * k, center + Vector2(-26, 3.2 * side) * k, GOLD, 1.8, true)
 
 
 func _point(point: Vector2) -> Vector2:
