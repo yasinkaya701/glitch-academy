@@ -152,7 +152,7 @@ func _layout_hud() -> void:
 			right = button.position.x - 8.0
 	counter.position = Vector2(edge, 16)
 	counter.size = Vector2(maxf(right - edge - 12, 120), 24)
-	var directive_top := 64.0 if right - edge < 300.0 else 56.0
+	var directive_top := 78.0 if right - edge < 300.0 else 70.0
 	directive.position = Vector2(edge, directive_top)
 	# Yönerge sahnenin sağındaki grafik ve panelleri örtmesin: en fazla 620 px.
 	directive.size = Vector2(minf(maxf(right - edge, minf(size.x - edge * 2, 260)), 620.0), 0)
@@ -192,21 +192,39 @@ func _draw() -> void:
 	_draw_step_track()
 
 
+const PHASES: Array[String] = ["Tanı", "Tahmin", "Dene", "Gözle", "Çıkarım"]
+
+
+## Her deneyde aynı beş aşama: istasyonun adım sayısı bu beş aşamaya orantılanır.
+func current_phase() -> int:
+	if _steps_total <= 0:
+		return 0
+	if _steps_current >= _steps_total:
+		return PHASES.size()
+	return clampi(int(float(_steps_current) * PHASES.size() / _steps_total), 0, PHASES.size() - 1)
+
+
 func _draw_step_track() -> void:
 	if _steps_total <= 1 or size.x <= 0.0:
 		return
-	var track_y := _progress_track_y()
-	var track_width := minf(size.x - 48.0, 420.0)
-	var segment_gap := 5.0
-	var segment_width := (track_width - segment_gap * (_steps_total - 1)) / _steps_total
-	var track_left := 24.0
-	for index in _steps_total:
-		var color := Color("#3b3d35")
-		if index < _steps_current:
-			color = Color("#8fbea0")
-		elif index == _steps_current:
-			color = Color("#dfae63")
-		draw_rect(Rect2(track_left + index * (segment_width + segment_gap), track_y, segment_width, 6.0), color, true)
+	var font := get_theme_default_font()
+	var font_size := 13
+	var phase := current_phase()
+	var compact := size.x < 560.0
+	var x := 24.0
+	var y := _progress_track_y() + 12.0
+	for index in PHASES.size():
+		var done := index < phase
+		var now := index == phase
+		if compact and not now:
+			continue
+		var mark: String = "✓ " if done else ("▸ " if now else "")
+		var text: String = mark + String(PHASES[index])
+		var color := Color("#8fbea0") if done else Color("#dfae63") if now else Color("#b1ac9e")
+		draw_string(font, Vector2(x, y), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+		var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		draw_line(Vector2(x, y + 5.0), Vector2(x + width, y + 5.0), color, 2.0 if now else 1.0)
+		x += width + 18.0
 
 
 func _progress_track_y() -> float:
