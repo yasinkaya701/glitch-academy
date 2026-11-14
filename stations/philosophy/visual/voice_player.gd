@@ -1,4 +1,4 @@
-class_name VoicePlayer
+class_name PhilosophyVoicePlayer
 extends Node
 ## Filozof ses oynatıcısı, canlı TTS/dudak senkronu ve mikrofon STT (sesle konuşma) sürücüsü.
 ##
@@ -14,6 +14,8 @@ extends Node
 
 signal line_started(line_id: StringName, text: String)
 signal line_finished(line_id: StringName)
+signal line_failed(line_id: StringName)
+signal busy_changed(busy: bool)
 signal speech_recognized(ok: bool, text: String)
 
 const AUDIO_DIR := "res://stations/philosophy/audio/"
@@ -29,19 +31,27 @@ var _actor: PhilosopherActor
 var _active_id: StringName = &""
 var _levels: Array = []
 var _fps: float = 50.0
-var _fallback_timer: float = 0.0
-var _using_fallback: bool = false
+var _busy: bool = false
+var _generation: int = 0
+var _pending_local: Dictionary = {}
 var _db: Dictionary = {}
 var _pending_live_hash: String = ""
 var _pending_live_text: String = ""
+var _pending_philosopher: StringName = &""
 var _tts_thread: Thread
 var _stt_thread: Thread
 var _listening: bool = false
+var _first_output: bool = true
+var _local_only: bool = false
+var _track_gain_db: float = 0.0
+var _volume: float = 1.0
+var _last_request: Dictionary = {}
 
 
 func _ready() -> void:
 	add_child(_player)
 	add_child(_http)
+	_http.timeout = 45.0
 	_player.finished.connect(_on_audio_finished)
 	_http.request_completed.connect(_on_live_tts_completed)
 	_load_db()
@@ -63,6 +73,30 @@ func is_listening() -> bool:
 	return _listening
 
 
+func is_busy() -> bool:
+	return _busy
+
+
+func set_volume(value: float) -> void:
+	_volume = clampf(value, 0.0, 1.0)
+	_player.volume_db = _track_gain_db + linear_to_db(maxf(_volume, 0.0001))
+
+
+func replay() -> void:
+	if _busy or _listening or _last_request.is_empty():
+		return
+	if _last_request.has("text"):
+		speak_live(_last_request["who"], _last_request["text"], _last_request["id"])
+	else:
+		play_line(_last_request["who"], _last_request["id"])
+
+
+func _set_busy(value: bool) -> void:
+	if _busy != value:
+		_busy = value
+		busy_changed.emit(value)
+
+
 func get_line_text(philosopher_id: StringName, line_id: StringName) -> String:
 	var p: Dictionary = _db.get("philosophers", {}).get(String(philosopher_id), {})
 	return String(p.get("lines", {}).get(String(line_id), ""))
@@ -81,6 +115,7 @@ func get_choices(philosopher_id: StringName) -> Array:
 ## Önceden üretilmiş satırı çalar; yoksa canlı ElevenLabs API'yi veya yerel TTS'i dener.
 func play_line(philosopher_id: StringName, line_id: StringName) -> String:
 	stop()
+	_last_request = {"who": philosopher_id, "id": line_id}
 	var text: String = get_line_text(philosopher_id, line_id)
 	_active_id = line_id
 	var base_path: String = AUDIO_DIR + String(philosopher_id) + "/" + String(line_id)
@@ -88,7 +123,7 @@ func play_line(philosopher_id: StringName, line_id: StringName) -> String:
 	var json_path: String = base_path + ".json"
 
 	if FileAccess.file_exists(mp3_path):
-		var stream := _load_mp3(mp3_path)
+		var stream := _load_audio(mp3_path)
 		if stream != null:
 			_load_track_json(json_path)
 			_start_stream(stream, text)
@@ -96,27 +131,33 @@ func play_line(philosopher_id: StringName, line_id: StringName) -> String:
 
 	if text != "":
 		speak_live(philosopher_id, text, line_id)
+	else:
+		_fail_line()
 	return text
 
 
 ## Serbest metni canlı ElevenLabs API veya yerel gen_voices.py ile seslendirir.
 func speak_live(philosopher_id: StringName, text: String, tag_id: StringName = &"live") -> void:
 	stop()
+	_last_request = {"who": philosopher_id, "id": tag_id, "text": text}
 	_active_id = tag_id
+	_pending_philosopher = philosopher_id
+	_pending_live_text = text
+	_set_busy(true)
 	var voice_id: String = _get_voice_id(philosopher_id)
 	var sig: String = (String(philosopher_id) + ":" + voice_id + ":" + text).sha256_text().substr(0, 16)
 	var cache_mp3: String = CACHE_DIR + sig + ".mp3"
 	var cache_json: String = CACHE_DIR + sig + ".json"
 
-	if FileAccess.file_exists(cache_mp3):
-		var stream := _load_mp3(cache_mp3)
+	if FileAccess.file_exists(cache_mp3) or FileAccess.file_exists(cache_mp3.get_basename() + ".wav"):
+		var stream := _load_audio(cache_mp3)
 		if stream != null:
 			_load_track_json(cache_json)
 			_start_stream(stream, text)
 			return
 
 	var api_key: String = _resolve_api_key()
-	if api_key != "" and voice_id != "":
+	if not _local_only and api_key != "" and voice_id != "":
 		_pending_live_hash = sig
 		_pending_live_text = text
 		var url: String = "https://api.elevenlabs.io/v1/text-to-speech/%s/with-timestamps" % voice_id
@@ -124,32 +165,45 @@ func speak_live(philosopher_id: StringName, text: String, tag_id: StringName = &
 		var body := JSON.stringify({
 			"text": text,
 			"model_id": "eleven_multilingual_v2",
-			"voice_settings": {"stability": 0.52, "similarity_boost": 0.78, "style": 0.22, "use_speaker_boost": true}
+			"voice_settings": {"stability": 0.68, "similarity_boost": 0.85, "style": 0.05, "use_speaker_boost": true}
 		})
 		if _http.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
-			_start_fallback_speaking(text, 10.0)
 			return
 
-	# Yerel Python TTS (gen_voices.py --who --text --out) ile arka planda gerçek ses + 50 Hz zarf üret
-	var py_bin: String = _resolve_python()
-	if py_bin != "" and (_tts_thread == null or not _tts_thread.is_alive()):
-		if _tts_thread != null and _tts_thread.is_started():
-			_tts_thread.wait_to_finish()
-		_tts_thread = Thread.new()
-		var abs_script: String = ProjectSettings.globalize_path(GEN_VOICES_SCRIPT)
-		var abs_mp3: String = ProjectSettings.globalize_path(cache_mp3)
-		var who_str: String = String(philosopher_id)
-		_start_fallback_speaking(text, 8.0)
-		_tts_thread.start(_run_local_tts_job.bind(py_bin, abs_script, who_str, text, abs_mp3, cache_mp3, cache_json))
-		return
+	_queue_local_tts(cache_mp3, cache_json)
 
-	var est_duration: float = clampf(float(text.length()) * 0.065, 1.8, 7.0)
-	_start_fallback_speaking(text, est_duration)
+
+func _queue_local_tts(cache_mp3: String, cache_json: String) -> void:
+	_pending_local = {
+		"mp3": cache_mp3, "json": cache_json, "text": _pending_live_text,
+		"who": String(_pending_philosopher), "generation": _generation,
+	}
+	_try_start_local_tts()
+
+
+func _try_start_local_tts() -> void:
+	if _pending_local.is_empty() or (_tts_thread != null and _tts_thread.is_alive()):
+		return
+	if _tts_thread != null and _tts_thread.is_started():
+		_tts_thread.wait_to_finish()
+	var job: Dictionary = _pending_local
+	_pending_local = {}
+	var py_bin: String = _resolve_python()
+	if py_bin == "":
+		_fail_line()
+		return
+	_tts_thread = Thread.new()
+	var err: Error = _tts_thread.start(_run_local_tts_job.bind(
+		py_bin, ProjectSettings.globalize_path(GEN_VOICES_SCRIPT), job["who"], job["text"],
+		ProjectSettings.globalize_path(job["mp3"]), job["mp3"], job["json"], job["generation"]
+	))
+	if err != OK:
+		_fail_line()
 
 
 ## Mikrofondan oyuncunun sesini dinleyip Türkçe metne çevirir ve speech_recognized sinyali yayar.
 func listen_microphone(seconds: float = 4.2) -> bool:
-	if _listening:
+	if _listening or _busy or (_stt_thread != null and _stt_thread.is_alive()):
 		return false
 	var py_bin: String = _resolve_python()
 	if py_bin == "":
@@ -160,7 +214,10 @@ func listen_microphone(seconds: float = 4.2) -> bool:
 	_listening = true
 	_stt_thread = Thread.new()
 	var abs_script: String = ProjectSettings.globalize_path(LISTEN_SCRIPT)
-	_stt_thread.start(_run_stt_job.bind(py_bin, abs_script, seconds))
+	if _stt_thread.start(_run_stt_job.bind(py_bin, abs_script, seconds, _generation)) != OK:
+		_listening = false
+		speech_recognized.emit(false, "")
+		return false
 	return true
 
 
@@ -171,7 +228,8 @@ func _run_local_tts_job(
 	text: String,
 	abs_mp3: String,
 	cache_mp3: String,
-	cache_json: String
+	cache_json: String,
+	generation: int
 ) -> void:
 	var out := []
 	var args := PackedStringArray([
@@ -179,23 +237,27 @@ func _run_local_tts_job(
 		"--who=" + who_str,
 		"--text=" + text,
 		"--out=" + abs_mp3,
+		"--engine=edge_tts",
 	])
 	var code: int = OS.execute(py_bin, args, out, true)
-	if code == 0:
-		call_deferred("_on_local_tts_ready", cache_mp3, cache_json, text)
+	call_deferred("_on_local_tts_ready", cache_mp3, cache_json, text, generation, code)
 
 
-func _on_local_tts_ready(cache_mp3: String, cache_json: String, text: String) -> void:
-	if not FileAccess.file_exists(cache_mp3):
+func _on_local_tts_ready(cache_mp3: String, cache_json: String, text: String, generation: int, code: int) -> void:
+	if generation != _generation or not _busy:
 		return
-	var stream := _load_mp3(cache_mp3)
+	if code != 0:
+		_fail_line()
+		return
+	var stream := _load_audio(cache_mp3)
 	if stream == null:
+		_fail_line()
 		return
 	_load_track_json(cache_json)
 	_start_stream(stream, text)
 
 
-func _run_stt_job(py_bin: String, abs_script: String, seconds: float) -> void:
+func _run_stt_job(py_bin: String, abs_script: String, seconds: float, generation: int) -> void:
 	var out := []
 	var args := PackedStringArray([abs_script, "--seconds=%.1f" % seconds])
 	OS.execute(py_bin, args, out, true)
@@ -208,24 +270,33 @@ func _run_stt_job(py_bin: String, abs_script: String, seconds: float) -> void:
 	if parsed is Dictionary:
 		ok = bool((parsed as Dictionary).get("ok", false))
 		recognized = String((parsed as Dictionary).get("text", "")).strip_edges()
-	call_deferred("_on_stt_done", ok, recognized)
+	call_deferred("_on_stt_done", ok, recognized, generation)
 
 
-func _on_stt_done(ok: bool, recognized: String) -> void:
+func _on_stt_done(ok: bool, recognized: String, generation: int) -> void:
+	if generation != _generation:
+		return
 	_listening = false
 	speech_recognized.emit(ok, recognized)
 
 
 func stop() -> void:
+	_generation += 1
 	_http.cancel_request()
 	_player.stop()
-	_using_fallback = false
+	_pending_local.clear()
+	_pending_live_hash = ""
+	_pending_live_text = ""
+	_listening = false
+	_active_id = &""
 	_levels.clear()
 	if _actor != null:
 		_actor.set_speaking(false, -1.0)
+	_set_busy(false)
 
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
+	_try_start_local_tts()
 	if _actor == null:
 		return
 	if _player.playing:
@@ -238,46 +309,61 @@ func _process(delta: float) -> void:
 			_actor.set_speaking(true, lerpf(a, b, frac))
 		else:
 			_actor.set_speaking(true, -1.0)
-	elif _using_fallback:
-		_fallback_timer -= delta
-		if _fallback_timer <= 0.0:
-			_using_fallback = false
-			_actor.set_speaking(false, -1.0)
-			line_finished.emit(_active_id)
 
 
-func _start_stream(stream: AudioStreamMP3, text: String) -> void:
-	_using_fallback = false
+func _start_stream(stream: AudioStream, text: String) -> void:
+	if stream.get_length() <= 0.0:
+		_fail_line()
+		return
+	_set_busy(true)
 	_player.stream = stream
+	set_volume(_volume)
+	var generation: int = _generation
+	if _first_output:
+		# İlk cümle, pencere/portre yüklenirken arka planda tüketilmesin.
+		if DisplayServer.get_name() != "headless":
+			await RenderingServer.frame_post_draw
+		await get_tree().create_timer(0.15).timeout
+		if generation != _generation or not is_inside_tree():
+			return
+		_first_output = false
 	_player.play()
 	if _actor != null:
 		_actor.set_speaking(true, 0.0)
 	line_started.emit(_active_id, text)
 
 
-func _start_fallback_speaking(text: String, duration: float) -> void:
-	_using_fallback = true
-	_fallback_timer = duration
-	if _actor != null:
-		_actor.set_speaking(true, -1.0)
-	line_started.emit(_active_id, text)
-
-
 func _on_audio_finished() -> void:
+	var finished_id: StringName = _active_id
+	_active_id = &""
 	if _actor != null:
 		_actor.set_speaking(false, -1.0)
-	line_finished.emit(_active_id)
+	_set_busy(false)
+	line_finished.emit(finished_id)
+
+
+func _fail_line() -> void:
+	var failed_id: StringName = _active_id
+	stop()
+	line_failed.emit(failed_id)
 
 
 func _on_live_tts_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	if not _busy or _pending_live_hash == "":
+		return
 	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
+		if response_code in [401, 403, 429]:
+			_local_only = true
+		_queue_local_tts(CACHE_DIR + _pending_live_hash + ".mp3", CACHE_DIR + _pending_live_hash + ".json")
 		return
 	var parsed: Variant = JSON.parse_string(body.get_string_from_utf8())
 	if not (parsed is Dictionary):
+		_queue_local_tts(CACHE_DIR + _pending_live_hash + ".mp3", CACHE_DIR + _pending_live_hash + ".json")
 		return
 	var dict := parsed as Dictionary
 	var b64: String = String(dict.get("audio_base64", ""))
 	if b64 == "":
+		_queue_local_tts(CACHE_DIR + _pending_live_hash + ".mp3", CACHE_DIR + _pending_live_hash + ".json")
 		return
 	var mp3_bytes: PackedByteArray = Marshalls.base64_to_raw(b64)
 	var cache_mp3: String = CACHE_DIR + _pending_live_hash + ".mp3"
@@ -295,6 +381,7 @@ func _on_live_tts_completed(result: int, response_code: int, _headers: PackedStr
 	stream.data = mp3_bytes
 	_levels = track.get("levels", [])
 	_fps = float(track.get("fps", 50.0))
+	_track_gain_db = 0.0
 	_start_stream(stream, _pending_live_text)
 
 
@@ -323,18 +410,22 @@ func _alignment_to_track(alignment: Dictionary) -> Dictionary:
 	return {"fps": 50, "levels": out}
 
 
-func _load_mp3(path: String) -> AudioStreamMP3:
+func _load_audio(path: String) -> AudioStream:
+	var wav_path: String = path.get_basename() + ".wav"
+	if not FileAccess.file_exists(path):
+		return AudioStreamWAV.load_from_file(wav_path) if FileAccess.file_exists(wav_path) else null
 	var bytes := FileAccess.get_file_as_bytes(path)
 	if bytes.is_empty():
 		return null
 	var stream := AudioStreamMP3.new()
 	stream.data = bytes
-	return stream
+	return stream if stream.get_length() > 0.0 else null
 
 
 func _load_track_json(path: String) -> void:
 	_levels.clear()
 	_fps = 50.0
+	_track_gain_db = 0.0
 	if not FileAccess.file_exists(path):
 		return
 	var f := FileAccess.open(path, FileAccess.READ)
@@ -344,6 +435,7 @@ func _load_track_json(path: String) -> void:
 	if parsed is Dictionary:
 		_levels = (parsed as Dictionary).get("levels", [])
 		_fps = float((parsed as Dictionary).get("fps", 50.0))
+		_track_gain_db = clampf(float((parsed as Dictionary).get("gain_db", 0.0)), 0.0, 6.0)
 
 
 func _get_voice_id(philosopher_id: StringName) -> String:
@@ -362,6 +454,8 @@ func _resolve_api_key() -> String:
 	var env_key: String = OS.get_environment("ELEVEN_API_KEY")
 	if env_key == "":
 		env_key = OS.get_environment("ELEVENLABS_API_KEY")
+	if env_key == "":
+		env_key = OS.get_environment("XI_API_KEY")
 	if env_key != "":
 		return env_key.strip_edges()
 	if FileAccess.file_exists(KEY_FILE):

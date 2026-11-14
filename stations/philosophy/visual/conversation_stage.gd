@@ -20,7 +20,7 @@ const ISLAMIC_IDS := [&"kindi", &"farabi", &"ibn_sina", &"ibn_rushd"]
 
 var actor: PhilosopherActor
 var ring: MemoryRing
-var voice: VoicePlayer
+var voice: PhilosophyVoicePlayer
 var choice_slot: VBoxContainer
 
 var _backdrop_rect := ColorRect.new()
@@ -90,9 +90,9 @@ func _ready() -> void:
 
 
 func _init_fonts() -> void:
-	_serif_font = FONT_CINZEL
-	_serif_italic = FONT_MARCELLUS
-	_sans_font = FONT_CINZEL
+	_serif_font = UITheme.FONT
+	_serif_italic = UITheme.FONT
+	_sans_font = UITheme.FONT
 
 
 func show_philosopher(id: StringName, star_count: int = 4) -> bool:
@@ -160,21 +160,36 @@ func _build_line_ui() -> void:
 	_line_group.add_theme_constant_override("separation", 8)
 
 	_speaker_label.add_theme_font_override("font", _serif_font)
-	_speaker_label.add_theme_font_size_override("font_size", 22)
-	_speaker_label.add_theme_color_override("font_color", Color("#d8b97a"))
-	_speaker_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+	_speaker_label.add_theme_font_size_override("font_size", 18)
+	_speaker_label.add_theme_color_override("font_color", Color("#3b7867"))
+	_speaker_label.add_theme_color_override("font_shadow_color", Color(1, 1, 1, 0))
 	_speaker_label.add_theme_constant_override("shadow_offset_x", 0)
 	_speaker_label.add_theme_constant_override("shadow_offset_y", 2)
 
+	var name_surface := StyleBoxFlat.new()
+	name_surface.bg_color = Color(1, 1, 1, 0.96)
+	name_surface.content_margin_left = 14
+	name_surface.content_margin_top = 6
+	name_surface.content_margin_bottom = 6
+	_speaker_label.add_theme_stylebox_override("normal", name_surface)
+	_rule_line.hide()
 	_rule_line.custom_minimum_size = Vector2(68, 1)
 	_rule_line.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_rule_line.color = Color(0.85, 0.72, 0.48, 0.55)
 
 	_line_label.add_theme_font_override("font", _serif_italic)
-	_line_label.add_theme_font_size_override("font_size", 24)
-	_line_label.add_theme_color_override("font_color", Color("#f3eee2"))
+	_line_label.add_theme_font_size_override("font_size", 22)
+	_line_label.add_theme_color_override("font_color", Color("#22332f"))
 	_line_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_line_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.92))
+	var reading_surface := StyleBoxFlat.new()
+	reading_surface.bg_color = Color(1, 1, 1, 0.94)
+	reading_surface.set_corner_radius_all(8)
+	reading_surface.content_margin_left = 14
+	reading_surface.content_margin_right = 14
+	reading_surface.content_margin_top = 12
+	reading_surface.content_margin_bottom = 12
+	_line_label.add_theme_stylebox_override("normal", reading_surface)
+	_line_label.add_theme_color_override("font_shadow_color", Color(1, 1, 1, 0))
 	_line_label.add_theme_constant_override("shadow_offset_x", 0)
 	_line_label.add_theme_constant_override("shadow_offset_y", 2)
 

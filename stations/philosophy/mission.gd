@@ -41,12 +41,17 @@ var _chat_row := HBoxContainer.new()
 var _input_box := LineEdit.new()
 var _send_btn := Button.new()
 var _mic_btn := Button.new()
+var _replay_btn := Button.new()
+var _volume_slider := HSlider.new()
+var _volume_label := Label.new()
 
 var _index: int = 0
 var _stage_level: int = 0
 var _anger: float = 0.0
 var _used_choices: Array[String] = []
 var _failed: bool = false
+var _waiting_reply: bool = false
+var _completion_awaiting_voice: bool = false
 
 
 func _ready() -> void:
@@ -65,6 +70,9 @@ func _ready() -> void:
 	brain.response_ready.connect(apply_llm_trigger)
 
 	stage.voice.speech_recognized.connect(_on_speech_recognized)
+	stage.voice.busy_changed.connect(func(_busy: bool) -> void: _refresh_dialogue_controls())
+	stage.voice.line_finished.connect(_on_line_finished)
+	stage.voice.line_failed.connect(_on_line_failed)
 
 	hud = Hud.new()
 	add_child(hud)
@@ -87,21 +95,21 @@ func _ready() -> void:
 
 
 func _build_dialogue_controls() -> void:
-	var font_cinzel := preload("res://fonts/Cinzel-Regular.ttf")
-	var font_marcellus := preload("res://fonts/Marcellus-Regular.ttf")
+	var font_cinzel: Font = UITheme.FONT
+	var font_marcellus: Font = UITheme.FONT
 
 	if hud != null:
 		hud.directive.add_theme_font_override("font", font_cinzel)
-		hud.directive.add_theme_font_size_override("font_size", 18)
-		hud.directive.add_theme_color_override("font_color", Color("#ede4d3"))
+		hud.directive.add_theme_font_size_override("font_size", 20)
+		hud.directive.add_theme_color_override("font_color", UITheme.INK)
 		if hud.info_label != null:
 			hud.info_label.add_theme_font_override("font", font_marcellus)
-			hud.info_label.add_theme_color_override("font_color", Color("#c4baa4"))
+			hud.info_label.add_theme_color_override("font_color", UITheme.INK)
 
 	_player_quote.add_theme_font_override("font", font_marcellus)
 	_player_quote.add_theme_font_size_override("font_size", 18)
-	_player_quote.add_theme_color_override("font_color", Color("#d5cbba"))
-	_player_quote.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.90))
+	_player_quote.add_theme_color_override("font_color", UITheme.INK)
+	_player_quote.add_theme_color_override("font_shadow_color", Color(1, 1, 1, 0))
 	_player_quote.add_theme_constant_override("shadow_offset_x", 0)
 	_player_quote.add_theme_constant_override("shadow_offset_y", 2)
 	_player_quote.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -117,18 +125,18 @@ func _build_dialogue_controls() -> void:
 
 	_input_box.placeholder_text = "Düşünceni veya sözünü yaz…"
 	_input_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_input_box.custom_minimum_size = Vector2(260, 42)
+	_input_box.custom_minimum_size = Vector2(160, 42)
 	_input_box.add_theme_font_override("font", font_marcellus)
 	_input_box.add_theme_font_size_override("font_size", 16)
-	_input_box.add_theme_color_override("font_color", Color("#f5f0e6"))
-	_input_box.add_theme_color_override("font_placeholder_color", Color(0.72, 0.68, 0.60, 0.55))
+	_input_box.add_theme_color_override("font_color", UITheme.INK)
+	_input_box.add_theme_color_override("font_placeholder_color", UITheme.MUTED)
 	_input_box.text_submitted.connect(_on_text_submitted)
 
 	var normal_sb := StyleBoxFlat.new()
-	normal_sb.bg_color = Color(0.04, 0.05, 0.07, 0.82)
-	normal_sb.border_color = Color(0.75, 0.62, 0.40, 0.45)
+	normal_sb.bg_color = UITheme.PANEL
+	normal_sb.border_color = UITheme.EDGE_STRONG
 	normal_sb.border_width_bottom = 1
-	normal_sb.set_corner_radius_all(2)
+	normal_sb.set_corner_radius_all(8)
 	normal_sb.content_margin_left = 14
 	normal_sb.content_margin_right = 14
 	normal_sb.content_margin_top = 8
@@ -136,31 +144,31 @@ func _build_dialogue_controls() -> void:
 	_input_box.add_theme_stylebox_override("normal", normal_sb)
 
 	var focus_sb := normal_sb.duplicate() as StyleBoxFlat
-	focus_sb.bg_color = Color(0.06, 0.07, 0.10, 0.94)
-	focus_sb.border_color = Color("#d8b97a")
+	focus_sb.bg_color = UITheme.PANEL
+	focus_sb.border_color = UITheme.EDGE_STRONG
 	focus_sb.border_width_bottom = 1
 	_input_box.add_theme_stylebox_override("focus", focus_sb)
 	_chat_row.add_child(_input_box)
 
 	var btn_sb := StyleBoxFlat.new()
-	btn_sb.bg_color = Color(0.09, 0.08, 0.07, 0.85)
-	btn_sb.border_color = Color(0.80, 0.68, 0.44, 0.55)
+	btn_sb.bg_color = UITheme.PANEL
+	btn_sb.border_color = UITheme.EDGE_STRONG
 	btn_sb.set_border_width_all(1)
-	btn_sb.set_corner_radius_all(2)
+	btn_sb.set_corner_radius_all(8)
 	btn_sb.content_margin_left = 16
 	btn_sb.content_margin_right = 16
 	btn_sb.content_margin_top = 8
 	btn_sb.content_margin_bottom = 8
 
 	var btn_hover := btn_sb.duplicate() as StyleBoxFlat
-	btn_hover.bg_color = Color(0.16, 0.13, 0.09, 0.95)
-	btn_hover.border_color = Color("#e5c685")
+	btn_hover.bg_color = UITheme.PANEL_RAISED
+	btn_hover.border_color = UITheme.EDGE_STRONG
 
 	_send_btn.text = "Söyle"
 	_send_btn.custom_minimum_size = Vector2(88, 42)
 	_send_btn.add_theme_font_override("font", font_cinzel)
 	_send_btn.add_theme_font_size_override("font_size", 14)
-	_send_btn.add_theme_color_override("font_color", Color("#efe7d6"))
+	_send_btn.add_theme_color_override("font_color", UITheme.INK)
 	_send_btn.add_theme_stylebox_override("normal", btn_sb)
 	_send_btn.add_theme_stylebox_override("hover", btn_hover)
 	_send_btn.add_theme_stylebox_override("pressed", btn_hover)
@@ -171,7 +179,7 @@ func _build_dialogue_controls() -> void:
 	_mic_btn.custom_minimum_size = Vector2(124, 42)
 	_mic_btn.add_theme_font_override("font", font_cinzel)
 	_mic_btn.add_theme_font_size_override("font_size", 14)
-	_mic_btn.add_theme_color_override("font_color", Color("#d8ceba"))
+	_mic_btn.add_theme_color_override("font_color", UITheme.INK)
 	_mic_btn.add_theme_stylebox_override("normal", btn_sb)
 	_mic_btn.add_theme_stylebox_override("hover", btn_hover)
 	_mic_btn.add_theme_stylebox_override("pressed", btn_hover)
@@ -179,6 +187,38 @@ func _build_dialogue_controls() -> void:
 	_chat_row.add_child(_mic_btn)
 
 	stage.choice_slot.add_child(_chat_row)
+
+	var audio_row := HBoxContainer.new()
+	audio_row.add_theme_constant_override("separation", 12)
+	var audio_panel := PanelContainer.new()
+	audio_panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	var audio_surface := StyleBoxFlat.new()
+	audio_surface.bg_color = UITheme.PANEL
+	audio_surface.set_corner_radius_all(8)
+	audio_surface.content_margin_left = 8
+	audio_surface.content_margin_right = 8
+	audio_surface.content_margin_top = 4
+	audio_surface.content_margin_bottom = 4
+	audio_panel.add_theme_stylebox_override("panel", audio_surface)
+	audio_panel.add_child(audio_row)
+	_replay_btn.text = "Tekrar dinle"
+	_replay_btn.pressed.connect(func() -> void: stage.voice.replay())
+	audio_row.add_child(_replay_btn)
+	_volume_label.text = "Ses %100"
+	_volume_label.custom_minimum_size.x = 82
+	audio_row.add_child(_volume_label)
+	_volume_slider.min_value = 0
+	_volume_slider.max_value = 100
+	_volume_slider.step = 5
+	_volume_slider.value = 100
+	_volume_slider.custom_minimum_size.x = 140
+	_volume_slider.tooltip_text = "Filozofun ses düzeyi"
+	_volume_slider.value_changed.connect(func(value: float) -> void:
+		stage.voice.set_volume(value / 100.0)
+		_volume_label.text = "Ses %d" % int(value)
+	)
+	audio_row.add_child(_volume_slider)
+	stage.choice_slot.add_child(audio_panel)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -195,13 +235,17 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_V:
 			_on_mic_pressed()
 		KEY_SPACE:
-			_speak_stage_line(_stage_level)
+			if not _dialogue_busy():
+				_speak_stage_line(_stage_level)
 		KEY_M:
-			_set_level(_stage_level + 1)
+			if not _dialogue_busy():
+				_set_level(_stage_level + 1)
 		KEY_N:
-			_set_level(_stage_level - 1)
+			if not _dialogue_busy():
+				_set_level(_stage_level - 1)
 		KEY_A:
-			apply_llm_trigger({"trigger": "wrong", "reply_id": "wrong_sofist"})
+			if not _dialogue_busy():
+				apply_llm_trigger({"trigger": "wrong", "reply_id": "wrong_sofist"})
 		KEY_S:
 			_anger = clampf(_anger - 0.25, 0.0, 1.0)
 			stage.set_anger(_anger)
@@ -209,12 +253,16 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			if stage.has_node("PhilosopherActor"):
 				stage.get_node("PhilosopherActor").call("play_reaction", &"stir")
 		KEY_E:
-			apply_llm_trigger({"trigger": "angry_leave", "reply_id": "angry_leave"})
+			if not _dialogue_busy():
+				apply_llm_trigger({"trigger": "angry_leave", "reply_id": "angry_leave"})
 		KEY_X:
 			_pick(_index)
 
 
 func _pick(i: int) -> void:
+	brain.cancel()
+	_waiting_reply = false
+	_completion_awaiting_voice = false
 	_index = clampi(i, 0, ORDER.size() - 1)
 	var id: StringName = ORDER[_index]
 	_stage_level = 0
@@ -232,12 +280,42 @@ func _pick(i: int) -> void:
 	hud.set_note(NOTES.get(id, ""))
 	hud.set_action("")
 	_speak_stage_line(0)
+	_refresh_dialogue_controls()
+
+
+func _dialogue_busy() -> bool:
+	return _waiting_reply or stage.voice.is_busy() or stage.voice.is_listening()
+
+
+func _refresh_dialogue_controls() -> void:
+	var busy: bool = _dialogue_busy()
+	_send_btn.disabled = busy or _failed
+	_mic_btn.disabled = busy or _failed
+	_mic_btn.text = "Dinleniyor…" if stage.voice.is_listening() else "Mikrofon (V)"
+	_send_btn.text = "Bekle…" if busy else "Söyle"
+	_replay_btn.disabled = busy or _failed
+
+
+func _on_line_finished(_line_id: StringName) -> void:
+	_refresh_dialogue_controls()
+	if _failed:
+		stage.actor.exit_angry(1.4)
+	if _completion_awaiting_voice:
+		_completion_awaiting_voice = false
+		completed.emit()
+
+
+func _on_line_failed(_line_id: StringName) -> void:
+	hud.say("Ses hazırlanamadı; yanıtı ekrandan okuyabilir, konuşmaya devam edebilirsin.", &"bad")
+	_on_line_finished(_line_id)
 
 
 func _on_text_submitted(raw_text: String) -> void:
 	var clean: String = raw_text.strip_edges()
-	if clean == "" or _failed:
+	if clean == "" or _failed or _dialogue_busy():
 		return
+	_waiting_reply = true
+	_refresh_dialogue_controls()
 	_input_box.text = ""
 	_input_box.release_focus()
 	_player_quote.text = "Siz: “%s”" % clean
@@ -256,18 +334,17 @@ func _on_text_submitted(raw_text: String) -> void:
 
 
 func _on_mic_pressed() -> void:
-	if _failed or _stage_level >= 4 or stage.voice.is_listening():
+	if _failed or _dialogue_busy():
 		return
-	stage.voice.stop()
 	if stage.voice.listen_microphone(4.2):
 		_mic_btn.text = "Dinleniyor…"
 		_mic_btn.disabled = true
 		hud.say("Mikrofona Türkçe konuşun…", &"neutral")
+	_refresh_dialogue_controls()
 
 
 func _on_speech_recognized(ok: bool, text: String) -> void:
-	_mic_btn.text = "Mikrofon (V)"
-	_mic_btn.disabled = false
+	_refresh_dialogue_controls()
 	if not ok or text == "":
 		hud.say("Ses anlaşılamadı; tekrar konuşun veya cümlenizi yazın.", &"bad")
 		return
@@ -284,6 +361,7 @@ func _on_speech_recognized(ok: bool, text: String) -> void:
 func apply_llm_trigger(result: Dictionary) -> void:
 	if _failed:
 		return
+	_waiting_reply = false
 	var trig: String = String(result.get("trigger", result.get("verdict", "chat")))
 	var pts: int = maxi(int(result.get("points", 2)), 2)
 	var cid: String = String(result.get("choice_id", ""))
@@ -302,11 +380,11 @@ func apply_llm_trigger(result: Dictionary) -> void:
 		stage.set_memory_stage(_stage_level)
 		hud.set_steps(_stage_level, 4, "ONARILDI" if _stage_level >= 4 else NAMES[id].to_upper())
 
-		if reply_text != "":
+		if reply_id != "" and stage.voice.get_line_text(id, StringName(reply_id)) != "" and (reply_text == "" or reply_text == stage.voice.get_line_text(id, StringName(reply_id))):
+			stage.speak_line(NAMES[id], StringName(reply_id))
+		elif reply_text != "":
 			stage.show_line(NAMES[id], reply_text)
 			stage.voice.speak_live(id, reply_text, &"llm_ok")
-		elif reply_id != "" and stage.voice.get_line_text(id, StringName(reply_id)) != "":
-			stage.speak_line(NAMES[id], StringName(reply_id))
 		else:
 			_speak_stage_line(_stage_level)
 
@@ -316,7 +394,10 @@ func apply_llm_trigger(result: Dictionary) -> void:
 			hud.say("Sonuca ulaşıldı — %s tamamen uyandı!" % NAMES[id], &"good")
 			hud.set_action("Yeniden Dene")
 			if not was_completed:
-				completed.emit()
+				# Merkez completed sinyalinde sahneyi kaldırır; son söz önce bitsin.
+				_completion_awaiting_voice = stage.voice.is_busy()
+				if not _completion_awaiting_voice:
+					completed.emit()
 		else:
 			hud.say("Doğru söz! Hafızası hızla açılıyor (%d/4)." % _stage_level, &"good")
 	elif trig == "angry_leave":
@@ -332,7 +413,8 @@ func apply_llm_trigger(result: Dictionary) -> void:
 			stage.voice.speak_live(id, reply_text, &"llm_leave")
 		else:
 			stage.show_line(NAMES[id], "Beni kendi fikirlerimden uzaklaştırdın; tartışmayı bırakıyorum!")
-		stage.actor.exit_angry(1.4)
+		if not stage.voice.is_busy():
+			stage.actor.exit_angry(1.4)
 		hud.set_directive("%s öfkeyle meydandan ayrıldı." % NAMES[id])
 		hud.say("Sabrı tükendi — görev başarısız.", &"bad")
 		hud.set_action("Yeniden Dene")
@@ -358,6 +440,7 @@ func apply_llm_trigger(result: Dictionary) -> void:
 		elif reply_text != "":
 			stage.show_line(NAMES[id], reply_text)
 			stage.voice.speak_live(id, reply_text, &"llm_chat")
+	_refresh_dialogue_controls()
 
 
 func _on_action_pressed() -> void:

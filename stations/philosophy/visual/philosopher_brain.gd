@@ -138,6 +138,12 @@ func _ready() -> void:
 	_http.request_completed.connect(_on_llm_completed)
 
 
+func cancel() -> void:
+	_http.cancel_request()
+	_busy = false
+	_pending_context.clear()
+
+
 func ask(
 	philosopher_id: StringName,
 	user_text: String,
@@ -420,6 +426,8 @@ func _send_llm_request(cfg: Dictionary, ctx: Dictionary) -> void:
 
 
 func _on_llm_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	if not _busy:
+		return
 	_busy = false
 	var fallback: Dictionary = _pending_context.get("fallback", {})
 	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:

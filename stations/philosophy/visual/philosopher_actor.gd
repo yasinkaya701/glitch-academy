@@ -27,6 +27,7 @@ var _target_height: float = 640.0
 var _clock: float = 0.0
 var _speak_energy: float = 0.0
 var _tween: Tween
+var _exit_tween: Tween
 var _all_meta: Dictionary = {}
 
 
@@ -41,6 +42,15 @@ func _ready() -> void:
 
 
 func load_philosopher(id: StringName) -> bool:
+	if _exit_tween != null and _exit_tween.is_valid():
+		_exit_tween.kill()
+	if _tween != null and _tween.is_valid():
+		_tween.kill()
+	modulate = Color.WHITE
+	speaking = false
+	mouth_level = -1.0
+	_speak_energy = 0.0
+	mood = &"neutral"
 	philosopher_id = id
 	var meta: Dictionary = _all_meta.get(String(id), {})
 	var base_dir: String = CHAR_DIR + String(id) + "/"
@@ -121,7 +131,10 @@ func play_reaction(kind: StringName) -> void:
 
 func exit_angry(duration: float = 1.4) -> Tween:
 	speaking = false
+	if _exit_tween != null and _exit_tween.is_valid():
+		_exit_tween.kill()
 	var t := create_tween().set_parallel(true)
+	_exit_tween = t
 	t.tween_property(self, "position:x", position.x + 420.0, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	t.tween_property(self, "modulate:a", 0.0, duration * 0.85)
 	return t
