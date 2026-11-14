@@ -390,7 +390,7 @@ func _draw_screen(canvas: Control, size_px: Vector2) -> void:
 	canvas.draw_string(FONT, Vector2(50, 70) * s, "EKRAN  ·  ATOM İZLERİ", HORIZONTAL_ALIGNMENT_LEFT, -1, int(40 * s), MUTED)
 	# Plaka: iki kanal çizgisi, biriken izler, (kriz) cihazın beklediği tek leke
 	var plate := Rect2(Vector2(50, 100) * s, Vector2(660, 740) * s)
-	canvas.draw_rect(plate, Color("#0a111b"))
+	canvas.draw_rect(plate, Color("#141510"))
 	canvas.draw_rect(plate, Color(MUTED, 0.4), false, 3.0)
 	var centre_y := plate.position.y + plate.size.y * 0.5
 	canvas.draw_line(Vector2(plate.position.x, centre_y), Vector2(plate.end.x, centre_y), Color(MUTED, 0.25), 2.0)
@@ -427,7 +427,7 @@ func _draw_screen(canvas: Control, size_px: Vector2) -> void:
 
 func _draw_plate(canvas: Control, size_px: Vector2) -> void:
 	## Çıkarılmış soğuk cam plaka: mikroskop altında okunan gümüş çizgileri.
-	canvas.draw_rect(Rect2(Vector2.ZERO, size_px), Color("#141a22"))
+	canvas.draw_rect(Rect2(Vector2.ZERO, size_px), Color("#1a1b17"))
 	canvas.draw_rect(Rect2(Vector2.ZERO, size_px), Color(1, 1, 1, 0.12), false, 4.0)
 	var centre_y := size_px.y * 0.5
 	canvas.draw_string(FONT_REGULAR, Vector2(14, 34), "SOĞUK PLAKA", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, MUTED)

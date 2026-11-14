@@ -2,6 +2,7 @@ extends Control
 
 const Mission = preload("res://scripts/mission.gd")
 const MissionDefinition = preload("res://scripts/mission_definition.gd")
+const MissionPath = preload("res://scripts/mission_path.gd")
 const StoryDialogue = preload("res://scripts/story_dialogue.gd")
 const FINALE = preload("res://stations/yks/three_suns.tscn")
 const INTRO = preload("res://scenes/intro/intro.tscn")
@@ -58,6 +59,8 @@ var visible_missions: Array[MissionDefinition] = []
 var completed_ids: Dictionary[StringName, bool] = {}
 var story_dialogue: StoryDialogue
 var finale_button: Button
+var mission_path: MissionPath
+var _path_scroll: ScrollContainer
 var _playing_finale := false
 var _completion_pending := false
 var _last_campaign_mission: StringName
@@ -97,6 +100,7 @@ func _ready() -> void:
 	grade_filter.item_selected.connect(_on_grade_selected)
 	mission_list.item_selected.connect(_select_mission)
 	mission_list.item_activated.connect(_activate_mission)
+	_build_path()
 	start_mission.pressed.connect(_start_mission)
 	%Back.pressed.connect(_return_to_hub)
 	%Reset.pressed.connect(_retry_current)
@@ -151,6 +155,7 @@ func _refresh_list() -> void:
 	var selected_id: StringName = selected_mission.id if selected_mission != null else &""
 	mission_list.clear()
 	visible_missions.clear()
+	var path_items: Array[Dictionary] = []
 	var selected_grade := grade_filter.get_selected_id()
 	for mission in CATALOG:
 		if not mission.routes.has(String(active_route)):
@@ -183,8 +188,19 @@ func _refresh_list() -> void:
 			mission_list.set_item_tooltip(index, "Kilitli: önce “%s” düzeneğini onar." % _next_route_mission().title)
 		mission_list.set_item_metadata(index, mission.id)
 		visible_missions.append(mission)
+		path_items.append({
+			"title": mission.title,
+			"subject": subject,
+			"state": &"done" if done else &"next" if is_next else &"locked",
+			"tooltip": "Kilitli: önce “%s” düzeneğini onar." % _next_route_mission().title if numbered and not done and not unlocked else "",
+		})
 		if mission.id == selected_id:
 			mission_list.select(index)
+			mission_path.select(index)
+	var numbered_route := active_route != &"class"
+	mission_path.set_items(path_items)
+	_path_scroll.visible = numbered_route
+	mission_list.visible = not numbered_route
 	var selected_items := mission_list.get_selected_items()
 	if selected_items.is_empty():
 		if not visible_missions.is_empty():
@@ -194,10 +210,12 @@ func _refresh_list() -> void:
 					next_index = index
 					break
 			mission_list.select(next_index)
+			mission_path.select(next_index)
 			_select_mission(next_index)
 		else:
 			_clear_selection()
 	else:
+		mission_path.select(selected_items[0])
 		_select_mission(selected_items[0])
 	var route_missions := _route_missions()
 	var route_total := route_missions.size()
@@ -218,6 +236,24 @@ func _refresh_list() -> void:
 	var remaining := maxi(route_total - repaired, 0)
 	finale_button.text = "Finali yeniden oyna · Üç Güneş" if Campaign.has_story_flag(_story_key("won")) else ("Final · Üç Güneş" if remaining == 0 else "Final · Üç Güneş  ·  %d düzenek kaldı" % remaining)
 	finale_button.tooltip_text = "Rotadaki tüm düzenekleri onararak finali aç." if finale_button.disabled else "Son ölçümü yap ve merkezi yetkiyi kaldır."
+
+
+## Numaralı rotalarda liste yerine yol görünümü gösterilir; ItemList veri ve klavye için arkada kalır.
+func _build_path() -> void:
+	mission_path = MissionPath.new()
+	mission_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mission_path.selected.connect(func(index: int) -> void:
+		mission_list.select(index)
+		_select_mission(index))
+	mission_path.activated.connect(_activate_mission)
+	_path_scroll = ScrollContainer.new()
+	_path_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_path_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_path_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_path_scroll.custom_minimum_size = Vector2(380, 200)
+	_path_scroll.add_child(mission_path)
+	mission_columns.add_child(_path_scroll)
+	mission_columns.move_child(_path_scroll, mission_list.get_index())
 
 
 func _clear_selection() -> void:
@@ -371,6 +407,7 @@ func _layout() -> void:
 	var compact_missions := size.x < 820.0
 	mission_columns.vertical = compact_missions
 	mission_list.custom_minimum_size.x = 0.0 if compact_missions else 380.0
+	_path_scroll.custom_minimum_size.x = 0.0 if compact_missions else 380.0
 	%DetailCard.custom_minimum_size.x = 0.0 if compact_missions else 350.0
 	play_title.clip_text = true
 	play_title.custom_minimum_size.x = 0
@@ -457,6 +494,7 @@ func _advance_campaign() -> void:
 	for index in visible_missions.size():
 		if visible_missions[index].id == next.id:
 			mission_list.select(index)
+			mission_path.select(index)
 			_select_mission(index)
 			_start_mission()
 			return

@@ -16,6 +16,7 @@ func _ready() -> void:
 		host.clip_contents = true
 		add_child(host)
 		var scene: Control = load("res://stations/spin/mission.tscn").instantiate()
+		scene.theme = UITheme.build_gameplay()
 		host.add_child(scene)
 		scene.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		var tag := "%dx%d" % [SIZES[index].x, SIZES[index].y]

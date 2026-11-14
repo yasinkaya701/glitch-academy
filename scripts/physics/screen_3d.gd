@@ -18,7 +18,7 @@ func setup(pixels: Vector2i, world_size: Vector2, draw_callable: Callable) -> vo
 	_viewport.disable_3d = true
 	add_child(_viewport)
 	var backdrop := ColorRect.new()
-	backdrop.color = Color("#0b1119")
+	backdrop.color = Color("#12130f")
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_viewport.add_child(backdrop)
 	_canvas = Control.new()
@@ -31,7 +31,7 @@ func setup(pixels: Vector2i, world_size: Vector2, draw_callable: Callable) -> vo
 	bezel_mesh.size = Vector3(world_size.x + 0.08, world_size.y + 0.08, 0.04)
 	bezel.mesh = bezel_mesh
 	var bezel_material := StandardMaterial3D.new()
-	bezel_material.albedo_color = Color("#1b2027")
+	bezel_material.albedo_color = Color("#22231f")
 	bezel_material.metallic = 0.6
 	bezel_material.roughness = 0.45
 	bezel.material_override = bezel_material

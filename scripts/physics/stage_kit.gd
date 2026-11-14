@@ -2,14 +2,14 @@ extends RefCounted
 ## Fizik sahneleri için ortak çizim kiti: arka plan, cam panel, metalik gövde, okuma kartı, parlama.
 ## Hepsi bir CanvasItem'ın _draw() içinden çağrılır. Renkler docs/ART_DIRECTION.md paletinden.
 
-const INK := Color("#e8f1f2")
-const MUTED := Color("#8fa6b3")
+const INK := Color("#eeeae0")
+const MUTED := Color("#b1ac9e")
 const ACCENT := Color("#6fe3c1")
-const WARM := Color("#f2a65a")
+const WARM := Color("#dfae63")
 const DANGER := Color("#e5645a")
-const BG := Color("#070b12")
-const PANEL := Color("#0f1824")
-const EDGE := Color("#2c4560")
+const BG := Color("#10110f")
+const PANEL := Color("#191a17")
+const EDGE := Color("#3b3d35")
 const PANEL_TEX = preload("res://assets/ui/panel_glass.png")
 const PHOTO_BG = preload("res://stations/free_fall/assets/chamber_bg.png")
 const METAL = preload("res://assets/materials/Metal009/Metal009_2K-JPG_Color.jpg")
@@ -40,7 +40,7 @@ static func _box(fill: Color, border: Color, radius: int, border_width: int = 1,
 	return box
 
 
-## Derin mavi-siyah dikey geçiş, iki yumuşak ışık lekesi, ince ızgara ve kenarlarda vinyet.
+## Grafit dikey geçiş, iki yumuşak ışık lekesi, ince ızgara ve kenarlarda vinyet.
 static func backdrop(ci: CanvasItem, size: Vector2, glow_a: Vector2 = Vector2(0.18, 0.2), glow_b: Vector2 = Vector2(0.82, 0.7), photo: bool = true, dim: float = 0.3) -> void:
 	if photo:
 		# Fotogerçekçi laboratuvar, koyulaştırılmış: ölçü yazıları okunsun.
@@ -52,10 +52,10 @@ static func backdrop(ci: CanvasItem, size: Vector2, glow_a: Vector2 = Vector2(0.
 			ci.draw_rect(Rect2(Vector2(i * edge_w / 8.0, 0), Vector2(edge_w / 8.0, size.y)), Color(0, 0, 0, a))
 			ci.draw_rect(Rect2(Vector2(size.x - (i + 1) * edge_w / 8.0, 0), Vector2(edge_w / 8.0, size.y)), Color(0, 0, 0, a))
 		return
-	var top := Color("#0b1422")
-	var bottom := Color("#05080e")
+	var top := Color("#1a1b17")
+	var bottom := Color("#0d0e0c")
 	ci.draw_polygon(PackedVector2Array([Vector2.ZERO, Vector2(size.x, 0), size, Vector2(0, size.y)]), PackedColorArray([top, top, bottom, bottom]))
-	for glow in [[glow_a, Color("#1b3a5a"), 0.55], [glow_b, Color("#3a2a1a"), 0.4]]:
+	for glow in [[glow_a, Color("#3a3a2a"), 0.55], [glow_b, Color("#4a3a22"), 0.4]]:
 		var centre: Vector2 = Vector2(size.x * glow[0].x, size.y * glow[0].y)
 		for ring in 14:
 			var u := float(ring) / 13.0
