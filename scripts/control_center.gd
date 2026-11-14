@@ -11,25 +11,20 @@ const LEVEL_DONE := Color("#2f6b5a")
 const LEVEL_NEXT := Color("#9a5a14")
 const LEVEL_LOCKED := Color("#7d8782")
 const CATALOG: Array[MissionDefinition] = [
+	# Sıra: en olgun ve en iyi görünen görevler başta; kilit açma sırası da buradan gelir.
 	preload("res://stations/seasons/mission.tres"),
-	# Fikir Meydanı ikinci sırada: oyuncu ilk ölçümden sonra düşünce yöntemiyle tanışır.
 	preload("res://stations/philosophy/mission.tres"),
-	preload("res://stations/measurement/mission.tres"),
-	preload("res://stations/vectors/mission.tres"),
+	preload("res://stations/heart/mission.tres"),
+	preload("res://stations/history/mission.tres"),
 	preload("res://stations/derivative/mission.tres"),
+	preload("res://stations/vectors/mission.tres"),
+	preload("res://stations/newton/mission.tres"),
+	preload("res://stations/spin/mission.tres"),
+	preload("res://stations/measurement/mission.tres"),
+	preload("res://stations/indicator/mission.tres"),
+	preload("res://stations/pressure/mission.tres"),
 	preload("res://stations/bridge/mission.tres"),
 	preload("res://stations/prism/mission.tres"),
-	# Düşüş Odası şimdilik oyundan çıkarıldı (stations/free_fall/ yerinde duruyor).
-	# YKS düzeyinde fizik; sınav sırası korunur, Sınıflar keşfinde oynanır.
-	preload("res://stations/newton/mission.tres"),
-	# Atış Alanı şimdilik oyundan çıkarıldı (stations/projectile/ yerinde duruyor).
-	# Çarpışma Hattı şimdilik oyundan çıkarıldı (stations/collision/ yerinde duruyor).
-	preload("res://stations/indicator/mission.tres"),
-	preload("res://stations/heart/mission.tres"),
-	preload("res://stations/spin/mission.tres"),
-	preload("res://stations/pressure/mission.tres"),
-	preload("res://stations/history/mission.tres"),
-	# LGS: bütün ders görevleri ve basit makine düzeneği.
 	preload("res://stations/pulley/mission.tres"),
 	preload("res://stations/turkish/mission.tres"),
 	preload("res://stations/english/mission.tres"),
