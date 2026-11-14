@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="1024" viewBox="0 0 2048 1024">
+<defs>
+  <linearGradient id="tissue" x1="0" y1="0" x2="0.85" y2="1"><stop stop-color="#E7A4A0"/><stop offset=".5" stop-color="#C97978"/><stop offset="1" stop-color="#8D555E"/></linearGradient>
+  <linearGradient id="nerve" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#C8FFF2"/><stop offset=".45" stop-color="#70D5D0"/><stop offset="1" stop-color="#399B9D"/></linearGradient>
+  <linearGradient id="myelin" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F2E9D6"/><stop offset=".45" stop-color="#D7C8A6"/><stop offset="1" stop-color="#8B8E83"/></linearGradient>
+  <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#657786"/><stop offset=".5" stop-color="#394957"/><stop offset="1" stop-color="#192937"/></linearGradient>
+  <radialGradient id="glow"><stop stop-color="#F5B75F" stop-opacity=".8"/><stop offset="1" stop-color="#F5B75F" stop-opacity="0"/></radialGradient>
+  <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="smallGlow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  
+</defs>
+<path d="M 1830 516 C 1895 510 1910 445 1945 396" fill="none" stroke="url(#nerve)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" /><path d="M 1830 516 C 1900 525 1916 585 1953 630" fill="none" stroke="url(#nerve)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" /><path d="M 1906 464 L 1976 430 M 1920 492 L 2000 484 M 1910 575 L 1980 608 M 1930 596 L 1990 671" fill="none" stroke="url(#nerve)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" /><circle cx="1945" cy="396" r="12" fill="#FFC970" stroke="#FFF1C7" stroke-width="5" filter="url(#smallGlow)"/><circle cx="1976" cy="430" r="12" fill="#FFC970" stroke="#FFF1C7" stroke-width="5" filter="url(#smallGlow)"/><circle cx="2000" cy="484" r="12" fill="#FFC970" stroke="#FFF1C7" stroke-width="5" filter="url(#smallGlow)"/><circle cx="1953" cy="630" r="12" fill="#FFC970" stroke="#FFF1C7" stroke-width="5" filter="url(#smallGlow)"/><circle cx="1980" cy="608" r="12" fill="#FFC970" stroke="#FFF1C7" stroke-width="5" filter="url(#smallGlow)"/><circle cx="1990" cy="671" r="12" fill="#FFC970" stroke="#FFF1C7" stroke-width="5" filter="url(#smallGlow)"/>
+</svg>
