@@ -251,6 +251,7 @@ func _landing_result(correct: bool, submitted: Vector2) -> void:
 
 
 func _set_capsule(value: Vector2) -> void:
+	_plot.in_motion = (value != Vector2.ZERO and not _plot.docked)
 	_plot.capsule = value
 	_plot.queue_redraw()
 	_sync_harbor()
@@ -273,6 +274,8 @@ func _sync_harbor() -> void:
 func _stop_animation() -> void:
 	if _animation != null and _animation.is_valid():
 		_animation.kill()
+	if _plot != null:
+		_plot.in_motion = false
 
 
 func _number_text(value: String) -> String:

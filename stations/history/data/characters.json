@@ -2,321 +2,99 @@
   "figures": {
     "mete_han": {
       "body_size": [
-        830,
-        1102
-      ],
-      "face_rect": [
-        207,
-        55,
-        415,
-        385
-      ],
-      "faces": [
-        "neutral",
-        "smile",
-        "angry",
-        "confused",
-        "thinking"
-      ],
-      "uppers": {
-        "smile": {
-          "rect": [
-            207,
-            55,
-            415,
-            385
-          ]
-        },
-        "angry": {
-          "rect": [
-            207,
-            55,
-            415,
-            385
-          ]
-        },
-        "confused": {
-          "rect": [
-            207,
-            55,
-            415,
-            385
-          ]
-        },
-        "thinking": {
-          "rect": [
-            207,
-            55,
-            415,
-            385
-          ]
-        }
-      }
-    },
-    "alparslan": {
-      "body_size": [
-        865,
-        1104
-      ],
-      "face_rect": [
-        216,
-        55,
-        432,
-        386
-      ],
-      "faces": [
-        "neutral",
-        "smile",
-        "angry",
-        "confused",
-        "thinking"
-      ],
-      "uppers": {
-        "smile": {
-          "rect": [
-            216,
-            55,
-            432,
-            386
-          ]
-        },
-        "angry": {
-          "rect": [
-            216,
-            55,
-            432,
-            386
-          ]
-        },
-        "confused": {
-          "rect": [
-            216,
-            55,
-            432,
-            386
-          ]
-        },
-        "thinking": {
-          "rect": [
-            216,
-            55,
-            432,
-            386
-          ]
-        }
-      }
-    },
-    "fatih": {
-      "body_size": [
-        886,
+        896,
         1200
       ],
       "face_rect": [
-        221,
-        60,
-        443,
-        420
+        262,
+        104,
+        410,
+        362
       ],
       "faces": [
-        "neutral",
-        "smile",
-        "angry",
-        "confused",
-        "thinking"
+        "neutral"
       ],
-      "uppers": {
-        "smile": {
-          "rect": [
-            221,
-            60,
-            443,
-            420
-          ]
-        },
-        "angry": {
-          "rect": [
-            221,
-            60,
-            443,
-            420
-          ]
-        },
-        "confused": {
-          "rect": [
-            221,
-            60,
-            443,
-            420
-          ]
-        },
-        "thinking": {
-          "rect": [
-            221,
-            60,
-            443,
-            420
-          ]
-        }
-      }
+      "uppers": {}
+    },
+    "alparslan": {
+      "body_size": [
+        896,
+        1200
+      ],
+      "face_rect": [
+        250,
+        102,
+        429,
+        362
+      ],
+      "faces": [
+        "neutral"
+      ],
+      "uppers": {}
+    },
+    "fatih": {
+      "body_size": [
+        896,
+        1200
+      ],
+      "face_rect": [
+        225,
+        99,
+        445,
+        363
+      ],
+      "faces": [
+        "neutral"
+      ],
+      "uppers": {}
     },
     "kanuni": {
       "body_size": [
-        832,
-        1048
+        896,
+        1200
       ],
       "face_rect": [
-        188,
-        58,
-        377,
-        411
+        279,
+        29,
+        374,
+        387
       ],
       "faces": [
-        "neutral",
-        "smile",
-        "angry",
-        "confused",
-        "thinking"
+        "neutral"
       ],
-      "uppers": {
-        "smile": {
-          "rect": [
-            188,
-            58,
-            377,
-            411
-          ]
-        },
-        "angry": {
-          "rect": [
-            188,
-            58,
-            377,
-            411
-          ]
-        },
-        "confused": {
-          "rect": [
-            188,
-            58,
-            377,
-            411
-          ]
-        },
-        "thinking": {
-          "rect": [
-            188,
-            58,
-            377,
-            411
-          ]
-        }
-      }
+      "uppers": {}
     },
     "mimar_sinan": {
       "body_size": [
         896,
-        1096
+        1200
       ],
       "face_rect": [
         224,
-        54,
-        448,
-        383
+        114,
+        446,
+        358
       ],
       "faces": [
-        "neutral",
-        "smile",
-        "angry",
-        "confused",
-        "thinking"
+        "neutral"
       ],
-      "uppers": {
-        "smile": {
-          "rect": [
-            224,
-            54,
-            448,
-            383
-          ]
-        },
-        "angry": {
-          "rect": [
-            224,
-            54,
-            448,
-            383
-          ]
-        },
-        "confused": {
-          "rect": [
-            224,
-            54,
-            448,
-            383
-          ]
-        },
-        "thinking": {
-          "rect": [
-            224,
-            54,
-            448,
-            383
-          ]
-        }
-      }
+      "uppers": {}
     },
     "ataturk": {
       "body_size": [
         896,
-        1133
+        1200
       ],
       "face_rect": [
         224,
-        56,
-        448,
-        396
+        26,
+        445,
+        388
       ],
       "faces": [
-        "neutral",
-        "smile",
-        "angry",
-        "confused",
-        "thinking"
+        "neutral"
       ],
-      "uppers": {
-        "smile": {
-          "rect": [
-            224,
-            56,
-            448,
-            396
-          ]
-        },
-        "angry": {
-          "rect": [
-            224,
-            56,
-            448,
-            396
-          ]
-        },
-        "confused": {
-          "rect": [
-            224,
-            56,
-            448,
-            396
-          ]
-        },
-        "thinking": {
-          "rect": [
-            224,
-            56,
-            448,
-            396
-          ]
-        }
-      }
+      "uppers": {}
     }
   }
 }

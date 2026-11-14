@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
-"""Filozof replikleri için TTS ses (.mp3) ve 50 Hz dudak senkronu (.json) üreticisi.
+"""Filozof ve Tarih replikleri için TTS ses (.mp3) ve 50 Hz dudak senkronu (.json) üreticisi.
 
 Nasıl çalışır?
-1. ELEVEN_API_KEY (veya ELEVENLABS_API_KEY) ortam değişkeni tanımlıysa:
+1. ELEVEN_API_KEY (veya user://elevenlabs_key.txt, .env, --api-key) tanımlıysa:
    ElevenLabs '/v1/text-to-speech/{voice_id}/with-timestamps' uç noktasını (eleven_multilingual_v2)
-   kullanır. Hem .mp3 dosyasını hem de harf zamanlaması + ses zarfından 50 Hz dudak açıklığı
+   kullanır. Hem .mp3 dosyasını hem de harf zamanlaması + ses dalgası RMS zarfından 50 Hz dudak açıklığı
    eğrisini (<line_id>.json) üretir. Metin değişmediyse tekrar API çağırmaz (kota koruma).
-2. ELEVEN_API_KEY henüz verilmemişse (veya --engine=edge seçilirse):
-   edge-tts (tr-TR-AhmetNeural, filozof yaş/ton ayarıyla) üzerinden Türkçe erkek sesi üretir
-   ve macOS 'afconvert' ile ses dalgası zarfından 50 Hz dudak senkronu eğrisini çıkarır.
+2. ELEVEN_API_KEY verilmemişse (veya --engine=edge seçilirse):
+   edge-tts (tr-TR-AhmetNeural) üzerinden Türkçe erkek sesi üretir ve macOS 'afconvert' ile ses dalgası
+   zarfından 50 Hz dudak senkronu eğrisini çıkarır.
 
 Kullanım:
-  ELEVEN_API_KEY="..." python3 stations/philosophy/tools/gen_voices.py socrates
-  python3 stations/philosophy/tools/gen_voices.py socrates   # anahtar yoksa edge-tts yedeğiyle üretir
+  # Tek filozof üretimi (ElevenLabs):
+  python3 stations/philosophy/tools/gen_voices.py socrates --engine=elevenlabs --api-key="<KEY>"
+  # Tüm filozofları aynı sesle üret:
+  python3 stations/philosophy/tools/gen_voices.py all --voice-id=pNInz6obpgDQGcFmaJgB
+  # Tarih figürlerini üret:
+  python3 stations/philosophy/tools/gen_voices.py all --station=history
+  # Canlı tek replik üret:
+  python3 stations/philosophy/tools/gen_voices.py --who=socrates --text="Merhaba dünya" --out=/path/to/test.mp3
 """
 import asyncio
 import base64
@@ -28,14 +34,61 @@ from pathlib import Path
 import numpy as np
 import requests
 
-ROOT = Path(__file__).resolve().parents[1]
-LINES_PATH = ROOT / "data" / "lines.json"
-AUDIO_DIR = ROOT / "audio"
+ROOT = Path(__file__).resolve().parents[3] if "stations" in str(Path(__file__).resolve()) else Path(__file__).resolve().parents[1]
+# Varsayılan paths
+PHILOSOPHY_ROOT = ROOT / "stations" / "philosophy"
+HISTORY_ROOT = ROOT / "stations" / "history"
 FPS = 50  # 20 ms dudak senkronu adımı
 
 OPEN_VOWELS = set("aAeEıIoOöÖuUüÜ")
 ROUND_VOWELS = set("oOöÖuUüÜ")
 CLOSED_CONSONANTS = set("bBmMpP")
+
+DEFAULT_ELEVEN_VOICE = "CwhRBWXzGAHq8TQ4Fs17"  # Roger / Kallavi yaşlı bilge filozof sesi
+
+
+def resolve_api_key(cli_key: str | None = None) -> str:
+    """Sırasıyla CLI argümanı, ortam değişkenleri, Godot user:// dizini ve .env dosyasından anahtarı arar."""
+    if cli_key and cli_key.strip():
+        return cli_key.strip()
+
+    for k in ("ELEVEN_API_KEY", "ELEVENLABS_API_KEY", "XI_API_KEY"):
+        val = os.environ.get(k)
+        if val and val.strip():
+            return val.strip()
+
+    # Godot app_userdata kontrolü (macOS ve Linux/Windows uyumlu)
+    godot_paths = [
+        Path.home() / "Library" / "Application Support" / "Godot" / "app_userdata" / "Yanlış Dünya" / "elevenlabs_key.txt",
+        Path.home() / ".local" / "share" / "godot" / "app_userdata" / "Yanlış Dünya" / "elevenlabs_key.txt",
+        Path(os.environ.get("APPDATA", "")) / "Godot" / "app_userdata" / "Yanlış Dünya" / "elevenlabs_key.txt"
+    ]
+    for p in godot_paths:
+        if p.exists():
+            try:
+                content = p.read_text(encoding="utf-8").strip()
+                if content:
+                    return content
+            except Exception:
+                pass
+
+    # Çalışma alanı veya kök .env kontrolü
+    for env_path in (ROOT / ".env", Path.cwd() / ".env"):
+        if env_path.exists():
+            try:
+                for line in env_path.read_text(encoding="utf-8").splitlines():
+                    line = line.strip()
+                    if line.startswith("#") or "=" not in line:
+                        continue
+                    k, v = line.split("=", 1)
+                    k = k.strip()
+                    v = v.strip().strip("'\"")
+                    if k in ("ELEVEN_API_KEY", "ELEVENLABS_API_KEY", "XI_API_KEY") and v:
+                        return v
+            except Exception:
+                pass
+
+    return ""
 
 
 def envelope_from_mp3(mp3_path: Path) -> tuple[float, list[float]]:
@@ -98,10 +151,11 @@ def generate_elevenlabs(text: str, voice_id: str, api_key: str, mp3_out: Path) -
     payload = {
         "text": text,
         "model_id": "eleven_multilingual_v2",
-        "voice_settings": {"stability": 0.52, "similarity_boost": 0.78, "style": 0.22, "use_speaker_boost": True},
+        "voice_settings": {"stability": 0.68, "similarity_boost": 0.85, "style": 0.05, "use_speaker_boost": True},
     }
     r = requests.post(url, headers=headers, json=payload, timeout=45)
-    r.raise_for_status()
+    if r.status_code != 200:
+        raise RuntimeError(f"ElevenLabs API Hatası [{r.status_code}]: {r.text}")
     body = r.json()
     mp3_bytes = base64.b64decode(body["audio_base64"])
     mp3_out.write_bytes(mp3_bytes)
@@ -125,39 +179,60 @@ async def generate_edge(text: str, voice_cfg: dict, mp3_out: Path) -> dict:
     return {"engine": "edge_tts", "duration": duration, "fps": FPS, "levels": levels}
 
 
-def build_philosopher(pid: str, force_engine: str | None = None) -> None:
-    db = json.loads(LINES_PATH.read_text())
+def build_character(
+    cid: str,
+    lines_path: Path,
+    audio_dir: Path,
+    api_key: str,
+    force_engine: str | None = None,
+    override_voice_id: str | None = None,
+    force_rebuild: bool = False,
+) -> None:
+    db = json.loads(lines_path.read_text(encoding="utf-8"))
     voices = db.get("voices", {})
-    pdata = db.get("philosophers", {}).get(pid)
-    if not pdata:
-        raise SystemExit(f"'{pid}' için lines.json kaydı bulunamadı.")
-    vcfg = voices.get(pid, {})
-    api_key = os.environ.get("ELEVEN_API_KEY") or os.environ.get("ELEVENLABS_API_KEY") or ""
+    chars = db.get("philosophers") or db.get("figures") or {}
+    cdata = chars.get(cid)
+    if not cdata:
+        raise SystemExit(f"'{cid}' için {lines_path.name} kaydı bulunamadı.")
+    vcfg = voices.get(cid, {})
+    voice_id = override_voice_id or vcfg.get("elevenlabs_voice_id") or DEFAULT_ELEVEN_VOICE
+
     engine = force_engine or ("elevenlabs" if api_key else "edge_tts")
 
-    out_dir = AUDIO_DIR / pid
+    out_dir = audio_dir / cid
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    for line_id, text in pdata.get("lines", {}).items():
+    print(f"\n▶ [{cid}] Ses üretimi başlıyor (motor: {engine}, voice_id: {voice_id})...")
+
+    for line_id, text in cdata.get("lines", {}).items():
         mp3_path = out_dir / f"{line_id}.mp3"
         meta_path = out_dir / f"{line_id}.json"
-        sig = hashlib.sha256(f"{engine}:{vcfg.get('elevenlabs_voice_id','')}:{text}".encode("utf-8")).hexdigest()[:16]
+        sig = hashlib.sha256(f"{engine}:{voice_id}:{text}".encode("utf-8")).hexdigest()[:16]
 
-        if mp3_path.exists() and meta_path.exists():
-            old = json.loads(meta_path.read_text())
-            if old.get("hash") == sig and old.get("engine") == engine:
-                print(f"  [önbellek] {pid}/{line_id}.mp3 ({old.get('duration')}s, {engine})")
-                continue
+        if not force_rebuild and mp3_path.exists() and meta_path.exists():
+            try:
+                old = json.loads(meta_path.read_text(encoding="utf-8"))
+                if old.get("hash") == sig and old.get("engine") == engine:
+                    print(f"  [önbellek] {cid}/{line_id}.mp3 ({old.get('duration')}s, {engine})")
+                    continue
+            except Exception:
+                pass
 
-        if engine == "elevenlabs" and api_key:
-            track = generate_elevenlabs(text, vcfg["elevenlabs_voice_id"], api_key, mp3_path)
+        if engine == "elevenlabs":
+            if not api_key:
+                raise RuntimeError("ElevenLabs seçildi ancak API anahtarı bulunamadı!")
+            try:
+                track = generate_elevenlabs(text, voice_id, api_key, mp3_path)
+            except Exception as e:
+                print(f"  [UYARI] ElevenLabs çağrısı başarısız ({e}), yerel yedek (edge_tts) ile üretiliyor...")
+                track = asyncio.run(generate_edge(text, vcfg, mp3_path))
         else:
             track = asyncio.run(generate_edge(text, vcfg, mp3_path))
 
         track["hash"] = sig
         track["text"] = text
-        meta_path.write_text(json.dumps(track, indent=2, ensure_ascii=False) + "\n")
-        print(f"  [üretildi] {pid}/{line_id}.mp3 ({track['duration']}s, {track['engine']}, {len(track['levels'])} kare)")
+        meta_path.write_text(json.dumps(track, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"  [üretildi] {cid}/{line_id}.mp3 ({track['duration']}s, {track['engine']}, {len(track['levels'])} kare)")
 
 
 if __name__ == "__main__":
@@ -165,10 +240,23 @@ if __name__ == "__main__":
     live_text = None
     live_out = None
     forced = None
+    cli_key = None
+    station = "philosophy"
+    override_voice = None
+    force_flag = False
     targets = []
+
     for a in sys.argv[1:]:
         if a.startswith("--engine="):
             forced = a.split("=", 1)[1]
+        elif a.startswith("--api-key="):
+            cli_key = a.split("=", 1)[1]
+        elif a.startswith("--station="):
+            station = a.split("=", 1)[1]
+        elif a.startswith("--voice-id="):
+            override_voice = a.split("=", 1)[1]
+        elif a in ("--force", "-f"):
+            force_flag = True
         elif a.startswith("--who="):
             live_who = a.split("=", 1)[1]
         elif a.startswith("--text="):
@@ -178,23 +266,55 @@ if __name__ == "__main__":
         elif not a.startswith("--"):
             targets.append(a)
 
+    api_key = resolve_api_key(cli_key)
+
+    # Canlı tek replik üretimi
     if live_who and live_text and live_out:
-        db = json.loads(LINES_PATH.read_text())
+        lines_p = (HISTORY_ROOT if station == "history" else PHILOSOPHY_ROOT) / "data" / "lines.json"
+        db = json.loads(lines_p.read_text(encoding="utf-8"))
         vcfg = db.get("voices", {}).get(live_who, {})
-        api_key = os.environ.get("ELEVEN_API_KEY") or os.environ.get("ELEVENLABS_API_KEY") or ""
+        voice_id = override_voice or vcfg.get("elevenlabs_voice_id", DEFAULT_ELEVEN_VOICE)
         mp3_out = Path(live_out)
         mp3_out.parent.mkdir(parents=True, exist_ok=True)
         meta_out = mp3_out.with_suffix(".json")
         if api_key and forced != "edge_tts":
-            track = generate_elevenlabs(live_text, vcfg.get("elevenlabs_voice_id", "pNInz6obpgDQGcFmaJgB"), api_key, mp3_out)
+            track = generate_elevenlabs(live_text, voice_id, api_key, mp3_out)
         else:
             track = asyncio.run(generate_edge(live_text, vcfg, mp3_out))
         track["text"] = live_text
-        meta_out.write_text(json.dumps(track, ensure_ascii=False))
+        meta_out.write_text(json.dumps(track, ensure_ascii=False), encoding="utf-8")
+        print(f"Canlı TTS üretildi: {live_out}")
         raise SystemExit(0)
 
+    # Hedef istasyon dizinleri
+    if station == "history":
+        lines_path = HISTORY_ROOT / "data" / "lines.json"
+        audio_dir = HISTORY_ROOT / "audio"
+    else:
+        lines_path = PHILOSOPHY_ROOT / "data" / "lines.json"
+        audio_dir = PHILOSOPHY_ROOT / "audio"
+
+    db = json.loads(lines_path.read_text(encoding="utf-8"))
+    available_chars = list((db.get("philosophers") or db.get("figures") or {}).keys())
+
     if not targets or targets == ["all"]:
-        db = json.loads(LINES_PATH.read_text())
-        targets = list(db.get("philosophers", {}).keys())
+        targets = available_chars
+
+    print(f"=== Glitch Academy TTS Üretici ===")
+    print(f"İstasyon: {station}")
+    print(f"Kayıt: {lines_path}")
+    print(f"API Anahtarı: {'Mevcut (uzunluk: ' + str(len(api_key)) + ')' if api_key else 'Bulunamadı (edge_tts kullanılacak)'}")
+    print(f"Ortak Ses ID: {override_voice or DEFAULT_ELEVEN_VOICE}")
+    print(f"Hedefler: {', '.join(targets)}")
+
     for t in targets:
-        build_philosopher(t, forced)
+        build_character(
+            cid=t,
+            lines_path=lines_path,
+            audio_dir=audio_dir,
+            api_key=api_key,
+            force_engine=forced,
+            override_voice_id=override_voice,
+            force_rebuild=force_flag,
+        )
+    print("\n✅ Tüm sesler başarıyla işlendi.")

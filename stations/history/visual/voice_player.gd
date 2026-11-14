@@ -126,7 +126,7 @@ func speak_live(philosopher_id: StringName, text: String, tag_id: StringName = &
 		var body := JSON.stringify({
 			"text": text,
 			"model_id": "eleven_multilingual_v2",
-			"voice_settings": {"stability": 0.52, "similarity_boost": 0.78, "style": 0.22, "use_speaker_boost": true}
+			"voice_settings": {"stability": 0.68, "similarity_boost": 0.85, "style": 0.05, "use_speaker_boost": true}
 		})
 		if _http.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
 			_start_fallback_speaking(text, 10.0)
@@ -277,6 +277,7 @@ func _on_audio_finished() -> void:
 
 func _on_live_tts_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
+		push_warning("ElevenLabs TTS hatası: result=%d, code=%d, yanit=%s" % [result, response_code, body.get_string_from_utf8()])
 		return
 	var parsed: Variant = JSON.parse_string(body.get_string_from_utf8())
 	if not (parsed is Dictionary):
@@ -368,6 +369,8 @@ func _resolve_api_key() -> String:
 	var env_key: String = OS.get_environment("ELEVEN_API_KEY")
 	if env_key == "":
 		env_key = OS.get_environment("ELEVENLABS_API_KEY")
+	if env_key == "":
+		env_key = OS.get_environment("XI_API_KEY")
 	if env_key != "":
 		return env_key.strip_edges()
 	if FileAccess.file_exists(KEY_FILE):
