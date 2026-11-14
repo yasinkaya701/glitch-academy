@@ -33,7 +33,15 @@ func screen(index: int, label: String, directive: String, action_text: String = 
 		_view().clear_controls()
 
 
+## Sahne alttaki araç ve bildirim şeridinin üstünde biter: bildirim konsol etiketlerini örtmez.
+func _process(_delta: float) -> void:
+	if hud == null or stage == null:
+		return
+	stage.offset_bottom = -maxf(88.0, tools.size.y + 40.0)
+
+
 func _begin() -> void:
+	process_priority = 10
 	step_total = 5
 	_enter_crisis()
 
@@ -125,11 +133,15 @@ func _enter_reason() -> void:
 		&"ratio": "Kuvvet ve kütle birlikte: a = F / m",
 		&"mass_only": "Yalnız kütle: ağır olan hep daha yavaş",
 	}
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 6)
+	tools.add_child(list)
 	for choice in options:
 		var button := Button.new()
 		button.text = options[choice]
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.pressed.connect(_on_reason.bind(choice))
-		tools.add_child(button)
+		list.add_child(button)
 
 
 func _on_reason(choice: StringName) -> void:

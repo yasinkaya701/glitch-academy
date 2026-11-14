@@ -22,6 +22,10 @@ Audio="*res://scripts/audio_director.gd"
 Narrator="*res://scripts/narrator.gd"
 Campaign="*res://scripts/campaign_state.gd"
 
+[audio]
+
+driver/enable_input=true
+
 [display]
 
 window/size/viewport_width=1280

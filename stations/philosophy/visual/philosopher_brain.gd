@@ -134,7 +134,7 @@ var _pending_context: Dictionary = {}
 
 func _ready() -> void:
 	add_child(_http)
-	_http.timeout = 7.0
+	_http.timeout = 15.0
 	_http.request_completed.connect(_on_llm_completed)
 
 
@@ -318,6 +318,8 @@ func _resolve_llm_config() -> Dictionary:
 	var openai_key: String = OS.get_environment("OPENAI_API_KEY").strip_edges()
 	var groq_key: String = OS.get_environment("GROQ_API_KEY").strip_edges()
 	var ollama_host: String = OS.get_environment("OLLAMA_HOST").strip_edges()
+	if gemini_key == "" and openai_key == "" and groq_key == "":
+		gemini_key = Narrator.key()
 
 	if gemini_key == "" and openai_key == "" and groq_key == "" and FileAccess.file_exists(KEY_FILE):
 		var f := FileAccess.open(KEY_FILE, FileAccess.READ)

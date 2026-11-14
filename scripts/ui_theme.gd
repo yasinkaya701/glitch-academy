@@ -7,6 +7,8 @@ const FAINT := Color("#87958c")
 const ACCENT_DIM := Color("#e0eee6")
 const PANEL_SUNKEN := Color("#edf1ec")
 const DISPLAY_FONT = preload("res://assets/fonts/SpaceGrotesk.ttf")
+## MERİDYEN ve anlatıcı sesinin yazısı: sıcak, okunaklı serif (Lora, OFL).
+const SERIF_FONT = preload("res://assets/fonts/Lora.ttf")
 
 const BG := Color("#f4f6f2")
 const PANEL := Color("#ffffff")

@@ -83,8 +83,9 @@ func _fit_camera() -> void:
 	if stage == null or stage.camera == null or stage.size.y < 1.0:
 		return
 	var wide := stage.size.x / stage.size.y >= 16.0 / 9.0
+	var compact := stage.size.x < 760.0
 	var camera := stage.camera
-	camera.look_at_from_position(_camera_position(), _camera_target() + Vector3(0.0, 0.0 if wide else _narrow_shift(), 0.0))
+	camera.look_at_from_position(_camera_position(), _camera_target() + Vector3(0.0, _narrow_shift() if compact else 0.0, 0.0))
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT if wide else Camera3D.KEEP_WIDTH
 	camera.fov = BASE_FOV if wide else rad_to_deg(2.0 * atan(tan(deg_to_rad(BASE_FOV * 0.5)) * 16.0 / 9.0))
 

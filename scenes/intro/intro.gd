@@ -57,11 +57,15 @@ func _ready() -> void:
 	set_process(false)
 	set_process_input(false)
 	var title_font := FontVariation.new()
-	title_font.base_font = UITheme.DISPLAY_FONT
+	title_font.base_font = UITheme.SERIF_FONT
 	title_font.variation_opentype = {"weight": 600}
 	headline.add_theme_font_override("font", title_font)
+	var speech_font := FontVariation.new()
+	speech_font.base_font = UITheme.SERIF_FONT
+	speech_font.variation_opentype = {"weight": 500}
 	caption.add_theme_font_override("font", UITheme.FONT)
-	guide_line.add_theme_font_override("font", UITheme.FONT)
+	guide_line.add_theme_font_override("font", speech_font)
+	guide_line.add_theme_color_override("font_color", Color("#22332f"))
 	skip.pressed.connect(_finish)
 	resized.connect(_layout_intro)
 	_layout_intro()
@@ -85,13 +89,13 @@ func _layout_intro() -> void:
 		guide_portrait.offset_top = _guide_top
 		guide_portrait.offset_right = -18.0
 		guide_portrait.offset_bottom = _guide_bottom
-		guide_line.add_theme_font_size_override("font_size", 14 if mobile else 15)
+		guide_line.add_theme_font_size_override("font_size", 16 if mobile else 18)
 		guide_bubble.anchor_left = 0.04 if mobile else 1.0
 		guide_bubble.anchor_right = 0.96 if mobile else 1.0
 		guide_bubble.offset_left = 0.0 if mobile else -286.0
 		guide_bubble.offset_top = 84.0
 		guide_bubble.offset_right = 0.0 if mobile else -28.0
-		guide_bubble.offset_bottom = 164.0 if mobile else 180.0
+		guide_bubble.offset_bottom = 176.0 if mobile else 196.0
 		trace.hide()
 	else:
 		cue.anchor_right = 0.64
@@ -106,13 +110,13 @@ func _layout_intro() -> void:
 		guide_portrait.offset_top = _guide_top
 		guide_portrait.offset_right = -28.0
 		guide_portrait.offset_bottom = _guide_bottom
-		guide_line.add_theme_font_size_override("font_size", 16)
+		guide_line.add_theme_font_size_override("font_size", 20)
 		guide_bubble.anchor_left = 1.0
 		guide_bubble.anchor_right = 1.0
 		guide_bubble.offset_left = -398.0
 		guide_bubble.offset_top = 100.0
 		guide_bubble.offset_right = -32.0
-		guide_bubble.offset_bottom = 192.0
+		guide_bubble.offset_bottom = 214.0
 
 
 func start() -> void:

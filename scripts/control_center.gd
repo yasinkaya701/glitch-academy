@@ -12,9 +12,9 @@ const LEVEL_NEXT := Color("#9a5a14")
 const LEVEL_LOCKED := Color("#7d8782")
 const CATALOG: Array[MissionDefinition] = [
 	# Sıra: en olgun ve en iyi görünen görevler başta; kilit açma sırası da buradan gelir.
-	preload("res://stations/seasons/mission.tres"),
 	preload("res://stations/philosophy/mission.tres"),
 	preload("res://stations/heart/mission.tres"),
+	preload("res://stations/seasons/mission.tres"),
 	preload("res://stations/history/mission.tres"),
 	preload("res://stations/derivative/mission.tres"),
 	preload("res://stations/vectors/mission.tres"),

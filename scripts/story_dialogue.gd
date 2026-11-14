@@ -155,6 +155,10 @@ func _ready() -> void:
 	message = Label.new()
 	message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	message.add_theme_font_size_override("font_size", 19)
+	var speech_font := FontVariation.new()
+	speech_font.base_font = UITheme.SERIF_FONT
+	speech_font.variation_opentype = {"weight": 500}
+	message.add_theme_font_override("font", speech_font)
 	content.add_child(message)
 	_news_report = Label.new()
 	_news_report.add_theme_font_size_override("font_size", 16)
@@ -197,7 +201,7 @@ func _layout_dialogue() -> void:
 		_news_image.hide()
 	_portrait.custom_minimum_size = Vector2(64, 64) if compact else Vector2(88, 88)
 	heading.add_theme_font_size_override("font_size", 23 if compact else 29)
-	message.add_theme_font_size_override("font_size", 16 if compact else 19)
+	message.add_theme_font_size_override("font_size", 17 if compact else 21)
 	_news_headline.add_theme_font_size_override("font_size", 18 if compact else 22)
 	_news_report.add_theme_font_size_override("font_size", 14 if compact else 16)
 	_actions.columns = 1 if compact or not _return_button.visible else 2
