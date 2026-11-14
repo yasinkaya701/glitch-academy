@@ -13,6 +13,9 @@ const ACCENT := Color("#6fe3c1")
 const WARM := Color("#f2a65a")
 const DANGER := Color("#e5645a")
 const BG := Color("#070b12")
+const Kit = preload("res://scripts/physics/stage_kit.gd")
+const PANEL := Color("#0f1824")
+const EDGE_STRONG := Color("#41627f")
 
 var directive: Label
 var counter: Label
@@ -43,12 +46,12 @@ func _ready() -> void:
 	directive.add_theme_constant_override("shadow_offset_x", 0)
 	directive.add_theme_constant_override("shadow_offset_y", 2)
 	directive.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	directive.position = Vector2(28, 44)
+	directive.position = Vector2(40, 54)
 	add_child(directive)
 
 	counter = Label.new()
 	counter.theme_type_variation = "SectionLabel"
-	counter.position = Vector2(28, 22)
+	counter.position = Vector2(40, 24)
 	counter.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(counter)
 
@@ -62,7 +65,7 @@ func _ready() -> void:
 	toast_box.bg_color = Color(BG, 0.88)
 	toast_box.border_color = Color("#41627f")
 	toast_box.set_border_width_all(1)
-	toast_box.set_corner_radius_all(14)
+	toast_box.set_corner_radius_all(6)
 	toast_box.content_margin_left = 16
 	toast_box.content_margin_right = 16
 	toast_box.content_margin_top = 8
@@ -72,7 +75,7 @@ func _ready() -> void:
 
 	tools = HBoxContainer.new()
 	tools.add_theme_constant_override("separation", 10)
-	tools.alignment = BoxContainer.ALIGNMENT_CENTER
+	tools.alignment = BoxContainer.ALIGNMENT_BEGIN
 	add_child(tools)
 
 	action = Button.new()
@@ -116,8 +119,9 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	var size_now := size
 	var bottom := size_now.y - 22.0
-	tools.position = Vector2(28, bottom - 52.0)
-	tools.size = Vector2(maxf(size_now.x - 28.0 - 240.0, 200.0), 46.0)
+	tools.size = Vector2(maxf(size_now.x - 44.0 - 250.0, 200.0), 52.0)
+	tools.position = Vector2(44, bottom - 54.0)
+	queue_redraw()
 	action.position = Vector2(size_now.x - action.size.x - 28.0, bottom - 46.0)
 	var right := size_now.x - 28.0
 	back.position = Vector2(right - back.size.x, 22.0)
@@ -132,15 +136,37 @@ func _process(_delta: float) -> void:
 
 
 func _draw() -> void:
-	# Üstte ve altta yumuşak karartma: yönerge ve araçlar okunur kalır, panel yok.
-	var dark := Color(BG, 0.78)
-	var clear := Color(BG, 0.0)
-	var top := minf(size.y * 0.22, 150.0)
-	draw_polygon(PackedVector2Array([Vector2(0, 0), Vector2(size.x, 0), Vector2(size.x, top), Vector2(0, top)]),
-		PackedColorArray([dark, dark, clear, clear]))
-	var bottom := minf(size.y * 0.24, 170.0)
-	draw_polygon(PackedVector2Array([Vector2(0, size.y), Vector2(size.x, size.y), Vector2(size.x, size.y - bottom), Vector2(0, size.y - bottom)]),
-		PackedColorArray([dark, dark, clear, clear]))
+	var font := get_theme_default_font()
+	# Yönerge kartı: yuvarlak cam panel, ilerleme çubuğu, ince vurgu çizgisi.
+	var wanted := maxf(directive.get_minimum_size().x + 40.0, 420.0)
+	var card_height := maxf(88.0, directive.position.y - 16.0 + directive.get_minimum_size().y + 16.0)
+	var card := Rect2(Vector2(24, 16), Vector2(minf(wanted, size.x - 48.0), card_height))
+	draw_style_box(_card_box(Color(PANEL, 0.94), EDGE_STRONG, 8, 0), card)
+	if _steps_total > 0:
+		var track := Rect2(card.position + Vector2(0, card.size.y - 3.0), Vector2(card.size.x, 3.0))
+		draw_rect(track, Color(MUTED, 0.18))
+		draw_rect(Rect2(track.position, Vector2(track.size.x * float(_steps_current) / float(_steps_total), 3.0)), ACCENT)
+	# Araç şeridi: yalnızca araç varken, içeriğin genişliğinde cam dock.
+	if tools.get_child_count() > 0:
+		var need := tools.get_combined_minimum_size()
+		var dock := Rect2(tools.position - Vector2(18, 14), Vector2(minf(need.x, tools.size.x) + 36.0, maxf(need.y, 46.0) + 28.0))
+		draw_style_box(_card_box(Color(PANEL, 0.94), EDGE_STRONG, 8, 0), dock)
+	if font == null:
+		return
+
+
+static func _card_box(fill: Color, border: Color, radius: int, shadow: int) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = fill
+	box.border_color = border
+	box.set_border_width_all(1)
+	box.set_corner_radius_all(radius)
+	box.anti_aliasing = true
+	if shadow > 0:
+		box.shadow_size = shadow
+		box.shadow_color = Color(0, 0, 0, 0.5)
+		box.shadow_offset = Vector2(0, 5)
+	return box
 
 
 func _standalone() -> bool:
@@ -171,9 +197,8 @@ func set_steps(current: int, total: int, label: String = "") -> void:
 	_steps_current = current
 	_steps_total = total
 	var dots := ""
-	for i in total:
-		dots += "●  " if i < current else "○  "
-	counter.text = ("%s  %s" % [dots.strip_edges(), label]).strip_edges()
+	counter.text = ("ADIM %d / %d  ·  %s" % [mini(current + 1, total), total, label]) if label != "" else ""
+	queue_redraw()
 
 
 func set_action(text: String, enabled: bool = true) -> void:

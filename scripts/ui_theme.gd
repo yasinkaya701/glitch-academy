@@ -3,8 +3,9 @@ extends Node
 ## Renkler docs/ART_DIRECTION.md paletinden. Özel türler: PrimaryButton, DangerButton, HeadlineLabel,
 ## SectionLabel, MutedLabel, GlassPanel, ConsolePanel.
 
-const FONT = preload("res://assets/fonts/IBMPlexSans.ttf")
-const DISPLAY_FONT = preload("res://assets/fonts/SpaceGrotesk.ttf")
+const FONT = preload("res://assets/fonts/IBMPlexSans-Regular.ttf")
+const FONT_BOLD = preload("res://assets/fonts/IBMPlexSans-SemiBold.ttf")
+const DISPLAY_FONT = preload("res://assets/fonts/YanlisDunyaMeridian-Display.ttf")
 
 const BG := Color("#070b12")
 const PANEL := Color("#0f1824")
@@ -25,16 +26,9 @@ func _ready() -> void:
 
 static func build() -> Theme:
 	var theme := Theme.new()
-	var regular := FontVariation.new()
-	regular.base_font = FONT
-	regular.variation_opentype = {"wght": 400, "wdth": 100}
-	var semibold := FontVariation.new()
-	semibold.base_font = FONT
-	semibold.base_font = FONT
-	semibold.variation_opentype = {"wght": 600, "wdth": 100}
-	var display := FontVariation.new()
-	display.base_font = DISPLAY_FONT
-	display.variation_opentype = {"wght": 700}
+	var regular: Font = FONT
+	var semibold: Font = FONT_BOLD
+	var display: Font = FONT_BOLD
 	theme.default_font = regular
 	theme.default_font_size = 16
 
@@ -42,10 +36,10 @@ static func build() -> Theme:
 	theme.set_color("font_color", "Label", INK)
 	theme.set_type_variation("HeadlineLabel", "Label")
 	theme.set_font("font", "HeadlineLabel", display)
-	theme.set_font_size("font_size", "HeadlineLabel", 27)
+	theme.set_font_size("font_size", "HeadlineLabel", 24)
 	theme.set_type_variation("SectionLabel", "Label")
 	theme.set_font("font", "SectionLabel", semibold)
-	theme.set_font_size("font_size", "SectionLabel", 14)
+	theme.set_font_size("font_size", "SectionLabel", 12)
 	theme.set_color("font_color", "SectionLabel", ACCENT)
 	theme.set_type_variation("MutedLabel", "Label")
 	theme.set_color("font_color", "MutedLabel", MUTED)
@@ -77,14 +71,14 @@ static func build() -> Theme:
 
 	# Kaydırıcı
 	var track := _flat(Color("#1b2c3f"), Color(0, 0, 0, 0), 0, 3, 0)
-	track.content_margin_top = 3
-	track.content_margin_bottom = 3
+	track.content_margin_top = 4
+	track.content_margin_bottom = 4
 	theme.set_stylebox("slider", "HSlider", track)
 	theme.set_stylebox("grabber_area", "HSlider", _flat(ACCENT, Color(0, 0, 0, 0), 0, 3, 0))
 	theme.set_stylebox("grabber_area_highlight", "HSlider", _flat(Color("#9af1da"), Color(0, 0, 0, 0), 0, 3, 0))
-	theme.set_icon("grabber", "HSlider", _dot(ACCENT, 11))
-	theme.set_icon("grabber_highlight", "HSlider", _dot(Color("#ffffff"), 12))
-	theme.set_icon("grabber_disabled", "HSlider", _dot(EDGE, 10))
+	theme.set_icon("grabber", "HSlider", _dot(ACCENT, 9))
+	theme.set_icon("grabber_highlight", "HSlider", _dot(Color("#9af1da"), 10))
+	theme.set_icon("grabber_disabled", "HSlider", _dot(EDGE, 8))
 
 	# Giriş kutusu
 	theme.set_stylebox("normal", "LineEdit", _flat(Color("#0a121d"), EDGE, 1, 6, 10))
@@ -233,18 +227,18 @@ static func _texture_box(path: String, texture_left: float, texture_right: float
 
 
 static func _button(theme: Theme, type_name: String, fill: Color, edge: Color, text: Color) -> void:
-	theme.set_stylebox("normal", type_name, _flat(fill, edge, 1, 8, 16, 9))
-	theme.set_stylebox("hover", type_name, _flat(fill.lightened(0.12), edge.lightened(0.25), 1, 8, 16, 9))
-	theme.set_stylebox("pressed", type_name, _flat(fill.darkened(0.2), edge, 1, 8, 16, 10))
-	theme.set_stylebox("disabled", type_name, _flat(Color(fill, 0.35), Color(edge, 0.3), 1, 8, 16, 9))
-	theme.set_stylebox("focus", type_name, _flat(Color(0, 0, 0, 0), ACCENT, 2, 8, 16, 9))
+	theme.set_stylebox("normal", type_name, _flat(fill, edge, 1, 6, 16, 9))
+	theme.set_stylebox("hover", type_name, _flat(fill.lightened(0.1), edge.lightened(0.2), 1, 6, 16, 9))
+	theme.set_stylebox("pressed", type_name, _flat(fill.darkened(0.2), edge, 1, 6, 16, 10))
+	theme.set_stylebox("disabled", type_name, _flat(Color(fill, 0.35), Color(edge, 0.3), 1, 6, 16, 9))
+	theme.set_stylebox("focus", type_name, _flat(Color(0, 0, 0, 0), ACCENT, 2, 6, 16, 9))
 	theme.set_color("font_color", type_name, text)
 	theme.set_color("font_hover_color", type_name, text)
 	theme.set_color("font_pressed_color", type_name, text)
 	theme.set_color("font_disabled_color", type_name, Color(text, 0.4))
 	theme.set_color("font_focus_color", type_name, text)
 	theme.set_color("icon_normal_color", type_name, text)
-	var pressed_toggle := _flat(Color(ACCENT, 0.22), ACCENT, 2, 8, 16, 9)
+	var pressed_toggle := _flat(Color(ACCENT, 0.18), ACCENT, 1, 6, 16, 9)
 	theme.set_stylebox("hover_pressed", type_name, pressed_toggle)
 	if type_name == "Button":
 		theme.set_color("font_hover_pressed_color", type_name, INK)
