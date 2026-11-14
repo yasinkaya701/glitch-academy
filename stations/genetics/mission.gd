@@ -28,7 +28,7 @@ var _advance: Button
 var _prediction: LineEdit
 var _rule_label: Label
 var _rule_heading: Label
-var _main: HBoxContainer
+var _main: BoxContainer
 var _right_panel: PanelContainer
 
 
@@ -77,7 +77,7 @@ func _build_ui() -> void:
 	main.add_child(left)
 
 	var frame := PanelContainer.new()
-	frame.theme_type_variation = "GlassPanel"
+	_graphite(frame)
 	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	frame.custom_minimum_size = Vector2(0, 230)
 	left.add_child(frame)
@@ -88,7 +88,7 @@ func _build_ui() -> void:
 	frame.add_child(experiment)
 
 	var board_panel := PanelContainer.new()
-	board_panel.theme_type_variation = "GlassPanel"
+	_graphite(board_panel)
 	board_panel.custom_minimum_size.y = 166
 	left.add_child(board_panel)
 	_board = Control.new()
@@ -97,7 +97,7 @@ func _build_ui() -> void:
 	board_panel.add_child(_board)
 
 	var right := PanelContainer.new()
-	right.theme_type_variation = "ConsolePanel"
+	_graphite(right)
 	_right_panel = right
 	right.custom_minimum_size.x = 320
 	right.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -126,6 +126,17 @@ func _build_ui() -> void:
 	var foot := _label("Punnett karesi olasılığı verir; dört gerçek yavruda kesin sayı garantilemez.", 13, MUTED)
 	foot.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	outer.add_child(foot)
+
+
+## Bu istasyonun yazıları açık renktir; ortak temanın açık panelleri yerine görev içi grafit zemin kullanılır.
+func _graphite(panel: PanelContainer) -> void:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("#191a17")
+	style.border_color = Color("#3b3d35")
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(12)
+	style.set_content_margin_all(14)
+	panel.add_theme_stylebox_override("panel", style)
 
 
 func _build_3d_seeds() -> void:

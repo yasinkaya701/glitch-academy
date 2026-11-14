@@ -59,9 +59,9 @@ var _completion_pending := false
 var _last_campaign_mission: StringName
 
 const RECORDS := {
-	"seasons": "Işık açısı değişince seranın tepkisi de değişti. Uzaklık kaydım aynı şeyi açıklamıyordu.",
+	"seasons": "Işık açısı değişince seranın tepkisi de değişti. Kayıttaki uzaklık verisi aynı şeyi açıklamıyordu.",
 	"measurement": "Sayı aynıydı; birimi farklıydı. Arşiv taşıyıcısı şimdi doğru parçayı kabul ediyor.",
-	"vectors": "Yönü kayıttan silmiştim. Kapsülün yanaşması için uzunluk tek başına yetmiyor.",
+	"vectors": "Kayıtta yön bilgisi eksikti. Kapsülün yanaşması için uzunluk tek başına yetmiyor.",
 	"derivative": "Kutunun hacmi, kesik büyüdükçe hep artmıyor. Tepe noktasını ölçümle buldun.",
 	"bridge": "Eksik uzunluk tamamlandı. Köprünün kapanması, hesabın sahnedeki karşılığı oldu.",
 	"prism": "Katmanları tek tek hesaba kattın. Kasa artık ne eksik ne fazla doluyor.",
@@ -74,11 +74,11 @@ const RECORDS := {
 	"pressure": "Derinliği ve sıvıyı ayrı değiştirdin. Hedef basınca hangi koşulda ulaşıldığı belli.",
 	"philosophy": "Kaydı, düşüncenin gerekçesiyle eşleştirdin. Bir iddia tekrar edildiği için doğru olmuyor.",
 	"history": "Belgeleri tarihleri ve bağlamlarıyla doğruladın. Arşivin sırası yeniden kuruluyor.",
-	"pulley": "Kuvvet azalırken çekilen yol arttı. Kaydımdan sildiğim ip kolunu geri koydun.",
+	"pulley": "Kuvvet azalırken çekilen yol arttı. Kayıtta eksik kalan ip kolunu geri koydun.",
 	"turkish": "Tek bir olumsuzluk eki güvenlik talimatını tersine çevirmişti. Çıkış yolu yeniden açık.",
 	"english": "İsteği ve uyarıyı ayırdın. Yardım mesajı şimdi doğru ekibe ulaşıyor.",
 	"religion": "Yardım kaydını gösterişe değil açık ihtiyaca bağladın. Destek doğru yere gidiyor.",
-	"genetics": "Çekinik özellik görünmese de alel kaybolmuyor. Sildiğim kayıt çaprazlamada yeniden ortaya çıktı."
+	"genetics": "Çekinik özellik görünmese de alel kaybolmuyor. Kayıtta eksik görünen alel çaprazlamada yeniden ortaya çıktı."
 }
 
 
@@ -308,6 +308,8 @@ func _show_completion_story(mission_id: StringName) -> void:
 		Campaign.set_story_flag(_story_key("reveal"))
 		_set_world_alarm(1.0)
 		text += "\n\nMERİDYEN: “Doğa yasalarını değiştirdim. Şimdi yaşamın kurallarını değiştireceğim.” Gözlemevi kararır; kırmızı kalibrasyon ışığı atımla yanar."
+	elif Campaign.has_story_flag(_story_key("reveal")):
+		text += "\n\nMERİDYEN: “Bu kaydı ben değiştirmiştim. Ölçümün onu düzeltti.”"
 	if _route_ready_for_finale():
 		text += "\n\nRotadaki tüm kayıtlar doğrulandı. Son bir ölçüm kaldı: Üç Güneş. Merkezi yetkimi yalnız o karşılaştırmadan sonra kaldırabilirsin."
 		story_dialogue.present("Son kayıt", text, "Üç Güneş'e geç", _start_finale, _return_to_hub)

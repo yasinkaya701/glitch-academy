@@ -152,10 +152,10 @@ func _layout_hud() -> void:
 			right = button.position.x - 8.0
 	counter.position = Vector2(edge, 16)
 	counter.size = Vector2(maxf(right - edge - 12, 120), 24)
-	var directive_top := 78.0 if right - edge < 300.0 else 70.0
+	var directive_top := 64.0 if right - edge < 300.0 else 56.0
 	directive.position = Vector2(edge, directive_top)
 	# Yönerge sahnenin sağındaki grafik ve panelleri örtmesin: en fazla 620 px.
-	directive.size = Vector2(minf(maxf(right - edge, minf(size.x - edge * 2, 260)), 620.0), 0)
+	directive.size = Vector2(minf(maxf(right - edge, minf(size.x - edge * 2, 260)), minf(620.0, size.x * 0.55)), 0)
 	directive.size.y = maxf(directive.get_combined_minimum_size().y, 30.0)
 	var below_y := directive.position.y + directive.size.y + 10.0
 	for item in below_directive:
@@ -210,21 +210,32 @@ func _draw_step_track() -> void:
 	var font := get_theme_default_font()
 	var font_size := 13
 	var phase := current_phase()
-	var compact := size.x < 560.0
-	var x := 24.0
-	var y := _progress_track_y() + 12.0
+	# Şerit sayaçla aynı satırda durur; yönerge ve istasyon içeriği yerinde kalır.
+	var start_x := counter.position.x + counter.get_combined_minimum_size().x + 22.0
+	var baseline := counter.position.y + 17.0
+	var limit := size.x - 24.0
+	for button in [back, skip, pause, view_button, info_button]:
+		if button.visible:
+			limit = minf(limit, button.position.x - 12.0)
+	var marks: Array[String] = []
+	var total := 0.0
+	for index in PHASES.size():
+		var mark: String = "✓ " if index < phase else ("▸ " if index == phase else "")
+		var text: String = mark + String(PHASES[index])
+		marks.append(text)
+		total += font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + 16.0
+	var compact := start_x + total > limit
+	var x := start_x
 	for index in PHASES.size():
 		var done := index < phase
 		var now := index == phase
 		if compact and not now:
 			continue
-		var mark: String = "✓ " if done else ("▸ " if now else "")
-		var text: String = mark + String(PHASES[index])
 		var color := Color("#8fbea0") if done else Color("#dfae63") if now else Color("#b1ac9e")
-		draw_string(font, Vector2(x, y), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
-		var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		draw_line(Vector2(x, y + 5.0), Vector2(x + width, y + 5.0), color, 2.0 if now else 1.0)
-		x += width + 18.0
+		draw_string(font, Vector2(x, baseline), marks[index], HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+		var width: float = font.get_string_size(marks[index], HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		draw_line(Vector2(x, baseline + 5.0), Vector2(x + width, baseline + 5.0), color, 2.0 if now else 1.0)
+		x += width + 16.0
 
 
 func _progress_track_y() -> float:

@@ -99,6 +99,7 @@ func _build_dialogue_controls() -> void:
 	if hud != null:
 		hud.counter.add_theme_font_override("font", font_cinzel_display)
 		hud.counter.add_theme_font_size_override("font_size", 16)
+		hud.counter.add_theme_color_override("font_color", UITheme.GAME_TEXT)
 		hud.directive.add_theme_font_override("font", font_body)
 		hud.directive.add_theme_font_size_override("font_size", 18)
 		hud.directive.add_theme_color_override("font_color", UITheme.GAME_TEXT)
@@ -241,6 +242,13 @@ func _layout_dialogue_controls() -> void:
 	stage.choice_slot.position = Vector2(32.0, maxf(safe_top, minf(desired_y, available_y)))
 	stage.choice_slot.size = Vector2(slot_width, slot_height)
 	stage.choice_slot.add_theme_constant_override("separation", 10)
+
+
+func _process(_delta: float) -> void:
+	if stage == null or hud == null or not is_instance_valid(hud.directive):
+		return
+	if stage.set_top_inset(hud.directive.position.y + hud.directive.size.y + 10.0):
+		_layout_dialogue_controls()
 
 
 func _apply_display_title() -> void:
