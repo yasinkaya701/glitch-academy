@@ -1,10 +1,11 @@
 extends "res://scripts/mission.gd"
-## Tarih Meydanı — tarihî kanıtı bağlamıyla yorumlama görevi.
-## Oyuncu kısa kaynak sorularını yanıtlayabilir; metin, ses veya karar kartı kullanabilir.
+## Tarih Meydanı ve LGS T.C. İnkılap Tarihi İstasyonu.
+## MEB 8. Sınıf İnkılap Tarihi (LGS · İTA.8.2.2) ve Genel Tarih kazanımları.
+## Oyuncu doğrudan cümlesini yazabilir, mikrofona konuşabilir veya ekrandaki tarihî karar kartlarını seçebilir.
 
 const HistoryStageScript = preload("res://stations/history/visual/history_stage.gd")
 const HistoryBrainScript = preload("res://stations/history/visual/history_brain.gd")
-const Hud = preload("res://stations/history/visual/archive_hud.gd")
+const Hud = preload("res://scripts/mission_hud.gd")
 const UITheme = preload("res://scripts/ui_theme.gd")
 
 const ORDER: Array[StringName] = [&"mete_han", &"alparslan", &"fatih", &"kanuni", &"mimar_sinan", &"ataturk"]
@@ -31,14 +32,6 @@ const FALLBACK_LINES := [
 	"Dur, söyleme, hatırlıyorum!",
 	"Şimdi hatırlıyorum: vatan ve millet iradesi baki kalır.",
 ]
-const EVIDENCE_QUESTIONS := {
-	&"mete_han": ["MÖ 209'da orduyu düzenli birliklere ayıran teşkilatın adı neydi?", "Mete Han'ın toprak karşısındaki tutumu hangi egemenlik anlayışını gösterir?", "Türk boylarını tek bayrak altında toplamak devlet yapısını nasıl etkiledi?", "Onlu teşkilat ve vatan toprağına bağlılık hangi ortak gücü besledi?"],
-	&"alparslan": ["1071 Malazgirt Zaferi Anadolu tarihi açısından hangi dönüm noktasıdır?", "Ani'nin alınması ve Nizamiye medreseleri Selçuklu'nun hangi iki alandaki etkisini gösterir?", "Malazgirt sonrası Anadolu'daki Türk varlığını güçlendiren gelişme neydi?", "Askerî başarı ile eğitim kurumları birlikte nasıl kalıcılık sağladı?"],
-	&"fatih": ["1453'te İstanbul'un fethinde gemilerin karadan Haliç'e indirilmesi neyi gösterir?", "Sahn-ı Seman medreseleri ve Kanunnâme hangi iki devlet işlevini destekler?", "Fetih, Orta Çağ'dan Yeni Çağ'a geçişte neden dönüm noktası sayılır?", "Teknik yenilik ve eğitim yatırımı İstanbul'u nasıl bir merkez yaptı?"],
-	&"kanuni": ["Kanûnî unvanı, padişahın hangi yönetim yaklaşımıyla ilişkilidir?", "Mohaç ve Preveze zaferleri Osmanlı'nın hangi alanlardaki gücünü gösterir?", "Adalet ve kanun düzeni merkezî yönetimi nasıl destekler?", "Askerî başarı ile hukuk düzeni birlikte imparatorluğu nasıl güçlendirir?"],
-	&"mimar_sinan": ["Şehzade, Süleymaniye ve Selimiye eserleri hangi gelişim sırasını anlatır?", "Selimiye'de kubbe ve taşıyıcıların uyumu hangi mühendislik bilgisini gerektirir?", "Su kemerleri ve yapı akustiği Mimar Sinan'ın hangi uzmanlığını gösterir?", "Çıraklık–kalfalık–ustalık sırası bir mimarın gelişimini nasıl kanıtlar?"],
-	&"ataturk": ["Amasya Genelgesi, millî mücadelenin kararını kime dayandırır?", "Erzurum ve Sivas kararlarında ortak vatan ve manda konuları nasıl ele alınır?", "TBMM'nin açılması egemenliğin kaynağını nasıl değiştirir?", "Lozan'da kapitülasyonların kaldırılması hangi hedefi sonuçlandırır?"],
-}
 
 var stage: Control
 var brain: Node
@@ -46,7 +39,6 @@ var hud: Hud
 
 var _player_quote := Label.new()
 var _cards_container := VBoxContainer.new()
-var _evidence_prompt := Label.new()
 var _chat_row := HBoxContainer.new()
 var _input_box := LineEdit.new()
 var _send_btn := Button.new()
@@ -61,8 +53,10 @@ var _is_lgs: bool = false
 
 
 func _ready() -> void:
-	var shared_theme: Theme = UITheme.build_gameplay()
+	var shared_theme: Theme = UITheme.build()
 	theme = shared_theme
+	if get_tree().root.theme == null:
+		get_tree().root.theme = shared_theme
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 
 	var args := OS.get_cmdline_user_args()
@@ -75,7 +69,6 @@ func _ready() -> void:
 	stage = HistoryStageScript.new()
 	stage.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(stage)
-	stage.resized.connect(_layout_evidence_controls)
 
 	brain = HistoryBrainScript.new()
 	add_child(brain)
@@ -111,9 +104,9 @@ func _ready() -> void:
 
 
 func _build_dialogue_controls() -> void:
-	var font_cinzel := UITheme.FONT
-	var font_cinzel_bold := UITheme.DISPLAY_FONT
-	var font_marcellus := UITheme.FONT
+	var font_cinzel := preload("res://fonts/Cinzel-Regular.ttf")
+	var font_cinzel_bold := preload("res://fonts/CinzelDecorative-Bold.ttf")
+	var font_marcellus := preload("res://fonts/Marcellus-Regular.ttf")
 
 	if hud != null:
 		hud.directive.add_theme_font_override("font", font_cinzel)
@@ -135,12 +128,6 @@ func _build_dialogue_controls() -> void:
 
 	# Karar ve Belge Kartları Alanı
 	_cards_container.add_theme_constant_override("separation", 6)
-	_evidence_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_evidence_prompt.add_theme_font_override("font", font_marcellus)
-	_evidence_prompt.add_theme_font_size_override("font_size", 16)
-	_evidence_prompt.add_theme_color_override("font_color", Color("#eeeae0"))
-	_evidence_prompt.custom_minimum_size = Vector2(0, 54)
-	stage.choice_slot.add_child(_evidence_prompt)
 	stage.choice_slot.add_child(_cards_container)
 
 	var spacer := Control.new()
@@ -151,7 +138,7 @@ func _build_dialogue_controls() -> void:
 	_chat_row.add_theme_constant_override("separation", 8)
 	_chat_row.custom_minimum_size = Vector2(0, 40)
 
-	_input_box.placeholder_text = "Kanıttan hareketle kısa yanıt yaz…"
+	_input_box.placeholder_text = "Tarihî ilkeyi, kararı yazın veya mikrofona söyleyin…"
 	_input_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_input_box.custom_minimum_size = Vector2(260, 40)
 	_input_box.add_theme_font_override("font", font_marcellus)
@@ -213,18 +200,6 @@ func _build_dialogue_controls() -> void:
 	_chat_row.add_child(_mic_btn)
 
 	stage.choice_slot.add_child(_chat_row)
-	_layout_evidence_controls()
-
-
-func _layout_evidence_controls() -> void:
-	if not is_instance_valid(stage):
-		return
-	var compact := stage.size.x < 560.0
-	_player_quote.add_theme_font_size_override("font_size", 14 if compact else 17)
-	_evidence_prompt.add_theme_font_size_override("font_size", 14 if compact else 16)
-	_input_box.custom_minimum_size.x = 130 if compact else 200
-	_mic_btn.text = "Konuş" if compact else "Konuş (V)"
-	_mic_btn.custom_minimum_size.x = 70 if compact else 108
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -263,18 +238,17 @@ func _pick(i: int) -> void:
 	_input_box.text = ""
 	_player_quote.visible = false
 	_chat_row.visible = true
-	_evidence_prompt.visible = true
 	hud.clear_tools()
 
 	stage.show_philosopher(id, 4)
 	hud.set_steps(0, 4, NAMES[id].to_upper())
 
 	if _is_lgs:
-		hud.set_directive("BELGEYİ YORUMLA · Millî Mücadele'nin dört kararını bağlamıyla eşleştir.")
+		hud.set_directive("Zaman arşivi bozuldu! Mustafa Kemal Paşa ile konuşarak veya kararları seçerek Millî Mücadele'nin 4 temel adımını savun.")
 		hud.set_note("İTA.8.2.2 · Amasya Genelgesi, Erzurum ve Sivas Kongreleri, TBMM'nin Açılışı ve Lozan.")
 	else:
-		hud.set_directive("TARİHÎ KANIT · Kaynağı dönemi ve sonucu ile eşleştir.")
-		hud.set_note("%s · %s" % [NAMES[id], NOTES.get(id, "")])
+		hud.set_directive("%s ile konuşarak unuttuğu 4 temel ilkeyi ve kararı hatırlat." % NAMES[id])
+		hud.set_note(NOTES.get(id, ""))
 
 	hud.set_action("")
 	_speak_stage_line(0)
@@ -287,14 +261,10 @@ func _refresh_decision_cards() -> void:
 
 	if _stage_level >= 4 or _failed:
 		_cards_container.visible = false
-		_evidence_prompt.visible = false
 		return
 
 	_cards_container.visible = true
-	_evidence_prompt.visible = true
 	var id: StringName = ORDER[_index]
-	var questions: Array = EVIDENCE_QUESTIONS.get(id, [])
-	_evidence_prompt.text = "KANIT SORUSU  %02d / 04\n%s" % [_stage_level + 1, questions[clampi(_stage_level, 0, questions.size() - 1)]] if not questions.is_empty() else "KANIT SORUSU · Kaynağı dönemi ve sonucu ile eşleştir."
 	var all_choices: Array = stage.voice.get_choices(id)
 	if all_choices.is_empty():
 		return
@@ -335,8 +305,8 @@ func _refresh_decision_cards() -> void:
 		display_cards[k] = display_cards[swap_idx]
 		display_cards[swap_idx] = tmp
 
-	var font_marcellus := UITheme.FONT
-	var font_cinzel := UITheme.FONT
+	var font_marcellus := preload("res://fonts/Marcellus-Regular.ttf")
+	var font_cinzel := preload("res://fonts/Cinzel-Regular.ttf")
 
 	for c in display_cards:
 		var btn := Button.new()
@@ -479,7 +449,6 @@ func apply_llm_trigger(result: Dictionary) -> void:
 		if _stage_level >= 4:
 			hud.set_steps(4, 4, "ONARILDI")
 			_cards_container.visible = false
-			_evidence_prompt.visible = false
 			_chat_row.visible = false
 			if _is_lgs:
 				hud.set_directive("TEBRİKLER! Millî Mücadele zaman arşivi ve I. TBMM salonu onarıldı; Türkiye Cumhuriyeti tam bağımsızdır!")
@@ -498,7 +467,6 @@ func apply_llm_trigger(result: Dictionary) -> void:
 		stage.set_anger(_anger)
 		_failed = true
 		_cards_container.visible = false
-		_evidence_prompt.visible = false
 		_chat_row.visible = false
 		stage.actor.play_reaction(&"refuse")
 		if stage.voice.get_line_text(id, &"angry_leave") != "":
@@ -547,7 +515,6 @@ func _set_level(level: int, custom_line_id: StringName = &"") -> void:
 	hud.set_steps(_stage_level, 4, "ONARILDI" if _stage_level >= 4 else NAMES[id].to_upper())
 	if _stage_level >= 4:
 		_cards_container.visible = false
-		_evidence_prompt.visible = false
 		_chat_row.visible = false
 	_speak_stage_line(_stage_level, custom_line_id)
 	_refresh_decision_cards()
