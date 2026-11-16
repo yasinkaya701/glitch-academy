@@ -1,0 +1,50 @@
+name: Deploy Godot web game to GitHub Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag containing index.pck and the web client archive
+        required: true
+        default: web-build-2026-11-16
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download web export from release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          mkdir -p /tmp/web-export public
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern 'index.pck' --pattern 'glitch-academy-web-client.zip' --dir /tmp/web-export
+          unzip -q /tmp/web-export/glitch-academy-web-client.zip -d public
+          cp /tmp/web-export/index.pck public/index.pck
+          touch public/.nojekyll
+          du -sh public
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
