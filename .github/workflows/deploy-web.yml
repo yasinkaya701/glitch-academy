@@ -6,7 +6,7 @@ on:
       release_tag:
         description: Release tag containing index.pck and the web client archive
         required: true
-        default: web-build-2026-11-16
+        default: web-build-2026-11-16-r2
 
 permissions:
   contents: read
@@ -27,8 +27,8 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           mkdir -p /tmp/web-export public
-          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern 'index.pck' --pattern 'glitch-academy-web-client.zip' --dir /tmp/web-export
-          unzip -q /tmp/web-export/glitch-academy-web-client.zip -d public
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern 'index.pck' --pattern 'glitch-academy-web-client-r2.zip' --dir /tmp/web-export
+          unzip -q /tmp/web-export/glitch-academy-web-client-r2.zip -d public
           cp /tmp/web-export/index.pck public/index.pck
           touch public/.nojekyll
           du -sh public
