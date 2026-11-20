@@ -1,11 +1,11 @@
-import { philosophy } from './philosophy.js';
-import { history } from './history.js';
+import { subjects, findLesson, figureChoices, originalCast } from './lessons.js';
+import { stageAsset, stageMarkup, setStageState } from './stage.js';
 import { startGame, remaining, begin, pause, lock, review, normalized } from './game.js';
 import { bindDictation, bindReading, stopVoice } from './voice.js';
 
 const routes = {
-  '/felsefe': { name: 'Felsefe', title: 'Fikir Meydanı', units: philosophy },
-  '/tarih': { name: 'Tarih', title: 'Zaman Arşivi', units: history },
+  '/felsefe': { title: 'Fikir Meydanı', key: 'philosophy', primary: ['felsefeyi-tanima', 'socrates'] },
+  '/tarih': { title: 'Zaman Arşivi', key: 'history', primary: ['milli-mucadele', 'ataturk'] },
 };
 const route = location.pathname.replace(/\/$/, '') || '/';
 const subject = routes[route];
@@ -14,7 +14,9 @@ const rules = document.querySelector('#rules');
 document.querySelector('#rules-open').addEventListener('click', () => rules.showModal());
 
 const rooms = new Map();
-let unit = subject?.units[0];
+const selection = new URLSearchParams(location.search);
+const requested = findLesson(selection.get('unit'), selection.get('figure') || '');
+let unit = subject && (requested?.subject === subject.key ? requested : findLesson(...subject.primary));
 let match = null;
 let timer;
 let setup = { teams: ['Takım 1', 'Takım 2'], questionSeconds: 45, memorySeconds: 30 };
@@ -35,9 +37,9 @@ function renderHome() {
   mount(`<section class="intro"><h1>Sınıf Sohbetleri</h1>
     <p>Bir düşünürle fikrini tartış ya da tarihî bir figüre dönemini sor.</p></section>
     <div class="subjects">
-      <a class="subject" href="/felsefe"><small>Felsefe</small><h2>Fikir Meydanı</h2>
+      <a class="subject" href="/felsefe"><img class="subject-figure" src="/stage/socrates/idle.webp" alt=""><small>Felsefe</small><h2>Fikir Meydanı</h2>
         <p>Sokrates, Platon ve diğer düşünürlerle konuş.</p><span>Felsefede sohbete gir →</span></a>
-      <a class="subject history" href="/tarih"><small>Tarih</small><h2>Zaman Arşivi</h2>
+      <a class="subject history" href="/tarih"><img class="subject-figure" src="/stage/ataturk/idle.webp" alt=""><small>Tarih</small><h2>Zaman Arşivi</h2>
         <p>Halide Edib, Evliya Çelebi ve diğer figürlere kendi dönemlerini sor.</p><span>Tarihte sohbete gir →</span></a>
     </div>`);
 }
@@ -49,16 +51,21 @@ function greeting() {
 }
 
 function createRoom() {
-  return { log: [], turns: [], memory: [], controller: null, status: '' };
+  return { log: [], turns: [], memory: [], controller: null, status: '', stageState: 'idle' };
+}
+
+function roomKey(lesson) {
+  return `${lesson.id}/${lesson.figureId}`;
 }
 
 function freeRoom() {
-  if (!rooms.has(unit.id)) {
+  const key = roomKey(unit);
+  if (!rooms.has(key)) {
     const room = createRoom();
     room.log.push({ role: 'assistant', label: unit.person.name, text: greeting() });
-    rooms.set(unit.id, room);
+    rooms.set(key, room);
   }
-  return rooms.get(unit.id);
+  return rooms.get(key);
 }
 
 function activeRoom() {
@@ -66,10 +73,29 @@ function activeRoom() {
 }
 
 function unitOptions() {
-  const grades = [...new Set(subject.units.map(item => item.grade))];
-  return grades.map(grade => `<optgroup label="${grade === 12 ? '12. sınıf / İnkılap Tarihi' : `${grade}. sınıf`}">${subject.units.filter(item => item.grade === grade).map(item =>
+  const lessons = subjects[subject.key];
+  const grades = [...new Set(lessons.map(item => item.grade))];
+  return grades.map(grade => `<optgroup label="${grade === 12 ? '12. sınıf / İnkılap Tarihi' : `${grade}. sınıf`}">${lessons.filter(item => item.grade === grade).map(item =>
     `<option value="${escapeHtml(item.id)}" ${item.id === unit.id ? 'selected' : ''}>${escapeHtml(item.title)}</option>`,
   ).join('')}</optgroup>`).join('');
+}
+
+function figureSelector() {
+  const choices = figureChoices(unit.id);
+  if (choices.length < 2) return '';
+  return `<label class="field figure-select">Ünitedeki figür<select id="figure-select">${choices.map(item =>
+    `<option value="${escapeHtml(item.figureId)}" ${item.figureId === unit.figureId ? 'selected' : ''}>${escapeHtml(item.person.name)}</option>`,
+  ).join('')}</select></label>`;
+}
+
+function castDialog() {
+  return `<dialog id="cast-dialog" class="cast-dialog" aria-labelledby="cast-title">
+    <div class="dialog-head"><h2 id="cast-title">Yanlış Dünya figürleri</h2><form method="dialog"><button class="quiet" type="submit">Kapat</button></form></div>
+    <div class="cast-grid">${originalCast(subject.key).map(lesson => `<button class="cast-person ${lesson.figureId === unit.figureId ? 'current' : ''}" type="button"
+      data-figure="${escapeHtml(lesson.figureId)}" data-unit="${escapeHtml(lesson.id)}">
+      <img src="${stageAsset(lesson.figureId, 'thumb')}" alt="" loading="lazy"><strong>${escapeHtml(lesson.person.name)}</strong>
+    </button>`).join('')}</div>
+  </dialog>`;
 }
 
 function setupDialog() {
@@ -99,24 +125,24 @@ function contextPanel(room) {
     <ol class="timeline">${person.timeline.map(([date, event]) => `<li><strong>${escapeHtml(date)}</strong> · ${escapeHtml(event)}</li>`).join('')}</ol>
     <button class="chip timeline-question" type="button">Bu üç olayı sıraya koyup aralarındaki ilişkiyi anlatır mısın?</button>
   </details>` : '';
-  return `<aside class="panel stack room-context">
+  return `<section class="panel stack room-context">
     <h3>${room.memory.length ? 'Hatırladıklarım' : 'Bir soru seç'}</h3>
     ${room.memory.length ? `<ul class="timeline">${room.memory.map(note => `<li>${escapeHtml(note)}</li>`).join('')}</ul><h3>Konuşmaya devam et</h3>` : ''}
     <div class="prompt-list">${person.prompts.map(prompt => `<button class="chip" type="button">${escapeHtml(prompt)}</button>`).join('')}</div>
     ${timeline}
-  </aside>`;
+  </section>`;
 }
 
 function matchPanel() {
   const game = match.game;
-  return `<aside class="panel stack room-context">
+  return `<section class="panel stack room-context">
     <div><h3>Puan durumu</h3><ol class="score-list">${game.teams.map((team, index) =>
       `<li ${(match.pending?.team ?? game.team) === index ? 'class="current" aria-current="step"' : ''}><span>${escapeHtml(team)}</span><strong>${game.scores[index]}</strong></li>`,
     ).join('')}</ol></div>
     <div><h3>Hafızam · ${game.memory.length >= 2 ? 'tamamlandı' : `${game.memory.length}/2`}</h3>
       ${game.memory.length ? `<ul class="timeline">${game.memory.map(note => `<li>${escapeHtml(note)}</li>`).join('')}</ul>` :
         '<p class="note">Hatırlattığınız yeni bilgiler burada birikir.</p>'}</div>
-  </aside>`;
+  </section>`;
 }
 
 function voiceControls({ dictation = true } = {}) {
@@ -173,7 +199,8 @@ function renderRoom({ focus = false } = {}) {
         ${match
           ? '<button class="quiet secondary-action" id="leave-match" type="button">Yarışmadan çık</button>'
           : `<label class="field">YKS ünitesi<select id="unit-select">${unitOptions()}</select></label>
-          <button class="quiet" id="open-match" type="button">Takım yarışması</button>`}
+          ${figureSelector()}<div class="row"><button class="quiet secondary-action" id="open-cast" type="button">Figürler</button>
+          <button class="quiet" id="open-match" type="button">Takım yarışması</button></div>`}
       </div>
     </section>
     <div class="chat-grid">
@@ -183,13 +210,16 @@ function renderRoom({ focus = false } = {}) {
         ${match ? matchControls() : freeControls()}
         <p class="note status" id="chat-status" role="status">${escapeHtml(room.status || (match ? '' : 'Kişisel bilgi yazmayın.'))}</p>
       </section>
-      ${match ? matchPanel() : contextPanel(room)}
+      <aside class="room-side">
+        ${stageMarkup(unit, match?.pending?.state === 'loading' ? 'thinking' : room.stageState, match?.game.memory.length ?? room.memory.length, escapeHtml)}
+        ${match ? matchPanel() : contextPanel(room)}
+      </aside>
     </div>
-    ${match ? '' : setupDialog()}`, focus);
+    ${match ? '' : setupDialog() + castDialog()}`, focus);
   const messages = app.querySelector('#messages');
   for (const entry of room.log.slice(-60)) drawBubble(messages, entry);
   messages.scrollTop = messages.scrollHeight;
-  bindReading(app.querySelector('#read-aloud'), () => room.log.findLast(entry => entry.role === 'assistant' && entry.text)?.text, status => showStatus(room, status));
+  bindReading(app.querySelector('#read-aloud'), () => room.log.findLast(entry => entry.role === 'assistant' && entry.text)?.text, status => showStatus(room, status), speaking => showStage(room, speaking ? 'speaking' : 'idle'));
   if (match) bindMatch();
   else bindFree(room);
 }
@@ -219,14 +249,40 @@ function showStatus(room, status) {
   if (activeRoom() === room) app.querySelector('#chat-status').textContent = status;
 }
 
+function showStage(room, state) {
+  room.stageState = state;
+  if (activeRoom() === room) setStageState(state);
+}
+
+function switchLesson(room, next, focusTarget) {
+  room.controller?.abort();
+  unit = next;
+  const url = new URL(location.href);
+  url.searchParams.set('unit', unit.id);
+  if (unit.figureId) url.searchParams.set('figure', unit.figureId);
+  else url.searchParams.delete('figure');
+  window.history.replaceState(null, '', url);
+  renderRoom({ focus: !focusTarget });
+  if (focusTarget) app.querySelector(focusTarget)?.focus();
+}
+
 function bindFree(room) {
   const selector = app.querySelector('#unit-select');
   selector.addEventListener('change', event => {
-    room.controller?.abort();
-    unit = subject.units.find(item => item.id === event.target.value);
-    renderRoom();
-    app.querySelector('#unit-select').focus();
+    const choices = figureChoices(event.target.value);
+    switchLesson(room, choices.find(item => item.figureId) ?? choices[0], '#unit-select');
   });
+  app.querySelector('#figure-select')?.addEventListener('change', event => {
+    switchLesson(room, findLesson(unit.id, event.target.value), '#figure-select');
+  });
+  const cast = app.querySelector('#cast-dialog');
+  app.querySelector('#open-cast').addEventListener('click', () => cast.showModal());
+  for (const button of cast.querySelectorAll('.cast-person')) {
+    button.addEventListener('click', () => {
+      cast.close();
+      switchLesson(room, findLesson(button.dataset.unit, button.dataset.figure));
+    });
+  }
   const form = app.querySelector('#chat-form');
   const field = form.elements.message;
   bindDictation(app.querySelector('#dictate'), field, status => showStatus(room, status));
@@ -267,6 +323,7 @@ function nextStage() {
   const { game, room } = match;
   match.pending = null;
   room.status = '';
+  room.stageState = 'idle';
   if (game.phase === 'results') {
     room.log.push({ role: 'assistant', label: unit.person.name, text: game.memory.length >= 2
       ? 'Hafızamdaki parçaları bir araya getirdiniz. Şimdi hatırlattıklarınızdan birini alıp üzerine konuşabiliriz.'
@@ -301,7 +358,7 @@ function bindMatch() {
       room.memory = [...new Set([...game.memory, ...previous.memory])].slice(0, 4);
       room.turns = previous.turns;
       room.log = [...previous.log, ...room.log];
-      rooms.set(unit.id, room);
+      rooms.set(roomKey(unit), room);
       match = null;
       renderRoom({ focus: true });
       app.querySelector('[name=message]').focus();
@@ -360,10 +417,12 @@ function finishStage(current, assessment, evaluated, source) {
   const { game, room, pending } = current;
   const phase = game.phase;
   const startScore = game.scores[game.team];
+  const memoriesBefore = game.memory.length;
   if (phase === 'question') current.previousAnswers[game.team] = game.draft[0] || '';
   const facts = phase === 'memory' ? (assessment?.accepted ?? []).map(index => game.draft[index]).filter(Boolean) : [];
   review(game, { score: assessment?.score, facts, evaluated });
   const delta = game.scores[pending.team] - startScore;
+  room.stageState = game.memory.length > memoriesBefore ? 'recalled' : 'idle';
   pending.state = 'ready';
   room.log.push({
     role: assessment ? 'assistant' : 'system',
@@ -409,11 +468,12 @@ async function evaluateMatch(current) {
   room.controller = controller;
   pending.state = 'loading';
   room.status = '';
+  room.stageState = 'thinking';
   renderRoom();
   const timeout = setTimeout(() => controller.abort(), 17_500);
   let verdict, source, complete = false;
   try {
-    await readEvents({ kind: 'evaluate', unitId: unit.id, phase: game.phase, team: game.team,
+    await readEvents({ kind: 'evaluate', unitId: unit.id, figureId: unit.figureId, phase: game.phase, team: game.team,
       answers: game.draft, memory: game.memory, previousAnswer: previousAnswers[game.team] }, controller.signal, event => {
       source ||= event.source;
       verdict ||= event.assessment;
@@ -424,6 +484,7 @@ async function evaluateMatch(current) {
   } catch {
     if (match !== current) return;
     pending.state = 'failed';
+    room.stageState = 'idle';
     room.status = 'Değerlendirme bağlantısı kurulamadı.';
     renderRoom();
   } finally {
@@ -453,9 +514,10 @@ async function sendChat(room, message) {
   send.disabled = true;
   stop.hidden = false;
   showStatus(room, 'Figür düşünüyor…');
+  showStage(room, 'thinking');
   const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, 17_500);
   try {
-    await readEvents({ unitId: unit.id, message, memory: room.memory, history: room.turns.slice(-4) }, controller.signal, event => {
+    await readEvents({ unitId: unit.id, figureId: unit.figureId, message, memory: room.memory, history: room.turns.slice(-4) }, controller.signal, event => {
       source ||= event.source;
       complete ||= !!event.done;
       if (event.delta) {
@@ -463,6 +525,7 @@ async function sendChat(room, message) {
         reply.body.textContent = reply.entry.text;
         reply.messages.scrollTop = reply.messages.scrollHeight;
         showStatus(room, 'Yanıt geliyor…');
+        showStage(room, 'speaking');
       }
     });
     if (!complete || !reply.entry.text.trim()) throw new Error('chat_incomplete');
@@ -482,6 +545,7 @@ async function sendChat(room, message) {
   } finally {
     clearTimeout(timeout);
     room.controller = null;
+    showStage(room, 'idle');
     if (activeRoom() === room) {
       app.querySelector('#send-chat').disabled = false;
       app.querySelector('#stop-chat').hidden = true;
@@ -490,7 +554,7 @@ async function sendChat(room, message) {
 }
 
 window.render_game_to_text = () => JSON.stringify({
-  route, view: subject ? (match ? 'match' : 'chat') : 'home', unit: unit?.id,
+  route, view: subject ? (match ? 'match' : 'chat') : 'home', unit: unit?.id, figure: unit?.figureId,
   phase: match?.game.phase, team: match?.game.team, scores: match?.game.scores,
   memory: subject ? (match?.game.memory ?? activeRoom().memory) : [],
   pending: match?.pending?.state, chatTurns: subject ? activeRoom().turns.length : 0,

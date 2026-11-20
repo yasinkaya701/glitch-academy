@@ -56,7 +56,7 @@ export function bindDictation(button, field, status) {
   });
 }
 
-export function bindReading(button, getText, status) {
+export function bindReading(button, getText, status, onSpeaking) {
   if (!button || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
   button.hidden = false;
   button.addEventListener('click', () => {
@@ -71,12 +71,18 @@ export function bindReading(button, getText, status) {
     utterance.lang = 'tr-TR';
     utterance.rate = 0.92;
     if (voice) utterance.voice = voice;
-    const reset = () => { button.textContent = 'Sesli oku'; };
+    const reset = () => {
+      button.textContent = 'Sesli oku';
+      onSpeaking?.(false);
+    };
     const complete = () => {
       if (reading?.utterance !== utterance) return;
       reading = null;
       reset();
     };
+    utterance.addEventListener('start', () => {
+      if (reading?.utterance === utterance) onSpeaking?.(true);
+    });
     utterance.addEventListener('end', complete);
     utterance.addEventListener('error', event => {
       if (reading?.utterance !== utterance) return;

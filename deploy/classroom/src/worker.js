@@ -1,11 +1,6 @@
 import { normalized } from '../public/game.js';
-import { philosophy } from '../public/philosophy.js';
-import { history } from '../public/history.js';
+import { findLesson } from '../public/lessons.js';
 
-const units = new Map([
-  ...philosophy.map(unit => [unit.id, { ...unit, subject: 'philosophy' }]),
-  ...history.map(unit => [unit.id, { ...unit, subject: 'history' }]),
-]);
 const backupModel = '@cf/google/gemma-4-26b-a4b-it';
 const maxRequestBytes = 12_000;
 const responseHeaders = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
@@ -44,7 +39,7 @@ async function readRequest(request) {
 }
 
 function validRequest(input) {
-  if (!input || !units.has(input.unitId) || !textWithin(input.message, 500)) return false;
+  if (!textWithin(input.message, 500)) return false;
   if (!Array.isArray(input.memory) || input.memory.length > 4 || input.memory.some(note => !textWithin(note, 200))) return false;
   if (!Array.isArray(input.history) || input.history.length > 4 || input.history.length % 2 !== 0) return false;
   return input.history.every((entry, index) => {
@@ -54,7 +49,6 @@ function validRequest(input) {
 }
 
 function validEvaluationRequest(input) {
-  if (!input || input.kind !== 'evaluate' || !units.has(input.unitId)) return false;
   if (!['question', 'memory'].includes(input.phase) || ![0, 1].includes(input.team)) return false;
   const isQuestion = input.phase === 'question';
   if (!Array.isArray(input.answers) || input.answers.length < 1 ||
@@ -317,7 +311,7 @@ async function readRemoteEvaluation(result, input, deadline, signal) {
   return { source, assessment };
 }
 
-function evaluationStream(env, input, requestSignal) {
+function evaluationStream(env, unit, input, requestSignal) {
   const encoder = new TextEncoder();
   const controller = new AbortController();
   const stop = () => controller.abort();
@@ -325,7 +319,6 @@ function evaluationStream(env, input, requestSignal) {
   if (requestSignal.aborted) stop();
   else requestSignal.addEventListener('abort', stop, { once: true });
   const { signal } = controller;
-  const unit = units.get(input.unitId);
   const instructions = evaluationInstructions(unit, input);
   const messages = [{
     role: 'user',
@@ -483,16 +476,17 @@ export default {
       if (!request.headers.get('content-type')?.startsWith('application/json')) return json({ error: 'invalid_request' }, 415);
       const input = await readRequest(request);
       const evaluation = input?.kind === 'evaluate';
-      if (evaluation ? !validEvaluationRequest(input) : !validRequest(input)) return json({ error: 'invalid_request' }, 400);
+      const unit = findLesson(input?.unitId, input?.figureId);
+      if (!unit || (evaluation ? !validEvaluationRequest(input) : !validRequest(input))) return json({ error: 'invalid_request' }, 400);
       if (env.CHAT_LIMIT) {
         const key = request.headers.get('CF-Connecting-IP') || request.headers.get('x-vercel-forwarded-for') || 'unknown';
         const { success } = await env.CHAT_LIMIT.limit({ key });
         if (!success) return json({ error: 'too_many_requests' }, 429);
       }
-      if (evaluation) return new Response(evaluationStream(env, input, request.signal), {
+      if (evaluation) return new Response(evaluationStream(env, unit, input, request.signal), {
         headers: { ...responseHeaders, 'Content-Type': 'application/x-ndjson; charset=utf-8' },
       });
-      return new Response(answerStream(env, units.get(input.unitId), input, request.signal), {
+      return new Response(answerStream(env, unit, input, request.signal), {
         headers: { ...responseHeaders, 'Content-Type': 'application/x-ndjson; charset=utf-8' },
       });
     }

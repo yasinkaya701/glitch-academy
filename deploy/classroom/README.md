@@ -17,3 +17,9 @@ Bu dizinde Node.js 22 ile `npm test` çalıştırılır. Vercel statik dosyalar�
 4. Gateway erişimi yoksa Gemma 4 yanıtları kaynak etiketiyle görünür. İki sağlayıcı da yanıt veremezse sohbet ünitenin **Hazır tartışma kartı**na döner. Yarışmada aynı yanıt yeniden gönderilebilir veya puansız geçilebilir. Değerlendirilmemiş tur kaldığında kazanan ilan edilmez.
 
 Başarı ve gecikme kontrolü için ayrı ders bağlantılarını taze tarayıcıda açın. Felsefede güncel bir örnek ve takip sorusu, tarihte kronoloji ve toplumsal etki sorun. Sonuçta yanıtın kaynak etiketini ve doğru zamanda ulaştığını kontrol edin.
+
+## Yanlış Dünya sahneleri
+
+**Figürler** menüsündeki 14 karakterin görselleri ve mekânları özgün Godot istasyonlarından gelir. Aynı figürler serbest sohbette ve takım yarışmasında kullanılır. Felsefe figürleri düşünürken ve konuşurken istasyonun mimik karelerini kullanır. Tarih figürleri özgün portre ve duruşla sunulur. YKS ünitelerinde ayrıca özgün kadronun dışındaki profiller seçilebilir.
+
+WebP dosyalarını özgün istasyon kaynaklarından yeniden çıkarmak için Pillow ile `python3 tools/export_stage_art.py --source /yanlis-dunya-deposu` çalıştırılır. Canlı sahneler sürümlenen `public/stage/` dosyalarından yüklenir.
