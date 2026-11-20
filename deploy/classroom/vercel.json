@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "outputDirectory": "public",
+  "regions": ["fra1"],
+  "functions": { "api/chat.js": { "maxDuration": 20 }, "api/transcribe.js": { "maxDuration": 18 } },
+  "rewrites": [
+    { "source": "/felsefe", "destination": "/index.html" },
+    { "source": "/tarih", "destination": "/index.html" },
+    { "source": "/cografya", "destination": "/index.html" }
+  ],
+  "headers": [{
+    "source": "/(.*)",
+    "headers": [
+      { "key": "X-Content-Type-Options", "value": "nosniff" },
+      { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+      { "key": "Permissions-Policy", "value": "camera=(), microphone=(self), geolocation=()" },
+      { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'" }
+    ]
+  }]
+}
