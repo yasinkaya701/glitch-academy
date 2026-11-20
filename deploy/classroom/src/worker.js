@@ -1,5 +1,6 @@
 import { normalized } from '../public/game.js';
 import { findLesson } from '../public/lessons.js';
+import { transcribeRequest } from './transcribe.js';
 
 const backupModel = '@cf/google/gemma-4-26b-a4b-it';
 const maxRequestBytes = 12_000;
@@ -108,9 +109,11 @@ function characterInstructions(unit, competition = false) {
   const { person, subject } = unit;
   const lesson = subject === 'history'
     ? 'Kronoloji sorusunda tarih ve olayı zaman sırasına koy. Sebep-sonuç ile eş zamanlı olmayı karıştırma. Sosyokültürel sorularda zanaat, eğitim, ticaret, hukuk veya gündelik yaşamdan ilgili somut bir örnek ver. Olguyu yorumdan ayır. Kendi katkını sorarlarsa üslubunla ve bilinen eyleminle yanıtla. Belgelenmemiş kişisel anı, ayrıntı veya kalabalığın iç duygularını tanıklık gibi anlatma. Ölümünden sonraki olaylarda görgü tanığı gibi konuşma. Verilen üç olayın sırası soruluyorsa çizelgedeki tarihleri aynen koru. Kendi dönemine veya soruya ait olmayan dördüncü bir olay ekleme. Tarihler yaklaşık veya tartışmalıysa bunu belirt.'
-    : 'Düşünürün ana görüşünü öğrenci düzeyinde örnekle. Bugünkü bir duruma görüşünü uygularken “Bugüne uyarlarsam” de. Diğer filozofların görüşlerini bu düşünürün ağzına koyma. Gerekçe, karşı örnek veya bir ayrım üzerinden tartışmayı ilerlet.';
+    : subject === 'geography'
+      ? 'Coğrafi süreçleri konum, ölçek ve neden-sonuç üzerinden anlat. Verilen koordinatları ve yönleri koru. Doğal ve beşerî etkenleri bir örnekte ilişkilendir. Kaynaksız güncel istatistik veya tarih uydurma.'
+      : 'Düşünürün ana görüşünü öğrenci düzeyinde örnekle. Bugünkü bir duruma görüşünü uygularken “Bugüne uyarlarsam” de. Diğer filozofların görüşlerini bu düşünürün ağzına koyma. Gerekçe, karşı örnek veya bir ayrım üzerinden tartışmayı ilerlet.';
   return [
-    'Türkçe lise etkinliğinde tarihî veya felsefi bir figürün eğitim amaçlı canlandırmasısın. Kendini, düşüncelerini ve dönemini hatırlıyorsun.',
+    'Türkçe lise etkinliğinde seçilen figürün veya alan rehberinin eğitim amaçlı canlandırmasısın. Kendini, düşüncelerini ve dönemini hatırlıyorsun.',
     `Rol: ${person.name}. ${person.role}. Üslup: ${person.voice}. Bakış açısı: ${person.lens}.`,
     `Ünite: ${unit.title}. Hedef: ${unit.focus}`,
     `Dayanaklar: ${person.facts.join(' | ')}`,
@@ -470,6 +473,7 @@ export default {
     if (url.pathname === '/api/health' && request.method === 'GET') {
       return json({ ok: true, primary: 'gpt-6-luna', lunaEnabled: env.LUNA_PAUSED !== '1' || !!env.OPENAI_API_KEY });
     }
+    if (url.pathname === '/api/transcribe') return transcribeRequest(request, env);
     if (url.pathname === '/api/chat') {
       if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
       if (request.headers.get('origin') !== url.origin) return json({ error: 'forbidden' }, 403);

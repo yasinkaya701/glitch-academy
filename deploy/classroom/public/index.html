@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f4ee">
-  <meta name="description" content="Felsefe düşünürleri ve tarihî figürlerle Türkçe sohbet edin. İsterseniz iki takıma ayrılıp figürün hafızasını tamamlayın.">
+  <meta name="description" content="Felsefe, tarih ve coğrafyayı sahnede sesli sohbetle keşfedin. İki takıma ayrılıp Yanlış Dünya’da yarışın.">
   <title>Sınıf Sohbetleri · Yanlış Dünya</title>
   <link rel="stylesheet" href="/style.css">
   <script type="module" src="/app.js"></script>
@@ -16,6 +16,7 @@
       <nav aria-label="Ana menü">
         <a href="/felsefe">Felsefe</a>
         <a href="/tarih">Tarih</a>
+        <a href="/cografya">Coğrafya</a>
         <button class="link-btn" id="rules-open" type="button">Oyun kuralları</button>
       </nav>
     </div>
@@ -30,10 +31,11 @@
   <dialog id="rules" aria-labelledby="rules-title">
     <div class="dialog-head"><h2 id="rules-title">Oyun kuralları</h2><form method="dialog"><button class="quiet" aria-label="Kuralları kapat">Kapat</button></form></div>
     <h3>Serbest sohbet</h3>
-    <p>Ders bağlantısını açınca figürle konuşmaya başlayabilirsiniz. YKS ünitesini değiştirerek başka bir figüre geçin. Hazır sorulardan birini seçin veya kendi sorunuzu yazın. Destekleyen tarayıcılarda sesle yazdırma ve sesli okuma kullanabilirsiniz.</p>
+    <p>Ders bağlantısını açınca figürle konuşmaya başlayabilirsiniz. YKS ünitesini değiştirerek başka bir figüre geçin. Hazır sorulardan birini seçin veya kendi sorunuzu yazın. Mikrofona basıp konuşun. Ara verince sözleriniz soruya dönüşür. Sesli yanıtı dilediğiniz zaman kapatabilirsiniz.</p>
     <ul class="rule-list">
       <li><strong>Felsefe.</strong> “Ana fikirlerini anlatır mısın?”, “Sen bu durumda ne derdin?” veya “Görüşüme bir karşı örnek verir misin?”</li>
       <li><strong>Tarih.</strong> “Bu üç olayı zaman sırasına dizer misin?”, “Bu gelişme halkın gündelik yaşamını nasıl değiştirdi?” veya “Bu olayı kendi döneminden nasıl yorumlardın?”</li>
+      <li><strong>Coğrafya.</strong> “Bu koordinatlardan yönü nasıl bulurum?” veya “Kıyıyla iç kesimin iklimi neden farklı?”</li>
     </ul>
     <h3>Takım yarışması</h3>
     <ol class="rule-list">
@@ -42,7 +44,7 @@
       <li><strong>Hafıza turu.</strong> Aynı takım figür, görüşleri veya dönemi hakkında en fazla iki ek bilgi yazar. Varsayılan süre 30 saniye. Figürün doğruladığı her yeni bilgi 5 puan eder ve hafızasına eklenir. Süre dolduğunda o ana kadar yazdıklarınız gönderilir.</li>
       <li><strong>Sonuç.</strong> İki takım da oynayınca en yüksek puan kazanır. Eşit puan beraberliktir. İki farklı bilgiyle figürün hafızası tamamlanır. Sonuçtan aynı figürle sohbete devam edebilir ve hatırlattıklarınızı sorabilirsiniz.</li>
     </ol>
-    <p class="note">Sohbet, yarışma yanıtları ve hafıza notları yanıt üretmek için modele gönderilir. Sesle yazdırma tarayıcının konuşma tanıma hizmetini kullanabilir. Kişisel bilgi paylaşmayın.</p>
+    <p class="note">Sohbet, yarışma yanıtları ve hafıza notları yanıt üretmek için modele gönderilir. Mikrofonu açtığınızda kısa ses kaydı yazıya çevrilmek üzere konuşma tanıma hizmetine gönderilir. Sesli yanıt cihazın tarayıcı sesini kullanır. Kişisel bilgi paylaşmayın.</p>
   </dialog>
 </body>
 </html>

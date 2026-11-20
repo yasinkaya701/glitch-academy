@@ -1,11 +1,12 @@
 import { subjects, findLesson, figureChoices, originalCast } from './lessons.js';
-import { stageAsset, stageMarkup, setStageState } from './stage.js';
+import { stageAsset, stageMarkup, setStageState, setStageMouth } from './stage.js';
 import { startGame, remaining, begin, pause, lock, review, normalized } from './game.js';
-import { bindDictation, bindReading, stopVoice } from './voice.js';
+import { bindDictation, bindReading, stopVoice, supportsVoiceOutput } from './voice.js';
 
 const routes = {
   '/felsefe': { title: 'Fikir Meydanı', key: 'philosophy', primary: ['felsefeyi-tanima', 'socrates'] },
   '/tarih': { title: 'Zaman Arşivi', key: 'history', primary: ['milli-mucadele', 'ataturk'] },
+  '/cografya': { title: 'Coğrafya Atlası', key: 'geography', primary: ['cografya-harita-ve-konum'] },
 };
 const route = location.pathname.replace(/\/$/, '') || '/';
 const subject = routes[route];
@@ -19,6 +20,9 @@ const requested = findLesson(selection.get('unit'), selection.get('figure') || '
 let unit = subject && (requested?.subject === subject.key ? requested : findLesson(...subject.primary));
 let match = null;
 let timer;
+let observeMicrophone;
+let voiceReplies = false;
+let voicePreferenceSet = false;
 let setup = { teams: ['Takım 1', 'Takım 2'], questionSeconds: 45, memorySeconds: 30 };
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -27,25 +31,31 @@ const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
 
 function mount(markup, focus) {
   clearInterval(timer);
+  observeMicrophone?.disconnect();
   stopVoice();
   app.innerHTML = markup;
   if (focus) app.querySelector('h1')?.focus({ preventScroll: true });
 }
 
 function renderHome() {
+  const cards = [
+    ['/felsefe', 'Felsefe', 'Düşünürlerin fikirlerini kendi örneklerinle tartış.', 'socrates'],
+    ['/tarih', 'Tarih', 'Figürlere dönemlerini, kararlarını ve olayların sırasını sor.', 'ataturk'],
+    ['/cografya', 'Coğrafya', 'Harita, iklim ve yerleşme üzerine atlas rehberleriyle konuş.', ''],
+  ];
   app.classList.add('landing');
-  mount(`<section class="intro"><h1>Sınıf Sohbetleri</h1>
-    <p>Bir düşünürle fikrini tartış ya da tarihî bir figüre dönemini sor.</p></section>
-    <div class="subjects">
-      <a class="subject" href="/felsefe"><img class="subject-figure" src="/stage/socrates/idle.webp" alt=""><small>Felsefe</small><h2>Fikir Meydanı</h2>
-        <p>Sokrates, Platon ve diğer düşünürlerle konuş.</p><span>Felsefede sohbete gir →</span></a>
-      <a class="subject history" href="/tarih"><img class="subject-figure" src="/stage/ataturk/idle.webp" alt=""><small>Tarih</small><h2>Zaman Arşivi</h2>
-        <p>Halide Edib, Evliya Çelebi ve diğer figürlere kendi dönemlerini sor.</p><span>Tarihte sohbete gir →</span></a>
-    </div>`);
+  mount(`<section class="intro landing-intro"><h1>Sahneyi seç, konuş.</h1>
+    <p>Bir derse gir, figüre sesinle soru sor ya da iki takımla yarış.</p></section>
+    <div class="subjects entry-grid">${cards.map(([href, name, text, figure]) => `<a class="entry-card" href="${href}">
+      <div class="entry-art ${figure ? '' : 'entry-atlas'}"><img class="entry-setting" src="${figure ? stageAsset(figure, 'setting') : '/stage/geography/atlas.webp'}" alt="">
+      ${figure ? `<img class="entry-actor" src="${stageAsset(figure, 'idle')}" alt="">` : ''}</div>
+      <div class="entry-content"><h2>${name}</h2><p>${text}</p><span>Sahneyi aç →</span></div>
+    </a>`).join('')}</div>`);
 }
 
 function greeting() {
-  return route === '/tarih'
+  if (subject.key === 'geography') return `Ben ${unit.person.name}. Haritadan başlayalım. Yerleri, yönleri ya da yaşadığınız çevreyi bana sorabilirsiniz.`;
+  return subject.key === 'history'
     ? `Ben ${unit.person.name}. Dönemime dair neyi merak ediyorsunuz? Olayların sırasından ya da o günlerde insanların nasıl yaşadığından başlayabiliriz.`
     : `Ben ${unit.person.name}. Düşüncelerimden birini konuşalım. İsterseniz ortaya bir fikir atın, birlikte sınayalım.`;
 }
@@ -75,7 +85,7 @@ function activeRoom() {
 function unitOptions() {
   const lessons = subjects[subject.key];
   const grades = [...new Set(lessons.map(item => item.grade))];
-  return grades.map(grade => `<optgroup label="${grade === 12 ? '12. sınıf / İnkılap Tarihi' : `${grade}. sınıf`}">${lessons.filter(item => item.grade === grade).map(item =>
+  return grades.map(grade => `<optgroup label="${grade === 12 && subject.key === 'history' ? '12. sınıf / İnkılap Tarihi' : `${grade}. sınıf`}">${lessons.filter(item => item.grade === grade).map(item =>
     `<option value="${escapeHtml(item.id)}" ${item.id === unit.id ? 'selected' : ''}>${escapeHtml(item.title)}</option>`,
   ).join('')}</optgroup>`).join('');
 }
@@ -146,13 +156,14 @@ function matchPanel() {
 }
 
 function voiceControls({ dictation = true } = {}) {
-  return `${dictation ? '<button class="quiet secondary-action" id="dictate" type="button" aria-pressed="false" hidden>Sesle yaz</button>' : ''}
-    <button class="quiet secondary-action read-button" id="read-aloud" type="button" hidden>Sesli oku</button>`;
+  return `${dictation ? '<button class="quiet secondary-action" id="dictate" type="button" aria-pressed="false" hidden>Mikrofon</button>' : ''}
+    <button class="quiet secondary-action read-button" id="read-aloud" type="button" hidden>Sesli oku</button>
+    ${supportsVoiceOutput() ? `<label class="voice-switch"><input id="voice-replies" type="checkbox" ${voiceReplies ? 'checked' : ''}> Sesli yanıt</label>` : ''}`;
 }
 
 function freeControls() {
   return `<form class="stack composer" id="chat-form">
-    <label class="field"><span>Sorunuz</span><textarea name="message" maxlength="500" required rows="2" placeholder="Figüre bir şey sor…"></textarea></label>
+    <label class="field"><span>Sorunuz</span><textarea name="message" maxlength="500" required rows="2" placeholder="Konuşmak için mikrofonu aç ya da yaz…"></textarea></label>
     <div class="row"><button class="primary" id="send-chat">Gönder</button>${voiceControls()}
     <button class="quiet secondary-action" id="stop-chat" type="button" hidden>Yanıtı durdur</button></div>
   </form>`;
@@ -192,6 +203,9 @@ function matchControls() {
 function renderRoom({ focus = false } = {}) {
   const room = activeRoom();
   const { person } = unit;
+  const hasCast = subject.key !== 'geography';
+  const scene = stageMarkup(unit, match?.pending?.state === 'loading' ? 'thinking' : room.stageState, match?.game.memory.length ?? room.memory.length, escapeHtml);
+  app.classList.add('room-screen');
   mount(`<section class="room-heading">
       <div><p class="room-mode">${subject.title} / ${match ? 'Takım yarışması' : 'Serbest sohbet'}</p>
       <h1 tabindex="-1">${escapeHtml(person.name)}</h1><p class="subtle">${escapeHtml(person.role)}</p></div>
@@ -199,29 +213,53 @@ function renderRoom({ focus = false } = {}) {
         ${match
           ? '<button class="quiet secondary-action" id="leave-match" type="button">Yarışmadan çık</button>'
           : `<label class="field">YKS ünitesi<select id="unit-select">${unitOptions()}</select></label>
-          ${figureSelector()}<div class="row"><button class="quiet secondary-action" id="open-cast" type="button">Figürler</button>
+          ${figureSelector()}<div class="row">${hasCast ? '<button class="quiet secondary-action" id="open-cast" type="button">Figürler</button>' : ''}
           <button class="quiet" id="open-match" type="button">Takım yarışması</button></div>`}
       </div>
     </section>
-    <div class="chat-grid">
+    <div class="chat-grid stage-layout ${scene ? 'has-scene' : ''}">
+      ${scene}
       <section class="panel stack conversation ${match ? 'match-conversation' : ''}" aria-label="${escapeHtml(person.name)} ile sohbet">
         <p class="note conversation-note">Eğitim amaçlı canlandırma</p>
         <div class="messages" id="messages" role="log" aria-label="Sohbet mesajları"></div>
         ${match ? matchControls() : freeControls()}
         <p class="note status" id="chat-status" role="status">${escapeHtml(room.status || (match ? '' : 'Kişisel bilgi yazmayın.'))}</p>
       </section>
-      <aside class="room-side">
-        ${stageMarkup(unit, match?.pending?.state === 'loading' ? 'thinking' : room.stageState, match?.game.memory.length ?? room.memory.length, escapeHtml)}
-        ${match ? matchPanel() : contextPanel(room)}
-      </aside>
+      ${match ? matchPanel() : contextPanel(room)}
     </div>
-    ${match ? '' : setupDialog() + castDialog()}`, focus);
+    ${match ? '' : setupDialog() + (hasCast ? castDialog() : '')}`, focus);
   const messages = app.querySelector('#messages');
   for (const entry of room.log.slice(-60)) drawBubble(messages, entry);
   messages.scrollTop = messages.scrollHeight;
-  bindReading(app.querySelector('#read-aloud'), () => room.log.findLast(entry => entry.role === 'assistant' && entry.text)?.text, status => showStatus(room, status), speaking => showStage(room, speaking ? 'speaking' : 'idle'));
+  room.speak = bindReading(app.querySelector('#read-aloud'), () => room.log.findLast(entry => entry.role === 'assistant' && entry.text)?.text,
+    status => showStatus(room, status), speaking => showStage(room, speaking ? 'speaking' : 'idle'), mouth => {
+      if (activeRoom() === room) setStageMouth(mouth);
+    });
+  app.querySelector('#voice-replies')?.addEventListener('change', event => {
+    voicePreferenceSet = true;
+    voiceReplies = event.target.checked;
+    if (!voiceReplies) stopVoice();
+  });
   if (match) bindMatch();
   else bindFree(room);
+  bindStageMicrophone();
+}
+
+function bindStageMicrophone() {
+  const control = app.querySelector('#dictate');
+  const stage = app.querySelector('#stage-mic');
+  if (!stage || !control || control.hidden) return;
+  stage.hidden = false;
+  app.querySelector('.conversation').classList.add('stage-mic-wired');
+  const sync = () => {
+    stage.textContent = control.textContent;
+    stage.disabled = control.disabled;
+    stage.setAttribute('aria-pressed', control.getAttribute('aria-pressed'));
+  };
+  stage.addEventListener('click', () => control.click());
+  observeMicrophone = new MutationObserver(sync);
+  observeMicrophone.observe(control, { attributes: true, attributeFilter: ['aria-pressed', 'disabled'], childList: true });
+  sync();
 }
 
 function drawBubble(messages, entry) {
@@ -276,8 +314,8 @@ function bindFree(room) {
     switchLesson(room, findLesson(unit.id, event.target.value), '#figure-select');
   });
   const cast = app.querySelector('#cast-dialog');
-  app.querySelector('#open-cast').addEventListener('click', () => cast.showModal());
-  for (const button of cast.querySelectorAll('.cast-person')) {
+  app.querySelector('#open-cast')?.addEventListener('click', () => cast.showModal());
+  for (const button of cast?.querySelectorAll('.cast-person') ?? []) {
     button.addEventListener('click', () => {
       cast.close();
       switchLesson(room, findLesson(button.dataset.unit, button.dataset.figure));
@@ -285,14 +323,24 @@ function bindFree(room) {
   }
   const form = app.querySelector('#chat-form');
   const field = form.elements.message;
-  bindDictation(app.querySelector('#dictate'), field, status => showStatus(room, status));
-  form.addEventListener('submit', event => {
-    event.preventDefault();
+  const sendFromField = () => {
     const message = field.value.trim();
     if (message && !room.controller) {
       field.value = '';
-      sendChat(room, message);
+      void sendChat(room, message);
     }
+  };
+  bindDictation(app.querySelector('#dictate'), field, status => showStatus(room, status), {
+    onState: state => showStage(room, state),
+    onTranscript: () => {
+      const checkbox = app.querySelector('#voice-replies');
+      if (checkbox && !voicePreferenceSet) voiceReplies = checkbox.checked = true;
+      sendFromField();
+    },
+  });
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    sendFromField();
   });
   app.querySelectorAll('.chip').forEach(button => button.addEventListener('click', () => {
     field.value = button.textContent;
@@ -336,6 +384,7 @@ function nextStage() {
     begin(game);
   }
   renderRoom();
+  if (voiceReplies) room.speak?.();
 }
 
 function bindMatch() {
@@ -372,7 +421,7 @@ function bindMatch() {
   const toggle = app.querySelector('#clock-toggle');
   const send = app.querySelector('#submit-stage');
   const dictate = app.querySelector('#dictate');
-  if (dictate) bindDictation(dictate, inputs[0], status => showStatus(room, status));
+  if (dictate) bindDictation(dictate, inputs[0], status => showStatus(room, status), { onState: state => showStage(room, state) });
   const submit = (skip = false) => {
     const current = match;
     if (game.locked) return;
@@ -432,6 +481,7 @@ function finishStage(current, assessment, evaluated, source) {
   room.status = evaluated ? `+${delta} puan${source ? ' · ' + providerName(source) : ''}` : '';
   renderRoom();
   app.querySelector('#next-stage')?.focus({ preventScroll: true });
+  if (voiceReplies && assessment?.reply) room.speak?.(assessment.reply);
 }
 
 async function readEvents(payload, signal, onEvent) {
@@ -507,11 +557,13 @@ async function sendChat(room, message) {
   room.controller = controller;
   const send = app.querySelector('#send-chat');
   const stop = app.querySelector('#stop-chat');
+  const dictate = app.querySelector('#dictate');
   append(room, 'user', 'Sınıf', message);
   const reply = append(room, 'assistant', unit.person.name);
   const card = discussionCard(message);
-  let source, complete = false, timedOut = false;
+  let source, complete = false, timedOut = false, receivedReply = false;
   send.disabled = true;
+  if (dictate) dictate.disabled = true;
   stop.hidden = false;
   showStatus(room, 'Figür düşünüyor…');
   showStage(room, 'thinking');
@@ -525,10 +577,11 @@ async function sendChat(room, message) {
         reply.body.textContent = reply.entry.text;
         reply.messages.scrollTop = reply.messages.scrollHeight;
         showStatus(room, 'Yanıt geliyor…');
-        showStage(room, 'speaking');
+        showStage(room, 'typing');
       }
     });
     if (!complete || !reply.entry.text.trim()) throw new Error('chat_incomplete');
+    receivedReply = true;
     room.turns.push({ role: 'user', content: message }, { role: 'assistant', content: reply.entry.text.trim().slice(0, 1000) });
     showStatus(room, `Canlı yanıt · ${providerName(source)}`);
   } catch {
@@ -549,6 +602,9 @@ async function sendChat(room, message) {
     if (activeRoom() === room) {
       app.querySelector('#send-chat').disabled = false;
       app.querySelector('#stop-chat').hidden = true;
+      const mic = app.querySelector('#dictate');
+      if (mic) mic.disabled = false;
+      if (voiceReplies && receivedReply) room.speak?.(reply.entry.text);
     }
   }
 }

@@ -1,8 +1,9 @@
 import { philosophy } from './philosophy.js';
 import { history } from './history.js';
+import { geography } from './geography.js';
 import { originalFigures } from './original-figures.js';
 
-export const subjects = { philosophy, history };
+export const subjects = { philosophy, history, geography };
 const byUnit = new Map();
 for (const [subject, lessons] of Object.entries(subjects)) {
   for (const unit of lessons) byUnit.set(unit.id, { ...unit, subject });
@@ -11,7 +12,7 @@ for (const [subject, lessons] of Object.entries(subjects)) {
 export function figureChoices(unitId) {
   const unit = byUnit.get(unitId);
   if (!unit) return [];
-  const cast = originalFigures[unit.subject].filter(figure => figure.unitId === unitId);
+  const cast = (originalFigures[unit.subject] ?? []).filter(figure => figure.unitId === unitId);
   const original = cast.find(figure => !figure.person);
   return [
     { ...unit, figureId: original?.id ?? '' },
@@ -29,5 +30,5 @@ export function findLesson(unitId, figureId = '') {
 }
 
 export function originalCast(subject) {
-  return originalFigures[subject].map(({ id, unitId }) => findLesson(unitId, id));
+  return (originalFigures[subject] ?? []).map(({ id, unitId }) => findLesson(unitId, id));
 }

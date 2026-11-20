@@ -38,3 +38,17 @@ test('alternate history figures supply their own chronology and assessment rubri
     assert.equal(lesson.person.timeline.length, 3);
   }
 });
+
+test('history figures have mouth frames and geography lessons resolve independently', async () => {
+  for (const figure of originalFigures.history) {
+    for (const file of ['talk-mid', 'talk-open']) {
+      assert.ok((await stat(new URL(`../public/stage/${figure.id}/${file}.webp`, import.meta.url))).size > 100);
+    }
+  }
+  const atlas = findLesson('cografya-harita-ve-konum');
+  assert.equal(atlas.subject, 'geography');
+  assert.equal(atlas.scene, 'atlas');
+  assert.match(atlas.person.name, /Reis/);
+  assert.equal(findLesson(atlas.id, 'socrates'), null);
+  assert.ok((await stat(new URL('../public/stage/geography/atlas.webp', import.meta.url))).size > 50_000);
+});

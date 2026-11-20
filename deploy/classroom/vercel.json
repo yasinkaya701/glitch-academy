@@ -3,10 +3,11 @@
   "framework": null,
   "outputDirectory": "public",
   "regions": ["fra1"],
-  "functions": { "api/chat.js": { "maxDuration": 20 } },
+  "functions": { "api/chat.js": { "maxDuration": 20 }, "api/transcribe.js": { "maxDuration": 18 } },
   "rewrites": [
     { "source": "/felsefe", "destination": "/index.html" },
-    { "source": "/tarih", "destination": "/index.html" }
+    { "source": "/tarih", "destination": "/index.html" },
+    { "source": "/cografya", "destination": "/index.html" }
   ],
   "headers": [{
     "source": "/(.*)",
