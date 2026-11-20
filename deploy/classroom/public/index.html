@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f4ee">
+  <meta name="description" content="İki takımla oynanan Türkçe felsefe ve tarih sınıf oyunları. Üniteyi seç, figürün hafızasını tamamla ve sohbet et.">
+  <title>Sınıf Sohbetleri · Yanlış Dünya</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="site-bar">
+    <div class="shell bar-inner">
+      <a class="brand" href="/"><span class="mark" aria-hidden="true">✦</span><span>Yanlış Dünya</span></a>
+      <nav aria-label="Ana menü">
+        <a href="/felsefe">Felsefe</a>
+        <a href="/tarih">Tarih</a>
+        <button class="link-btn" id="rules-open" type="button">Oyun kuralları</button>
+      </nav>
+    </div>
+  </header>
+  <main class="shell" id="app">
+    <noscript><section class="intro"><h1>Sınıf Sohbetleri</h1><p>Oyun için tarayıcında JavaScript’i etkinleştir.</p></section></noscript>
+  </main>
+  <footer class="shell site-footer">
+    <span>Yanlış Dünya / Sınıf Sohbetleri</span>
+    <a href="https://ttkb.meb.gov.tr/meb_iys_dosyalar/2025_11/26164023_2026_yks.pdf" target="_blank" rel="noopener noreferrer">MEB 2026 YKS konu ve kazanımları ↗</a>
+  </footer>
+  <dialog id="rules" aria-labelledby="rules-title">
+    <div class="dialog-head"><h2 id="rules-title">Oyun kuralları</h2><form method="dialog"><button class="quiet" aria-label="Kuralları kapat">Kapat</button></form></div>
+    <h3>Takım yarışması</h3>
+    <ol class="rule-list">
+      <li><strong>Hazırlık.</strong> Öğretmen bir ünite seçer. İki takım ortak ekranı kullanır. Sözlü tartışın, bir sözcü yanıtı yazsın.</li>
+      <li><strong>Soru turu.</strong> Figür sıradaki takıma bir açık uçlu soru sorar. Önerilen süre 45 saniye. Süre dolunca eldeki yanıt değerlendirmeye geçer. Öğretmen ana fikre 5, doğru ve gerekçeli cevaba 10, hatalı ya da boş cevaba 0 puan verir.</li>
+      <li><strong>Hafıza turu.</strong> Aynı takım figür, görüşleri veya dönemi hakkında en fazla iki ek bilgi yazar. Önerilen süre 30 saniye. Öğretmenin doğruladığı her yeni bilgi 5 puan. Az önceki cevabı ve önceki takımın bilgisini tekrarlamayın.</li>
+      <li><strong>Sonuç.</strong> İki takım da oynayınca en yüksek puan kazanır. Eşit puan beraberliktir. Sınıf iki farklı bilgi onaylatırsa figürün hafızası tamamlanır ve sonuçtan sohbet açılır.</li>
+    </ol>
+    <h3>Serbest sohbet</h3>
+    <p>Bir üniteyi seçip figür hafızasını hatırlıyorken konuşun. Puan ve süre yok. Verilen yanıtlar sınıf için bir canlandırmadır.</p>
+    <ul class="rule-list">
+      <li><strong>Felsefe.</strong> “Ana fikirlerini anlatır mısın?”, “Sen bu durumda ne derdin?” veya “Görüşüme bir karşı örnek verir misin?”</li>
+      <li><strong>Tarih.</strong> “Bu üç olayı zaman sırasına dizer misin?”, “Bu gelişme halkın gündelik yaşamını nasıl değiştirdi?” veya “Bu olayı kendi döneminden nasıl yorumlardın?”</li>
+    </ul>
+    <p class="note">Takım puanları ve soru yanıtları bu ekranda kalır. Serbest sohbeti açarsanız sohbet metni ve varsa onaylanan hafıza notları modele gönderilebilir. Kişisel bilgi yazmayın.</p>
+  </dialog>
+</body>
+</html>
