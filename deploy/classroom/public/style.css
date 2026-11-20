@@ -143,3 +143,30 @@ dialog h3 { margin-block: .9rem .5rem; }
 @media (prefers-reduced-motion: reduce) {
   .subject { transition: none; }
 }
+
+.room-heading { display: flex; justify-content: space-between; align-items: end; gap: 1.2rem; margin-bottom: 1.35rem; }
+.room-heading h1 { font-size: clamp(2.35rem, 5vw, 4.4rem); }
+.room-heading .subtle { margin-top: .45rem; }
+.room-mode { color: var(--sub); margin-bottom: .45rem; font-size: .88rem; }
+.room-actions { display: flex; align-items: end; flex-wrap: wrap; justify-content: end; gap: .7rem; min-width: 0; }
+.room-actions select { max-width: min(28em, 100%); width: min(27vw, 300px); }
+.conversation { gap: 12px; }
+.conversation-note { font-size: .8rem; }
+.conversation .messages { min-height: min(255px, 32vh); max-height: min(46vh, 460px); }
+.composer, .match-result { border-top: 1px solid var(--line); padding-top: .85rem; }
+.composer textarea { min-height: 70px; }
+.room-context .timeline { padding-top: .2rem; overflow-wrap: anywhere; }
+.timeline-box { border-top: 1px solid var(--line); padding-top: .6rem; }
+.timeline-box summary { font-weight: 700; }
+.timeline-box[open] .timeline { margin-top: .5rem; }
+.message.system { background: var(--paper); border: 1px solid var(--line); }
+.read-button { margin-left: auto; }
+@media (max-width: 760px) {
+  .room-heading { align-items: start; flex-direction: column; gap: .9rem; }
+  .room-actions { width: 100%; justify-content: start; }
+  .room-actions .field { flex: 1; min-width: min(185px, 100%); }
+  .room-actions select { width: 100%; max-width: 100%; }
+  .conversation .messages { min-height: min(190px, 29vh); max-height: min(48vh, 400px); }
+}
+.match-conversation .messages { min-height: min(156px, 22vh); max-height: min(33vh, 285px); }
+.timeline-question { margin-top: .65rem; }

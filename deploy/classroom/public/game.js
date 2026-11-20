@@ -1,7 +1,7 @@
 export function startGame({ teams, questionSeconds, memorySeconds }) {
   return {
     teams, questionSeconds, memorySeconds, team: 0, scores: [0, 0],
-    memory: [], phase: 'question', timer: questionSeconds * 1000,
+    memory: [], unscored: 0, phase: 'question', timer: questionSeconds * 1000,
     deadline: null, locked: false, draft: [],
   };
 }
@@ -38,17 +38,18 @@ export function normalized(value) {
     .normalize('NFD').replace(/\p{M}/gu, '').replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
-export function review(game, { score, facts = [] }) {
+export function review(game, { score, facts = [], evaluated = true }) {
   if (!game.locked) return;
+  if (!evaluated && game.draft.some(Boolean)) game.unscored += 1;
   if (game.phase === 'question') {
-    game.scores[game.team] += game.draft[0] && [5, 10].includes(score) ? score : 0;
+    game.scores[game.team] += evaluated && game.draft[0] && [5, 10].includes(score) ? score : 0;
     game.phase = 'memory';
     game.timer = game.memorySeconds * 1000;
   } else if (game.phase === 'memory') {
     const known = new Set(game.memory.map(normalized));
     for (const fact of game.draft.slice(0, 2)) {
       const key = normalized(fact);
-      if (key && facts.includes(fact) && !known.has(key)) {
+      if (evaluated && key && facts.includes(fact) && !known.has(key)) {
         game.memory.push(fact);
         known.add(key);
         game.scores[game.team] += 5;

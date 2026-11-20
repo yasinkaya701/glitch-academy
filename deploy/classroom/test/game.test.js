@@ -46,3 +46,16 @@ test('a skipped answer and unchecked draft add no points and double review is ig
   assert.deepEqual(game.scores, [0, 0]);
   assert.equal(game.team, 1);
 });
+
+test('a provider outage advances without awarding points and marks the result incomplete', () => {
+  const game = startGame(options);
+  lock(game, ['Yanıt gönderildi']);
+  review(game, { score: 10, evaluated: false });
+  assert.equal(game.phase, 'memory');
+  assert.equal(game.unscored, 1);
+  assert.deepEqual(game.scores, [0, 0]);
+  lock(game, ['Hatırlanan bilgi']);
+  review(game, { facts: ['Hatırlanan bilgi'], evaluated: false });
+  assert.equal(game.unscored, 2);
+  assert.deepEqual(game.memory, []);
+});

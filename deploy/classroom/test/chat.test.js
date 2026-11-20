@@ -75,3 +75,137 @@ test('honors the edge rate limit before invoking inference', async () => {
   const env = { CHAT_LIMIT: { limit: async () => ({ success: false }) }, AI: { run: () => assert.fail('rate-limited') } };
   assert.equal((await worker.fetch(post(), env)).status, 429);
 });
+
+function evaluationPost(body, origin = baseUrl) {
+  return post({
+    kind: 'evaluate', unitId: 'felsefeyi-tanima', phase: 'question', team: 0,
+    answers: ['Çoğunluk yanılıyor olabilir; neden doğru sayılıyor?'], memory: [],
+    previousAnswer: '', ...body,
+  }, origin);
+}
+
+function ndjson(response) {
+  return response.text().then(text => text.trim().split('\n').map(line => JSON.parse(line)));
+}
+
+test('automatically evaluates a question and returns typed character feedback', async () => {
+  const env = {
+    LUNA_PAUSED: '1',
+    AI: { run: async (model, input) => {
+      assert.equal(model, '@cf/google/gemma-4-26b-a4b-it');
+      assert.equal(input.stream, true);
+      assert.doesNotMatch(input.messages[0].content, /Çoğunluk yanılıyor olabilir/);
+      assert.match(input.messages[1].content, /Çoğunluk yanılıyor olabilir/);
+      assert.match(input.messages[0].content, /Çoğunluğun görüşü ile doğruluk arasını sorgulayan/);
+      return { response: JSON.stringify({ score: 10, accepted: [], reply: 'Sokratik bir ayrım kurdunuz.' }) };
+    } },
+  };
+  const response = await worker.fetch(evaluationPost({}), env);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await ndjson(response), [
+    { source: 'backup' },
+    { assessment: { score: 10, accepted: [], reply: 'Sokratik bir ayrım kurdunuz.' } },
+    { done: true },
+  ]);
+});
+
+test('uses Luna first and validates its streamed assessment before returning it', async () => {
+  const encoder = new TextEncoder();
+  const payload = JSON.stringify({ score: 5, accepted: [], reply: 'Ana fikri yakaladınız.' });
+  const sse = encoder.encode(`event: response.output_text.delta\ndata: ${JSON.stringify({ type: 'response.output_text.delta', delta: payload })}\n\nevent: response.completed\ndata: {"type":"response.completed"}\n\n`);
+  const env = { AI: { run: async (model, input) => {
+    assert.equal(model, 'openai/gpt-6-luna');
+    assert.equal(input.stream, true);
+    assert.match(input.instructions, /Turnuva modunda/);
+    return new ReadableStream({ start(controller) { controller.enqueue(sse); controller.close(); } });
+  } } };
+  const events = await ndjson(await worker.fetch(evaluationPost({}), env));
+  assert.deepEqual(events, [
+    { source: 'luna' },
+    { assessment: { score: 5, accepted: [], reply: 'Ana fikri yakaladınız.' } },
+    { done: true },
+  ]);
+});
+
+test('rejects accepted memory that duplicates known notes or the previous answer', async () => {
+  const env = {
+    LUNA_PAUSED: '1',
+    AI: { run: async () => ({ response: JSON.stringify({ score: 5, accepted: [0], reply: 'Yeni bir bilgi.' }) }) },
+  };
+  const response = await worker.fetch(evaluationPost({
+    phase: 'memory', answers: ['Erdemi sorgular.'], memory: ['Erdemi sorgular.'], previousAnswer: '',
+  }), env);
+  const events = await ndjson(response);
+  assert.deepEqual(events, [{ error: 'evaluation_unavailable' }]);
+  assert.equal(events.some(event => event.assessment), false);
+});
+
+test('rejects normalized duplicates of the previous question answer', async () => {
+  const env = {
+    LUNA_PAUSED: '1',
+    AI: { run: async () => ({ response: JSON.stringify({ score: 5, accepted: [0], reply: 'Yeni bir bilgi.' }) }) },
+  };
+  const events = await ndjson(await worker.fetch(evaluationPost({
+    phase: 'memory', answers: ['ERDEMİ SORGULAR'], memory: [], previousAnswer: 'Erdemi sorgular.',
+  }), env));
+  assert.deepEqual(events, [{ error: 'evaluation_unavailable' }]);
+});
+
+test('never fabricates an evaluation when both providers fail', async () => {
+  const env = { LUNA_PAUSED: '1', AI: { run: async () => { throw Error('unavailable'); } } };
+  const events = await ndjson(await worker.fetch(evaluationPost({}), env));
+  assert.deepEqual(events, [{ error: 'evaluation_unavailable' }]);
+  assert.equal(events.some(event => event.assessment), false);
+});
+
+test('does not award points for a blank question response', async () => {
+  const env = {
+    LUNA_PAUSED: '1',
+    AI: { run: async () => ({ response: JSON.stringify({ score: 10, accepted: [], reply: 'İyi yanıt.' }) }) },
+  };
+  const events = await ndjson(await worker.fetch(evaluationPost({ answers: ['  '] }), env));
+  assert.deepEqual(events, [{ error: 'evaluation_unavailable' }]);
+});
+
+test('relays the same typed evaluation through the Cloudflare fallback worker', async () => {
+  const originalFetch = globalThis.fetch;
+  let forwarded;
+  globalThis.fetch = async (url, init) => {
+    forwarded = JSON.parse(init.body);
+    return worker.fetch(new Request(String(url), init), {
+      LUNA_PAUSED: '1',
+      AI: { run: async () => ({ response: JSON.stringify({ score: 5, accepted: [], reply: 'Ana fikri yakaladınız.' }) }) },
+    });
+  };
+  try {
+    const requestBody = {
+      kind: 'evaluate', unitId: 'felsefeyi-tanima', phase: 'question', team: 1,
+      answers: ['Bir örnek düşünelim.'], memory: [], previousAnswer: '',
+    };
+    const events = await ndjson(await worker.fetch(evaluationPost(requestBody), {
+      LUNA_PAUSED: '1', BACKUP_ORIGIN: 'https://backup.example',
+    }));
+    assert.deepEqual(forwarded, requestBody);
+    assert.deepEqual(events, [
+      { source: 'backup' },
+      { assessment: { score: 5, accepted: [], reply: 'Ana fikri yakaladınız.' } },
+      { done: true },
+    ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('normalizes exact echoed memory facts to their original answer positions', async () => {
+  const facts = ['Sokrates’in kendi yazılı eseri yoktur.', 'Platon onu diyaloglarında anlatır.'];
+  const env = {
+    LUNA_PAUSED: '1',
+    AI: { run: async () => ({ response: JSON.stringify({ score: 10, accepted: facts, reply: 'İki bilgiyi de hatırladım.' }) }) },
+  };
+  const events = await ndjson(await worker.fetch(evaluationPost({ phase: 'memory', answers: facts }), env));
+  assert.deepEqual(events, [
+    { source: 'backup' },
+    { assessment: { score: 10, accepted: [0, 1], reply: 'İki bilgiyi de hatırladım.' } },
+    { done: true },
+  ]);
+});

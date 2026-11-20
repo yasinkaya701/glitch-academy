@@ -1,11 +1,11 @@
 # Yanlış Dünya Sınıf Sohbetleri
 
-[Fikir Meydanı – Felsefe](https://yanlis-dunya-sinif-sohbetleri.vercel.app/felsefe) ve [Zaman Arşivi – Tarih](https://yanlis-dunya-sinif-sohbetleri.vercel.app/tarih) projeksiyonda veya tek öğretmen cihazında çalışır. Oyun kuralları her iki dersin üst menüsünde bulunur.
+[Fikir Meydanı – Felsefe](https://yanlis-dunya-sinif-sohbetleri.vercel.app/felsefe) ve [Zaman Arşivi – Tarih](https://yanlis-dunya-sinif-sohbetleri.vercel.app/tarih) doğrudan figürle sohbeti açar ve sınıfın ortak ekranında çalışır. Oyun kuralları her iki dersin üst menüsünde bulunur.
 
-- **Yarışma.** Her takım bir soruyu sözlü tartışır ve bir yanıt yazar. Öğretmen örnek yanıta göre 0, 5 veya 10 puan verir. Aynı takım, her biri 5 puan eden en fazla iki yeni hafıza bilgisi yazabilir. Sınıf iki farklı doğrulanmış bilgiyle yarışma sonundan sohbeti açar.
-- **Serbest sohbet.** Bu mod ünite ekranından doğrudan açılır. Felsefe canlandırmaları güncel örnekleri, ilkeleri ve karşı örnekleri tartışır. Tarih canlandırmaları bir zaman çizelgesi ile olayları ve dönemin toplumsal yaşamını ele alır.
+- **Serbest sohbet.** Bir YKS ünitesi seçin ve figüre doğrudan sorun. Düşünürler görüşlerini ve karşı örnekleri tartışır. Tarihî figürler olayları kronoloji ve dönemlerinin toplumsal yaşamıyla ilişkilendirir. Destekleyen tarayıcılarda sesle yazdırabilir ve son figür mesajını sesli dinleyebilirsiniz.
+- **Yarışma.** Aynı sohbet ekranında figür iki takıma sırayla soru sorar ve yanıtını kendi üslubuyla değerlendirir. Ana fikir 5, doğru ve gerekçeli yanıt 10 puan. Figür doğru ve yeni hafıza bilgisi başına 5 puan verir, o bilgiyi sonraki konuşmaya taşır.
 - **Üniteler.** [MEB 2026 YKS başlıkları](https://ttkb.meb.gov.tr/meb_iys_dosyalar/2025_11/26164023_2026_yks.pdf) 9 felsefe ve 26 tarih/inkılap kartına bağlanır. Her kart üniteden bir öğrenme örneği, bir figür ve iki soru içerir.
-- **Veri.** Takım adları, puanlar ve yarışma cevapları açık sekmede tutulur. Sohbet açıldığında yalnızca sohbet metni, yakın konuşma geçmişi, ünite kimliği ve varsa öğretmen onaylı hafıza notları yanıt üretmek için gönderilir.
+- **Veri.** Takım adları ve puanlar sekmede tutulur. Girilen sorular, yarışma yanıtları ve hafıza notları yanıt üretmek için modele gönderilir. Sesle yazdırma için tarayıcı kendi ses tanıma hizmetini kullanabilir.
 
 ## Doğrulama ve yayın
 
@@ -14,6 +14,6 @@ Bu dizinde Node.js 22 ile `npm test` çalıştırılır. Vercel statik dosyalar�
 1. Cloudflare Worker için bu dizinde `wrangler deploy` çalıştırın. Vercel’de gerekirse `BACKUP_ORIGIN` değişkenini yayınlanan Worker adresiyle ayarlayın.
 2. Vercel projesini bu dizine bağlayıp `vercel deploy --prod` çalıştırın. `public/` çıktısı ile Frankfurt bölgesi `vercel.json` içinde ayarlıdır.
 3. Vercel üretim işlevi GPT-6 Luna için Vercel OIDC kullanır. AI Gateway erişimi hazır olduğunda yeni sohbette kaynak etiketi **GPT-6 Luna** görünür. Uygun bir OpenAI projesi anahtarını Vercel’de sunucu sırrı olarak `OPENAI_API_KEY` adıyla eklemek doğrudan API yolunu açar. Anahtarı kaynak koduna veya tarayıcıya koymayın.
-4. Gateway erişimi yoksa Gemma 4 yanıtları **Yedek model** olarak görünür. İki sağlayıcı da yanıt veremezse uygulama ünitenin **Hazır tartışma kartı**na döner. Yarışma puanlaması öğretmenin cihazında çalışır.
+4. Gateway erişimi yoksa Gemma 4 yanıtları kaynak etiketiyle görünür. İki sağlayıcı da yanıt veremezse sohbet ünitenin **Hazır tartışma kartı**na döner. Yarışmada aynı yanıt yeniden gönderilebilir veya puansız geçilebilir. Değerlendirilmemiş tur kaldığında kazanan ilan edilmez.
 
 Başarı ve gecikme kontrolü için ayrı ders bağlantılarını taze tarayıcıda açın. Felsefede güncel bir örnek ve takip sorusu, tarihte kronoloji ve toplumsal etki sorun. Sonuçta yanıtın kaynak etiketini ve doğru zamanda ulaştığını kontrol edin.
